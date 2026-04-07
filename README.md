@@ -734,7 +734,7 @@ mux.HandleFunc(queue.TypeSubscriptionExpiring, subscProcessor.HandleSubscription
 # infra/docker/docker-compose.yml
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: petcontrol
       POSTGRES_USER: petcontrol
@@ -873,7 +873,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: test
           POSTGRES_USER: test
@@ -966,7 +966,7 @@ import (
 func TestMain(m *testing.M) {
     ctx := context.Background()
 
-    pgContainer, _ := postgres.Run(ctx, "postgres:16-alpine",
+    pgContainer, _ := postgres.Run(ctx, "postgres:18-alpine",
         postgres.WithDatabase("petcontrol_test"),
         postgres.WithUsername("test"),
         postgres.WithPassword("test"),

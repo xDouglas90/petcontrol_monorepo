@@ -29,7 +29,7 @@ func SetupPostgresWithMigrations(t *testing.T) PostgresSetup {
 
 	pgContainer, err := tcpostgres.Run(
 		ctx,
-		"postgres:16-alpine",
+		"postgres:18-alpine",
 		tcpostgres.WithDatabase("petcontrol_test"),
 		tcpostgres.WithUsername("test"),
 		tcpostgres.WithPassword("test"),

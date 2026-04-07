@@ -9,7 +9,7 @@ fi
 docker run --rm \
   --network host \
   -i \
-  postgres:16-alpine \
+  postgres:18-alpine \
   psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 <<'SQL'
 -- Modules
 INSERT INTO modules (code, name, description, min_package)
