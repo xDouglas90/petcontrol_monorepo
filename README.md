@@ -782,52 +782,52 @@ volumes:
 
 # Desenvolvimento
 dev-api:
-	cd apps/api && go run ./cmd/server
+ cd apps/api && go run ./cmd/server
 
 dev-worker:
-	cd apps/worker && go run ./cmd/worker
+ cd apps/worker && go run ./cmd/worker
 
 dev-web:
-	cd apps/web && pnpm dev
+ cd apps/web && pnpm dev
 
 # Build
 build-api:
-	cd apps/api && go build -o bin/server ./cmd/server
+ cd apps/api && go build -o bin/server ./cmd/server
 
 build-worker:
-	cd apps/worker && go build -o bin/worker ./cmd/worker
+ cd apps/worker && go build -o bin/worker ./cmd/worker
 
 # Testes
 test-api:
-	cd apps/api && go test ./... -v -race -count=1
+ cd apps/api && go test ./... -v -race -count=1
 
 test-web:
-	cd apps/web && pnpm test
+ cd apps/web && pnpm test
 
 # Lint
 lint-go:
-	golangci-lint run ./apps/api/... ./apps/worker/...
+ golangci-lint run ./apps/api/... ./apps/worker/...
 
 lint-web:
-	cd apps/web && pnpm lint
+ cd apps/web && pnpm lint
 
 # Migrations
 migrate-up:
-	migrate -path infra/migrations -database "$$DATABASE_URL" up
+ migrate -path infra/migrations -database "$$DATABASE_URL" up
 
 migrate-down:
-	migrate -path infra/migrations -database "$$DATABASE_URL" down 1
+ migrate -path infra/migrations -database "$$DATABASE_URL" down 1
 
 migrate-create:
-	migrate create -ext sql -dir infra/migrations -seq $(name)
+ migrate create -ext sql -dir infra/migrations -seq $(name)
 
 # SQLC
 sqlc:
-	cd apps/api && sqlc generate
+ cd apps/api && sqlc generate
 
 # Swagger
 swagger:
-	cd apps/api && swag init -g cmd/server/main.go --output docs/
+ cd apps/api && swag init -g cmd/server/main.go --output docs/
 ```
 
 ### 8.3 Variáveis de ambiente
