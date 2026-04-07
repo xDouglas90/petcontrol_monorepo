@@ -12,7 +12,7 @@ import {
 } from '@petcontrol/shared-utils';
 
 const apiUrl = normalizeUrl(
-  import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1',
+  import.meta.env.VITE_API_URL ?? 'http://localhost:8082/api/v1',
 );
 const authMode = (import.meta.env.VITE_AUTH_MODE ?? 'api').toLowerCase();
 
