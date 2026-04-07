@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
@@ -37,6 +38,22 @@ func (h *UserHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to list users",
 		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": users})
+}
+
+func (h *UserHandler) ListCompanyUsers(c *gin.Context) {
+	companyID, ok := middleware.GetCompanyID(c)
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		return
+	}
+
+	users, err := h.service.ListCompanyUsers(c.Request.Context(), companyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list company users"})
 		return
 	}
 

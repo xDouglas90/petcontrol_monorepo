@@ -66,6 +66,41 @@ func (q *Queries) DeactivateCompanyUser(ctx context.Context, arg DeactivateCompa
 	return err
 }
 
+const getActiveCompanyUserByUserID = `-- name: GetActiveCompanyUserByUserID :one
+SELECT
+    cu.id,
+    cu.company_id,
+    cu.user_id,
+    cu.is_owner,
+    cu.is_active,
+    cu.joined_at,
+    cu.left_at
+FROM
+    company_users cu
+WHERE
+    cu.user_id = $1
+    AND cu.is_active = TRUE
+ORDER BY
+    cu.is_owner DESC,
+    cu.joined_at ASC
+LIMIT 1
+`
+
+func (q *Queries) GetActiveCompanyUserByUserID(ctx context.Context, userid pgtype.UUID) (CompanyUser, error) {
+	row := q.db.QueryRow(ctx, getActiveCompanyUserByUserID, userid)
+	var i CompanyUser
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.UserID,
+		&i.IsOwner,
+		&i.IsActive,
+		&i.JoinedAt,
+		&i.LeftAt,
+	)
+	return i, err
+}
+
 const getCompanyUser = `-- name: GetCompanyUser :one
 SELECT
     cu.id,

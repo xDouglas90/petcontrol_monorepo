@@ -27,7 +27,9 @@ func main() {
 
 	queries := sqlc.New(pool)
 	userService := service.NewUserService(queries)
+	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	userHandler := handler.NewUserHandler(userService)
+	authHandler := handler.NewAuthHandler(authService)
 	healthHandler := handler.NewHealthHandler(pool)
 
 	router := gin.New()
@@ -37,7 +39,15 @@ func main() {
 	router.GET("/ready", healthHandler.Ready)
 
 	v1 := router.Group("/api/v1")
+	v1.POST("/auth/login", authHandler.Login)
 	v1.GET("/users", userHandler.List)
+
+	protected := v1.Group("/")
+	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
+	protected.GET("/company-users", userHandler.ListCompanyUsers)
+	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
+		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
+	})
 
 	log.Printf("api listening on %s", cfg.Address())
 	if err := router.Run(cfg.Address()); err != nil {

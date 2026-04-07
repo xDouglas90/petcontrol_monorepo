@@ -35,6 +35,25 @@ WHERE
     AND cu.user_id = sqlc.arg('UserID')
 LIMIT 1;
 
+-- name: GetActiveCompanyUserByUserID :one
+SELECT
+    cu.id,
+    cu.company_id,
+    cu.user_id,
+    cu.is_owner,
+    cu.is_active,
+    cu.joined_at,
+    cu.left_at
+FROM
+    company_users cu
+WHERE
+    cu.user_id = sqlc.arg('UserID')
+    AND cu.is_active = TRUE
+ORDER BY
+    cu.is_owner DESC,
+    cu.joined_at ASC
+LIMIT 1;
+
 -- name: ListCompanyUsersByCompanyID :many
 SELECT
     cu.id,

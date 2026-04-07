@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 )
 
@@ -19,4 +20,8 @@ func (s *UserService) ListUsers(ctx context.Context, limit int32, offset int32) 
 		Limit:  limit,
 		Offset: offset,
 	})
+}
+
+func (s *UserService) ListCompanyUsers(ctx context.Context, companyID pgtype.UUID) ([]sqlc.CompanyUser, error) {
+	return s.queries.ListCompanyUsersByCompanyID(ctx, companyID)
 }
