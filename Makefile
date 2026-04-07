@@ -1,5 +1,6 @@
 ROOT_DIR := $(CURDIR)
 API_DIR := $(ROOT_DIR)/apps/api
+WORKER_DIR := $(ROOT_DIR)/apps/worker
 INFRA_DIR := $(ROOT_DIR)/infra
 DOCKER_DIR := $(INFRA_DIR)/docker
 COMPOSE_FILE := $(ROOT_DIR)/infra/docker/docker-compose.yml
@@ -7,7 +8,7 @@ MIGRATIONS_DIR := $(INFRA_DIR)/migrations
 SCRIPTS_DIR := $(INFRA_DIR)/scripts
 DATABASE_URL ?=
 
-.PHONY: dev-api test-api sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
+.PHONY: dev-api test-api dev-worker test-worker sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
 
 dev-api:
 	cd $(API_DIR) && \
@@ -18,6 +19,16 @@ dev-api:
 
 test-api:
 	cd $(API_DIR) && go test ./...
+
+dev-worker:
+	cd $(WORKER_DIR) && \
+		set -a && \
+		if [ -f $(ROOT_DIR)/.env ]; then . $(ROOT_DIR)/.env; else . $(ROOT_DIR)/.env.example; fi && \
+		set +a && \
+		go run ./cmd/worker
+
+test-worker:
+	cd $(WORKER_DIR) && go test ./...
 
 sqlc:
 	cd $(API_DIR) && sqlc generate
