@@ -11,8 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteUser = `-- name: DeleteUser :exec
-UPDATE users
+const deleteUser = `-- name: DeleteUser :execrows
+UPDATE
+  users
 SET
   deleted_at = now(),
   is_active = FALSE
@@ -20,9 +21,12 @@ WHERE
   id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
-	return err
+func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -41,8 +45,7 @@ FROM
   users u
 WHERE
   u.email = $1
-LIMIT
-  1
+LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -79,8 +82,7 @@ FROM
   users u
 WHERE
   u.id = $1
-LIMIT
-  1
+LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
@@ -102,17 +104,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 }
 
 const insertUser = `-- name: InsertUser :one
-INSERT INTO
-  users(
-    email,
-    email_verified,
-    email_verified_at,
-    "role",
-    kind,
-    is_active
-  )
-VALUES
-  ($1, $2, $3, $4, $5, $6)
+INSERT INTO users(email, email_verified, email_verified_at, "role", kind, is_active)
+  VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING
   id, email, email_verified, email_verified_at, role, kind, is_active, created_at, updated_at, deleted_at
 `
@@ -167,40 +160,24 @@ FROM
   users u
 WHERE
   u.deleted_at IS NULL
-  AND (
-    u.email ILIKE '%' || $1 || '%'
-    OR $1 IS NULL
-  )
-  AND (
-    u."role" = $2
-    OR $2 IS NULL
-  )
-  AND (
-    u.kind = $3
-    OR $3 IS NULL
-  )
-  AND (
-    u.is_active = $4
-    OR $4 IS NULL
-  )
-  AND (
-    u.created_at >= $5
-    OR $5 IS NULL
-  )
-  AND (
-    u.email_verified = $6
-    OR $6 IS NULL
-  )
-  AND (
-    u.email_verified_at >= $7
-    OR $7 IS NULL
-  )
+  AND (u.email ILIKE '%' || $1 || '%'
+    OR $1 IS NULL)
+  AND (u."role" = $2
+    OR $2 IS NULL)
+  AND (u.kind = $3
+    OR $3 IS NULL)
+  AND (u.is_active = $4
+    OR $4 IS NULL)
+  AND (u.created_at >= $5
+    OR $5 IS NULL)
+  AND (u.email_verified = $6
+    OR $6 IS NULL)
+  AND (u.email_verified_at >= $7
+    OR $7 IS NULL)
 ORDER BY
   u.created_at DESC
-LIMIT
-  $9
-OFFSET
-  $8
+LIMIT $9
+OFFSET $8
 `
 
 type ListUsersParams struct {
@@ -274,10 +251,8 @@ WHERE
   u.deleted_at IS NULL
 ORDER BY
   u.created_at DESC
-LIMIT
-  $2
-OFFSET
-  $1
+LIMIT $2
+OFFSET $1
 `
 
 type ListUsersBasicParams struct {
@@ -316,8 +291,9 @@ func (q *Queries) ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) 
 	return items, nil
 }
 
-const updateUser = `-- name: UpdateUser :one
-UPDATE users
+const updateUser = `-- name: UpdateUser :execrows
+UPDATE
+  users
 SET
   email = coalesce($1, email),
   email_verified = coalesce($2, email_verified),
@@ -328,8 +304,6 @@ SET
   updated_at = now()
 WHERE
   id = $7
-RETURNING
-  id, email, email_verified, email_verified_at, role, kind, is_active, created_at, updated_at, deleted_at
 `
 
 type UpdateUserParams struct {
@@ -342,8 +316,8 @@ type UpdateUserParams struct {
 	ID              pgtype.UUID        `db:"ID" json:"ID"`
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser,
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUser,
 		arg.Email,
 		arg.EmailVerified,
 		arg.EmailVerifiedAt,
@@ -352,18 +326,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.IsActive,
 		arg.ID,
 	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.EmailVerified,
-		&i.EmailVerifiedAt,
-		&i.Role,
-		&i.Kind,
-		&i.IsActive,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
