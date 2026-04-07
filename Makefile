@@ -10,7 +10,11 @@ DATABASE_URL ?=
 .PHONY: dev-api test-api sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
 
 dev-api:
-	cd $(API_DIR) && go run ./cmd/server
+	cd $(API_DIR) && \
+		set -a && \
+		if [ -f $(ROOT_DIR)/.env ]; then . $(ROOT_DIR)/.env; else . $(ROOT_DIR)/.env.example; fi && \
+		set +a && \
+		go run ./cmd/server
 
 test-api:
 	cd $(API_DIR) && go test ./...
