@@ -10,6 +10,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
@@ -28,8 +29,15 @@ func main() {
 	queries := sqlc.New(pool)
 	userService := service.NewUserService(queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
+	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
+	defer func() {
+		if err := workerPublisher.Close(); err != nil {
+			log.Printf("close worker publisher: %v", err)
+		}
+	}()
 	userHandler := handler.NewUserHandler(userService)
 	authHandler := handler.NewAuthHandler(authService)
+	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
 
 	router := gin.New()
@@ -45,6 +53,7 @@ func main() {
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
 	protected.GET("/users", userHandler.List)
 	protected.GET("/company-users", userHandler.ListCompanyUsers)
+	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
 	})
