@@ -1,5 +1,7 @@
 ROOT_DIR := $(CURDIR)
 API_DIR := $(ROOT_DIR)/apps/api
+INFRA_DIR := $(ROOT_DIR)/infra
+DOCKER_DIR := $(INFRA_DIR)/docker
 COMPOSE_FILE := $(ROOT_DIR)/infra/docker/docker-compose.yml
 
 .PHONY: dev-api test-api sqlc docker-up docker-down docker-logs docker-ps go-work-sync
@@ -14,16 +16,16 @@ sqlc:
 	cd $(API_DIR) && sqlc generate
 
 docker-up:
-	docker compose -f $(COMPOSE_FILE) up -d
+	cd $(DOCKER_DIR) && docker compose up -d
 
 docker-down:
-	docker compose -f $(COMPOSE_FILE) down
+	cd $(DOCKER_DIR) && docker compose down
 
 docker-logs:
-	docker compose -f $(COMPOSE_FILE) logs -f
+	cd $(DOCKER_DIR) && docker compose logs -f
 
 docker-ps:
-	docker compose -f $(COMPOSE_FILE) ps
+	cd $(DOCKER_DIR) && docker compose ps
 
 go-work-sync:
 	go work sync
