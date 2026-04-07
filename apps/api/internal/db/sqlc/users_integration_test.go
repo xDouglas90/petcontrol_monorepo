@@ -108,7 +108,7 @@ func TestQueries_UpdateUser(t *testing.T) {
 
 	created := insertDefaultUser(t, queries, uniqueEmail("update"))
 
-	updated, err := queries.UpdateUser(context.Background(), sqlc.UpdateUserParams{
+	rowsAffected, err := queries.UpdateUser(context.Background(), sqlc.UpdateUserParams{
 		Email:         pgtype.Text{String: uniqueEmail("updated"), Valid: true},
 		EmailVerified: pgtype.Bool{Bool: true, Valid: true},
 		Role: sqlc.NullUserRoleType{
@@ -123,7 +123,10 @@ func TestQueries_UpdateUser(t *testing.T) {
 		ID:       created.ID,
 	})
 	require.NoError(t, err)
+	require.EqualValues(t, 1, rowsAffected)
 
+	updated, err := queries.GetUserByID(context.Background(), created.ID)
+	require.NoError(t, err)
 	require.Equal(t, sqlc.UserRoleTypeManager, updated.Role)
 	require.Equal(t, sqlc.UserKindStaff, updated.Kind)
 	require.True(t, updated.EmailVerified)
@@ -136,8 +139,9 @@ func TestQueries_DeleteUser(t *testing.T) {
 
 	created := insertDefaultUser(t, queries, uniqueEmail("delete"))
 
-	err := queries.DeleteUser(context.Background(), created.ID)
+	rowsAffected, err := queries.DeleteUser(context.Background(), created.ID)
 	require.NoError(t, err)
+	require.EqualValues(t, 1, rowsAffected)
 
 	got, err := queries.GetUserByID(context.Background(), created.ID)
 	require.NoError(t, err)
@@ -191,7 +195,7 @@ func TestQueries_UpdateUser_NotFound(t *testing.T) {
 	defer cleanup()
 
 	missingID := pgtype.UUID{Valid: true}
-	_, err := queries.UpdateUser(context.Background(), sqlc.UpdateUserParams{
+	rowsAffected, err := queries.UpdateUser(context.Background(), sqlc.UpdateUserParams{
 		Email:         pgtype.Text{String: uniqueEmail("updated-missing"), Valid: true},
 		EmailVerified: pgtype.Bool{Bool: true, Valid: true},
 		Role: sqlc.NullUserRoleType{
@@ -205,6 +209,6 @@ func TestQueries_UpdateUser_NotFound(t *testing.T) {
 		IsActive: pgtype.Bool{Bool: true, Valid: true},
 		ID:       missingID,
 	})
-	require.Error(t, err)
-	require.True(t, errors.Is(err, pgx.ErrNoRows))
+	require.NoError(t, err)
+	require.EqualValues(t, 0, rowsAffected)
 }
