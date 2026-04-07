@@ -207,12 +207,12 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ### 4.2 - Checks
 
-- [] Login com credenciais validas retorna JWT.
-- [] Login invalido retorna erro padronizado e nao vaza detalhe sensível.
-- [] Rota autenticada sem token retorna `401`.
-- [] Rota autenticada com token sem `company_id` retorna `403`.
-- [] Queries de dados de tenant usam `company_id` obtido do middleware, nao do body do request.
-- [] Testes unitários cobrem middlewares `Auth` e `Tenant`.
+- [x] Login com credenciais validas retorna JWT.
+- [x] Login invalido retorna erro padronizado e nao vaza detalhe sensível.
+- [x] Rota autenticada sem token retorna `401`.
+- [x] Rota autenticada com token sem `company_id` retorna `403`.
+- [x] Queries de dados de tenant usam `company_id` obtido do middleware, nao do body do request.
+- [x] Testes unitários cobrem middlewares `Auth` e `Tenant`.
 
 ## Fase 5 - Frontend Web Base (`apps/web`)
 
