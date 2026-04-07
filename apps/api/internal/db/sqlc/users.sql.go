@@ -182,11 +182,11 @@ OFFSET $8
 
 type ListUsersParams struct {
 	Email              pgtype.Text        `db:"Email" json:"Email"`
-	Role               UserRoleType       `db:"Role" json:"Role"`
-	Kind               UserKind           `db:"Kind" json:"Kind"`
-	IsActive           bool               `db:"IsActive" json:"IsActive"`
+	Role               NullUserRoleType   `db:"Role" json:"Role"`
+	Kind               NullUserKind       `db:"Kind" json:"Kind"`
+	IsActive           pgtype.Bool        `db:"IsActive" json:"IsActive"`
 	CreatedAfter       pgtype.Timestamptz `db:"CreatedAfter" json:"CreatedAfter"`
-	EmailVerified      bool               `db:"EmailVerified" json:"EmailVerified"`
+	EmailVerified      pgtype.Bool        `db:"EmailVerified" json:"EmailVerified"`
 	EmailVerifiedAfter pgtype.Timestamptz `db:"EmailVerifiedAfter" json:"EmailVerifiedAfter"`
 	Offset             int32              `db:"Offset" json:"Offset"`
 	Limit              int32              `db:"Limit" json:"Limit"`

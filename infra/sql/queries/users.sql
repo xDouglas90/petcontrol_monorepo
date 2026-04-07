@@ -79,20 +79,20 @@ FROM
   users u
 WHERE
   u.deleted_at IS NULL
-  AND (u.email ILIKE '%' || sqlc.arg('Email') || '%'
-    OR sqlc.arg('Email') IS NULL)
-  AND (u."role" = sqlc.arg('Role')
-    OR sqlc.arg('Role') IS NULL)
-  AND (u.kind = sqlc.arg('Kind')
-    OR sqlc.arg('Kind') IS NULL)
-  AND (u.is_active = sqlc.arg('IsActive')
-    OR sqlc.arg('IsActive') IS NULL)
-  AND (u.created_at >= sqlc.arg('CreatedAfter')
-    OR sqlc.arg('CreatedAfter') IS NULL)
-  AND (u.email_verified = sqlc.arg('EmailVerified')
-    OR sqlc.arg('EmailVerified') IS NULL)
-  AND (u.email_verified_at >= sqlc.arg('EmailVerifiedAfter')
-    OR sqlc.arg('EmailVerifiedAfter') IS NULL)
+  AND (u.email ILIKE '%' || sqlc.narg('Email') || '%'
+    OR sqlc.narg('Email') IS NULL)
+  AND (u."role" = sqlc.narg('Role')
+    OR sqlc.narg('Role') IS NULL)
+  AND (u.kind = sqlc.narg('Kind')
+    OR sqlc.narg('Kind') IS NULL)
+  AND (u.is_active = sqlc.narg('IsActive')
+    OR sqlc.narg('IsActive') IS NULL)
+  AND (u.created_at >= sqlc.narg('CreatedAfter')
+    OR sqlc.narg('CreatedAfter') IS NULL)
+  AND (u.email_verified = sqlc.narg('EmailVerified')
+    OR sqlc.narg('EmailVerified') IS NULL)
+  AND (u.email_verified_at >= sqlc.narg('EmailVerifiedAfter')
+    OR sqlc.narg('EmailVerifiedAfter') IS NULL)
 ORDER BY
   u.created_at DESC
 LIMIT sqlc.arg('Limit')
