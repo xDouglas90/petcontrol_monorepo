@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
-    "format": "prettier --check ."
+    "format": "prettier --check .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@petcontrol/shared-constants": "workspace:*",
@@ -42,6 +43,8 @@
     "tailwindcss": "^3.4.18",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^3.2.4",
+    "jsdom": "^26.1.0"
   }
 }
