@@ -491,6 +491,48 @@ Gerar/atualizar docs:
 swag init -g cmd/server/main.go --output docs/
 ```
 
+### 5.7 Dockerfile e Entrypoint da API
+
+O backend em `apps/api` já possui conteinerização implementada com build multi-stage.
+
+Resumo do que foi implementado:
+
+- Stage de build em Go (`golang:1.26.1-alpine3.23`) para:
+  - instalar `sqlc` e `migrate`;
+  - executar `sqlc generate` dentro de `apps/api`;
+  - compilar o binário `./cmd/server` em modo estático (`CGO_ENABLED=0`).
+- Stage de runtime em Alpine (`alpine:3.23`) com:
+  - `ca-certificates` e `tzdata`;
+  - binário final da API;
+  - binário `migrate`;
+  - migrations copiadas de `infra/migrations`.
+- `entrypoint.sh` como ponto de entrada do container:
+  - se `RUN_MIGRATIONS=true`, roda `migrate up` antes da aplicação subir;
+  - em seguida inicia a API (`/app/petcontrol-api`).
+
+Arquivos relevantes:
+
+- `apps/api/Dockerfile`
+- `apps/api/entrypoint.sh`
+
+Variáveis usadas no startup do container:
+
+- `DATABASE_URL` (obrigatória para conexão com Postgres e migrations)
+- `RUN_MIGRATIONS` (opcional, default `false`)
+
+Exemplo de uso local:
+
+```bash
+# na raiz do monorepo
+docker build -f apps/api/Dockerfile -t petcontrol-api .
+
+docker run --rm \
+  -e DATABASE_URL="postgres://petcontrol:petcontrol@host.docker.internal:5432/petcontrol?sslmode=disable" \
+  -e RUN_MIGRATIONS=true \
+  -p 8080:8080 \
+  petcontrol-api
+```
+
 ---
 
 ## 6. App: Web
