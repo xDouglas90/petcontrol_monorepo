@@ -51,7 +51,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 ### 1.1 - Ações
 
 - Criar `infra/docker/docker-compose.yml` para desenvolvimento local com:
-  - `postgres` usando `postgres:16-alpine`.
+  - `postgres` usando `postgres:18-alpine`.
   - `redis` usando `redis:7-alpine`.
   - `pgadmin` para inspeção local.
   - `asynqmon` para monitorar filas quando o Worker existir.
@@ -102,6 +102,11 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - [x] `go test ./...` em `apps/api` passa.
 - [x] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
 
+### 2.2.1 - Entregas adicionais realizadas
+
+- O target `make dev-api` foi ajustado para carregar variaveis de ambiente a partir de `.env` com fallback para `.env.example`.
+- A inicializacao da API via Makefile foi validada apos o ajuste de `DATABASE_URL`, evitando erro de configuração ausente.
+
 ### 2.3 - Testes de Integração com Testcontainers para SQLC
 
 Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/internal/db/sqlc`, usando PostgreSQL real via Testcontainers e migrations oficiais de `infra/migrations`. O primeiro alvo deve ser `apps/api/internal/db/sqlc/users.sql.go`, sem editar esse arquivo gerado manualmente.
@@ -117,7 +122,7 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
   - `github.com/golang-migrate/migrate/v4/source/file`.
 - Criar o arquivo de teste inicial em `apps/api/internal/db/sqlc/users_integration_test.go`.
 - Usar `package sqlc_test` para testar o SQLC como consumidor externo do pacote, importando `github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc`.
-- Subir um container `postgres:16-alpine` ou `postgres:17-alpine`, mantendo a versão alinhada com `infra/docker/docker-compose.yml` e `.env.example`.
+- Subir um container `postgres:18-alpine`, mantendo a versão alinhada com `infra/docker/docker-compose.yml` e `.env.example`.
 - Obter a connection string do container com `sslmode=disable`.
 - Aplicar as migrations de `../../../../infra/migrations` a partir do diretório do pacote de teste, ou calcular o caminho absoluto com `runtime.Caller` para evitar falha quando o teste rodar de outro diretório.
 - Abrir um `pgxpool.Pool` apontando para o banco do container e criar `queries := sqlc.New(pool)`.
@@ -249,6 +254,12 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 - [x] Login chama `VITE_API_URL` configurado.
 - [x] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
 
+### 5.3 - Entregas adicionais realizadas
+
+- Foi adicionada suite de testes com Vitest no `apps/web`, incluindo configuracao dedicada (`vitest.config.ts`) e script `test` no `package.json`.
+- Foram adicionados testes unitarios para `rest-client`, `auth.store` e `ui.store` cobrindo fluxo de login, erros de autenticacao e gerenciamento de estado.
+- O fallback visual da URL da API na tela de login foi alinhado para `http://localhost:8082/api/v1`, mantendo consistencia com o `.env.example`.
+
 ## Fase 6 - Libs Compartilhadas (`libs/*`)
 
 ### 6.1 - Ações
@@ -271,6 +282,12 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 - [x] `shared-constants` evita magic strings de rotas no Web.
 - [x] `libs/ui/core` nao importa React DOM nem React Native.
 
+### 6.3 - Entregas adicionais realizadas
+
+- Foi expandida a cobertura de testes com Vitest para libs compartilhadas, com suites em `libs/shared-constants/tests` e `libs/ui/tests`.
+- Os pacotes `@petcontrol/shared-constants` e `@petcontrol/ui` receberam scr8ipt `test` para execução padronizada no workspace.
+- O app web foi migrado para consumir rotas, tipos, utilitários e helper de UI diretamente das libs via `workspace:*`, reduzindo acoplamento por paths locais profundos.
+
 ## Fase 7 - Worker Base (`apps/worker`)
 
 ### 7.1 - Ações
@@ -287,14 +304,33 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 - Configurar Asynq com Redis.
 - Criar fila inicial `notifications` com task dummy verificável.
 - Compartilhar tipos de task com a API via pacote Go interno comum ou duplicação minima documentada.
+- Implementar testes unitários no Worker para configuração e processor da task dummy.
+- Implementar testes de integração:
+  - publisher da API com Redis em memória (miniredis + Asynq inspector).
+  - processor do Worker consumindo task dummy em Redis em memória.
 
 ### 7.2 - Checks
 
-- [] `go run ./cmd/worker` inicia e conecta no Redis.
-- [] API consegue publicar task dummy.
-- [] Worker consome task dummy e registra log estruturado.
-- [] `go test ./...` no Worker passa.
-- [] Worker pode ser desligado sem afetar a API.
+- [x] `go run ./cmd/worker` inicia e conecta no Redis.
+- [x] API consegue publicar task dummy.
+- [x] Worker consome task dummy e registra log estruturado.
+- [x] `go test ./...` no Worker passa.
+- [x] Worker pode ser desligado sem afetar a API.
+
+### 7.3 - Entregas adicionais realizadas
+
+- Foi criado o endpoint protegido `POST /api/v1/worker/notifications/dummy` na API para publicar task dummy via Asynq.
+- Foi adicionado publisher dedicado na API e contrato de task compartilhado por tipo/payload (`notifications:dummy`).
+- Foi criado o modulo `apps/worker` com bootstrap (`cmd/worker/main.go`), processor da task dummy, scheduler base e cliente WhatsApp placeholder.
+- Foram adicionados testes unitarios no Worker para:
+  - resolução de configuracao de Redis/queue.
+  - processamento da task dummy e validação de payload invalido.
+- Foram adicionados testes de integração para:
+  - enqueue da API com verificação da task em Redis usando miniredis.
+  - processamento do Worker com task real em Redis de teste (miniredis).
+- Validação executada com sucesso:
+  - `cd apps/worker && go mod tidy && go test ./...`.
+  - `cd apps/api && go mod tidy && go test ./...`.
 
 ## Fase 8 - Qualidade, CI e Documentação
 
