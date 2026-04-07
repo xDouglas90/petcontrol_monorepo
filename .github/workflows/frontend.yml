@@ -5,8 +5,10 @@ on:
     branches: ['main']
     paths:
       - 'apps/web/**'
+      - 'libs/shared-constants/**'
       - 'libs/shared-types/**'
       - 'libs/shared-utils/**'
+      - 'libs/ui/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -16,8 +18,10 @@ on:
     branches: ['main']
     paths:
       - 'apps/web/**'
+      - 'libs/shared-constants/**'
       - 'libs/shared-types/**'
       - 'libs/shared-utils/**'
+      - 'libs/ui/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -57,17 +61,40 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Validate workspace types required by the frontend
-        run: pnpm --filter ./apps/web... type-check
+        run: pnpm --filter ./apps/web... build
+
+  libs-test:
+    name: Shared Libs Tests
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run shared libs tests
+        run: |
+          pnpm --filter @petcontrol/shared-utils test
+          pnpm --filter @petcontrol/shared-constants test
+          pnpm --filter @petcontrol/ui test
 
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    needs: typecheck
+    needs: libs-test
     steps:
       - uses: actions/checkout@v6
       - name: Set up pnpm

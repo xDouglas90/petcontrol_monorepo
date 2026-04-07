@@ -8,7 +8,7 @@ MIGRATIONS_DIR := $(INFRA_DIR)/migrations
 SCRIPTS_DIR := $(INFRA_DIR)/scripts
 DATABASE_URL ?=
 
-.PHONY: dev-api test-api dev-worker test-worker sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
+.PHONY: dev-api test-api dev-worker test-worker test lint lint-go lint-ts sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
 
 dev-api:
 	cd $(API_DIR) && \
@@ -29,6 +29,34 @@ dev-worker:
 
 test-worker:
 	cd $(WORKER_DIR) && go test ./...
+
+test: test-api test-worker
+	@if command -v pnpm >/dev/null 2>&1; then \
+		pnpm --filter @petcontrol/shared-utils test && \
+		pnpm --filter @petcontrol/shared-constants test && \
+		pnpm --filter @petcontrol/ui test && \
+		pnpm --filter web test; \
+	else \
+		echo "pnpm not found, skipping JS/TS tests"; \
+	fi
+
+lint: lint-go lint-ts
+
+lint-go:
+	@if [ -n "$(shell gofmt -l $(API_DIR) $(WORKER_DIR))" ]; then \
+		echo "gofmt check failed:"; \
+		gofmt -l $(API_DIR) $(WORKER_DIR); \
+		exit 1; \
+	fi
+	cd $(API_DIR) && go vet ./...
+	cd $(WORKER_DIR) && go vet ./...
+
+lint-ts:
+	@if command -v pnpm >/dev/null 2>&1; then \
+		pnpm --filter web lint; \
+	else \
+		echo "pnpm not found, skipping TS lint"; \
+	fi
 
 sqlc:
 	cd $(API_DIR) && sqlc generate
