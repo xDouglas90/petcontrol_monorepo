@@ -40,10 +40,10 @@ func main() {
 
 	v1 := router.Group("/api/v1")
 	v1.POST("/auth/login", authHandler.Login)
-	v1.GET("/users", userHandler.List)
 
 	protected := v1.Group("/")
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
+	protected.GET("/users", userHandler.List)
 	protected.GET("/company-users", userHandler.ListCompanyUsers)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
