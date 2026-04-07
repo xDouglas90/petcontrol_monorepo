@@ -184,11 +184,11 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ### 3.2 - Checks
 
-- [] `make migrate-up` aplica a migration inicial em banco limpo.
-- [] `make migrate-down` reverte a ultima migration sem erro.
-- [] `make seed` cria dados mínimos idempotentes ou falha de forma controlada.
-- [] `sqlc generate` gera os arquivos esperados para as novas queries.
-- [] Queries tenant-aware sempre recebem `company_id` quando a tabela pertence ao tenant.
+- [x] `make migrate-up` aplica a migration inicial em banco limpo.
+- [x] `make migrate-down` reverte a ultima migration sem erro.
+- [x] `make seed` cria dados mínimos idempotentes ou falha de forma controlada.
+- [x] `sqlc generate` gera os arquivos esperados para as novas queries.
+- [x] Queries tenant-aware sempre recebem `company_id` quando a tabela pertence ao tenant.
 
 ## Fase 4 - Autenticação, Tenant e Permissões
 
