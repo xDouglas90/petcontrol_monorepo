@@ -23,13 +23,16 @@ func Load() (Config, error) {
 		JWTTTL:      30 * time.Minute,
 	}
 
-	if rawTTL := getEnv("JWT_TTL", "30m"); rawTTL != "" {
-		ttl, err := time.ParseDuration(rawTTL)
-		if err != nil {
-			return Config{}, fmt.Errorf("invalid JWT_TTL: %w", err)
-		}
-		cfg.JWTTTL = ttl
+	rawTTL := firstNonEmptyEnv("JWT_ACCESS_TOKEN_TTL", "JWT_TTL")
+	if rawTTL == "" {
+		rawTTL = "30m"
 	}
+
+	ttl, err := time.ParseDuration(rawTTL)
+	if err != nil {
+		return Config{}, fmt.Errorf("invalid JWT_ACCESS_TOKEN_TTL/JWT_TTL: %w", err)
+	}
+	cfg.JWTTTL = ttl
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")
@@ -52,4 +55,14 @@ func getEnv(key string, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func firstNonEmptyEnv(keys ...string) string {
+	for _, key := range keys {
+		value := os.Getenv(key)
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }
