@@ -1,32 +1,15 @@
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface LoginSession {
-  accessToken: string;
-  tokenType: string;
-  userId: string;
-  companyId: string;
-  role: string;
-  kind: string;
-}
-
-interface LoginApiResponse {
-  data: {
-    access_token: string;
-    token_type: string;
-    user_id: string;
-    company_id: string;
-    role: string;
-    kind: string;
-  };
-}
-
-interface ErrorResponse {
-  error?: string;
-  message?: string;
-}
+import { API_PATHS, AUTH_MODES } from '@petcontrol/shared-constants';
+import type {
+  ApiErrorPayloadDTO,
+  LoginApiResponseDTO,
+  LoginCredentials,
+  LoginSession,
+} from '@petcontrol/shared-types';
+import {
+  isNonEmptyTrimmed,
+  normalizeUrl,
+  safeLowerCase,
+} from '@petcontrol/shared-utils';
 
 const apiUrl = normalizeUrl(
   import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1',
@@ -56,11 +39,11 @@ export function getAuthMode() {
 export async function login(
   credentials: LoginCredentials,
 ): Promise<LoginSession> {
-  if (authMode === 'mock') {
+  if (authMode === AUTH_MODES.mock) {
     return mockLogin(credentials);
   }
 
-  const response = await fetch(`${apiUrl}/auth/login`, {
+  const response = await fetch(`${apiUrl}${API_PATHS.authLogin}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -77,14 +60,14 @@ export async function login(
     );
   }
 
-  return mapLoginSession((payload as LoginApiResponse).data);
+  return mapLoginSession((payload as LoginApiResponseDTO).data);
 }
 
 async function mockLogin(credentials: LoginCredentials): Promise<LoginSession> {
   await delay(380);
 
-  const email = credentials.email.trim().toLowerCase();
-  if (!email || !credentials.password.trim()) {
+  const email = safeLowerCase(credentials.email);
+  if (!isNonEmptyTrimmed(email) || !isNonEmptyTrimmed(credentials.password)) {
     throw new ApiError('Credenciais inválidas', 422, {
       error: 'invalid payload',
     });
@@ -100,7 +83,7 @@ async function mockLogin(credentials: LoginCredentials): Promise<LoginSession> {
   };
 }
 
-function mapLoginSession(payload: LoginApiResponse['data']): LoginSession {
+function mapLoginSession(payload: LoginApiResponseDTO['data']): LoginSession {
   return {
     accessToken: payload.access_token,
     tokenType: payload.token_type,
@@ -126,15 +109,11 @@ async function readJson(response: Response) {
 
 function extractMessage(payload: unknown): string | undefined {
   if (payload && typeof payload === 'object') {
-    const errorPayload = payload as ErrorResponse;
+    const errorPayload = payload as ApiErrorPayloadDTO;
     return errorPayload.error ?? errorPayload.message;
   }
 
   return undefined;
-}
-
-function normalizeUrl(value: string) {
-  return value.replace(/\/$/, '');
 }
 
 function delay(milliseconds: number) {

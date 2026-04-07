@@ -1,4 +1,6 @@
 import { Link, Navigate, Outlet } from '@tanstack/react-router';
+import { APP_ROUTES } from '@petcontrol/shared-constants';
+import { cn } from '@petcontrol/ui/web';
 import {
   LogOut,
   Menu,
@@ -9,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { cn } from '@/lib/cn';
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
@@ -27,7 +28,7 @@ export function AppLayout() {
   }, [theme]);
 
   if (hydrated && !session) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={APP_ROUTES.login} replace />;
   }
 
   if (!hydrated) {
@@ -66,7 +67,7 @@ export function AppLayout() {
 
           <nav className="mt-6 space-y-2 text-sm">
             <SidebarLink
-              to="/dashboard"
+              to={APP_ROUTES.dashboard}
               icon={Menu}
               label="Dashboard"
               expanded={sidebarOpen}
@@ -150,7 +151,7 @@ function SidebarLink({
   label,
   expanded,
 }: {
-  to: '/dashboard';
+  to: typeof APP_ROUTES.dashboard;
   icon: typeof Menu;
   label: string;
   expanded: boolean;

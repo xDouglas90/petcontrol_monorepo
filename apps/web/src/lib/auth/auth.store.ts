@@ -1,7 +1,7 @@
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand';
-
-import type { LoginSession } from '@/lib/api/rest-client';
+import { STORAGE_KEYS } from '@petcontrol/shared-constants';
+import type { LoginSession } from '@petcontrol/shared-types';
 
 interface AuthState {
   session: LoginSession | null;
@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>()(
       markHydrated: () => set({ hydrated: true }),
     }),
     {
-      name: 'petcontrol-web-auth',
+      name: STORAGE_KEYS.auth,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ session: state.session }),
       onRehydrateStorage: () => (state) => {

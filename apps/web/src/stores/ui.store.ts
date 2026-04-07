@@ -1,5 +1,6 @@
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand';
+import { STORAGE_KEYS } from '@petcontrol/shared-constants';
 
 export type AppTheme = 'midnight' | 'ember';
 
@@ -22,7 +23,7 @@ export const useUIStore = create<UIState>()(
       setTheme: (theme) => set({ theme }),
     }),
     {
-      name: 'petcontrol-web-ui',
+      name: STORAGE_KEYS.ui,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,

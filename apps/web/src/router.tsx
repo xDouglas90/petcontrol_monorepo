@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { QueryClient } from '@tanstack/react-query';
+import { APP_ROUTES, APP_ROUTE_SEGMENTS } from '@petcontrol/shared-constants';
 import {
   Navigate,
   Outlet,
@@ -31,13 +32,13 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: APP_ROUTES.home,
   component: HomeRedirect,
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: 'login',
+  path: APP_ROUTE_SEGMENTS.login,
   component: LoginPage,
 });
 
@@ -49,7 +50,7 @@ const appRoute = createRoute({
 
 const dashboardRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'dashboard',
+  path: APP_ROUTE_SEGMENTS.dashboard,
   component: DashboardPage,
 });
 
@@ -89,7 +90,9 @@ function HomeRedirect() {
     return <SplashScreen />;
   }
 
-  return <Navigate to={session ? '/dashboard' : '/login'} replace />;
+  return (
+    <Navigate to={session ? APP_ROUTES.dashboard : APP_ROUTES.login} replace />
+  );
 }
 
 function SplashScreen() {

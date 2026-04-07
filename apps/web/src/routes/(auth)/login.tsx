@@ -10,8 +10,9 @@ import {
 import { type UseFormRegisterReturn, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { APP_ROUTES } from '@petcontrol/shared-constants';
+import { cn } from '@petcontrol/ui/web';
 
-import { cn } from '@/lib/cn';
 import {
   login as performLogin,
   getAuthMode,
@@ -48,12 +49,12 @@ export function LoginPage() {
     mutationFn: performLogin,
     onSuccess: (result) => {
       setSession(result);
-      void navigate({ to: '/dashboard' });
+      void navigate({ to: APP_ROUTES.dashboard });
     },
   });
 
   if (hydrated && session) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={APP_ROUTES.dashboard} replace />;
   }
 
   return (
@@ -162,7 +163,7 @@ export function LoginPage() {
                 <span className="font-medium text-white/80">API</span>
                 <code className="rounded-full bg-black/30 px-3 py-1 text-xs text-secondary">
                   {import.meta.env.VITE_API_URL ??
-                    'http://localhost:8080/api/v1'}
+                    'http://localhost:8082/api/v1'}
                 </code>
               </div>
               <div className="flex items-center justify-between gap-4">
