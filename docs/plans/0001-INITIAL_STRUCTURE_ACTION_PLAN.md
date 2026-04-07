@@ -242,12 +242,12 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ### 5.2 - Checks
 
-- [] `pnpm install` executa sem conflito de workspace.
-- [] `pnpm --filter web dev` inicia o Vite.
-- [] `pnpm --filter web build` gera build de produção.
-- [] `pnpm --filter web lint` passa.
-- [] Login chama `VITE_API_URL` configurado.
-- [] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
+- [x] `pnpm install` executa sem conflito de workspace.
+- [x] `pnpm --filter web dev` inicia o Vite.
+- [x] `pnpm --filter web build` gera build de produção.
+- [x] `pnpm --filter web lint` passa.
+- [x] Login chama `VITE_API_URL` configurado.
+- [x] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
 
 ## Fase 6 - Libs Compartilhadas (`libs/*`)
 
