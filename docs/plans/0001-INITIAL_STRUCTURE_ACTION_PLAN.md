@@ -95,12 +95,12 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 2.2 - Checks
 
-- [] `go mod tidy` em `apps/api` nao remove dependências necessárias nem deixa pacotes quebrados.
-- [] `go run ./cmd/server` inicia o servidor local.
-- [] `curl http://localhost:<API_PORT>/health` retorna sucesso.
-- [] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
-- [] `go test ./...` em `apps/api` passa.
-- [] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
+- [x] `go mod tidy` em `apps/api` nao remove dependências necessárias nem deixa pacotes quebrados.
+- [x] `go run ./cmd/server` inicia o servidor local.
+- [x] `curl http://localhost:<API_PORT>/health` retorna sucesso.
+- [x] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
+- [x] `go test ./...` em `apps/api` passa.
+- [x] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
 
 ## Fase 3 - Migrations, Seed e Persistência
 
