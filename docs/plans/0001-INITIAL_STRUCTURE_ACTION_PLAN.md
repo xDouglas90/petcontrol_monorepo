@@ -265,11 +265,11 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ### 6.2 - Checks
 
-- []`pnpm -r build` ou comando equivalente compila libs e web.
-- [] `shared-utils` possui testes unitários para validadores e formatadores iniciais.
-- [] `shared-types` exporta DTOs usados pelo `rest-client`.
-- [] `shared-constants` evita magic strings de rotas no Web.
-- [] `libs/ui/core` nao importa React DOM nem React Native.
+- [x] `pnpm -r build` ou comando equivalente compila libs e web.
+- [x] `shared-utils` possui testes unitários para validadores e formatadores iniciais.
+- [x] `shared-types` exporta DTOs usados pelo `rest-client`.
+- [x] `shared-constants` evita magic strings de rotas no Web.
+- [x] `libs/ui/core` nao importa React DOM nem React Native.
 
 ## Fase 7 - Worker Base (`apps/worker`)
 
@@ -347,7 +347,7 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 - [ ] Migrations aplicam e revertem em banco limpo.
 - [ ] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
 - [ ] Web inicia com Vite e consome `VITE_API_URL`.
-- [ ] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
+- [x] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
 - [ ] Worker inicia separado e consome task dummy do Redis.
 - [ ] CI executa checks de Go, TypeScript, SQLC e Docker Compose.
 - [ ] Docs de contribuição e ADRs iniciais estão versionados.
