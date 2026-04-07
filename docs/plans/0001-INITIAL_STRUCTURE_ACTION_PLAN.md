@@ -13,6 +13,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - `go.work` foi adicionado na raiz para o workspace Go enxergar `apps/api` a partir da raiz do monorepo.
 - `Makefile`, `.env.example`, `infra/` e `libs/` foram iniciados na raiz para padronização da estrutura.
 - `infra/migrations` agora contem as migrations completas da base inicial e o `sqlc.yaml` de `apps/api` aponta para essa pasta.
+- `infra/docker` agora contem a base local e de producao do Docker Compose para Postgres, Redis, pgAdmin e Asynqmon.
 - `docs` existe, mas estava sem documentos versionados.
 - `.github/workflows` ja existe com workflows relacionados a Go, frontend e proteção de branch.
 - Ainda nao existem `apps/web` nem `apps/worker` na raiz.
@@ -62,11 +63,11 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 1.2 - Checks
 
-- [] `docker compose -f infra/docker/docker-compose.yml config` valida a sintaxe.
-- [] `make docker-up` sobe Postgres e Redis.
-- [] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudáveis.
-- [] Conexão Postgres local funciona com a `DATABASE_URL` documentada.
-- [] Redis responde via `redis-cli ping` ou check equivalente no container.
+- [x] `docker compose -f infra/docker/docker-compose.yml config` valida a sintaxe.
+- [x] `make docker-up` sobe Postgres e Redis.
+- [x] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudáveis.
+- [x] Conexão Postgres local funciona com a `DATABASE_URL` documentada.
+- [x] Redis responde via `redis-cli ping` ou check equivalente no container.
 
 ## Fase 2 - Backend API Base (`apps/api`)
 
@@ -82,6 +83,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
   - `internal/service`.
   - `internal/jwt`.
   - `internal/validator`.
+- Criar `apps/api/Dockerfile` (multi-stage) e `entrypoint.sh` da API, compatíveis com `cmd/server/main.go` e `infra/migrations`.
 - Conectar `pgxpool` usando `DATABASE_URL`.
 - Expor rotas iniciais:
   - `GET /health`.
