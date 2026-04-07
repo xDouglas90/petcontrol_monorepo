@@ -353,11 +353,11 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ### 8.2 - Checks
 
-- [] Workflows do GitHub Actions executam em pull request.
-- [] `make test` ou comando equivalente roda a suite minima local.
-- [] `make lint` ou comando equivalente cobre Go e TypeScript.
-- [] `docs/CONTRIBUTING.md` permite setup local sem depender de conhecimento oral.
-- [] ADRs iniciais explicam o motivo das decisões, nao apenas a tecnologia escolhida.
+- [x] Workflows do GitHub Actions executam em pull request.
+- [x] `make test` ou comando equivalente roda a suite minima local.
+- [x] `make lint` ou comando equivalente cobre Go e TypeScript.
+- [x] `docs/CONTRIBUTING.md` permite setup local sem depender de conhecimento oral.
+- [x] ADRs iniciais explicam o motivo das decisões, nao apenas a tecnologia escolhida.
 
 ## Ordem Recomendada de Execução
 
@@ -384,13 +384,13 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 - [ ] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
 - [ ] Web inicia com Vite e consome `VITE_API_URL`.
 - [x] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
-- [ ] Worker inicia separado e consome task dummy do Redis.
-- [ ] CI executa checks de Go, TypeScript, SQLC e Docker Compose.
-- [ ] Docs de contribuição e ADRs iniciais estão versionados.
+- [x] Worker inicia separado e consome task dummy do Redis.
+- [x] CI executa checks de Go, TypeScript, SQLC e Docker Compose.
+- [x] Docs de contribuição e ADRs iniciais estão versionados.
 
 ## Riscos e Decisões Pendentes
 
-- O README menciona `apps/worker` e `libs`, mas eles ainda nao existem. Criar a estrutura sem implementar regra complexa reduz risco de acoplamento prematuro.
+- A base inicial do monorepo foi criada com API, Worker e libs compartilhadas. O foco de risco passa a ser manter a coerência entre contratos e testes durante a evolução por fases.
 - O Web depende de contratos estáveis da API. Enquanto auth e endpoints base nao estiverem prontos, usar mocks deve ser temporário e explicitamente marcado.
 - O Worker deve ser criado depois da API publicar uma task minima; caso contrario, a integração com Redis fica pouco verificável.
 - Swagger deve entrar depois de handlers reais, para evitar documentação automática vazia ou enganosa.
