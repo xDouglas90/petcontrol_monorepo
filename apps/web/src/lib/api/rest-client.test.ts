@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError, login } from './rest-client';
+import { login } from './rest-client';
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -34,7 +34,7 @@ describe('rest-client login', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:8080/api/v1/auth/login',
+      'http://localhost:8082/api/v1/auth/login',
       expect.objectContaining({ method: 'POST' }),
     );
     expect(session).toEqual({
@@ -56,7 +56,7 @@ describe('rest-client login', () => {
 
     await expect(
       login({ email: 'admin@petcontrol.local', password: 'senha-invalida' }),
-    ).rejects.toMatchObject<ApiError>({
+    ).rejects.toMatchObject({
       name: 'ApiError',
       status: 401,
       message: 'credenciais inválidas',
