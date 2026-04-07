@@ -256,6 +256,66 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const listUsersBasic = `-- name: ListUsersBasic :many
+SELECT
+  u.id,
+  u.email,
+  u.email_verified,
+  u.email_verified_at,
+  u."role",
+  u.kind,
+  u.is_active,
+  u.created_at,
+  u.updated_at,
+  u.deleted_at
+FROM
+  users u
+WHERE
+  u.deleted_at IS NULL
+ORDER BY
+  u.created_at DESC
+LIMIT
+  $2
+OFFSET
+  $1
+`
+
+type ListUsersBasicParams struct {
+	Offset int32 `db:"Offset" json:"Offset"`
+	Limit  int32 `db:"Limit" json:"Limit"`
+}
+
+func (q *Queries) ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsersBasic, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.EmailVerified,
+			&i.EmailVerifiedAt,
+			&i.Role,
+			&i.Kind,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET

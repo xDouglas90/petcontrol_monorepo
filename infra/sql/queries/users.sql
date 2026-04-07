@@ -128,3 +128,26 @@ LIMIT
   sqlc.arg('Limit')
 OFFSET
   sqlc.arg('Offset');
+
+-- name: ListUsersBasic :many
+SELECT
+  u.id,
+  u.email,
+  u.email_verified,
+  u.email_verified_at,
+  u."role",
+  u.kind,
+  u.is_active,
+  u.created_at,
+  u.updated_at,
+  u.deleted_at
+FROM
+  users u
+WHERE
+  u.deleted_at IS NULL
+ORDER BY
+  u.created_at DESC
+LIMIT
+  sqlc.arg('Limit')
+OFFSET
+  sqlc.arg('Offset');
