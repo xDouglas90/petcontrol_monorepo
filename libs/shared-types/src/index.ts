@@ -1,6 +1,12 @@
-export type UserRole = 'admin' | 'manager' | 'staff' | string;
+export type UserRole =
+  | 'root'
+  | 'admin'
+  | 'manager'
+  | 'employee'
+  | 'aux'
+  | 'general';
 
-export type UserKind = 'owner' | 'employee' | string;
+export type UserKind = 'internal' | 'owner' | 'staff' | 'free';
 
 export interface LoginCredentials {
   email: string;
