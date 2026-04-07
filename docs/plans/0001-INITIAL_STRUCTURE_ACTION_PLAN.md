@@ -9,45 +9,45 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 ## Estado Atual Observado
 
 - `README.md` documenta a arquitetura alvo do monorepo, stack, estrutura de apps, libs, infra, CI e testes.
-- `apps/api` ja existe com `go.mod`, `go.sum`, `sqlc.yaml`, migrations SQL, query `users.sql` e codigo SQLC gerado.
+- `apps/api` ja existe com `go.mod`, `go.sum`, `sqlc.yaml`, migrations SQL, query `users.sql` e código SQLC gerado.
 - `go.work` foi adicionado na raiz para o workspace Go enxergar `apps/api` a partir da raiz do monorepo.
-- `Makefile`, `.env.example`, `infra/` e `libs/` foram iniciados na raiz para padronizacao da estrutura.
+- `Makefile`, `.env.example`, `infra/` e `libs/` foram iniciados na raiz para padronização da estrutura.
 - `infra/migrations` agora contem as migrations completas da base inicial e o `sqlc.yaml` de `apps/api` aponta para essa pasta.
 - `docs` existe, mas estava sem documentos versionados.
-- `.github/workflows` ja existe com workflows relacionados a Go, frontend e protecao de branch.
+- `.github/workflows` ja existe com workflows relacionados a Go, frontend e proteção de branch.
 - Ainda nao existem `apps/web` nem `apps/worker` na raiz.
 - `schema.sql` permanece como copia de referencia do schema inicial, mas a fonte operacional agora e `infra/migrations`.
 
 ## Princípios de Execução
 
-- Priorizar estrutura executavel e verificavel sobre implementacao extensa de regra de negocio.
+- Priorizar estrutura executável e verificável sobre implementação extensa de regra de negocio.
 - Manter isolamento multi-tenant como requisito desde as primeiras queries e rotas protegidas.
-- Evitar duplicacao entre frontend/mobile via libs TypeScript compartilhadas.
+- Evitar duplicação entre frontend/mobile via libs TypeScript compartilhadas.
 - Tratar migrations e queries SQLC como fonte de verdade do backend.
-- Cada fase deve terminar com checks objetivos de build, lint, teste ou validacao manual.
+- Cada fase deve terminar com checks objetivos de build, lint, teste ou validação manual.
 
 ## Fase 0 - Padronização Inicial do Monorepo
 
-### Ações
+### 0.1 - Ações
 
-- Definir a estrutura final de diretorios da raiz: `apps`, `libs`, `docs`, `infra`, `.github`.
-- Criar ou ajustar `Makefile` na raiz com comandos padrao para API, Web, SQLC, migrations, Docker e testes.
-- Criar `.env.example` na raiz com variaveis documentadas para API, Worker, Postgres, Redis, JWT, GCS e WhatsApp.
-- Decidir a localizacao oficial das migrations:
+- Definir a estrutura final de diretórios da raiz: `apps`, `libs`, `docs`, `infra`, `.github`.
+- Criar ou ajustar `Makefile` na raiz com comandos padrão para API, Web, SQLC, migrations, Docker e testes.
+- Criar `.env.example` na raiz com variáveis documentadas para API, Worker, Postgres, Redis, JWT, GCS e WhatsApp.
+- Decidir a localização oficial das migrations:
   - mover para `infra/migrations` e ajustar `apps/api/sqlc.yaml`.
 - Padronizar versões de runtime: Go `1.26.1`, Node LTS, pnpm e PostgreSQL `17`.
 
-### Checks
+### 0.2 - Checks
 
 - [x] `go work sync` executa sem erro.
 - [x] `go test ./...` dentro de `apps/api` executa sem falha estrutural.
-- [x] `sqlc generate` dentro de `apps/api` gera codigo sem alteracoes inesperadas.
+- [x] `sqlc generate` dentro de `apps/api` gera código sem alterações inesperadas.
 - [x] `Makefile` possui pelo menos `dev-api`, `test-api`, `sqlc`, `docker-up`, `docker-down`.
-- [x] `.env.example` cobre todas as variaveis usadas pelos comandos de desenvolvimento.
+- [x] `.env.example` cobre todas as variáveis usadas pelos comandos de desenvolvimento.
 
 ## Fase 1 - Infra Local com Docker e Docker Compose
 
-### Ações
+### 1.1 - Ações
 
 - Criar `infra/docker/docker-compose.yml` para desenvolvimento local com:
   - `postgres` usando `postgres:16-alpine`.
@@ -60,17 +60,17 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - Criar comandos `docker-up`, `docker-down`, `docker-logs` e `docker-ps` no `Makefile`.
 - Documentar a `DATABASE_URL` local e a porta dos serviços no `.env.example`.
 
-### Checks
+### 1.2 - Checks
 
 - [] `docker compose -f infra/docker/docker-compose.yml config` valida a sintaxe.
 - [] `make docker-up` sobe Postgres e Redis.
-- [] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudaveis.
-- [] Conexao Postgres local funciona com a `DATABASE_URL` documentada.
+- [] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudáveis.
+- [] Conexão Postgres local funciona com a `DATABASE_URL` documentada.
 - [] Redis responde via `redis-cli ping` ou check equivalente no container.
 
 ## Fase 2 - Backend API Base (`apps/api`)
 
-### Ações
+### 2.1 - Ações
 
 - Criar estrutura minima do Go conforme README:
   - `cmd/server/main.go`.
@@ -85,70 +85,70 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - Conectar `pgxpool` usando `DATABASE_URL`.
 - Expor rotas iniciais:
   - `GET /health`.
-  - `GET /ready` validando conexao com Postgres.
+  - `GET /ready` validando conexão com Postgres.
   - `GET /api/v1/users` ou rota equivalente usando SQLC, protegida quando auth estiver pronta.
-- Adicionar dependencias planejadas no `go.mod` de forma incremental: Gin, godotenv, validator, JWT, bcrypt, golang-migrate, swaggo, testify e testcontainers apenas quando usados.
+- Adicionar dependências planejadas no `go.mod` de forma incremental: Gin, godotenv, validator, JWT, bcrypt, golang-migrate, swaggo, testify e testcontainers apenas quando usados.
 - Garantir que SQLC leia queries e migrations do local padronizado na Fase 0.
-- Implementar middleware de erro e formato padrao de resposta da API.
+- Implementar middleware de erro e formato padrão de resposta da API.
 
-### Checks
+### 2.2 - Checks
 
-- [] `go mod tidy` em `apps/api` nao remove dependencias necessarias nem deixa pacotes quebrados.
+- [] `go mod tidy` em `apps/api` nao remove dependências necessárias nem deixa pacotes quebrados.
 - [] `go run ./cmd/server` inicia o servidor local.
 - [] `curl http://localhost:<API_PORT>/health` retorna sucesso.
 - [] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
 - [] `go test ./...` em `apps/api` passa.
-- [] `sqlc generate` passa e mantem `internal/db/sqlc` consistente.
+- [] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
 
-## Fase 3 - Migrations, Seed e Persistencia
+## Fase 3 - Migrations, Seed e Persistência
 
-### Ações
+### 3.1 - Ações
 
 - Adicionar comandos de migration no `Makefile` usando `golang-migrate`.
 - Criar script `infra/scripts/migrate.sh` ou comando make equivalente para CI/local.
-- Criar seed minimo para dados essenciais:
-  - Modulos.
+- Criar seed mínimo para dados essenciais:
+  - Módulos.
   - Tipos de planos.
   - Plano inicial.
-  - Usuario root/admin de desenvolvimento, se aplicavel.
+  - Usuário root/admin de desenvolvimento, se aplicável.
 - Validar que o schema multi-tenant possui indices para `company_id` nas entidades que usam tenant.
-- Criar queries SQLC iniciais para dominios base: users, companies, company_users, modules, plans.
+- Criar queries SQLC iniciais para domínios base: users, companies, company_users, modules, plans.
 
-### Checks
+### 3.2 - Checks
 
 - [] `make migrate-up` aplica a migration inicial em banco limpo.
 - [] `make migrate-down` reverte a ultima migration sem erro.
-- [] `make seed` cria dados minimos idempotentes ou falha de forma controlada.
+- [] `make seed` cria dados mínimos idempotentes ou falha de forma controlada.
 - [] `sqlc generate` gera os arquivos esperados para as novas queries.
 - [] Queries tenant-aware sempre recebem `company_id` quando a tabela pertence ao tenant.
 
-## Fase 4 - Autenticacao, Tenant e Permissoes
+## Fase 4 - Autenticação, Tenant e Permissões
 
-### Ações
+### 4.1 - Ações
 
 - Implementar fluxo inicial de auth:
   - Login com e-mail e senha.
   - Hash de senha com bcrypt.
   - Access token JWT com `user_id`, `company_id`, `role` e `kind`.
-  - Refresh token persistido ou controlado via Redis conforme decisao tecnica.
+  - Refresh token persistido ou controlado via Redis conforme decisão técnica.
 - Criar middleware `Auth` para validar JWT.
 - Criar middleware `Tenant` para injetar `company_id` no contexto.
 - Criar middleware `RequireModule` para validar modulo ativo da empresa.
 - Registrar logs de login em `login_history` ou tabela equivalente do schema.
-- Definir padrao de erros para `401`, `403`, `404`, `409` e `422`.
+- Definir padrão de erros para `401`, `403`, `404`, `409` e `422`.
 
-### Checks
+### 4.2 - Checks
 
 - [] Login com credenciais validas retorna JWT.
-- [] Login invalido retorna erro padronizado e nao vaza detalhe sensivel.
+- [] Login invalido retorna erro padronizado e nao vaza detalhe sensível.
 - [] Rota autenticada sem token retorna `401`.
 - [] Rota autenticada com token sem `company_id` retorna `403`.
 - [] Queries de dados de tenant usam `company_id` obtido do middleware, nao do body do request.
-- [] Testes unitarios cobrem middlewares `Auth` e `Tenant`.
+- [] Testes unitários cobrem middlewares `Auth` e `Tenant`.
 
 ## Fase 5 - Frontend Web Base (`apps/web`)
 
-### Ações
+### 5.1 - Ações
 
 - Criar `apps/web` com React, Vite e TypeScript.
 - Configurar pnpm workspace na raiz, se o projeto optar por workspaces JS/TS.
@@ -172,40 +172,40 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - Criar `VITE_API_URL` no `.env.example`.
 - Implementar tela de login conectada ao endpoint inicial da API ou mock controlado enquanto a API nao estiver pronta.
 
-### Checks
+### 5.2 - Checks
 
 - [] `pnpm install` executa sem conflito de workspace.
 - [] `pnpm --filter web dev` inicia o Vite.
-- [] `pnpm --filter web build` gera build de producao.
+- [] `pnpm --filter web build` gera build de produção.
 - [] `pnpm --filter web lint` passa.
 - [] Login chama `VITE_API_URL` configurado.
 - [] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
 
 ## Fase 6 - Libs Compartilhadas (`libs/*`)
 
-### Ações
+### 6.1 - Ações
 
 - Criar `libs/shared-types` para entidades, DTOs e enums usados pelo Web e Mobile futuro.
 - Criar `libs/shared-utils` para formatadores, validadores e helpers puros.
-- Criar `libs/shared-constants` para rotas, codigos de erro, paginacao e limites de plano.
-- Criar `libs/ui` com separacao:
-  - `core` para tokens, hooks e utils sem dependencia de plataforma.
+- Criar `libs/shared-constants` para rotas, códigos de erro, paginação e limites de plano.
+- Criar `libs/ui` com separação:
+  - `core` para tokens, hooks e utils sem dependência de plataforma.
   - `web` para componentes React DOM.
   - `native` apenas como estrutura futura, sem acoplamento prematuro.
 - Configurar `package.json`, `tsconfig.json` e exports para cada lib.
 - Atualizar `apps/web` para consumir libs via workspace em vez de paths relativos profundos.
 
-### Checks
+### 6.2 - Checks
 
 - []`pnpm -r build` ou comando equivalente compila libs e web.
-- [] `shared-utils` possui testes unitarios para validadores e formatadores iniciais.
+- [] `shared-utils` possui testes unitários para validadores e formatadores iniciais.
 - [] `shared-types` exporta DTOs usados pelo `rest-client`.
 - [] `shared-constants` evita magic strings de rotas no Web.
 - [] `libs/ui/core` nao importa React DOM nem React Native.
 
 ## Fase 7 - Worker Base (`apps/worker`)
 
-### Ações
+### 7.1 - Ações
 
 - Criar `apps/worker` como processo Go separado.
 - Definir se o Worker sera modulo Go independente ou parte do mesmo modulo/workspace Go.
@@ -217,10 +217,10 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
   - `internal/scheduler`.
   - `internal/whatsapp`.
 - Configurar Asynq com Redis.
-- Criar fila inicial `notifications` com task dummy verificavel.
-- Compartilhar tipos de task com a API via pacote Go interno comum ou duplicacao minima documentada.
+- Criar fila inicial `notifications` com task dummy verificável.
+- Compartilhar tipos de task com a API via pacote Go interno comum ou duplicação minima documentada.
 
-### Checks
+### 7.2 - Checks
 
 - [] `go run ./cmd/worker` inicia e conecta no Redis.
 - [] API consegue publicar task dummy.
@@ -228,9 +228,9 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - [] `go test ./...` no Worker passa.
 - [] Worker pode ser desligado sem afetar a API.
 
-## Fase 8 - Qualidade, CI e Documentacao
+## Fase 8 - Qualidade, CI e Documentação
 
-### Ações
+### 8.1 - Ações
 
 - Revisar `.github/workflows/go.yml` e `.github/workflows/frontend.yml` para refletir os comandos reais.
 - Garantir que CI rode:
@@ -245,23 +245,23 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
   - SQLC em vez de ORM.
   - Worker separado.
   - Estrategia de multi-tenancy por `company_id`.
-- Adicionar Swagger quando houver handlers reais suficientes para justificar a geracao.
+- Adicionar Swagger quando houver handlers reais suficientes para justificar a geração.
 
-### Checks
+### 8.2 - Checks
 
 - [] Workflows do GitHub Actions executam em pull request.
 - [] `make test` ou comando equivalente roda a suite minima local.
 - [] `make lint` ou comando equivalente cobre Go e TypeScript.
 - [] `docs/CONTRIBUTING.md` permite setup local sem depender de conhecimento oral.
-- [] ADRs iniciais explicam o motivo das decisoes, nao apenas a tecnologia escolhida.
+- [] ADRs iniciais explicam o motivo das decisões, nao apenas a tecnologia escolhida.
 
-## Ordem Recomendada de Execucao
+## Ordem Recomendada de Execução
 
 1. Fase 0: padronizar estrutura e paths.
 2. Fase 1: subir infra local com Docker Compose.
-3. Fase 2: tornar API executavel com health/readiness.
+3. Fase 2: tornar API executável com health/readiness.
 4. Fase 3: estabilizar migrations, seed e SQLC.
-5. Fase 4: implementar auth, tenant e permissoes base.
+5. Fase 4: implementar auth, tenant e permissões base.
 6. Fase 5: criar Web com login/layout/rest-client.
 7. Fase 6: extrair contratos, constantes e utils para libs.
 8. Fase 7: adicionar Worker com fila dummy.
@@ -271,13 +271,13 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 - [ ] Estrutura raiz possui `apps`, `libs`, `docs`, `infra` e `.github`.
 - [ ] `Makefile` centraliza comandos de dev, build, test, lint, sqlc, migrations e Docker.
-- [ ] `.env.example` documenta todas as variaveis locais.
+- [ ] `.env.example` documenta todas as variáveis locais.
 - [ ] Docker Compose sobe Postgres, Redis, pgAdmin e asynqmon.
 - [ ] API inicia com `go run ./cmd/server`.
 - [ ] API expõe `/health` e `/ready`.
-- [ ] SQLC gera codigo a partir das queries e migrations padronizadas.
+- [ ] SQLC gera código a partir das queries e migrations padronizadas.
 - [ ] Migrations aplicam e revertem em banco limpo.
-- [ ] Auth JWT e middleware de tenant estao implementados antes de rotas multi-tenant reais.
+- [ ] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
 - [ ] Web inicia com Vite e consome `VITE_API_URL`.
 - [ ] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
 - [ ] Worker inicia separado e consome task dummy do Redis.
