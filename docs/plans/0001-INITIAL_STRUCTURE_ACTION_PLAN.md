@@ -13,7 +13,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - `go.work` foi adicionado na raiz para o workspace Go enxergar `apps/api` a partir da raiz do monorepo.
 - `Makefile`, `.env.example`, `infra/` e `libs/` foram iniciados na raiz para padronização da estrutura.
 - `infra/migrations` agora contem as migrations completas da base inicial e o `sqlc.yaml` de `apps/api` aponta para essa pasta.
-- `infra/docker` agora contem a base local e de producao do Docker Compose para Postgres, Redis, pgAdmin e Asynqmon.
+- `infra/docker` agora contem a base local e de produção do Docker Compose para Postgres, Redis, pgAdmin e Asynqmon.
 - `docs` existe, mas estava sem documentos versionados.
 - `.github/workflows` ja existe com workflows relacionados a Go, frontend e proteção de branch.
 - Ainda nao existem `apps/web` nem `apps/worker` na raiz.
@@ -101,6 +101,72 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - [x] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
 - [x] `go test ./...` em `apps/api` passa.
 - [x] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
+
+### 2.3 - Testes de Integração com Testcontainers para SQLC
+
+Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/internal/db/sqlc`, usando PostgreSQL real via Testcontainers e migrations oficiais de `infra/migrations`. O primeiro alvo deve ser `apps/api/internal/db/sqlc/users.sql.go`, sem editar esse arquivo gerado manualmente.
+
+#### 2.3.1 - Passos de configuração
+
+- Adicionar dependências de teste em `apps/api/go.mod`:
+  - `github.com/stretchr/testify`.
+  - `github.com/testcontainers/testcontainers-go`.
+  - `github.com/testcontainers/testcontainers-go/modules/postgres`.
+  - `github.com/golang-migrate/migrate/v4`.
+  - `github.com/golang-migrate/migrate/v4/database/postgres`.
+  - `github.com/golang-migrate/migrate/v4/source/file`.
+- Criar o arquivo de teste inicial em `apps/api/internal/db/sqlc/users_integration_test.go`.
+- Usar `package sqlc_test` para testar o SQLC como consumidor externo do pacote, importando `github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc`.
+- Subir um container `postgres:16-alpine` ou `postgres:17-alpine`, mantendo a versão alinhada com `infra/docker/docker-compose.yml` e `.env.example`.
+- Obter a connection string do container com `sslmode=disable`.
+- Aplicar as migrations de `../../../../infra/migrations` a partir do diretório do pacote de teste, ou calcular o caminho absoluto com `runtime.Caller` para evitar falha quando o teste rodar de outro diretório.
+- Abrir um `pgxpool.Pool` apontando para o banco do container e criar `queries := sqlc.New(pool)`.
+- Encerrar corretamente pool e container com `defer` ou `t.Cleanup`.
+- Evitar dependência do Postgres local do Docker Compose; esses testes devem subir o próprio banco isolado.
+
+#### 2.3.2 - Estrutura ideal do teste
+
+- Criar um helper `setupTestDB(t)` que retorna:
+  - `context.Context`.
+  - `*pgxpool.Pool`.
+  - `*sqlc.Queries`.
+  - função de cleanup.
+- Executar migrations uma vez por pacote usando `TestMain` quando os testes crescerem, ou por teste enquanto houver poucos cenários e a simplicidade for mais importante.
+- Usar e-mails únicos por teste, por exemplo com timestamp ou UUID, para evitar conflito com o índice único de `users.email`.
+- Não usar seed global para estes primeiros testes; cada teste deve criar os registros que precisa.
+- Preferir testes independentes e explícitos em vez de depender de ordem de execução.
+- Começar pelos métodos já gerados em `users.sql.go`:
+  - `InsertUser`.
+  - `GetUserByEmail`.
+  - `GetUserByID`.
+  - `ListUsersBasic`.
+  - `UpdateUser`.
+  - `DeleteUser`.
+
+#### 2.3.3 - Cenários iniciais para `users.sql.go`
+
+- `TestQueries_InsertUser`: insere usuário com `email_verified=false`, `role=UserRoleTypeAdmin`, `kind=UserKindOwner` e `is_active=true`; valida `ID`, `Email`, `Role`, `Kind`, `CreatedAt` e `DeletedAt`.
+- `TestQueries_GetUserByEmail`: cria usuário e busca pelo e-mail; valida que o registro retornado e o mesmo usuário criado.
+- `TestQueries_GetUserByID`: cria usuário e busca pelo `ID` retornado no insert.
+- `TestQueries_ListUsersBasic`: cria dois usuários com e-mails únicos e valida que a lista retorna registros ativos e respeita `Limit` e `Offset`.
+- `TestQueries_UpdateUser`: cria usuário, altera campos com `UpdateUserParams` usando `pgtype.Text`, `pgtype.Bool`, `NullUserRoleType` e `NullUserKind`, e valida o retorno atualizado.
+- `TestQueries_DeleteUser`: cria usuário, chama `DeleteUser`, valida que `GetUserByID` ainda encontra o registro com `deleted_at` preenchido e `is_active=false`, confirmando o soft delete.
+
+#### 2.3.4 - Ajustes prováveis identificados no código atual
+
+- `ListUsersBasic` e `DeleteUser` sao bons pontos de partida porque nao dependem de filtros nullable complexos.
+- `ListUsers` usa filtros opcionais na SQL, mas os tipos gerados para alguns campos aparecem como não-nullable, por exemplo `Role UserRoleType`, `Kind UserKind`, `IsActive bool` e `EmailVerified bool`. Antes de testar filtros opcionais dessa query, avaliar se `infra/sql/queries/users.sql` deve trocar `sqlc.arg` por `sqlc.narg` nesses campos para gerar tipos nullable como `NullUserRoleType`, `NullUserKind` e `pgtype.Bool`.
+- `InsertUser` recebe `EmailVerifiedAt pgtype.Timestamptz`; para usuário não verificado, usar valor zero com `Valid=false`.
+- Como os testes rodam dentro de `apps/api/internal/db/sqlc`, o caminho relativo das migrations nao e o mesmo do `sqlc.yaml`. Preferir helper de caminho absoluto para reduzir fragilidade.
+- O teste deve falhar rapidamente se Docker nao estiver disponível, deixando claro que e teste de integração e nao teste unitário.
+
+#### 2.3.5 - Checks
+
+- [x] `cd apps/api && go test ./internal/db/sqlc -run TestQueries_InsertUser -count=1` sobe um Postgres via Testcontainers, aplica migrations e passa.
+- [x] `cd apps/api && go test ./internal/db/sqlc -count=1` passa com todos os testes iniciais de users.
+- [x] `cd apps/api && go test ./... -count=1` continua passando depois de adicionar as dependências.
+- [x] Os testes nao exigem `make docker-up` nem banco local ativo.
+- [x] Nenhum arquivo gerado por SQLC e editado manualmente para fazer os testes passarem.
 
 ## Fase 3 - Migrations, Seed e Persistência
 
