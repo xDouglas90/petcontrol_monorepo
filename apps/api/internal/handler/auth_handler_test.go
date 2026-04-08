@@ -141,3 +141,36 @@ func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
 	require.Contains(t, res.Body.String(), "invalid credentials")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestAuthHandler_Login_MissingCompanyMembership(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	serviceUnderTest, mock := authServiceWithMock(t)
+	defer mock.Close()
+
+	userID := newHandlerUUID(t)
+	password := "integration-secret"
+	hash := handlerValidHash(t, password)
+
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(handlerUserRows(userID, "owner@example.com", true, true))
+	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(handlerUserAuthRows(userID, hash))
+	mock.ExpectExec(`(?s)name: ResetUserAuthLoginAttempts`).WithArgs(userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnError(pgx.ErrNoRows)
+
+	h := NewAuthHandler(serviceUnderTest)
+	router := gin.New()
+	router.POST("/login", h.Login)
+
+	body := map[string]string{"email": "owner@example.com", "password": password}
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "HandlerTest/1.0")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "no active company membership")
+	require.NoError(t, mock.ExpectationsWereMet())
+}

@@ -42,6 +42,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			message = "account locked"
 		case errors.Is(err, apperror.ErrEmailNotVerified):
 			message = "email not verified"
+		case errors.Is(err, apperror.ErrForbidden):
+			message = "no active company membership"
 		case errors.Is(err, apperror.ErrUnprocessableEntity):
 			message = "invalid credentials payload"
 		}
