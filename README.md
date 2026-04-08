@@ -32,6 +32,13 @@ PetControl é uma plataforma SaaS **multi-tenant** voltada para pet shops e clí
 - **Auditoria imutável** — toda ação relevante é registrada sem possibilidade de deleção ou cascata.
 - **Soft delete por padrão** — nenhuma entidade de negócio é removida fisicamente do banco.
 
+### Credenciais de desenvolvimento (seed)
+
+Após executar o seed, o ambiente local cria dois usuários prontos para login:
+
+- `admin@petcontrol.local` / `password123` (compatível com o formulário padrão do Web)
+- `root@petcontrol.local` / `password123` (com `must_change_password=true`)
+
 ---
 
 ## 2. Stack Tecnológica

@@ -4,8 +4,8 @@ import { isNonEmptyTrimmed, normalizeUrl, safeLowerCase } from '../src';
 
 describe('shared-utils', () => {
   it('normaliza barra final da URL', () => {
-    expect(normalizeUrl('http://localhost:8082/api/v1/')).toBe(
-      'http://localhost:8082/api/v1',
+    expect(normalizeUrl('http://localhost:8080/api/v1/')).toBe(
+      'http://localhost:8080/api/v1',
     );
   });
 

@@ -258,7 +258,7 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 - Foi adicionada suite de testes com Vitest no `apps/web`, incluindo configuracao dedicada (`vitest.config.ts`) e script `test` no `package.json`.
 - Foram adicionados testes unitarios para `rest-client`, `auth.store` e `ui.store` cobrindo fluxo de login, erros de autenticacao e gerenciamento de estado.
-- O fallback visual da URL da API na tela de login foi alinhado para `http://localhost:8082/api/v1`, mantendo consistencia com o `.env.example`.
+- O fallback visual da URL da API na tela de login foi alinhado para `http://localhost:8080/api/v1`, mantendo consistencia com a porta padrão da API.
 
 ## Fase 6 - Libs Compartilhadas (`libs/*`)
 

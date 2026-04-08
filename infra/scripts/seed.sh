@@ -100,12 +100,15 @@ INSERT INTO users (email, email_verified, email_verified_at, role, kind, is_acti
 SELECT 'root@petcontrol.local', TRUE, NOW(), 'root', 'internal', TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'root@petcontrol.local');
 
--- Root auth profile (local development)
+-- Root auth profile (password: password123, requires password change)
 INSERT INTO user_auth (user_id, password_hash, must_change_password)
-SELECT u.id, '$2a$12$HP0VOGM.j2Gm6rXtAdo2XOR4fN1fMCTM4xCEf7hL1g9lhH57jXkju', TRUE
+SELECT u.id, '$2a$12$HAtO6l.iXD27nYmeaFjSEeeiYPo0TVPANJzxhUG/DvC5xzdAp2QrG', TRUE
 FROM users u
 WHERE u.email = 'root@petcontrol.local'
-  AND NOT EXISTS (SELECT 1 FROM user_auth ua WHERE ua.user_id = u.id);
+ON CONFLICT (user_id) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  must_change_password = EXCLUDED.must_change_password,
+  updated_at = NOW();
 
 -- Admin user compatible with web default credentials
 INSERT INTO users (email, email_verified, email_verified_at, role, kind, is_active)
@@ -117,7 +120,10 @@ INSERT INTO user_auth (user_id, password_hash, must_change_password)
 SELECT u.id, '$2a$12$HAtO6l.iXD27nYmeaFjSEeeiYPo0TVPANJzxhUG/DvC5xzdAp2QrG', FALSE
 FROM users u
 WHERE u.email = 'admin@petcontrol.local'
-  AND NOT EXISTS (SELECT 1 FROM user_auth ua WHERE ua.user_id = u.id);
+ON CONFLICT (user_id) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  must_change_password = EXCLUDED.must_change_password,
+  updated_at = NOW();
 
 -- Active memberships for seeded users
 WITH dev_company AS (

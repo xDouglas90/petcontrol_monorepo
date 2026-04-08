@@ -163,7 +163,7 @@ export function LoginPage() {
                 <span className="font-medium text-white/80">API</span>
                 <code className="rounded-full bg-black/30 px-3 py-1 text-xs text-secondary">
                   {import.meta.env.VITE_API_URL ??
-                    'http://localhost:8082/api/v1'}
+                    'http://localhost:8080/api/v1'}
                 </code>
               </div>
               <div className="flex items-center justify-between gap-4">

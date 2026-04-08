@@ -34,7 +34,7 @@ describe('rest-client login', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:8082/api/v1/auth/login',
+      'http://localhost:8080/api/v1/auth/login',
       expect.objectContaining({ method: 'POST' }),
     );
     expect(session).toEqual({
