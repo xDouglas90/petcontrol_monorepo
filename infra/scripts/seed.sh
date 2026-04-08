@@ -6,11 +6,27 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
+db_url="${DATABASE_URL}"
+network_arg=""
+
+if [ -n "${DOCKER_NETWORK:-}" ]; then
+  network_arg="--network ${DOCKER_NETWORK}"
+else
+  case "$(uname -s)" in
+    Linux*)
+      network_arg="--network host"
+      ;;
+    *)
+      db_url=$(printf '%s' "${db_url}" | sed 's/@localhost:/@host.docker.internal:/g; s/@127\.0\.0\.1:/@host.docker.internal:/g')
+      ;;
+  esac
+fi
+
 docker run --rm \
-  --network host \
+  ${network_arg} \
   -i \
   postgres:18-alpine \
-  psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 <<'SQL'
+  psql "${db_url}" -v ON_ERROR_STOP=1 <<'SQL'
 -- Modules
 INSERT INTO modules (code, name, description, min_package)
 VALUES
