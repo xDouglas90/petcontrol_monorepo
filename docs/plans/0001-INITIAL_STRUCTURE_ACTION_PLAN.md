@@ -13,6 +13,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - `go.work` foi adicionado na raiz para o workspace Go enxergar `apps/api` a partir da raiz do monorepo.
 - `Makefile`, `.env.example`, `infra/` e `libs/` foram iniciados na raiz para padronização da estrutura.
 - `infra/migrations` agora contem as migrations completas da base inicial e o `sqlc.yaml` de `apps/api` aponta para essa pasta.
+- `infra/docker` agora contem a base local e de produção do Docker Compose para Postgres, Redis, pgAdmin e Asynqmon.
 - `docs` existe, mas estava sem documentos versionados.
 - `.github/workflows` ja existe com workflows relacionados a Go, frontend e proteção de branch.
 - Ainda nao existem `apps/web` nem `apps/worker` na raiz.
@@ -50,7 +51,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 ### 1.1 - Ações
 
 - Criar `infra/docker/docker-compose.yml` para desenvolvimento local com:
-  - `postgres` usando `postgres:16-alpine`.
+  - `postgres` usando `postgres:18-alpine`.
   - `redis` usando `redis:7-alpine`.
   - `pgadmin` para inspeção local.
   - `asynqmon` para monitorar filas quando o Worker existir.
@@ -62,11 +63,11 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 1.2 - Checks
 
-- [] `docker compose -f infra/docker/docker-compose.yml config` valida a sintaxe.
-- [] `make docker-up` sobe Postgres e Redis.
-- [] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudáveis.
-- [] Conexão Postgres local funciona com a `DATABASE_URL` documentada.
-- [] Redis responde via `redis-cli ping` ou check equivalente no container.
+- [x] `docker compose -f infra/docker/docker-compose.yml config` valida a sintaxe.
+- [x] `make docker-up` sobe Postgres e Redis.
+- [x] `docker compose -f infra/docker/docker-compose.yml ps` mostra Postgres e Redis saudáveis.
+- [x] Conexão Postgres local funciona com a `DATABASE_URL` documentada.
+- [x] Redis responde via `redis-cli ping` ou check equivalente no container.
 
 ## Fase 2 - Backend API Base (`apps/api`)
 
@@ -82,6 +83,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
   - `internal/service`.
   - `internal/jwt`.
   - `internal/validator`.
+- Criar `apps/api/Dockerfile` (multi-stage) e `entrypoint.sh` da API, compatíveis com `cmd/server/main.go` e `infra/migrations`.
 - Conectar `pgxpool` usando `DATABASE_URL`.
 - Expor rotas iniciais:
   - `GET /health`.
@@ -93,12 +95,83 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 2.2 - Checks
 
-- [] `go mod tidy` em `apps/api` nao remove dependências necessárias nem deixa pacotes quebrados.
-- [] `go run ./cmd/server` inicia o servidor local.
-- [] `curl http://localhost:<API_PORT>/health` retorna sucesso.
-- [] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
-- [] `go test ./...` em `apps/api` passa.
-- [] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
+- [x] `go mod tidy` em `apps/api` nao remove dependências necessárias nem deixa pacotes quebrados.
+- [x] `go run ./cmd/server` inicia o servidor local.
+- [x] `curl http://localhost:<API_PORT>/health` retorna sucesso.
+- [x] `curl http://localhost:<API_PORT>/ready` retorna sucesso com Postgres ativo.
+- [x] `go test ./...` em `apps/api` passa.
+- [x] `sqlc generate` passa e mantém `internal/db/sqlc` consistente.
+
+### 2.2.1 - Entregas adicionais realizadas
+
+- O target `make dev-api` foi ajustado para carregar variaveis de ambiente a partir de `.env` com fallback para `.env.example`.
+- A inicializacao da API via Makefile foi validada apos o ajuste de `DATABASE_URL`, evitando erro de configuração ausente.
+
+### 2.3 - Testes de Integração com Testcontainers para SQLC
+
+Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/internal/db/sqlc`, usando PostgreSQL real via Testcontainers e migrations oficiais de `infra/migrations`. O primeiro alvo deve ser `apps/api/internal/db/sqlc/users.sql.go`, sem editar esse arquivo gerado manualmente.
+
+#### 2.3.1 - Passos de configuração
+
+- Adicionar dependências de teste em `apps/api/go.mod`:
+  - `github.com/stretchr/testify`.
+  - `github.com/testcontainers/testcontainers-go`.
+  - `github.com/testcontainers/testcontainers-go/modules/postgres`.
+  - `github.com/golang-migrate/migrate/v4`.
+  - `github.com/golang-migrate/migrate/v4/database/postgres`.
+  - `github.com/golang-migrate/migrate/v4/source/file`.
+- Criar o arquivo de teste inicial em `apps/api/internal/db/sqlc/users_integration_test.go`.
+- Usar `package sqlc_test` para testar o SQLC como consumidor externo do pacote, importando `github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc`.
+- Subir um container `postgres:18-alpine`, mantendo a versão alinhada com `infra/docker/docker-compose.yml` e `.env.example`.
+- Obter a connection string do container com `sslmode=disable`.
+- Aplicar as migrations de `../../../../infra/migrations` a partir do diretório do pacote de teste, ou calcular o caminho absoluto com `runtime.Caller` para evitar falha quando o teste rodar de outro diretório.
+- Abrir um `pgxpool.Pool` apontando para o banco do container e criar `queries := sqlc.New(pool)`.
+- Encerrar corretamente pool e container com `defer` ou `t.Cleanup`.
+- Evitar dependência do Postgres local do Docker Compose; esses testes devem subir o próprio banco isolado.
+
+#### 2.3.2 - Estrutura ideal do teste
+
+- Criar um helper `setupTestDB(t)` que retorna:
+  - `context.Context`.
+  - `*pgxpool.Pool`.
+  - `*sqlc.Queries`.
+  - função de cleanup.
+- Executar migrations uma vez por pacote usando `TestMain` quando os testes crescerem, ou por teste enquanto houver poucos cenários e a simplicidade for mais importante.
+- Usar e-mails únicos por teste, por exemplo com timestamp ou UUID, para evitar conflito com o índice único de `users.email`.
+- Não usar seed global para estes primeiros testes; cada teste deve criar os registros que precisa.
+- Preferir testes independentes e explícitos em vez de depender de ordem de execução.
+- Começar pelos métodos já gerados em `users.sql.go`:
+  - `InsertUser`.
+  - `GetUserByEmail`.
+  - `GetUserByID`.
+  - `ListUsersBasic`.
+  - `UpdateUser`.
+  - `DeleteUser`.
+
+#### 2.3.3 - Cenários iniciais para `users.sql.go`
+
+- `TestQueries_InsertUser`: insere usuário com `email_verified=false`, `role=UserRoleTypeAdmin`, `kind=UserKindOwner` e `is_active=true`; valida `ID`, `Email`, `Role`, `Kind`, `CreatedAt` e `DeletedAt`.
+- `TestQueries_GetUserByEmail`: cria usuário e busca pelo e-mail; valida que o registro retornado e o mesmo usuário criado.
+- `TestQueries_GetUserByID`: cria usuário e busca pelo `ID` retornado no insert.
+- `TestQueries_ListUsersBasic`: cria dois usuários com e-mails únicos e valida que a lista retorna registros ativos e respeita `Limit` e `Offset`.
+- `TestQueries_UpdateUser`: cria usuário, altera campos com `UpdateUserParams` usando `pgtype.Text`, `pgtype.Bool`, `NullUserRoleType` e `NullUserKind`, e valida o retorno atualizado.
+- `TestQueries_DeleteUser`: cria usuário, chama `DeleteUser`, valida que `GetUserByID` ainda encontra o registro com `deleted_at` preenchido e `is_active=false`, confirmando o soft delete.
+
+#### 2.3.4 - Ajustes prováveis identificados no código atual
+
+- `ListUsersBasic` e `DeleteUser` sao bons pontos de partida porque nao dependem de filtros nullable complexos.
+- `ListUsers` usa filtros opcionais na SQL, mas os tipos gerados para alguns campos aparecem como não-nullable, por exemplo `Role UserRoleType`, `Kind UserKind`, `IsActive bool` e `EmailVerified bool`. Antes de testar filtros opcionais dessa query, avaliar se `infra/sql/queries/users.sql` deve trocar `sqlc.arg` por `sqlc.narg` nesses campos para gerar tipos nullable como `NullUserRoleType`, `NullUserKind` e `pgtype.Bool`.
+- `InsertUser` recebe `EmailVerifiedAt pgtype.Timestamptz`; para usuário não verificado, usar valor zero com `Valid=false`.
+- Como os testes rodam dentro de `apps/api/internal/db/sqlc`, o caminho relativo das migrations nao e o mesmo do `sqlc.yaml`. Preferir helper de caminho absoluto para reduzir fragilidade.
+- O teste deve falhar rapidamente se Docker nao estiver disponível, deixando claro que e teste de integração e nao teste unitário.
+
+#### 2.3.5 - Checks
+
+- [x] `cd apps/api && go test ./internal/db/sqlc -run TestQueries_InsertUser -count=1` sobe um Postgres via Testcontainers, aplica migrations e passa.
+- [x] `cd apps/api && go test ./internal/db/sqlc -count=1` passa com todos os testes iniciais de users.
+- [x] `cd apps/api && go test ./... -count=1` continua passando depois de adicionar as dependências.
+- [x] Os testes nao exigem `make docker-up` nem banco local ativo.
+- [x] Nenhum arquivo gerado por SQLC e editado manualmente para fazer os testes passarem.
 
 ## Fase 3 - Migrations, Seed e Persistência
 
@@ -116,11 +189,11 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 3.2 - Checks
 
-- [] `make migrate-up` aplica a migration inicial em banco limpo.
-- [] `make migrate-down` reverte a ultima migration sem erro.
-- [] `make seed` cria dados mínimos idempotentes ou falha de forma controlada.
-- [] `sqlc generate` gera os arquivos esperados para as novas queries.
-- [] Queries tenant-aware sempre recebem `company_id` quando a tabela pertence ao tenant.
+- [x] `make migrate-up` aplica a migration inicial em banco limpo.
+- [x] `make migrate-down` reverte a ultima migration sem erro.
+- [x] `make seed` cria dados mínimos idempotentes ou falha de forma controlada.
+- [x] `sqlc generate` gera os arquivos esperados para as novas queries.
+- [x] Queries tenant-aware sempre recebem `company_id` quando a tabela pertence ao tenant.
 
 ## Fase 4 - Autenticação, Tenant e Permissões
 
@@ -139,12 +212,12 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 4.2 - Checks
 
-- [] Login com credenciais validas retorna JWT.
-- [] Login invalido retorna erro padronizado e nao vaza detalhe sensível.
-- [] Rota autenticada sem token retorna `401`.
-- [] Rota autenticada com token sem `company_id` retorna `403`.
-- [] Queries de dados de tenant usam `company_id` obtido do middleware, nao do body do request.
-- [] Testes unitários cobrem middlewares `Auth` e `Tenant`.
+- [x] Login com credenciais validas retorna JWT.
+- [x] Login invalido retorna erro padronizado e nao vaza detalhe sensível.
+- [x] Rota autenticada sem token retorna `401`.
+- [x] Rota autenticada com token sem `company_id` retorna `403`.
+- [x] Queries de dados de tenant usam `company_id` obtido do middleware, nao do body do request.
+- [x] Testes unitários cobrem middlewares `Auth` e `Tenant`.
 
 ## Fase 5 - Frontend Web Base (`apps/web`)
 
@@ -174,12 +247,18 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 5.2 - Checks
 
-- [] `pnpm install` executa sem conflito de workspace.
-- [] `pnpm --filter web dev` inicia o Vite.
-- [] `pnpm --filter web build` gera build de produção.
-- [] `pnpm --filter web lint` passa.
-- [] Login chama `VITE_API_URL` configurado.
-- [] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
+- [x] `pnpm install` executa sem conflito de workspace.
+- [x] `pnpm --filter web dev` inicia o Vite.
+- [x] `pnpm --filter web build` gera build de produção.
+- [x] `pnpm --filter web lint` passa.
+- [x] Login chama `VITE_API_URL` configurado.
+- [x] Estado vindo da API fica no TanStack Query; Zustand fica restrito a auth/UI.
+
+### 5.3 - Entregas adicionais realizadas
+
+- Foi adicionada suite de testes com Vitest no `apps/web`, incluindo configuracao dedicada (`vitest.config.ts`) e script `test` no `package.json`.
+- Foram adicionados testes unitarios para `rest-client`, `auth.store` e `ui.store` cobrindo fluxo de login, erros de autenticacao e gerenciamento de estado.
+- O fallback visual da URL da API na tela de login foi alinhado para `http://localhost:8080/api/v1`, mantendo consistencia com a porta padrão da API.
 
 ## Fase 6 - Libs Compartilhadas (`libs/*`)
 
@@ -197,11 +276,17 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 6.2 - Checks
 
-- []`pnpm -r build` ou comando equivalente compila libs e web.
-- [] `shared-utils` possui testes unitários para validadores e formatadores iniciais.
-- [] `shared-types` exporta DTOs usados pelo `rest-client`.
-- [] `shared-constants` evita magic strings de rotas no Web.
-- [] `libs/ui/core` nao importa React DOM nem React Native.
+- [x] `pnpm -r build` ou comando equivalente compila libs e web.
+- [x] `shared-utils` possui testes unitários para validadores e formatadores iniciais.
+- [x] `shared-types` exporta DTOs usados pelo `rest-client`.
+- [x] `shared-constants` evita magic strings de rotas no Web.
+- [x] `libs/ui/core` nao importa React DOM nem React Native.
+
+### 6.3 - Entregas adicionais realizadas
+
+- Foi expandida a cobertura de testes com Vitest para libs compartilhadas, com suites em `libs/shared-constants/tests` e `libs/ui/tests`.
+- Os pacotes `@petcontrol/shared-constants` e `@petcontrol/ui` receberam scr8ipt `test` para execução padronizada no workspace.
+- O app web foi migrado para consumir rotas, tipos, utilitários e helper de UI diretamente das libs via `workspace:*`, reduzindo acoplamento por paths locais profundos.
 
 ## Fase 7 - Worker Base (`apps/worker`)
 
@@ -219,14 +304,33 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - Configurar Asynq com Redis.
 - Criar fila inicial `notifications` com task dummy verificável.
 - Compartilhar tipos de task com a API via pacote Go interno comum ou duplicação minima documentada.
+- Implementar testes unitários no Worker para configuração e processor da task dummy.
+- Implementar testes de integração:
+  - publisher da API com Redis em memória (miniredis + Asynq inspector).
+  - processor do Worker consumindo task dummy em Redis em memória.
 
 ### 7.2 - Checks
 
-- [] `go run ./cmd/worker` inicia e conecta no Redis.
-- [] API consegue publicar task dummy.
-- [] Worker consome task dummy e registra log estruturado.
-- [] `go test ./...` no Worker passa.
-- [] Worker pode ser desligado sem afetar a API.
+- [x] `go run ./cmd/worker` inicia e conecta no Redis.
+- [x] API consegue publicar task dummy.
+- [x] Worker consome task dummy e registra log estruturado.
+- [x] `go test ./...` no Worker passa.
+- [x] Worker pode ser desligado sem afetar a API.
+
+### 7.3 - Entregas adicionais realizadas
+
+- Foi criado o endpoint protegido `POST /api/v1/worker/notifications/dummy` na API para publicar task dummy via Asynq.
+- Foi adicionado publisher dedicado na API e contrato de task compartilhado por tipo/payload (`notifications:dummy`).
+- Foi criado o modulo `apps/worker` com bootstrap (`cmd/worker/main.go`), processor da task dummy, scheduler base e cliente WhatsApp placeholder.
+- Foram adicionados testes unitarios no Worker para:
+  - resolução de configuracao de Redis/queue.
+  - processamento da task dummy e validação de payload invalido.
+- Foram adicionados testes de integração para:
+  - enqueue da API com verificação da task em Redis usando miniredis.
+  - processamento do Worker com task real em Redis de teste (miniredis).
+- Validação executada com sucesso:
+  - `cd apps/worker && go mod tidy && go test ./...`.
+  - `cd apps/api && go mod tidy && go test ./...`.
 
 ## Fase 8 - Qualidade, CI e Documentação
 
@@ -249,11 +353,11 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 
 ### 8.2 - Checks
 
-- [] Workflows do GitHub Actions executam em pull request.
-- [] `make test` ou comando equivalente roda a suite minima local.
-- [] `make lint` ou comando equivalente cobre Go e TypeScript.
-- [] `docs/CONTRIBUTING.md` permite setup local sem depender de conhecimento oral.
-- [] ADRs iniciais explicam o motivo das decisões, nao apenas a tecnologia escolhida.
+- [x] Workflows do GitHub Actions executam em pull request.
+- [x] `make test` ou comando equivalente roda a suite minima local.
+- [x] `make lint` ou comando equivalente cobre Go e TypeScript.
+- [x] `docs/CONTRIBUTING.md` permite setup local sem depender de conhecimento oral.
+- [x] ADRs iniciais explicam o motivo das decisões, nao apenas a tecnologia escolhida.
 
 ## Ordem Recomendada de Execução
 
@@ -279,14 +383,14 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - [ ] Migrations aplicam e revertem em banco limpo.
 - [ ] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
 - [ ] Web inicia com Vite e consome `VITE_API_URL`.
-- [ ] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
-- [ ] Worker inicia separado e consome task dummy do Redis.
-- [ ] CI executa checks de Go, TypeScript, SQLC e Docker Compose.
-- [ ] Docs de contribuição e ADRs iniciais estão versionados.
+- [x] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
+- [x] Worker inicia separado e consome task dummy do Redis.
+- [x] CI executa checks de Go, TypeScript, SQLC e Docker Compose.
+- [x] Docs de contribuição e ADRs iniciais estão versionados.
 
 ## Riscos e Decisões Pendentes
 
-- O README menciona `apps/worker` e `libs`, mas eles ainda nao existem. Criar a estrutura sem implementar regra complexa reduz risco de acoplamento prematuro.
+- A base inicial do monorepo foi criada com API, Worker e libs compartilhadas. O foco de risco passa a ser manter a coerência entre contratos e testes durante a evolução por fases.
 - O Web depende de contratos estáveis da API. Enquanto auth e endpoints base nao estiverem prontos, usar mocks deve ser temporário e explicitamente marcado.
 - O Worker deve ser criado depois da API publicar uma task minima; caso contrario, a integração com Redis fica pouco verificável.
 - Swagger deve entrar depois de handlers reais, para evitar documentação automática vazia ou enganosa.

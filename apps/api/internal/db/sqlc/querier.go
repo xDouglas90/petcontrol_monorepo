@@ -11,12 +11,43 @@ import (
 )
 
 type Querier interface {
-	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	CreateCompanyUser(ctx context.Context, arg CreateCompanyUserParams) (CompanyUser, error)
+	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
+	DeactivateCompanyUser(ctx context.Context, arg DeactivateCompanyUserParams) error
+	DeleteCompany(ctx context.Context, id pgtype.UUID) (int64, error)
+	DeleteModule(ctx context.Context, id pgtype.UUID) (int64, error)
+	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
+	GetActiveCompanyUserByUserID(ctx context.Context, userid pgtype.UUID) (CompanyUser, error)
+	GetCompanyByID(ctx context.Context, id pgtype.UUID) (Company, error)
+	GetCompanyBySlug(ctx context.Context, slug string) (Company, error)
+	GetCompanyUser(ctx context.Context, arg GetCompanyUserParams) (CompanyUser, error)
+	GetCompanyUserByID(ctx context.Context, id pgtype.UUID) (CompanyUser, error)
+	GetModuleByCode(ctx context.Context, code string) (Module, error)
+	GetPlanByID(ctx context.Context, id pgtype.UUID) (Plan, error)
+	GetUserAuthByUserID(ctx context.Context, userid pgtype.UUID) (UserAuth, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	HasActiveCompanyModuleByCode(ctx context.Context, arg HasActiveCompanyModuleByCodeParams) (bool, error)
+	IncrementUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
+	InsertCompany(ctx context.Context, arg InsertCompanyParams) (Company, error)
+	InsertLoginHistory(ctx context.Context, arg InsertLoginHistoryParams) error
+	InsertPlan(ctx context.Context, arg InsertPlanParams) (Plan, error)
+	InsertPlanType(ctx context.Context, arg InsertPlanTypeParams) (PlanType, error)
 	InsertUser(ctx context.Context, arg InsertUserParams) (User, error)
+	ListCompanies(ctx context.Context) ([]Company, error)
+	ListCompaniesByPackage(ctx context.Context, activepackage ModulePackage) ([]Company, error)
+	ListCompanyUsersByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]CompanyUser, error)
+	ListModules(ctx context.Context) ([]Module, error)
+	ListPlanTypes(ctx context.Context) ([]PlanType, error)
+	ListPlans(ctx context.Context) ([]Plan, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) ([]User, error)
+	ResetUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
+	SetUserAuthLockedUntil(ctx context.Context, arg SetUserAuthLockedUntilParams) error
+	UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (int64, error)
+	UpdateModule(ctx context.Context, arg UpdateModuleParams) (Module, error)
+	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (int64, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -32,6 +32,13 @@ PetControl é uma plataforma SaaS **multi-tenant** voltada para pet shops e clí
 - **Auditoria imutável** — toda ação relevante é registrada sem possibilidade de deleção ou cascata.
 - **Soft delete por padrão** — nenhuma entidade de negócio é removida fisicamente do banco.
 
+### Credenciais de desenvolvimento (seed)
+
+Após executar o seed, o ambiente local cria dois usuários prontos para login:
+
+- `admin@petcontrol.local` / `password123` (compatível com o formulário padrão do Web)
+- `root@petcontrol.local` / `password123` (com `must_change_password=true`)
+
 ---
 
 ## 2. Stack Tecnológica
@@ -491,6 +498,48 @@ Gerar/atualizar docs:
 swag init -g cmd/server/main.go --output docs/
 ```
 
+### 5.7 Dockerfile e Entrypoint da API
+
+O backend em `apps/api` já possui conteinerização implementada com build multi-stage.
+
+Resumo do que foi implementado:
+
+- Stage de build em Go (`golang:1.26.1-alpine3.23`) para:
+  - instalar `sqlc` e `migrate`;
+  - executar `sqlc generate` dentro de `apps/api`;
+  - compilar o binário `./cmd/server` em modo estático (`CGO_ENABLED=0`).
+- Stage de runtime em Alpine (`alpine:3.23`) com:
+  - `ca-certificates` e `tzdata`;
+  - binário final da API;
+  - binário `migrate`;
+  - migrations copiadas de `infra/migrations`.
+- `entrypoint.sh` como ponto de entrada do container:
+  - se `RUN_MIGRATIONS=true`, roda `migrate up` antes da aplicação subir;
+  - em seguida inicia a API (`/app/petcontrol-api`).
+
+Arquivos relevantes:
+
+- `apps/api/Dockerfile`
+- `apps/api/entrypoint.sh`
+
+Variáveis usadas no startup do container:
+
+- `DATABASE_URL` (obrigatória para conexão com Postgres e migrations)
+- `RUN_MIGRATIONS` (opcional, default `false`)
+
+Exemplo de uso local:
+
+```bash
+# na raiz do monorepo
+docker build -f apps/api/Dockerfile -t petcontrol-api .
+
+docker run --rm \
+  -e DATABASE_URL="postgres://petcontrol:petcontrol@host.docker.internal:5432/petcontrol?sslmode=disable" \
+  -e RUN_MIGRATIONS=true \
+  -p 8080:8080 \
+  petcontrol-api
+```
+
 ---
 
 ## 6. App: Web
@@ -692,7 +741,7 @@ mux.HandleFunc(queue.TypeSubscriptionExpiring, subscProcessor.HandleSubscription
 # infra/docker/docker-compose.yml
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: petcontrol
       POSTGRES_USER: petcontrol
@@ -740,52 +789,52 @@ volumes:
 
 # Desenvolvimento
 dev-api:
-	cd apps/api && go run ./cmd/server
+ cd apps/api && go run ./cmd/server
 
 dev-worker:
-	cd apps/worker && go run ./cmd/worker
+ cd apps/worker && go run ./cmd/worker
 
 dev-web:
-	cd apps/web && pnpm dev
+ cd apps/web && pnpm dev
 
 # Build
 build-api:
-	cd apps/api && go build -o bin/server ./cmd/server
+ cd apps/api && go build -o bin/server ./cmd/server
 
 build-worker:
-	cd apps/worker && go build -o bin/worker ./cmd/worker
+ cd apps/worker && go build -o bin/worker ./cmd/worker
 
 # Testes
 test-api:
-	cd apps/api && go test ./... -v -race -count=1
+ cd apps/api && go test ./... -v -race -count=1
 
 test-web:
-	cd apps/web && pnpm test
+ cd apps/web && pnpm test
 
 # Lint
 lint-go:
-	golangci-lint run ./apps/api/... ./apps/worker/...
+ golangci-lint run ./apps/api/... ./apps/worker/...
 
 lint-web:
-	cd apps/web && pnpm lint
+ cd apps/web && pnpm lint
 
 # Migrations
 migrate-up:
-	migrate -path infra/migrations -database "$$DATABASE_URL" up
+ migrate -path infra/migrations -database "$$DATABASE_URL" up
 
 migrate-down:
-	migrate -path infra/migrations -database "$$DATABASE_URL" down 1
+ migrate -path infra/migrations -database "$$DATABASE_URL" down 1
 
 migrate-create:
-	migrate create -ext sql -dir infra/migrations -seq $(name)
+ migrate create -ext sql -dir infra/migrations -seq $(name)
 
 # SQLC
 sqlc:
-	cd apps/api && sqlc generate
+ cd apps/api && sqlc generate
 
 # Swagger
 swagger:
-	cd apps/api && swag init -g cmd/server/main.go --output docs/
+ cd apps/api && swag init -g cmd/server/main.go --output docs/
 ```
 
 ### 8.3 Variáveis de ambiente
@@ -831,7 +880,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: test
           POSTGRES_USER: test
@@ -924,7 +973,7 @@ import (
 func TestMain(m *testing.M) {
     ctx := context.Background()
 
-    pgContainer, _ := postgres.Run(ctx, "postgres:16-alpine",
+    pgContainer, _ := postgres.Run(ctx, "postgres:18-alpine",
         postgres.WithDatabase("petcontrol_test"),
         postgres.WithUsername("test"),
         postgres.WithPassword("test"),

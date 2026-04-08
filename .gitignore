@@ -1,0 +1,11 @@
+node_modules
+
+apps/web/dist/*
+apps/web/node_modules
+apps/web/.env
+apps/web/dist
+libs/*/dist
+
+.env
+
+secrets/*

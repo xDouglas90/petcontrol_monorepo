@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: 4 9 20;
+  --foreground: 241 245 249;
+  --muted: 148 163 184;
+  --surface: 15 23 42;
+  --panel: 20 28 48;
+  --border: 51 65 85;
+  --primary: 245 158 11;
+  --secondary: 56 189 248;
+  --accent: 248 113 113;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+}
+
+:root[data-theme='ember'] {
+  --background: 20 11 7;
+  --foreground: 255 247 237;
+  --muted: 251 191 36;
+  --surface: 41 19 13;
+  --panel: 57 26 16;
+  --border: 120 53 15;
+  --primary: 251 146 60;
+  --secondary: 244 114 182;
+  --accent: 251 191 36;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), transparent 30%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
+    linear-gradient(135deg, rgb(var(--background)) 0%, rgb(2 6 23) 100%);
+  color: rgb(var(--foreground));
+  background-attachment: fixed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.35);
+  color: white;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}

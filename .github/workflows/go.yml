@@ -5,18 +5,38 @@ on:
     branches: ['main']
     paths:
       - 'apps/api/**'
-      - '.github/workflows/go.yml'
+      - 'apps/worker/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/sql/**'
+      - 'infra/migrations/**'
       - 'go.work'
+      - 'go.work.sum'
+      - 'Makefile'
+      - '.github/workflows/go.yml'
   pull_request:
     branches: ['main']
     paths:
       - 'apps/api/**'
-      - '.github/workflows/go.yml'
+      - 'apps/worker/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/sql/**'
+      - 'infra/migrations/**'
       - 'go.work'
+      - 'go.work.sum'
+      - 'Makefile'
+      - '.github/workflows/go.yml'
 
 jobs:
-  lint:
-    name: Lint and Format
+  docker-compose-config:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate compose file
+        run: docker compose -f infra/docker/docker-compose.yml config
+
+  api:
+    name: API Build and Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,324 +49,59 @@ jobs:
           go-version: '1.26.1'
           cache: true
           cache-dependency-path: apps/api/go.sum
-      - name: Check gofmt
+      - name: Check formatting
         run: |
-          if [ "$(gofmt -l . | wc -l)" -gt 0 ]; then
+          if [ -n "$(gofmt -l .)" ]; then
             echo "Files not formatted:"
             gofmt -l .
             exit 1
           fi
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+
+  worker:
+    name: Worker Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/worker
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
-          version: v2.11.3
-          working-directory: apps/api
+          go-version: '1.26.1'
+          cache: true
+          cache-dependency-path: apps/worker/go.sum
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Files not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
 
-  # unit:
-  #   name: Unit Tests
-  #   runs-on: ubuntu-latest
-  #   needs: lint
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Build
-  #       run: go build -v ./...
-  #     - name: Unit tests only (short)
-  #       run: go test -short -v -race ./...
-
-  # integration-core:
-  #   name: Integration Tests Core
-  #   runs-on: ubuntu-latest
-  #   needs: unit
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Verify Docker availability
-  #       run: docker version
-  #     - name: Integration core test suites
-  #       env:
-  #         TESTCONTAINERS_RYUK_DISABLED: true
-  #       run: |
-  #         go test -v ./internal/database
-  #         go test -v -run Integration \
-  #           ./internal/usecase/modalities \
-  #           ./internal/usecase/fields \
-  #           ./internal/usecase/team_preferred_fields \
-  #           ./internal/usecase/people_users \
-  #           ./internal/usecase/player_profiles \
-  #           ./internal/usecase/view_team_standings \
-  #           ./internal/usecase/user_settings \
-  #           ./internal/usecase/login_history \
-  #           ./internal/usecase/uploads \
-  #           ./internal/usecase/teams_main_field \
-  #           ./internal/usecase/staff_profiles \
-  #           ./internal/usecase/field_contacts \
-  #           ./internal/usecase/field_availability \
-  #           ./internal/usecase/field_managers \
-  #           ./internal/usecase/achievement_definitions \
-  #           ./internal/usecase/user_types \
-  #           ./internal/usecase/users \
-  #           ./internal/usecase/user_sessions \
-  #           ./internal/usecase/championships \
-  #           ./internal/usecase/user_roles \
-  #           ./internal/usecase/auth \
-  #           ./internal/usecase/people_profiles \
-  #           ./internal/usecase/people_addresses \
-  #           ./internal/usecase/user_auth \
-  #           ./internal/usecase/email_verification \
-  #           ./internal/usecase/password_recovery \
-  #           ./internal/usecase/teams \
-  #           ./internal/usecase/view_team_player_addresses \
-  #           ./internal/usecase/view_championship_standings \
-  #           ./internal/usecase/view_match_mvp_results \
-  #           ./internal/usecase/views_integration
-  #         go test -v -run Integration \
-  #           ./internal/handler/view_team_standings \
-  #           ./internal/handler/user_settings \
-  #           ./internal/handler/login_history \
-  #           ./internal/handler/teams_main_field \
-  #           ./internal/handler/staff_profiles \
-  #           ./internal/handler/audit_logs \
-  #           ./internal/handler/view_team_player_addresses \
-  #           ./internal/handler/view_player_career_stats \
-  #           ./internal/handler/view_match_mvp_results \
-  #           ./internal/handler/view_championship_standings \
-  #           ./internal/handler/user_roles \
-  #           ./internal/handler/people_profiles \
-  #           ./internal/handler/match_events \
-  #           ./internal/handler/field_contacts \
-  #           ./internal/handler/field_availability \
-  #           ./internal/handler/field_managers \
-  #           ./internal/handler/user_types \
-  #           ./internal/handler/auth \
-  #           ./internal/handler/achievement_definitions \
-  #           ./internal/handler/user_auth \
-  #           ./internal/handler/people_addresses \
-  #           ./internal/handler/user_sessions
-
-  # integration-heavy:
-  #   name: Integration Tests Heavy
-  #   runs-on: ubuntu-latest
-  #   needs: unit
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Verify Docker availability
-  #       run: docker version
-  #     - name: Integration heavy test suites
-  #       env:
-  #         TESTCONTAINERS_RYUK_DISABLED: true
-  #       run: |
-  #         go test -v -p 1 -run Integration \
-  #           ./internal/usecase/matches \
-  #           ./internal/usecase/team_members \
-  #           ./internal/usecase/match_presences \
-  #           ./internal/usecase/match_player_stats \
-  #           ./internal/usecase/match_votes \
-  #           ./internal/usecase/user_onboarding \
-  #           ./internal/usecase/championship_organizers \
-  #           ./internal/usecase/championship_supporters \
-  #           ./internal/usecase/championship_sponsors \
-  #           ./internal/usecase/championship_participants \
-  #           ./internal/usecase/audit_logs \
-  #           ./internal/usecase/view_player_career_stats \
-  #           ./internal/usecase/player_achievements \
-  #           ./internal/usecase/match_events
-  #         go test -v -p 1 -run Integration \
-  #           ./internal/handler/championships \
-  #           ./internal/handler/team_members \
-  #           ./internal/handler/match_votes \
-  #           ./internal/handler/match_presences \
-  #           ./internal/handler/match_player_stats \
-  #           ./internal/handler/matches \
-  #           ./internal/handler/championship_organizers \
-  #           ./internal/handler/championship_supporters \
-  #           ./internal/handler/championship_sponsors \
-  #           ./internal/handler/championship_participants \
-  #           ./internal/handler/modalities \
-  #           ./internal/handler/fields \
-  #           ./internal/handler/teams \
-  #           ./internal/handler/users \
-  #           ./internal/handler/team_preferred_fields \
-  #           ./internal/handler/player_profiles \
-  #           ./internal/handler/player_achievements \
-  #           ./internal/handler/user_onboarding
-
-  # e2e:
-  #   name: E2E Tests
-  #   runs-on: ubuntu-latest
-  #   needs: [integration-core, integration-heavy]
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Verify Docker availability
-  #       run: docker version
-  #     - name: E2E test suites
-  #       env:
-  #         TESTCONTAINERS_RYUK_DISABLED: true
-  #       run: |
-  #         go test -tags=e2e -v ./internal/e2e
-  #         go test -v ./internal/server -run TestServer_E2ECriticalRoutes
-  #         go test -v ./ -run 'TestMain_EndToEndInitialization|TestMain_EndToEndInitializationFixedPort'
-
-  # coverage:
-  #   name: Coverage Gate
-  #   runs-on: ubuntu-latest
-  #   needs: [unit, integration-core, integration-heavy]
-  #   env:
-  #     COVERAGE_MIN: '55.0'
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Compute coverage from unit tests
-  #       run: |
-  #         go test -short ./... -coverprofile=coverage.out
-  #         total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%", "", $3); print $3}')
-  #         echo "Total coverage: ${total}%"
-  #         awk -v t="$total" -v m="$COVERAGE_MIN" 'BEGIN {if (t+0 < m+0) {printf "Coverage %.1f%% is below minimum %.1f%%\n", t, m; exit 1}}'
-  #     - name: Upload coverage artifact
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: coverage-out
-  #         path: apps/api/coverage.out
-
-  # benchmark:
-  #   name: Benchmark Compare
-  #   runs-on: ubuntu-latest
-  #   needs: [unit, integration-core, integration-heavy]
-  #   continue-on-error: true
-  #   timeout-minutes: 25
-  #   env:
-  #     BENCH_PACKAGES: ./internal/usecase/matches ./internal/usecase/match_presences ./internal/usecase/match_player_stats ./internal/usecase/match_votes ./internal/usecase/user_onboarding ./internal/handler/matches ./internal/handler/match_presences ./internal/handler/match_player_stats ./internal/handler/match_votes ./internal/handler/user_onboarding
-  #     BENCH_TIME: 200ms
-  #     BENCH_COUNT: '3'
-  #     BENCH_TIMEOUT: 15m
-  #     BENCHSTAT_VERSION: v0.0.0-20260312031701-16a31bc5fbd0
-  #     BENCH_OUTPUT: benchmark-current.txt
-  #     BENCH_BASELINE_OUTPUT: benchmark-baseline.txt
-  #     BENCH_COMPARE_OUTPUT: benchmark-compare.txt
-  #     BENCH_REGRESSION_OUTPUT: benchmark-regressions.txt
-  #   defaults:
-  #     run:
-  #       working-directory: apps/api
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #       with:
-  #         fetch-depth: 0
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: '1.26.1'
-  #         cache: true
-  #         cache-dependency-path: apps/api/go.sum
-  #     - name: Install benchstat
-  #       run: go install golang.org/x/perf/cmd/benchstat@${BENCHSTAT_VERSION}
-  #     - name: Run benchmark snapshot (current)
-  #       run: |
-  #         chmod +x ./scripts/benchmark.sh
-  #         ./scripts/benchmark.sh
-  #         if rg -n '^func Benchmark' . -g '*_test.go' >/dev/null; then
-  #           echo "benchmarks_found=true" >> "$GITHUB_ENV"
-  #         else
-  #           echo "benchmarks_found=false" >> "$GITHUB_ENV"
-  #         fi
-
-  #     - name: Build benchmark baseline from main
-  #       if: env.benchmarks_found == 'true'
-  #       run: |
-  #         if [ "${{ github.event_name }}" = "pull_request" ]; then
-  #           git fetch origin main --depth=1
-  #           tmp_dir="$(mktemp -d)"
-  #           git worktree add "$tmp_dir" origin/main
-  #           pushd "$tmp_dir/apps/api" >/dev/null
-  #           chmod +x ./scripts/benchmark.sh
-  #           BENCH_OUTPUT="$GITHUB_WORKSPACE/apps/api/${BENCH_BASELINE_OUTPUT}" ./scripts/benchmark.sh
-  #           popd >/dev/null
-  #           git worktree remove "$tmp_dir" --force
-  #         else
-  #           cp "${BENCH_OUTPUT}" "${BENCH_BASELINE_OUTPUT}"
-  #         fi
-
-  #     - name: Compare baseline vs current (benchstat)
-  #       if: env.benchmarks_found == 'true'
-  #       run: |
-  #         chmod +x ./scripts/benchmark_compare.sh
-  #         ./scripts/benchmark_compare.sh "${BENCH_BASELINE_OUTPUT}" "${BENCH_OUTPUT}" "${BENCH_COMPARE_OUTPUT}" "${BENCH_REGRESSION_OUTPUT}"
-
-  #     - name: Write benchmark summary
-  #       run: |
-  #         {
-  #           echo "## Benchmark Compare"
-  #           echo
-  #           if [ "$benchmarks_found" = "true" ]; then
-  #             echo "Benchmarks were executed through \`./scripts/benchmark.sh\`."
-  #             echo "Config: packages=\`${BENCH_PACKAGES:-./...}\`, regex=\`${BENCH_REGEX:-.}\`, time=\`${BENCH_TIME}\`, count=\`${BENCH_COUNT}\`."
-  #             if [ -f "${BENCH_COMPARE_OUTPUT}" ]; then
-  #               echo
-  #               echo "### Benchstat (main baseline vs current)"
-  #               echo
-  #               cat "${BENCH_COMPARE_OUTPUT}"
-  #             fi
-  #             if [ -f "${BENCH_REGRESSION_OUTPUT}" ]; then
-  #               echo
-  #               echo "### Regressions (ns/op, B/op, allocs/op)"
-  #               echo
-  #               cat "${BENCH_REGRESSION_OUTPUT}"
-  #             fi
-  #             echo
-  #             echo "Baseline, snapshot and comparison files were uploaded as artifacts."
-  #           else
-  #             echo "No benchmark functions were found yet."
-  #             echo "This job is intentionally informational until new benchmark suites are added."
-  #           fi
-  #         } >> "$GITHUB_STEP_SUMMARY"
-
-  #     - name: Upload benchmark artifacts
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: benchmark-results
-  #         path: |
-  #           apps/api/benchmark-current.txt
-  #           apps/api/benchmark-baseline.txt
-  #           apps/api/benchmark-compare.txt
-  #           apps/api/benchmark-regressions.txt
+  sqlc-check:
+    name: SQLC Generation Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.1'
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+      - name: Run sqlc generate
+        run: sqlc generate
+      - name: Ensure generated files are up to date
+        run: git diff --exit-code

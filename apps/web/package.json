@@ -1,0 +1,50 @@
+{
+  "name": "web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --check .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@petcontrol/shared-constants": "workspace:*",
+    "@petcontrol/shared-types": "workspace:*",
+    "@petcontrol/shared-utils": "workspace:*",
+    "@petcontrol/ui": "workspace:*",
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.90.4",
+    "@tanstack/react-router": "^1.139.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-hook-form": "^7.66.1",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.1.13",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.3",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.0",
+    "autoprefixer": "^10.4.22",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vite": "^7.2.4",
+    "vitest": "^3.2.4",
+    "jsdom": "^26.1.0"
+  }
+}
