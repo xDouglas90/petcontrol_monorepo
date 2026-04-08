@@ -13,9 +13,11 @@ import (
 type Querier interface {
 	CreateCompanyUser(ctx context.Context, arg CreateCompanyUserParams) (CompanyUser, error)
 	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
+	CreateSchedule(ctx context.Context, arg CreateScheduleParams) (Schedule, error)
 	DeactivateCompanyUser(ctx context.Context, arg DeactivateCompanyUserParams) error
 	DeleteCompany(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteModule(ctx context.Context, id pgtype.UUID) (int64, error)
+	DeleteSchedule(ctx context.Context, arg DeleteScheduleParams) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	GetActiveCompanyUserByUserID(ctx context.Context, userid pgtype.UUID) (CompanyUser, error)
 	GetCompanyByID(ctx context.Context, id pgtype.UUID) (Company, error)
@@ -25,6 +27,7 @@ type Querier interface {
 	GetCurrentPlanByCompanyID(ctx context.Context, companyid pgtype.UUID) (Plan, error)
 	GetModuleByCode(ctx context.Context, code string) (Module, error)
 	GetPlanByID(ctx context.Context, id pgtype.UUID) (Plan, error)
+	GetScheduleByIDAndCompanyID(ctx context.Context, arg GetScheduleByIDAndCompanyIDParams) (GetScheduleByIDAndCompanyIDRow, error)
 	GetUserAuthByUserID(ctx context.Context, userid pgtype.UUID) (UserAuth, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
@@ -34,6 +37,7 @@ type Querier interface {
 	InsertLoginHistory(ctx context.Context, arg InsertLoginHistoryParams) error
 	InsertPlan(ctx context.Context, arg InsertPlanParams) (Plan, error)
 	InsertPlanType(ctx context.Context, arg InsertPlanTypeParams) (PlanType, error)
+	InsertScheduleStatusHistory(ctx context.Context, arg InsertScheduleStatusHistoryParams) (ScheduleStatusHistory, error)
 	InsertUser(ctx context.Context, arg InsertUserParams) (User, error)
 	ListActiveModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error)
 	ListCompanies(ctx context.Context) ([]Company, error)
@@ -43,6 +47,8 @@ type Querier interface {
 	ListPlanTypes(ctx context.Context) ([]PlanType, error)
 	ListPlans(ctx context.Context) ([]Plan, error)
 	ListPlansByPackage(ctx context.Context, package_ ModulePackage) ([]Plan, error)
+	ListScheduleStatusHistoryByScheduleID(ctx context.Context, arg ListScheduleStatusHistoryByScheduleIDParams) ([]ScheduleStatusHistory, error)
+	ListSchedulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListSchedulesByCompanyIDRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) ([]User, error)
 	ResetUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
@@ -50,7 +56,9 @@ type Querier interface {
 	UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (int64, error)
 	UpdateModule(ctx context.Context, arg UpdateModuleParams) (Module, error)
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (int64, error)
+	UpdateSchedule(ctx context.Context, arg UpdateScheduleParams) (int64, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error)
+	ValidateScheduleOwnership(ctx context.Context, arg ValidateScheduleOwnershipParams) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)
