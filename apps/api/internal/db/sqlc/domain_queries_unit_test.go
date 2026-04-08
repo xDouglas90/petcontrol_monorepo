@@ -75,6 +75,10 @@ func TestQueries_Plans_Unit(t *testing.T) {
 	_, err = queries.GetPlanByID(context.Background(), uuidValue())
 	require.ErrorIs(t, err, errExpected)
 
+	mock.ExpectQuery(`(?s)name: GetCurrentPlanByCompanyID`).WithArgs(pgxmock.AnyArg()).WillReturnError(errExpected)
+	_, err = queries.GetCurrentPlanByCompanyID(context.Background(), uuidValue())
+	require.ErrorIs(t, err, errExpected)
+
 	mock.ExpectQuery(`(?s)name: ListPlans`).WillReturnError(errExpected)
 	_, err = queries.ListPlans(context.Background())
 	require.ErrorIs(t, err, errExpected)

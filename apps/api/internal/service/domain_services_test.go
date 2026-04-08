@@ -51,8 +51,7 @@ func TestPlanService_GetCurrentPlan(t *testing.T) {
 
 	companyID := newDomainUUID(t)
 	planTypeID := newDomainUUID(t)
-	mock.ExpectQuery(`(?s)name: GetCompanyByID`).WithArgs(companyID).WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(companyID.String(), "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, newDomainUUID(t).String(), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
-	mock.ExpectQuery(`(?s)name: ListPlansByPackage`).WithArgs(sqlc.ModulePackageStarter).WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "name", "description", "package", "price", "billing_cycle_days", "max_users", "is_active", "image_url", "created_at", "updated_at", "deleted_at"}).AddRow(newDomainUUID(t).String(), planTypeID.String(), "Starter", "starter plan", sqlc.ModulePackageStarter, "99.90", int32(30), pgtype.Int4{Int32: 5, Valid: true}, true, nil, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetCurrentPlanByCompanyID`).WithArgs(companyID).WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "name", "description", "package", "price", "billing_cycle_days", "max_users", "is_active", "image_url", "created_at", "updated_at", "deleted_at"}).AddRow(newDomainUUID(t).String(), planTypeID.String(), "Starter", "starter plan", sqlc.ModulePackageStarter, "99.90", int32(30), pgtype.Int4{Int32: 5, Valid: true}, true, nil, time.Now(), nil, nil))
 
 	plan, err := serviceUnderTest.GetCurrentPlan(context.Background(), companyID)
 	require.NoError(t, err)

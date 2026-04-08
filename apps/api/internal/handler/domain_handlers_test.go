@@ -73,8 +73,7 @@ func TestPlanHandler_Current(t *testing.T) {
 	handlerUnderTest := NewPlanHandler(serviceUnderTest)
 
 	companyID := domainHandlerUUID(t)
-	mock.ExpectQuery(`(?s)name: GetCompanyByID`).WithArgs(companyID).WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(companyID.String(), "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t).String(), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
-	mock.ExpectQuery(`(?s)name: ListPlansByPackage`).WithArgs(sqlc.ModulePackageStarter).WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "name", "description", "package", "price", "billing_cycle_days", "max_users", "is_active", "image_url", "created_at", "updated_at", "deleted_at"}).AddRow(domainHandlerUUID(t).String(), domainHandlerUUID(t).String(), "Starter", "starter plan", sqlc.ModulePackageStarter, "99.90", int32(30), pgtype.Int4{Int32: 5, Valid: true}, true, nil, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetCurrentPlanByCompanyID`).WithArgs(companyID).WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "name", "description", "package", "price", "billing_cycle_days", "max_users", "is_active", "image_url", "created_at", "updated_at", "deleted_at"}).AddRow(domainHandlerUUID(t).String(), domainHandlerUUID(t).String(), "Starter", "starter plan", sqlc.ModulePackageStarter, "99.90", int32(30), pgtype.Int4{Int32: 5, Valid: true}, true, nil, time.Now(), nil, nil))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {

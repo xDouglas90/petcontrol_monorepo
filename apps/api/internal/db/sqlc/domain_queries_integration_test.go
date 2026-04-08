@@ -78,6 +78,21 @@ func mustAttachModuleToCompany(t *testing.T, pool interface {
 	require.NoError(t, err)
 }
 
+func mustCreateActiveSubscription(t *testing.T, pool interface {
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+}, companyID, planID pgtype.UUID, price string,
+) {
+	t.Helper()
+
+	_, err := pool.Exec(context.Background(),
+		"INSERT INTO company_subscriptions(company_id, plan_id, started_at, expires_at, is_active, price_paid) VALUES ($1, $2, now() - interval '1 day', now() + interval '30 days', TRUE, $3)",
+		companyID,
+		planID,
+		price,
+	)
+	require.NoError(t, err)
+}
+
 func TestQueries_Modules_Integration(t *testing.T) {
 	queries, _, _ := setupQueriesWithPool(t)
 
@@ -120,7 +135,7 @@ func TestQueries_Modules_Integration(t *testing.T) {
 }
 
 func TestQueries_Plans_Integration(t *testing.T) {
-	queries, _, _ := setupQueriesWithPool(t)
+	queries, _, pool := setupQueriesWithPool(t)
 
 	planType, err := queries.InsertPlanType(context.Background(), sqlc.InsertPlanTypeParams{
 		Name:        fmt.Sprintf("Type-%d", time.Now().UnixNano()),
@@ -162,6 +177,13 @@ func TestQueries_Plans_Integration(t *testing.T) {
 	plansByPackage, err := queries.ListPlansByPackage(context.Background(), sqlc.ModulePackageStarter)
 	require.NoError(t, err)
 	require.NotEmpty(t, plansByPackage)
+
+	company := mustCreateCompany(t, queries, pool)
+	mustCreateActiveSubscription(t, pool, company.ID, plan.ID, "129.90")
+
+	currentPlan, err := queries.GetCurrentPlanByCompanyID(context.Background(), company.ID)
+	require.NoError(t, err)
+	require.Equal(t, plan.ID, currentPlan.ID)
 
 	rows, err := queries.UpdatePlan(context.Background(), sqlc.UpdatePlanParams{
 		PlanTypeID:       planType.ID,
