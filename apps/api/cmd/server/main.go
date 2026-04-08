@@ -27,7 +27,6 @@ func main() {
 	defer pool.Close()
 
 	queries := sqlc.New(pool)
-	userService := service.NewUserService(queries)
 	companyService := service.NewCompanyService(queries)
 	planService := service.NewPlanService(queries)
 	moduleService := service.NewModuleService(queries)
@@ -39,7 +38,6 @@ func main() {
 			log.Printf("close worker publisher: %v", err)
 		}
 	}()
-	userHandler := handler.NewUserHandler(userService)
 	companyHandler := handler.NewCompanyHandler(companyService)
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
@@ -59,12 +57,8 @@ func main() {
 
 	protected := v1.Group("/")
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
-	protected.GET("/users", userHandler.List)
-	protected.GET("/companies", companyHandler.List)
 	protected.GET("/companies/current", companyHandler.Current)
-	protected.GET("/plans", planHandler.List)
 	protected.GET("/plans/current", planHandler.Current)
-	protected.GET("/modules", moduleHandler.List)
 	protected.GET("/modules/active", moduleHandler.Active)
 	protected.GET("/company-users", companyUserHandler.List)
 	protected.POST("/company-users", companyUserHandler.Create)
