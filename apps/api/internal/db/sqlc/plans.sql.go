@@ -11,6 +11,58 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getCurrentPlanByCompanyID = `-- name: GetCurrentPlanByCompanyID :one
+SELECT
+    p.id,
+    p.plan_type_id,
+    p.name,
+    p.description,
+    p.package,
+    p.price,
+    p.billing_cycle_days,
+    p.max_users,
+    p.is_active,
+    p.image_url,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    company_subscriptions cs
+    INNER JOIN plans p ON p.id = cs.plan_id
+WHERE
+    cs.company_id = $1
+    AND cs.is_active = TRUE
+    AND cs.canceled_at IS NULL
+    AND cs.started_at <= now()
+    AND cs.expires_at > now()
+    AND p.is_active = TRUE
+    AND p.deleted_at IS NULL
+ORDER BY
+    cs.started_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetCurrentPlanByCompanyID(ctx context.Context, companyid pgtype.UUID) (Plan, error) {
+	row := q.db.QueryRow(ctx, getCurrentPlanByCompanyID, companyid)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.PlanTypeID,
+		&i.Name,
+		&i.Description,
+		&i.Package,
+		&i.Price,
+		&i.BillingCycleDays,
+		&i.MaxUsers,
+		&i.IsActive,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getPlanByID = `-- name: GetPlanByID :one
 SELECT
     p.id,

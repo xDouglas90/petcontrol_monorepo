@@ -39,23 +39,11 @@ func (s *PlanService) GetPlan(ctx context.Context, planID pgtype.UUID) (sqlc.Pla
 }
 
 func (s *PlanService) GetCurrentPlan(ctx context.Context, companyID pgtype.UUID) (sqlc.Plan, error) {
-	company, err := s.queries.GetCompanyByID(ctx, companyID)
+	plan, err := s.queries.GetCurrentPlanByCompanyID(ctx, companyID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return sqlc.Plan{}, apperror.ErrNotFound
 	}
-	if err != nil {
-		return sqlc.Plan{}, err
-	}
-
-	plans, err := s.queries.ListPlansByPackage(ctx, company.ActivePackage)
-	if err != nil {
-		return sqlc.Plan{}, err
-	}
-	if len(plans) == 0 {
-		return sqlc.Plan{}, apperror.ErrNotFound
-	}
-
-	return plans[0], nil
+	return plan, err
 }
 
 func (s *PlanService) CreatePlanType(ctx context.Context, params sqlc.InsertPlanTypeParams) (sqlc.PlanType, error) {

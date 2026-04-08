@@ -22,6 +22,7 @@ type Querier interface {
 	GetCompanyBySlug(ctx context.Context, slug string) (Company, error)
 	GetCompanyUser(ctx context.Context, arg GetCompanyUserParams) (CompanyUser, error)
 	GetCompanyUserByID(ctx context.Context, id pgtype.UUID) (CompanyUser, error)
+	GetCurrentPlanByCompanyID(ctx context.Context, companyid pgtype.UUID) (Plan, error)
 	GetModuleByCode(ctx context.Context, code string) (Module, error)
 	GetPlanByID(ctx context.Context, id pgtype.UUID) (Plan, error)
 	GetUserAuthByUserID(ctx context.Context, userid pgtype.UUID) (UserAuth, error)
