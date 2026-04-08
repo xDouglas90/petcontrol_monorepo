@@ -162,10 +162,10 @@ O proximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ### 10.2 - Checks
 
-- Usuario seedado recebe JWT com `company_id` valido.
-- Endpoint de empresa corrente responde com base no tenant do token.
-- Endpoint de modulos ativos reflete `company_modules`.
-- Nenhuma rota de dados administrativos permanece publica sem necessidade.
+- [] Usuario seedado recebe JWT com `company_id` valido.
+- [] Endpoint de empresa corrente responde com base no tenant do token.
+- [] Endpoint de modulos ativos reflete `company_modules`.
+- [] Nenhuma rota de dados administrativos permanece publica sem necessidade.
 
 ## Fase 11 - Primeiro Modulo de Negocio Real: Schedules
 
