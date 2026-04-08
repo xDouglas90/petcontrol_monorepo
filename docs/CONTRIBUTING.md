@@ -60,19 +60,19 @@ pnpm --filter web dev
 Aplicar migrations:
 
 ```bash
-make migrate-up DATABASE_URL="postgres://postgres:postgres@localhost:5432/petcontrol_dev?sslmode=disable"
+make migrate-up DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
 ```
 
 Reverter ultima migration:
 
 ```bash
-make migrate-down DATABASE_URL="postgres://postgres:postgres@localhost:5432/petcontrol_dev?sslmode=disable"
+make migrate-down DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
 ```
 
 Seed inicial:
 
 ```bash
-make seed DATABASE_URL="postgres://postgres:postgres@localhost:5432/petcontrol_dev?sslmode=disable"
+make seed DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
 ```
 
 ## Qualidade local
