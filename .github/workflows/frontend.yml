@@ -61,8 +61,14 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Validate workspace types required by the frontend
-        run: pnpm --filter ./apps/web... build
+      - name: Build shared libraries
+        run: |
+          pnpm --filter @petcontrol/shared-types build
+          pnpm --filter @petcontrol/shared-utils build
+          pnpm --filter @petcontrol/shared-constants build
+          pnpm --filter @petcontrol/ui build
+      - name: Validate frontend build
+        run: pnpm --filter web build
 
   libs-test:
     name: Shared Libs Tests
@@ -100,6 +106,12 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build shared libraries
+        run: |
+          pnpm --filter @petcontrol/shared-types build
+          pnpm --filter @petcontrol/shared-utils build
+          pnpm --filter @petcontrol/shared-constants build
+          pnpm --filter @petcontrol/ui build
       - name: Run Vitest
         run: pnpm --filter web test
 
@@ -118,6 +130,12 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build shared libraries
+        run: |
+          pnpm --filter @petcontrol/shared-types build
+          pnpm --filter @petcontrol/shared-utils build
+          pnpm --filter @petcontrol/shared-constants build
+          pnpm --filter @petcontrol/ui build
       - name: Build frontend
         run: set -o pipefail && pnpm --filter web build 2>&1 | tee apps/web/.frontend-build.log
       - name: Surface bundle warnings
