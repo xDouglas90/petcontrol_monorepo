@@ -127,6 +127,21 @@ func TestAuthService_Login_UserNotFound(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestAuthService_Login_MissingAuthProfile(t *testing.T) {
+	serviceUnderTest, mock := newAuthService(t)
+	defer mock.Close()
+
+	userID := newPGUUID(t)
+
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnError(pgx.ErrNoRows)
+	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultInvalidCredentials, pgtype.Text{String: "auth profile not found", Valid: true}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
+
+	_, err := serviceUnderTest.Login(context.Background(), "owner@example.com", "secret", "127.0.0.1", "TestAgent/1.0")
+	require.ErrorIs(t, err, apperror.ErrInvalidCredentials)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestAuthService_Login_AccountInactive(t *testing.T) {
 	serviceUnderTest, mock := newAuthService(t)
 	defer mock.Close()

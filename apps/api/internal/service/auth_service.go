@@ -72,6 +72,10 @@ func (s *AuthService) Login(ctx context.Context, email string, password string, 
 
 	authData, err := s.queries.GetUserAuthByUserID(ctx, user.ID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			_ = s.logAttempt(ctx, user.ID, ipAddr, userAgent, sqlc.LoginResultInvalidCredentials, "auth profile not found")
+			return LoginResult{}, apperror.ErrInvalidCredentials
+		}
 		return LoginResult{}, err
 	}
 
