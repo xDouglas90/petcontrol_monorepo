@@ -89,10 +89,38 @@ func TestWorkerHandler_EnqueueDummyNotification_EnqueueError(t *testing.T) {
 	})
 	router.POST("/enqueue", h.EnqueueDummyNotification)
 
-	req := httptest.NewRequest(http.MethodPost, "/enqueue", nil)
+	body, err := json.Marshal(map[string]string{"message": "retry"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/enqueue", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()
 	router.ServeHTTP(res, req)
 
 	require.Equal(t, http.StatusInternalServerError, res.Code)
 	require.True(t, pub.called)
+}
+
+func TestWorkerHandler_EnqueueDummyNotification_InvalidJSON(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	pub := &publisherStub{}
+	h := NewWorkerHandler(pub)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("auth_claims", appjwt.Claims{UserID: "user-1", CompanyID: "11111111-1111-1111-1111-111111111111"})
+		c.Set("company_id", pgtype.UUID{Valid: true})
+		c.Next()
+	})
+	router.POST("/enqueue", h.EnqueueDummyNotification)
+
+	req := httptest.NewRequest(http.MethodPost, "/enqueue", bytes.NewBufferString("{invalid"))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.False(t, pub.called)
+	require.Contains(t, res.Body.String(), "invalid request body")
 }

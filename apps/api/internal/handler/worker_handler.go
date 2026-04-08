@@ -35,7 +35,10 @@ func (h *WorkerHandler) EnqueueDummyNotification(c *gin.Context) {
 	}
 
 	var req enqueueDummyRequest
-	_ = c.ShouldBindJSON(&req)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request body"})
+		return
+	}
 	if req.Message == "" {
 		req.Message = "Dummy notification from API"
 	}
