@@ -75,6 +75,16 @@ Seed inicial:
 make seed DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
 ```
 
+Observação sobre rede Docker:
+
+- No Linux, o script de migration usa `--network host` por padrão.
+- Em macOS/Windows (Docker Desktop), o script ajusta automaticamente `localhost` para `host.docker.internal`.
+- Se você precisar forçar uma rede específica do Docker, defina `DOCKER_NETWORK`:
+
+```bash
+DOCKER_NETWORK=petcontrol_monorepo_default make migrate-up DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
+```
+
 ## Qualidade local
 
 Suite minima (Go + JS/TS quando pnpm estiver disponível):
