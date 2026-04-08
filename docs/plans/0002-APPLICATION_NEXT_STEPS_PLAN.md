@@ -189,10 +189,10 @@ O proximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ### 11.2 - Checks
 
-- `GET /api/v1/schedules` retorna somente registros do tenant.
-- `POST /api/v1/schedules` cria registro com `company_id` derivado do token.
-- `PUT` e `DELETE` respeitam soft delete e ownership do tenant.
-- Testes de integracao cobrem ao menos listagem, criacao e isolamento multi-tenant.
+- [] `GET /api/v1/schedules` retorna somente registros do tenant.
+- [] `POST /api/v1/schedules` cria registro com `company_id` derivado do token.
+- [] `PUT` e `DELETE` respeitam soft delete e ownership do tenant.
+- [] Testes de integracao cobrem ao menos listagem, criacao e isolamento multi-tenant.
 
 ## Fase 12 - Web do Primeiro Fluxo Real
 
