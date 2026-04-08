@@ -133,10 +133,10 @@ O proximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ### 9.2 - Checks
 
-- `README.md`, `.env.example`, Makefile e Compose nao se contradizem em porta, versao e comandos principais.
-- Login seedado funciona ponta a ponta do Web para a API.
-- `shared-types` espelha os enums atuais de auth, usuario e tenant sem uso excessivo de `string`.
-- `sqlc generate` nao gera parametros incorretos para filtros opcionais relevantes.
+- [x] `README.md`, `.env.example`, Makefile e Compose nao se contradizem em porta, versao e comandos principais.
+- [x] Login seedado funciona ponta a ponta do Web para a API.
+- [x] `shared-types` espelha os enums atuais de auth, usuario e tenant sem uso excessivo de `string`.
+- [x] `sqlc generate` nao gera parametros incorretos para filtros opcionais relevantes.
 
 ## Fase 10 - Modulo Base de Empresas e Vinculos
 

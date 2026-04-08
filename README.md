@@ -49,7 +49,7 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 | -------------- | ------------------------------- | -------------------------------------------------------------------------- |
 | Linguagem      | Go 1.26.1                       | Performance nativa, binário único, excelente concorrência via goroutines   |
 | Framework HTTP | Gin                             | Roteamento rápido, middleware composável, ecossistema maduro               |
-| Banco de dados | PostgreSQL 17                   | Robusto, JSONB para auditoria, arrays nativos, UUID                        |
+| Banco de dados | PostgreSQL 18                   | Robusto, JSONB para auditoria, arrays nativos, UUID                        |
 | Query layer    | SQLC                            | Geração de código type-safe a partir de SQL puro — zero ORM magic          |
 | Migrations     | `golang-migrate`                | Migrations versionadas em SQL puro, aplicadas via CLI ou programaticamente |
 | Driver PG      | `pgx/v5`                        | Driver nativo PostgreSQL, máxima performance, suporte a pgxpool            |
@@ -142,14 +142,15 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 │   │   ├── 000001_init.down.sql
 │   │   └── ...
 │   ├── scripts/
-│   │   ├── seed.go                 # Seed de dados iniciais
+│   │   ├── seed.sh                 # Seed de dados iniciais
 │   │   └── migrate.sh              # Script de migration para CI
 │   └── nginx/                      # Config de reverse proxy (produção)
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                  # Lint, vet, testes
-│       └── deploy.yml              # Deploy por app
+│       ├── go.yml                  # CI do backend Go
+│       ├── frontend.yml            # CI do frontend e libs TS
+│       └── branch-protection.yml   # Regras de proteção de branch
 │
 └── .env.example                    # Variáveis de ambiente documentadas
 ```
@@ -749,7 +750,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres18_data:/var/lib/postgresql
 
   redis:
     image: redis:7-alpine
@@ -772,12 +773,12 @@ services:
     environment:
       REDIS_ADDR: redis:6379
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       - redis
 
 volumes:
-  postgres_data:
+  postgres18_data:
 ```
 
 ### 8.2 Makefile — pipeline de tasks
@@ -842,22 +843,34 @@ swagger:
 ```bash
 # .env.example
 
-# Database
-DATABASE_URL="postgresql://petcontrol:petcontrol@localhost:5432/petcontrol"
-
-# Redis
-REDIS_ADDR=localhost:6379
-
 # JWT
-JWT_SECRET=your-super-secret-here
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=another-secret
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_SECRET=change-me
+JWT_ACCESS_TOKEN_TTL=15m
+JWT_REFRESH_TOKEN_TTL=720h
 
 # App
-API_PORT=3000
-WORKER_CONCURRENCY=10
+API_PORT=8080
+API_HOST=0.0.0.0
 APP_ENV=development
+WORKER_CONCURRENCY=5
+WORKER_QUEUE=default
+
+# Database
+DATABASE_URL=postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=petcontrol
+POSTGRES_USER=petcontrol
+POSTGRES_PASSWORD=petcontrol
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Web
+VITE_API_URL=http://localhost:8080/api/v1
+VITE_AUTH_MODE=api
 
 # WhatsApp Business API
 WHATSAPP_API_URL=
@@ -871,12 +884,15 @@ GOOGLE_APPLICATION_CREDENTIALS=
 ### 8.4 CI/CD — GitHub Actions
 
 ```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
+# .github/workflows/go.yml
+name: Go CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
 
 jobs:
-  ci-go:
+  test:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -894,34 +910,39 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
-
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: apps/api
+          go-version-file: apps/api/go.mod
 
       - name: Test API
         run: make test-api
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
-          REDIS_ADDR: localhost:6379
+          REDIS_URL: redis://localhost:6379/0
 
-      - name: Test Worker
-        run: cd apps/worker && go test ./... -v -race
+# .github/workflows/frontend.yml
+name: Frontend CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
 
-  ci-web:
+jobs:
+  lint-test-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: make lint-web
-      - run: make test-web
+      - run: pnpm --filter @petcontrol/shared-types build
+      - run: pnpm --filter @petcontrol/shared-utils build
+      - run: pnpm --filter @petcontrol/shared-constants build
+      - run: pnpm --filter @petcontrol/ui build
+      - run: pnpm --filter web lint
+      - run: pnpm --filter web test
+      - run: pnpm --filter web build
 ```
 
 ---
