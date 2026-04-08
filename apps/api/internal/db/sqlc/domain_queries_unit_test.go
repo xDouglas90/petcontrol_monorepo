@@ -35,6 +35,10 @@ func TestQueries_Modules_Unit(t *testing.T) {
 	_, err = queries.ListModules(context.Background())
 	require.ErrorIs(t, err, errExpected)
 
+	mock.ExpectQuery(`(?s)name: ListActiveModulesByCompanyID`).WithArgs(pgxmock.AnyArg()).WillReturnError(errExpected)
+	_, err = queries.ListActiveModulesByCompanyID(context.Background(), uuidValue())
+	require.ErrorIs(t, err, errExpected)
+
 	mock.ExpectQuery(`(?s)name: UpdateModule`).WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnError(errExpected)
 	_, err = queries.UpdateModule(context.Background(), sqlc.UpdateModuleParams{})
 	require.ErrorIs(t, err, errExpected)
@@ -73,6 +77,10 @@ func TestQueries_Plans_Unit(t *testing.T) {
 
 	mock.ExpectQuery(`(?s)name: ListPlans`).WillReturnError(errExpected)
 	_, err = queries.ListPlans(context.Background())
+	require.ErrorIs(t, err, errExpected)
+
+	mock.ExpectQuery(`(?s)name: ListPlansByPackage`).WithArgs(pgxmock.AnyArg()).WillReturnError(errExpected)
+	_, err = queries.ListPlansByPackage(context.Background(), sqlc.ModulePackageStarter)
 	require.ErrorIs(t, err, errExpected)
 
 	mock.ExpectExec(`(?s)name: UpdatePlan`).WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("UPDATE", 1))

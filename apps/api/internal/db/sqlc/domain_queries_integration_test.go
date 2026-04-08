@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
@@ -63,6 +64,20 @@ func mustCreateCompany(t *testing.T, queries *sqlc.Queries, pool interface {
 	return company
 }
 
+func mustAttachModuleToCompany(t *testing.T, pool interface {
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+}, companyID, moduleID pgtype.UUID,
+) {
+	t.Helper()
+
+	_, err := pool.Exec(context.Background(),
+		"INSERT INTO company_modules(company_id, module_id, is_active) VALUES ($1, $2, TRUE)",
+		companyID,
+		moduleID,
+	)
+	require.NoError(t, err)
+}
+
 func TestQueries_Modules_Integration(t *testing.T) {
 	queries, _, _ := setupQueriesWithPool(t)
 
@@ -113,6 +128,12 @@ func TestQueries_Plans_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	secondType, err := queries.InsertPlanType(context.Background(), sqlc.InsertPlanTypeParams{
+		Name:        fmt.Sprintf("TypeB-%d", time.Now().UnixNano()),
+		Description: pgtype.Text{String: "plan type integration b", Valid: true},
+	})
+	require.NoError(t, err)
+
 	plan, err := queries.InsertPlan(context.Background(), sqlc.InsertPlanParams{
 		PlanTypeID:       planType.ID,
 		Name:             fmt.Sprintf("Plan-%d", time.Now().UnixNano()),
@@ -138,6 +159,10 @@ func TestQueries_Plans_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, plans)
 
+	plansByPackage, err := queries.ListPlansByPackage(context.Background(), sqlc.ModulePackageStarter)
+	require.NoError(t, err)
+	require.NotEmpty(t, plansByPackage)
+
 	rows, err := queries.UpdatePlan(context.Background(), sqlc.UpdatePlanParams{
 		PlanTypeID:       planType.ID,
 		Name:             pgtype.Text{String: "Plan Updated", Valid: true},
@@ -157,6 +182,7 @@ func TestQueries_Plans_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Plan Updated", updatedPlan.Name)
 	require.Equal(t, sqlc.ModulePackageBasic, updatedPlan.Package)
+	_ = secondType
 }
 
 func TestQueries_Companies_Integration(t *testing.T) {
@@ -203,6 +229,27 @@ func TestQueries_Companies_Integration(t *testing.T) {
 	_, err = queries.GetCompanyByID(context.Background(), created.ID)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, pgx.ErrNoRows))
+}
+
+func TestQueries_Modules_Integration_ActiveByCompany(t *testing.T) {
+	queries, _, pool := setupQueriesWithPool(t)
+
+	company := mustCreateCompany(t, queries, pool)
+	module, err := queries.CreateModule(context.Background(), sqlc.CreateModuleParams{
+		Code:        "SCH001",
+		Name:        "Scheduling",
+		Description: "active module integration",
+		MinPackage:  sqlc.ModulePackageStarter,
+		IsActive:    true,
+	})
+	require.NoError(t, err)
+
+	mustAttachModuleToCompany(t, pool, company.ID, module.ID)
+
+	activeModules, err := queries.ListActiveModulesByCompanyID(context.Background(), company.ID)
+	require.NoError(t, err)
+	require.Len(t, activeModules, 1)
+	require.Equal(t, module.ID, activeModules[0].ID)
 }
 
 func TestQueries_CompanyUsers_Integration(t *testing.T) {
