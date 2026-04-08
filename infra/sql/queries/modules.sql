@@ -40,6 +40,30 @@ WHERE
 ORDER BY
     m.code ASC;
 
+-- name: ListActiveModulesByCompanyID :many
+SELECT
+    m.id,
+    m.code,
+    m."name",
+    m.description,
+    m.min_package,
+    m.is_active,
+    m.created_at,
+    m.updated_at,
+    m.deleted_at
+FROM
+    company_modules cm
+    INNER JOIN modules m ON m.id = cm.module_id
+WHERE
+    cm.company_id = sqlc.arg('CompanyID')
+    AND cm.is_active = TRUE
+    AND (cm.expires_at IS NULL
+        OR cm.expires_at > now())
+    AND m.is_active = TRUE
+    AND m.deleted_at IS NULL
+ORDER BY
+    m.code ASC;
+
 -- name: UpdateModule :one
 UPDATE
     modules

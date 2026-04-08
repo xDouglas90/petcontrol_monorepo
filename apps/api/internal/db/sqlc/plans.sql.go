@@ -231,6 +231,64 @@ func (q *Queries) ListPlans(ctx context.Context) ([]Plan, error) {
 	return items, nil
 }
 
+const listPlansByPackage = `-- name: ListPlansByPackage :many
+SELECT
+    p.id,
+    p.plan_type_id,
+    p.name,
+    p.description,
+    p.package,
+    p.price,
+    p.billing_cycle_days,
+    p.max_users,
+    p.is_active,
+    p.image_url,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    plans p
+WHERE
+    p.deleted_at IS NULL
+    AND p.package = $1
+ORDER BY
+    p.created_at DESC
+`
+
+func (q *Queries) ListPlansByPackage(ctx context.Context, package_ ModulePackage) ([]Plan, error) {
+	rows, err := q.db.Query(ctx, listPlansByPackage, package_)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Plan
+	for rows.Next() {
+		var i Plan
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlanTypeID,
+			&i.Name,
+			&i.Description,
+			&i.Package,
+			&i.Price,
+			&i.BillingCycleDays,
+			&i.MaxUsers,
+			&i.IsActive,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePlan = `-- name: UpdatePlan :execrows
 UPDATE
     plans

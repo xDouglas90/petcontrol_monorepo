@@ -28,6 +28,10 @@ func main() {
 
 	queries := sqlc.New(pool)
 	userService := service.NewUserService(queries)
+	companyService := service.NewCompanyService(queries)
+	planService := service.NewPlanService(queries)
+	moduleService := service.NewModuleService(queries)
+	companyUserService := service.NewCompanyUserService(queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
 	defer func() {
@@ -36,6 +40,10 @@ func main() {
 		}
 	}()
 	userHandler := handler.NewUserHandler(userService)
+	companyHandler := handler.NewCompanyHandler(companyService)
+	planHandler := handler.NewPlanHandler(planService)
+	moduleHandler := handler.NewModuleHandler(moduleService)
+	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
@@ -52,7 +60,15 @@ func main() {
 	protected := v1.Group("/")
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
 	protected.GET("/users", userHandler.List)
-	protected.GET("/company-users", userHandler.ListCompanyUsers)
+	protected.GET("/companies", companyHandler.List)
+	protected.GET("/companies/current", companyHandler.Current)
+	protected.GET("/plans", planHandler.List)
+	protected.GET("/plans/current", planHandler.Current)
+	protected.GET("/modules", moduleHandler.List)
+	protected.GET("/modules/active", moduleHandler.Active)
+	protected.GET("/company-users", companyUserHandler.List)
+	protected.POST("/company-users", companyUserHandler.Create)
+	protected.DELETE("/company-users/:user_id", companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})

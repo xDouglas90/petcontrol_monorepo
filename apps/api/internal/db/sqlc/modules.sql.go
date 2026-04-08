@@ -103,6 +103,61 @@ func (q *Queries) GetModuleByCode(ctx context.Context, code string) (Module, err
 	return i, err
 }
 
+const listActiveModulesByCompanyID = `-- name: ListActiveModulesByCompanyID :many
+SELECT
+    m.id,
+    m.code,
+    m."name",
+    m.description,
+    m.min_package,
+    m.is_active,
+    m.created_at,
+    m.updated_at,
+    m.deleted_at
+FROM
+    company_modules cm
+    INNER JOIN modules m ON m.id = cm.module_id
+WHERE
+    cm.company_id = $1
+    AND cm.is_active = TRUE
+    AND (cm.expires_at IS NULL
+        OR cm.expires_at > now())
+    AND m.is_active = TRUE
+    AND m.deleted_at IS NULL
+ORDER BY
+    m.code ASC
+`
+
+func (q *Queries) ListActiveModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error) {
+	rows, err := q.db.Query(ctx, listActiveModulesByCompanyID, companyid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Module
+	for rows.Next() {
+		var i Module
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.MinPackage,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listModules = `-- name: ListModules :many
 SELECT
     m.id,

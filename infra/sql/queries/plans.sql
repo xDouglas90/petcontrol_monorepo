@@ -69,6 +69,29 @@ WHERE
 ORDER BY
     p.created_at DESC;
 
+-- name: ListPlansByPackage :many
+SELECT
+    p.id,
+    p.plan_type_id,
+    p.name,
+    p.description,
+    p.package,
+    p.price,
+    p.billing_cycle_days,
+    p.max_users,
+    p.is_active,
+    p.image_url,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    plans p
+WHERE
+    p.deleted_at IS NULL
+    AND p.package = sqlc.arg('Package')
+ORDER BY
+    p.created_at DESC;
+
 -- name: UpdatePlan :execrows
 UPDATE
     plans
