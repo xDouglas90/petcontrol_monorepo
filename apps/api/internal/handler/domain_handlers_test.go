@@ -157,3 +157,32 @@ func TestCompanyUserHandler_CreateAndDeactivate(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, res.Code)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestCompanyUserHandler_CreateRejectsInvalidUserID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewCompanyUserService(queries)
+	handlerUnderTest := NewCompanyUserHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Next()
+	})
+	router.POST("/company-users", handlerUnderTest.Create)
+
+	body, err := json.Marshal(map[string]any{"user_id": "invalid", "is_owner": true})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/company-users", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}

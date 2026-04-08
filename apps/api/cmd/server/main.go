@@ -61,8 +61,8 @@ func main() {
 	protected.GET("/plans/current", planHandler.Current)
 	protected.GET("/modules/active", moduleHandler.Active)
 	protected.GET("/company-users", companyUserHandler.List)
-	protected.POST("/company-users", companyUserHandler.Create)
-	protected.DELETE("/company-users/:user_id", companyUserHandler.Deactivate)
+	protected.POST("/company-users", middleware.RequireCompanyOwner(queries), companyUserHandler.Create)
+	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
