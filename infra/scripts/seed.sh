@@ -161,15 +161,55 @@ WHERE NOT EXISTS (
   WHERE cu.company_id = dc.id AND cu.user_id = su.id
 );
 
+-- Active subscription for current seeded plan
+WITH dev_company AS (
+  SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
+), starter_plan AS (
+  SELECT id, price, billing_cycle_days FROM plans WHERE name = 'Starter Monthly' AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1
+)
+INSERT INTO company_subscriptions (company_id, plan_id, started_at, expires_at, is_active, price_paid, notes)
+SELECT
+  dc.id,
+  sp.id,
+  NOW() - INTERVAL '1 day',
+  NOW() + make_interval(days => sp.billing_cycle_days),
+  TRUE,
+  sp.price,
+  'Seeded development subscription'
+FROM dev_company dc
+CROSS JOIN starter_plan sp
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM company_subscriptions cs
+  WHERE cs.company_id = dc.id
+    AND cs.plan_id = sp.id
+    AND cs.is_active = TRUE
+    AND cs.canceled_at IS NULL
+    AND cs.expires_at > NOW()
+);
+
 -- Active company modules for the seeded tenant
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
+), active_subscription AS (
+  SELECT id FROM company_subscriptions
+  WHERE company_id = (SELECT id FROM dev_company)
+    AND is_active = TRUE
+    AND canceled_at IS NULL
+    AND expires_at > NOW()
+  ORDER BY started_at DESC
+  LIMIT 1
 ), starter_modules AS (
   SELECT id FROM modules WHERE code IN ('SCH', 'CRM')
 )
-INSERT INTO company_modules (company_id, module_id, granted_manually, is_active)
-SELECT dc.id, sm.id, FALSE, TRUE
+INSERT INTO company_modules (company_id, module_id, subscription_id, granted_manually, is_active)
+SELECT dc.id, sm.id, s.id, FALSE, TRUE
 FROM dev_company dc
+JOIN active_subscription s ON TRUE
 CROSS JOIN starter_modules sm
-ON CONFLICT (company_id, module_id) DO NOTHING;
+ON CONFLICT (company_id, module_id) DO UPDATE SET
+  subscription_id = EXCLUDED.subscription_id,
+  granted_manually = EXCLUDED.granted_manually,
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
 SQL
