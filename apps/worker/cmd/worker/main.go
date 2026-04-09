@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -18,15 +17,17 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("load worker config: %v", err)
-	}
-
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Error("failed to load worker config", "error", err.Error())
+		os.Exit(1)
+	}
+
 	if err := pingRedis(cfg.RedisAddr); err != nil {
-		log.Fatalf("redis connection failed: %v", err)
+		logger.Error("redis connection failed", "redis_addr", cfg.RedisAddr, "error", err.Error())
+		os.Exit(1)
 	}
 
 	wa := whatsapp.NewClient(logger)
@@ -49,7 +50,8 @@ func main() {
 	go func() {
 		logger.Info("worker started", "redis_addr", cfg.RedisAddr, "queue", cfg.WorkerQueue)
 		if err := server.Run(mux); err != nil {
-			log.Fatalf("worker stopped: %v", err)
+			logger.Error("worker stopped unexpectedly", "error", err.Error())
+			os.Exit(1)
 		}
 	}()
 
