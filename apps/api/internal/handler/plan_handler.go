@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
@@ -20,25 +18,25 @@ func NewPlanHandler(service *service.PlanService) *PlanHandler {
 func (h *PlanHandler) List(c *gin.Context) {
 	plans, err := h.service.ListPlans(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list plans"})
+		middleware.JSONError(c, 500, "list_plans_failed", "failed to list plans")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": plans})
+	middleware.JSONData(c, 200, plans)
 }
 
 func (h *PlanHandler) Current(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	plan, err := h.service.GetCurrentPlan(c.Request.Context(), companyID)
 	if err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to get current plan"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "get_current_plan_failed", "failed to get current plan")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": plan})
+	middleware.JSONData(c, 200, plan)
 }

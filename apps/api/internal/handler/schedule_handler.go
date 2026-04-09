@@ -44,109 +44,109 @@ func NewScheduleHandler(service *service.ScheduleService) *ScheduleHandler {
 func (h *ScheduleHandler) List(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	items, err := h.service.ListSchedulesByCompanyID(c.Request.Context(), companyID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list schedules"})
+		middleware.JSONError(c, 500, "list_schedules_failed", "failed to list schedules")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": items})
+	middleware.JSONData(c, 200, items)
 }
 
 func (h *ScheduleHandler) GetByID(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	scheduleID, err := parseUUID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid schedule id"})
+		middleware.JSONError(c, 422, "invalid_schedule_id", "invalid schedule id")
 		return
 	}
 
 	item, err := h.service.GetScheduleByID(c.Request.Context(), companyID, scheduleID)
 	if err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to get schedule"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "get_schedule_failed", "failed to get schedule")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": item})
+	middleware.JSONData(c, 200, item)
 }
 
 func (h *ScheduleHandler) History(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	scheduleID, err := parseUUID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid schedule id"})
+		middleware.JSONError(c, 422, "invalid_schedule_id", "invalid schedule id")
 		return
 	}
 
 	items, err := h.service.ListScheduleStatusHistory(c.Request.Context(), companyID, scheduleID)
 	if err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to list schedule history"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "list_schedule_history_failed", "failed to list schedule history")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": items})
+	middleware.JSONData(c, 200, items)
 }
 
 func (h *ScheduleHandler) Create(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	claims, ok := middleware.GetClaims(c)
 	if !ok || claims.UserID == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "user context required"})
+		middleware.JSONError(c, 403, "user_context_required", "user context required")
 		return
 	}
 
 	createdBy, err := parseUUID(claims.UserID)
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid user_id in token"})
+		middleware.JSONError(c, 403, "invalid_user_id", "invalid user_id in token")
 		return
 	}
 
 	var req createScheduleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request body"})
+		middleware.JSONError(c, 422, "invalid_request_body", "invalid request body")
 		return
 	}
 
 	clientID, err := parseUUID(req.ClientID)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid client_id"})
+		middleware.JSONError(c, 422, "invalid_client_id", "invalid client_id")
 		return
 	}
 
 	petID, err := parseUUID(req.PetID)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid pet_id"})
+		middleware.JSONError(c, 422, "invalid_pet_id", "invalid pet_id")
 		return
 	}
 
 	scheduledAt, err := time.Parse(time.RFC3339, req.ScheduledAt)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid scheduled_at"})
+		middleware.JSONError(c, 422, "invalid_scheduled_at", "invalid scheduled_at")
 		return
 	}
 
 	estimatedEnd, err := parseOptionalTime(req.EstimatedEnd)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid estimated_end"})
+		middleware.JSONError(c, 422, "invalid_estimated_end", "invalid estimated_end")
 		return
 	}
 
@@ -163,65 +163,80 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 		StatusNotes:  strings.TrimSpace(req.StatusNotes),
 	})
 	if err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to create schedule"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "create_schedule_failed", "failed to create schedule")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"data": item})
+	middleware.AddAuditEntry(c, middleware.AuditEntry{
+		Action:      sqlc.LogActionCreate,
+		EntityTable: "schedules",
+		EntityID:    item.ID,
+		CompanyID:   companyID,
+		OldData:     nil,
+		NewData:     item,
+	})
+
+	middleware.JSONData(c, 201, item)
 }
 
 func (h *ScheduleHandler) Update(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	claims, ok := middleware.GetClaims(c)
 	if !ok || claims.UserID == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "user context required"})
+		middleware.JSONError(c, 403, "user_context_required", "user context required")
 		return
 	}
 
 	changedBy, err := parseUUID(claims.UserID)
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid user_id in token"})
+		middleware.JSONError(c, 403, "invalid_user_id", "invalid user_id in token")
 		return
 	}
 
 	scheduleID, err := parseUUID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid schedule id"})
+		middleware.JSONError(c, 422, "invalid_schedule_id", "invalid schedule id")
+		return
+	}
+
+	before, err := h.service.GetScheduleByID(c.Request.Context(), companyID, scheduleID)
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "get_schedule_failed", "failed to get schedule")
 		return
 	}
 
 	var req updateScheduleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request body"})
+		middleware.JSONError(c, 422, "invalid_request_body", "invalid request body")
 		return
 	}
 
 	clientID, err := parseOptionalUUID(req.ClientID)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid client_id"})
+		middleware.JSONError(c, 422, "invalid_client_id", "invalid client_id")
 		return
 	}
 
 	petID, err := parseOptionalUUID(req.PetID)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid pet_id"})
+		middleware.JSONError(c, 422, "invalid_pet_id", "invalid pet_id")
 		return
 	}
 
 	scheduledAt, err := parseOptionalRFC3339(req.ScheduledAt)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid scheduled_at"})
+		middleware.JSONError(c, 422, "invalid_scheduled_at", "invalid scheduled_at")
 		return
 	}
 
 	estimatedEnd, err := parseOptionalRFC3339(req.EstimatedEnd)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid estimated_end"})
+		middleware.JSONError(c, 422, "invalid_estimated_end", "invalid estimated_end")
 		return
 	}
 
@@ -238,30 +253,57 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 		ChangedBy:    changedBy,
 	})
 	if err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to update schedule"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "update_schedule_failed", "failed to update schedule")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": item})
+	middleware.AddAuditEntry(c, middleware.AuditEntry{
+		Action:      sqlc.LogActionUpdate,
+		EntityTable: "schedules",
+		EntityID:    item.ID,
+		CompanyID:   companyID,
+		OldData:     before,
+		NewData:     item,
+	})
+
+	middleware.JSONData(c, 200, item)
 }
 
 func (h *ScheduleHandler) Delete(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	scheduleID, err := parseUUID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid schedule id"})
+		middleware.JSONError(c, 422, "invalid_schedule_id", "invalid schedule id")
+		return
+	}
+
+	before, err := h.service.GetScheduleByID(c.Request.Context(), companyID, scheduleID)
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "get_schedule_failed", "failed to get schedule")
 		return
 	}
 
 	if err := h.service.DeleteSchedule(c.Request.Context(), companyID, scheduleID); err != nil {
-		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to delete schedule"})
+		middleware.JSONError(c, apperror.HTTPStatus(err), "delete_schedule_failed", "failed to delete schedule")
 		return
 	}
+
+	middleware.AddAuditEntry(c, middleware.AuditEntry{
+		Action:      sqlc.LogActionDelete,
+		EntityTable: "schedules",
+		EntityID:    before.ID,
+		CompanyID:   companyID,
+		OldData:     before,
+		NewData: gin.H{
+			"id":      before.ID,
+			"deleted": true,
+		},
+	})
 
 	c.Status(http.StatusNoContent)
 }

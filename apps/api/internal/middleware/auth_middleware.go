@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -14,13 +13,13 @@ func Auth(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractBearerToken(c.GetHeader("Authorization"))
 		if token == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing bearer token"})
+			JSONError(c, 401, "missing_bearer_token", "missing bearer token")
 			return
 		}
 
 		claims, err := appjwt.ParseToken(secret, token)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			JSONError(c, 401, "invalid_token", "invalid token")
 			return
 		}
 

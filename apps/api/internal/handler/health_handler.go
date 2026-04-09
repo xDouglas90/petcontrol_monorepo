@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 )
 
 type HealthHandler struct {
@@ -18,7 +18,7 @@ func NewHealthHandler(pool *pgxpool.Pool) *HealthHandler {
 }
 
 func (h *HealthHandler) Health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	c.JSON(200, gin.H{"status": "ok"})
 }
 
 func (h *HealthHandler) Ready(c *gin.Context) {
@@ -26,12 +26,9 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 	defer cancel()
 
 	if err := h.pool.Ping(ctx); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "not_ready",
-			"error":  "database unavailable",
-		})
+		middleware.JSONError(c, 503, "database_unavailable", "database unavailable")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "ready"})
+	c.JSON(200, gin.H{"status": "ready"})
 }

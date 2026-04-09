@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/config"
@@ -47,9 +49,10 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	router := gin.New()
-	router.Use(gin.Logger(), middleware.Recovery())
+	router.Use(middleware.RequestContext(), middleware.RequestLogger(logger), middleware.Recovery(logger))
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
@@ -58,7 +61,7 @@ func main() {
 	v1.POST("/auth/login", authHandler.Login)
 
 	protected := v1.Group("/")
-	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
+	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant(), middleware.Audit(queries, logger))
 	protected.GET("/companies/current", companyHandler.Current)
 	protected.GET("/plans/current", planHandler.Current)
 	protected.GET("/modules/active", moduleHandler.Active)
@@ -67,7 +70,7 @@ func main() {
 	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
-		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
+		middleware.JSONData(c, 200, gin.H{"allowed": true, "module": c.Param("code")})
 	})
 
 	schedules := protected.Group("/schedules")

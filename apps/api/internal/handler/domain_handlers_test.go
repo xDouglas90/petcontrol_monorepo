@@ -131,8 +131,12 @@ func TestCompanyUserHandler_CreateAndDeactivate(t *testing.T) {
 	companyID := domainHandlerUUID(t)
 	userID := domainHandlerUUID(t)
 	createdID := domainHandlerUUID(t)
+	joinedAt := time.Now().UTC()
+	leftAt := joinedAt.Add(5 * time.Minute)
 	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, true, true).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(createdID.String(), companyID.String(), userID.String(), true, true, time.Now(), nil))
+	mock.ExpectQuery(`(?s)name: GetCompanyUser`).WithArgs(companyID, userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(createdID.String(), companyID.String(), userID.String(), true, true, joinedAt, nil))
 	mock.ExpectExec(`(?s)name: DeactivateCompanyUser`).WithArgs(companyID, userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+	mock.ExpectQuery(`(?s)name: GetCompanyUser`).WithArgs(companyID, userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(createdID.String(), companyID.String(), userID.String(), true, false, joinedAt, leftAt))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {

@@ -33,6 +33,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	HasActiveCompanyModuleByCode(ctx context.Context, arg HasActiveCompanyModuleByCodeParams) (bool, error)
 	IncrementUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
+	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertCompany(ctx context.Context, arg InsertCompanyParams) (Company, error)
 	InsertLoginHistory(ctx context.Context, arg InsertLoginHistoryParams) error
 	InsertPlan(ctx context.Context, arg InsertPlanParams) (Plan, error)

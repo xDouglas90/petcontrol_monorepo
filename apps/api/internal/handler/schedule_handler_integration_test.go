@@ -95,6 +95,11 @@ func TestScheduleEndpoints_CreateUsesTenantFromContext(t *testing.T) {
 	listB, err := queries.ListSchedulesByCompanyID(ctx, tenantB.companyID)
 	require.NoError(t, err)
 	require.Len(t, listB, 0)
+
+	var createdCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'schedules' AND action = 'create' AND company_id = $1`, tenantA.companyID).Scan(&createdCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, createdCount)
 }
 
 func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) {
@@ -142,6 +147,34 @@ func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) 
 	err = pool.QueryRow(ctx, "SELECT deleted_at FROM schedules WHERE id = $1", scheduleA).Scan(&deletedAt)
 	require.NoError(t, err)
 	require.True(t, deletedAt.Valid)
+
+	var updatedCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'schedules' AND action = 'update' AND company_id = $1`, tenantA.companyID).Scan(&updatedCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, updatedCount)
+
+	var deletedCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'schedules' AND action = 'delete' AND company_id = $1`, tenantA.companyID).Scan(&deletedCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, deletedCount)
+}
+
+func TestScheduleEndpoints_CorrelationIDHeaderAndErrorPayload(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-correlation")
+	router := setupScheduleRouterForTenant(queries, tenant)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
+	req.Header.Set("X-Correlation-ID", "corr-test-123")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Equal(t, "corr-test-123", res.Header().Get("X-Correlation-ID"))
+	require.Contains(t, res.Body.String(), "\"correlation_id\":\"corr-test-123\"")
 }
 
 func TestScheduleEndpoints_HistoryIsTenantScoped(t *testing.T) {
@@ -203,6 +236,7 @@ func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenant
 	scheduleHandler := handler.NewScheduleHandler(scheduleService)
 
 	router := gin.New()
+	router.Use(middleware.RequestContext())
 	router.Use(func(c *gin.Context) {
 		c.Set("company_id", tenant.companyID)
 		c.Set("auth_claims", appjwt.Claims{
@@ -213,6 +247,7 @@ func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenant
 		})
 		c.Next()
 	})
+	router.Use(middleware.Audit(queries, nil))
 
 	schedules := router.Group("/api/v1/schedules")
 	schedules.Use(middleware.RequireModule(queries, "SCH"))

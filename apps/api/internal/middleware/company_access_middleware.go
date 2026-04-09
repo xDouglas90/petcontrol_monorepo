@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -13,13 +12,13 @@ func RequireCompanyOwner(queries sqlc.Querier) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		companyID, ok := GetCompanyID(c)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "company context required"})
+			JSONError(c, 403, "company_context_required", "company context required")
 			return
 		}
 
 		claims, ok := GetClaims(c)
 		if !ok || claims.UserID == "" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user context required"})
+			JSONError(c, 403, "user_context_required", "user context required")
 			return
 		}
 
@@ -30,7 +29,7 @@ func RequireCompanyOwner(queries sqlc.Querier) gin.HandlerFunc {
 
 		userID, err := parseUUID(claims.UserID)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid user_id in token"})
+			JSONError(c, 403, "invalid_user_id", "invalid user_id in token")
 			return
 		}
 
@@ -40,16 +39,16 @@ func RequireCompanyOwner(queries sqlc.Querier) gin.HandlerFunc {
 		})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "company ownership required"})
+				JSONError(c, 403, "company_ownership_required", "company ownership required")
 				return
 			}
 
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to verify company ownership"})
+			JSONError(c, 500, "company_ownership_verification_failed", "failed to verify company ownership")
 			return
 		}
 
 		if !membership.IsActive || !membership.IsOwner {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "company ownership required"})
+			JSONError(c, 403, "company_ownership_required", "company ownership required")
 			return
 		}
 
