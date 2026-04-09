@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,10 +33,24 @@ func main() {
 
 	wa := whatsapp.NewClient(logger)
 	notifProcessor := processor.NewNotificationsProcessor(logger, wa)
+	scheduleProcessor := processor.NewScheduleConfirmationProcessor(logger, wa)
 	scheduler.New(logger).Start()
+	webhookServer := &http.Server{
+		Addr:    cfg.WebhookAddr,
+		Handler: whatsapp.NewWebhookHandler(cfg.WhatsAppVerifyToken, logger),
+	}
+
+	go func() {
+		logger.Info("worker webhook started", "addr", cfg.WebhookAddr)
+		if err := webhookServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("worker webhook stopped unexpectedly", "error", err.Error())
+			os.Exit(1)
+		}
+	}()
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(queue.TypeNotificationDummy, notifProcessor.HandleDummyNotification)
+	mux.HandleFunc(queue.TypeScheduleConfirmed, scheduleProcessor.HandleScheduleConfirmation)
 
 	server := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: cfg.RedisAddr},
@@ -56,6 +71,9 @@ func main() {
 	}()
 
 	waitForShutdownSignal(logger)
+	if err := webhookServer.Shutdown(context.Background()); err != nil {
+		logger.Error("worker webhook shutdown failed", "error", err.Error())
+	}
 	server.Shutdown()
 }
 
