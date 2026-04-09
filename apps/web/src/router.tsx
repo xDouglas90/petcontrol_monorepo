@@ -11,6 +11,7 @@ import {
 
 import { AppLayout } from '@/routes/(app)/_layout';
 import { DashboardPage } from '@/routes/(app)/dashboard';
+import { SchedulesPage } from '@/routes/(app)/schedules';
 import { LoginPage } from '@/routes/(auth)/login';
 import { useAuthStore } from '@/lib/auth/auth.store';
 
@@ -54,10 +55,16 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
+const schedulesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: APP_ROUTE_SEGMENTS.schedules,
+  component: SchedulesPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
-  appRoute.addChildren([dashboardRoute]),
+  appRoute.addChildren([dashboardRoute, schedulesRoute]),
 ]);
 
 export const router = createRouter({

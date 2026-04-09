@@ -62,3 +62,77 @@ export interface ApiErrorPayloadDTO {
   error?: string;
   message?: string;
 }
+
+export const MODULE_PACKAGES = [
+  'internal',
+  'starter',
+  'basic',
+  'essential',
+  'premium',
+] as const;
+
+export type ModulePackage = (typeof MODULE_PACKAGES)[number];
+
+export interface CompanyDTO {
+  id: UUID;
+  slug: string;
+  name: string;
+  fantasy_name: string;
+  cnpj: string;
+  active_package: ModulePackage;
+  is_active: boolean;
+}
+
+export interface CurrentCompanyApiResponseDTO {
+  data: CompanyDTO;
+}
+
+export const SCHEDULE_STATUSES = [
+  'waiting',
+  'confirmed',
+  'canceled',
+  'in_progress',
+  'finished',
+  'delivered',
+] as const;
+
+export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
+
+export interface ScheduleDTO {
+  id: UUID;
+  company_id: UUID;
+  client_id: UUID;
+  pet_id: UUID;
+  scheduled_at: string;
+  estimated_end?: string | null;
+  notes?: string | null;
+  current_status: ScheduleStatus;
+}
+
+export interface ScheduleListApiResponseDTO {
+  data: ScheduleDTO[];
+}
+
+export interface ScheduleApiResponseDTO {
+  data: ScheduleDTO;
+}
+
+export interface CreateScheduleInput {
+  client_id: UUID;
+  pet_id: UUID;
+  scheduled_at: string;
+  estimated_end?: string;
+  notes?: string;
+  status?: ScheduleStatus;
+  status_notes?: string;
+}
+
+export interface UpdateScheduleInput {
+  client_id?: UUID;
+  pet_id?: UUID;
+  scheduled_at?: string;
+  estimated_end?: string;
+  notes?: string;
+  status?: ScheduleStatus;
+  status_notes?: string;
+}
