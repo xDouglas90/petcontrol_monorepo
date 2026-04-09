@@ -291,7 +291,7 @@ Observação: a fase foi concluída com integração do Swaggo na API (rota `/sw
 
 ## Fase 16 - Endurecimento de Qualidade
 \
-Observação: a Fase 16 foi concluída com a implementação dos comandos agregados no Makefile (`test`, `lint`, `build`, `dev`), expansão e validação dos testes unitários e de integração para middlewares, handlers e worker, além da revisão dos workflows de CI para garantir bloqueio de regressão em todos os módulos principais. O baseline de qualidade e previsibilidade foi consolidado, com cobertura mínima atendida e comandos de desenvolvimento local padronizados e documentados.
+Observação: a Fase 16 foi concluída com a consolidação dos comandos agregados no Makefile (`test`, `lint`, `build`, `dev`), expansão e validação dos testes unitários e de integração para middlewares, handlers e worker, além da revisão dos workflows de CI para garantir bloqueio de regressão em todos os módulos principais. O baseline de qualidade e previsibilidade foi consolidado, com verificação de cobertura mínima aplicada na CI para API e Worker em pacotes unitários determinísticos, e com comandos de desenvolvimento local padronizados e documentados.
 
 ### 16.1 - Ações
 
