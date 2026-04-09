@@ -489,7 +489,9 @@ func CompanyID(c *gin.Context) uuid.UUID {
 
 ### 5.5 Auditoria automática via Middleware
 
-O middleware `audit.go` intercepta automaticamente mutations (POST, PUT, PATCH, DELETE) e insere em `audit_logs` com `old_data` e `new_data` em JSONB. Não é necessário chamar nada manualmente nos handlers.
+O middleware de auditoria persiste automaticamente em `audit_logs` as entradas acumuladas durante a request, incluindo `old_data` e `new_data` em JSONB.
+
+No estado atual da implementação, os handlers de mutação ainda registram explicitamente cada `AuditEntry` via `middleware.AddAuditEntry(...)`, e o middleware cuida da persistência ao final da request.
 
 ### 5.6 Swagger com Swaggo
 
