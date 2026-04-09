@@ -45,7 +45,7 @@ func main() {
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
-	scheduleHandler := handler.NewScheduleHandler(scheduleService)
+	scheduleHandler := handler.NewScheduleHandler(scheduleService, workerPublisher)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)

@@ -19,6 +19,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
 	appjwt "github.com/xdouglas90/petcontrol_monorepo/internal/jwt"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 	"github.com/xdouglas90/petcontrol_monorepo/test/integration"
 )
@@ -159,6 +160,45 @@ func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) 
 	require.Equal(t, 1, deletedCount)
 }
 
+func TestScheduleEndpoints_ConfirmPublishesScheduleTask(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-confirm")
+	moduleID := mustCreateScheduleModule(t, ctx, pool)
+	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, moduleID)
+
+	scheduledAt := time.Now().UTC().Add(6 * time.Hour).Truncate(time.Second)
+	scheduleID := mustCreateScheduleRecord(t, ctx, queries, tenant, scheduledAt, "confirm")
+
+	pub := &schedulePublisherStub{}
+	router := setupScheduleRouterForTenant(queries, tenant, pub)
+
+	body, err := json.Marshal(map[string]any{"status": "confirmed", "status_notes": "confirmed by customer"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/schedules/"+scheduleID.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.True(t, pub.called)
+	require.Equal(t, scheduleID.String(), pub.captured.ScheduleID)
+	require.Equal(t, tenant.companyID.String(), pub.captured.CompanyID)
+	require.Equal(t, tenant.userID.String(), pub.captured.ChangedBy)
+	require.Equal(t, "confirmed", pub.captured.Status)
+	require.Equal(t, "confirmed by customer", pub.captured.StatusNotes)
+	require.Equal(t, 1, pub.captured.Version)
+	require.NotZero(t, pub.captured.OccurredAt)
+
+	var auditCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'schedules' AND action = 'update' AND company_id = $1`, tenant.companyID).Scan(&auditCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, auditCount)
+}
+
 func TestScheduleEndpoints_CorrelationIDHeaderAndErrorPayload(t *testing.T) {
 	ctx := context.Background()
 	pool := setupScheduleIntegrationPool(t)
@@ -229,11 +269,11 @@ func setupScheduleIntegrationPool(t *testing.T) *pgxpool.Pool {
 	return setup.Pool
 }
 
-func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixture) *gin.Engine {
+func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixture, publisher ...queue.Publisher) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 
 	scheduleService := service.NewScheduleService(queries)
-	scheduleHandler := handler.NewScheduleHandler(scheduleService)
+	scheduleHandler := handler.NewScheduleHandler(scheduleService, publisher...)
 
 	router := gin.New()
 	router.Use(middleware.RequestContext())
@@ -259,6 +299,25 @@ func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenant
 	schedules.DELETE("/:id", scheduleHandler.Delete)
 
 	return router
+}
+
+type schedulePublisherStub struct {
+	called   bool
+	captured queue.ScheduleConfirmationPayload
+}
+
+func (p *schedulePublisherStub) EnqueueDummyNotification(context.Context, queue.DummyNotificationPayload) error {
+	return nil
+}
+
+func (p *schedulePublisherStub) EnqueueScheduleConfirmation(_ context.Context, payload queue.ScheduleConfirmationPayload) error {
+	p.called = true
+	p.captured = payload
+	return nil
+}
+
+func (p *schedulePublisherStub) Close() error {
+	return nil
 }
 
 func mustCreateTenantFixture(t *testing.T, ctx context.Context, pool *pgxpool.Pool, slug string) integrationTenantFixture {

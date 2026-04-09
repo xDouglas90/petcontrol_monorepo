@@ -10,11 +10,13 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
 type ScheduleHandler struct {
-	service *service.ScheduleService
+	service   *service.ScheduleService
+	publisher queue.Publisher
 }
 
 type createScheduleRequest struct {
@@ -37,8 +39,12 @@ type updateScheduleRequest struct {
 	StatusNotes  *string `json:"status_notes"`
 }
 
-func NewScheduleHandler(service *service.ScheduleService) *ScheduleHandler {
-	return &ScheduleHandler{service: service}
+func NewScheduleHandler(service *service.ScheduleService, publisher ...queue.Publisher) *ScheduleHandler {
+	handler := &ScheduleHandler{service: service}
+	if len(publisher) > 0 {
+		handler.publisher = publisher[0]
+	}
+	return handler
 }
 
 func (h *ScheduleHandler) List(c *gin.Context) {
@@ -167,6 +173,10 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	if err := h.publishScheduleConfirmationIfNeeded(c, nil, item, createdBy, strings.TrimSpace(req.StatusNotes)); err != nil {
+		return
+	}
+
 	middleware.AddAuditEntry(c, middleware.AuditEntry{
 		Action:      sqlc.LogActionCreate,
 		EntityTable: "schedules",
@@ -257,6 +267,10 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 		return
 	}
 
+	if err := h.publishScheduleConfirmationIfNeeded(c, &before, item, changedBy, parseOptionalString(req.StatusNotes)); err != nil {
+		return
+	}
+
 	middleware.AddAuditEntry(c, middleware.AuditEntry{
 		Action:      sqlc.LogActionUpdate,
 		EntityTable: "schedules",
@@ -306,6 +320,40 @@ func (h *ScheduleHandler) Delete(c *gin.Context) {
 	})
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *ScheduleHandler) publishScheduleConfirmationIfNeeded(c *gin.Context, before *sqlc.GetScheduleByIDAndCompanyIDRow, after sqlc.GetScheduleByIDAndCompanyIDRow, changedBy pgtype.UUID, statusNotes string) error {
+	if h.publisher == nil {
+		return nil
+	}
+	if after.CurrentStatus != sqlc.ScheduleStatusConfirmed {
+		return nil
+	}
+	if before != nil && before.CurrentStatus == sqlc.ScheduleStatusConfirmed {
+		return nil
+	}
+
+	if err := h.publisher.EnqueueScheduleConfirmation(c.Request.Context(), queue.ScheduleConfirmationPayload{
+		Version:     1,
+		ScheduleID:  after.ID.String(),
+		CompanyID:   after.CompanyID.String(),
+		ChangedBy:   changedBy.String(),
+		Status:      string(after.CurrentStatus),
+		StatusNotes: statusNotes,
+		OccurredAt:  time.Now().UTC(),
+	}); err != nil {
+		middleware.JSONError(c, 500, "enqueue_schedule_confirmation_failed", "failed to enqueue schedule confirmation")
+		return err
+	}
+
+	return nil
+}
+
+func parseOptionalString(raw *string) string {
+	if raw == nil {
+		return ""
+	}
+	return strings.TrimSpace(*raw)
 }
 
 func parseOptionalTime(raw *string) (*time.Time, error) {

@@ -147,6 +147,78 @@ func TestScheduleHandler_CreateAndGetByID(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestScheduleHandler_UpdatePublishesConfirmation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewScheduleService(queries)
+	pub := &publisherStub{}
+	handlerUnderTest := NewScheduleHandler(serviceUnderTest, pub)
+
+	companyID := domainHandlerUUID(t)
+	scheduleID := domainHandlerUUID(t)
+	clientID := domainHandlerUUID(t)
+	petID := domainHandlerUUID(t)
+	changedByRaw := uuid.NewString()
+	changedBy, err := parseUUID(changedByRaw)
+	require.NoError(t, err)
+	now := time.Now().UTC().Truncate(time.Second)
+	confirmedAt := now.Add(30 * time.Minute)
+
+	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, confirmedAt, "banho", changedByRaw, now, nil, nil, sqlc.ScheduleStatusWaiting))
+
+	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, confirmedAt, "banho", changedByRaw, now, nil, nil, sqlc.ScheduleStatusWaiting))
+
+	mock.ExpectQuery(`(?s)name: ValidateScheduleOwnership`).
+		WithArgs(petID, companyID, clientID).
+		WillReturnRows(pgxmock.NewRows([]string{"is_valid"}).AddRow(true))
+
+	mock.ExpectQuery(`(?s)name: InsertScheduleStatusHistory`).
+		WithArgs(scheduleID, sqlc.ScheduleStatusConfirmed, changedBy, pgxmock.AnyArg()).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "schedule_id", "status", "changed_at", "changed_by", "notes"}).
+			AddRow(uuid.NewString(), scheduleID.String(), sqlc.ScheduleStatusConfirmed, now, changedByRaw, "confirmado"))
+
+	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, confirmedAt, "banho", changedByRaw, now, nil, nil, sqlc.ScheduleStatusConfirmed))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{UserID: changedByRaw, CompanyID: companyID.String(), Role: "admin", Kind: "owner"})
+		c.Next()
+	})
+	router.PUT("/schedules/:id", handlerUnderTest.Update)
+
+	body, err := json.Marshal(map[string]any{"status": "confirmed", "status_notes": "confirmado"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPut, "/schedules/"+scheduleID.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.True(t, pub.scheduleCalled)
+	require.Equal(t, scheduleID.String(), pub.scheduleCaptured.ScheduleID)
+	require.Equal(t, companyID.String(), pub.scheduleCaptured.CompanyID)
+	require.Equal(t, changedByRaw, pub.scheduleCaptured.ChangedBy)
+	require.Equal(t, "confirmed", pub.scheduleCaptured.Status)
+	require.Equal(t, "confirmado", pub.scheduleCaptured.StatusNotes)
+	require.Equal(t, 1, pub.scheduleCaptured.Version)
+	require.NotZero(t, pub.scheduleCaptured.OccurredAt)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestScheduleHandler_CreateRejectsInvalidDate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

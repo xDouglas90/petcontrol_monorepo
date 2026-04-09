@@ -16,15 +16,23 @@ import (
 )
 
 type publisherStub struct {
-	err      error
-	called   bool
-	captured queue.DummyNotificationPayload
+	err              error
+	called           bool
+	captured         queue.DummyNotificationPayload
+	scheduleCalled   bool
+	scheduleCaptured queue.ScheduleConfirmationPayload
 }
 
 func (p *publisherStub) EnqueueDummyNotification(_ context.Context, payload queue.DummyNotificationPayload) error {
 	p.called = true
 	p.captured = payload
 	return p.err
+}
+
+func (p *publisherStub) EnqueueScheduleConfirmation(_ context.Context, payload queue.ScheduleConfirmationPayload) error {
+	p.scheduleCalled = true
+	p.scheduleCaptured = payload
+	return nil
 }
 
 func (p *publisherStub) Close() error { return nil }
