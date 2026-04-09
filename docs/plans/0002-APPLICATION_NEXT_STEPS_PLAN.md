@@ -213,10 +213,12 @@ Observação: além dos checks originais, a fase passou a expor `GET /api/v1/sch
 
 ### 12.2 - Checks
 
-- Login leva a dashboard com dados reais da empresa corrente.
-- Tela de schedules lista dados da API.
-- Criação de schedule atualiza cache do Query corretamente.
-- Nenhum dado de servidor e salvo em Zustand fora da sessão/auth e UI.
+- [x] Login leva a dashboard com dados reais da empresa corrente.
+- [x] Tela de schedules lista dados da API.
+- [x] Criação de schedule atualiza cache do Query corretamente.
+- [x] Nenhum dado de servidor e salvo em Zustand fora da sessão/auth e UI.
+
+Observação: além dos checks originais, a fase passou a contar com testes de componente para a dashboard conectada e testes de integração dos hooks de domínio para validar invalidação e recarga do cache de schedules via TanStack Query.
 
 ## Fase 13 - Auditoria, Erros e Observabilidade Básica
 
