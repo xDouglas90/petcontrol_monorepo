@@ -39,6 +39,21 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 - `admin@petcontrol.local` / `password123` (compatível com o formulário padrão do Web)
 - `root@petcontrol.local` / `password123` (com `must_change_password=true`)
 
+### Estado atual vs alvo arquitetural (Abr/2026)
+
+Implementado nesta etapa:
+
+- API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
+- Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
+- Web conectado aos fluxos reais de login, dashboard e `schedules`.
+- Swagger operacional em `apps/api/docs` e disponível em `/swagger/index.html`.
+
+Ainda planejado para próximos ciclos:
+
+- Expansão de domínios de negócio além de `schedules` (clients/pets/services/reports completos de ponta a ponta).
+- Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
+- Hardening de qualidade/CI e consolidação documental contínua.
+
 ---
 
 ## 2. Stack Tecnológica
@@ -478,26 +493,25 @@ O middleware `audit.go` intercepta automaticamente mutations (POST, PUT, PATCH, 
 
 ### 5.6 Swagger com Swaggo
 
-```go
-// internal/handler/schedules.go
+Swagger está integrado na API e usa anotações dos handlers de `auth` e `schedules`.
 
-// @Summary     Listar agendamentos
-// @Description Retorna agendamentos do tenant com paginação
-// @Tags        schedules
-// @Security    BearerAuth
-// @Param       limit  query int false "Limite" default(20)
-// @Param       offset query int false "Offset"  default(0)
-// @Success     200 {array}  sqlc.Schedule
-// @Failure     401 {object} apperror.APIError
-// @Router      /api/v1/schedules [get]
-func (h *ScheduleHandler) List(c *gin.Context) { ... }
-```
+Rota pública local:
+
+- `GET /swagger/index.html`
+- JSON bruto: `GET /swagger/doc.json`
 
 Gerar/atualizar docs:
 
 ```bash
-swag init -g cmd/server/main.go --output docs/
+cd apps/api
+go run github.com/swaggo/swag/cmd/swag@latest init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
 ```
+
+Arquivos gerados:
+
+- `apps/api/docs/docs.go`
+- `apps/api/docs/swagger.json`
+- `apps/api/docs/swagger.yaml`
 
 ### 5.7 Dockerfile e Entrypoint da API
 

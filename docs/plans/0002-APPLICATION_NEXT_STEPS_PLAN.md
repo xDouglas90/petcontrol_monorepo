@@ -283,9 +283,11 @@ Observação: a Fase 14 foi implementada com o evento de confirmação de schedu
 
 ### 15.2 - Checks
 
-- [] Swagger abre localmente e documenta auth e `schedules`.
-- [] *README* deixa claro o que e implementado vs planejado.
-- [] *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
+- [x] Swagger abre localmente e documenta auth e `schedules`.
+- [x] *README* deixa claro o que e implementado vs planejado.
+- [x] *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
+
+Observação: a fase foi concluída com integração do Swaggo na API (rota `/swagger/*any`), geração versionada em `apps/api/docs` e cobertura de testes para configuração e exposição do endpoint Swagger, além da revisão documental de onboarding e estado atual do projeto.
 
 ## Fase 16 - Endurecimento de Qualidade
 
