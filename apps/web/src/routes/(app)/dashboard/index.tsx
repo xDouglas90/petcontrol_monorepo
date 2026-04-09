@@ -231,30 +231,30 @@ export function DashboardPage() {
 
             {viewState === 'ready'
               ? schedules.slice(0, 4).map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"
-              >
-                <div className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-medium text-white">
-                      {new Date(item.scheduled_at).toLocaleString('pt-BR', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                      })}
-                    </p>
-                    <span
-                      className={`rounded-full border px-2 py-1 text-xs ${scheduleStatusColorClass(item.current_status)}`}
-                    >
-                      {formatScheduleStatus(item.current_status)}
-                    </span>
+                  <div
+                    key={item.id}
+                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"
+                  >
+                    <div className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-medium text-white">
+                          {new Date(item.scheduled_at).toLocaleString('pt-BR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                        </p>
+                        <span
+                          className={`rounded-full border px-2 py-1 text-xs ${scheduleStatusColorClass(item.current_status)}`}
+                        >
+                          {formatScheduleStatus(item.current_status)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-300">
+                        {item.notes || 'Sem observações'}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-slate-300">
-                    {item.notes || 'Sem observações'}
-                  </p>
-                </div>
-              </div>
                 ))
               : null}
           </div>

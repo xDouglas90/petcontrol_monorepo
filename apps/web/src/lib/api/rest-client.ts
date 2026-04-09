@@ -93,7 +93,9 @@ export async function login(
   return mapLoginSession((payload as LoginApiResponseDTO).data);
 }
 
-export async function getCurrentCompany(accessToken: string): Promise<CompanyDTO> {
+export async function getCurrentCompany(
+  accessToken: string,
+): Promise<CompanyDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(180);
     return mockCompany;
@@ -109,7 +111,9 @@ export async function getCurrentCompany(accessToken: string): Promise<CompanyDTO
   return payload.data;
 }
 
-export async function listSchedules(accessToken: string): Promise<ScheduleDTO[]> {
+export async function listSchedules(
+  accessToken: string,
+): Promise<ScheduleDTO[]> {
   if (authMode === AUTH_MODES.mock) {
     await delay(160);
     return [...mockSchedules].sort((a, b) =>
@@ -117,10 +121,13 @@ export async function listSchedules(accessToken: string): Promise<ScheduleDTO[]>
     );
   }
 
-  const payload = await request<ScheduleListApiResponseDTO>(API_PATHS.schedules, {
-    method: 'GET',
-    accessToken,
-  });
+  const payload = await request<ScheduleListApiResponseDTO>(
+    API_PATHS.schedules,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
   return payload.data;
 }
 

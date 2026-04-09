@@ -94,7 +94,9 @@ export function SchedulesPage() {
   });
 
   const pendingMutation =
-    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
   function resetForm() {
     setEditingScheduleId(null);
@@ -192,7 +194,10 @@ export function SchedulesPage() {
             <tbody>
               {viewState === 'loading' ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-300">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-300"
+                  >
                     Carregando schedules...
                   </td>
                 </tr>
@@ -200,7 +205,10 @@ export function SchedulesPage() {
 
               {viewState === 'error' ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-rose-200">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-rose-200"
+                  >
                     Falha ao buscar schedules.
                   </td>
                 </tr>
@@ -208,7 +216,10 @@ export function SchedulesPage() {
 
               {viewState === 'empty' ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-300">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-300"
+                  >
                     Nenhum agendamento encontrado para este tenant.
                   </td>
                 </tr>
@@ -218,10 +229,13 @@ export function SchedulesPage() {
                 ? schedules.map((schedule) => (
                     <tr key={schedule.id} className="border-t border-white/10">
                       <td className="px-4 py-3 text-slate-200">
-                        {new Date(schedule.scheduled_at).toLocaleString('pt-BR', {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        })}
+                        {new Date(schedule.scheduled_at).toLocaleString(
+                          'pt-BR',
+                          {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          },
+                        )}
                       </td>
                       <td className="px-4 py-3 text-slate-300">
                         {schedule.client_id.slice(0, 8)}...
@@ -290,7 +304,10 @@ export function SchedulesPage() {
             />
           </FormField>
 
-          <FormField label="Pet ID" error={form.formState.errors.petId?.message}>
+          <FormField
+            label="Pet ID"
+            error={form.formState.errors.petId?.message}
+          >
             <input
               {...form.register('petId')}
               className={fieldClassName}
@@ -320,7 +337,10 @@ export function SchedulesPage() {
             />
           </FormField>
 
-          <FormField label="Status" error={form.formState.errors.status?.message}>
+          <FormField
+            label="Status"
+            error={form.formState.errors.status?.message}
+          >
             <select {...form.register('status')} className={fieldClassName}>
               {scheduleStatusOptions.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -330,7 +350,10 @@ export function SchedulesPage() {
             </select>
           </FormField>
 
-          <FormField label="Observações" error={form.formState.errors.notes?.message}>
+          <FormField
+            label="Observações"
+            error={form.formState.errors.notes?.message}
+          >
             <textarea
               {...form.register('notes')}
               className={fieldClassName}
