@@ -6,7 +6,7 @@ Definir a segunda etapa de desenvolvimento do PetControl apos a consolidação d
 
 Este plano compara:
 
-- o alvo arquitetural descrito no `README.md`;
+- o alvo arquitetural descrito no `*README*.md`;
 - o que foi registrado e entregue no `docs/plans/0001-INITIAL_STRUCTURE_ACTION_PLAN.md`;
 - o estado atual do repositório.
 
@@ -14,7 +14,7 @@ O foco agora deixa de ser "criar a base do monorepo" e passa a ser "evoluir a ap
 
 ## Resumo Executivo
 
-### O que ja foi entregue com boa aderência ão `README.md`
+### O que ja foi entregue com boa aderência ão `*README*.md`
 
 - Monorepo estruturado com `apps/api`, `apps/web`, `apps/worker`, `libs`, `infra`, `docs` e `.github`.
 - API Go executável com `health`, `ready`, SQLC, migrations, auth inicial, middlewares de tenant e modulo.
@@ -23,19 +23,19 @@ O foco agora deixa de ser "criar a base do monorepo" e passa a ser "evoluir a ap
 - Libs compartilhadas em TypeScript consumidas via `workspace:*`.
 - Worker separado com fila dummy via Redis/Asynq e testes.
 - CI para Go, frontend, SQLC e validação de Docker Compose.
-- ADRs iniciais e `docs/CONTRIBUTING.md`.
+- ADRs iniciais e `docs/*CONTRIBUTING*.md`.
 
-### O que ainda esta abaixo do alvo descrito no `README.md`
+### O que ainda esta abaixo do alvo descrito no `*README*.md`
 
 - A API ainda cobre apenas uma fatia pequena do domínio real.
-- O schema e amplo, mas a camada de aplicação ainda não implementa os módulos centrais do negocio, como schedules, clients, pets, services e reports.
+- O schema e amplo, mas a camada de aplicação ainda não implementa os módulos centrais do negocio, como `schedules`, clients, pets, services e reports.
 - O Web ainda e um shell inicial com login e dashboard placeholder.
 - As libs compartilhadas existem, mas ainda não são "source of truth" completo para enums, entidades e DTOs do domínio.
 - Swagger ainda não foi integrado de forma real.
 - Auditoria automática, refresh token, controle de plano por assinatura e módulos reais ainda não estão fechados.
 - O Worker ainda opera com task dummy, não com eventos reais do negocio.
 
-## Comparativo Consolidado entre README e Estado Atual
+## Comparativo Consolidado entre *README* e Estado Atual
 
 ### Backend API
 
@@ -48,8 +48,8 @@ Alinhado:
 
 Parcial:
 
-- O `README.md` descreve handlers e services de domínios amplos; hoje ha implementação real apenas para auth, users, verificações básicas e enqueue dummy do worker.
-- Não ha ainda camada consistente para schedules, clients, pets, services, products, reports ou uploads.
+- O `*README*.md` descreve handlers e services de domínios amplos; hoje ha implementação real apenas para auth, users, verificações básicas e enqueue dummy do worker.
+- Não ha ainda camada consistente para `schedules`, clients, pets, services, products, reports ou uploads.
 - Swagger esta no plano arquitetural, mas não aparece ainda como entrega operacional da API.
 - Auditoria imutável via middleware ainda não esta implementada.
 
@@ -63,7 +63,7 @@ Alinhado:
 
 Parcial:
 
-- O `README.md` projeta rotas e features para dashboard, schedules, clients, pets, services, reports e administração. Hoje a aplicação ainda esta concentrada em login, layout e dashboard inicial.
+- O `*README*.md` projeta rotas e features para dashboard, `schedules`, clients, pets, services, reports e administração. Hoje a aplicação ainda esta concentrada em login, layout e dashboard inicial.
 - Ainda não existe camada de query por domínio nem formulários de negocio reais.
 
 ### Libs Compartilhadas
@@ -76,7 +76,7 @@ Alinhado:
 
 Parcial:
 
-- As libs ainda não refletem com profundidade o domínio descrito no README.
+- As libs ainda não refletem com profundidade o domínio descrito no *README*.
 - Faltam enums, entidades, DTOs e constantes de módulos, erros e paginação em nível mais completo.
 - `libs/ui` ainda e uma base utilitária, não um design system de componentes do domínio.
 
@@ -104,7 +104,7 @@ Alinhado:
 
 Parcial:
 
-- O `README.md` ainda fala em workflows `ci.yml` e `deploy.yml`; o repositório usa arquivos diferentes.
+- O `*README*.md` ainda fala em workflows `ci.yml` e `deploy.yml`; o repositório usa arquivos diferentes.
 - Não ha ainda documentação operacional da API via Swagger.
 - Não ha fluxo de deploy por app implementado no escopo observado.
 
@@ -121,7 +121,7 @@ O próximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ### 9.1 - Acoes
 
-- Revisar divergências entre `README.md`, `.env.example`, Compose, Makefile e implementação atual.
+- Revisar divergências entre `*README*.md`, `.env.example`, Compose, Makefile e implementação atual.
 - Padronizar versões de runtime e imagens:
   - PostgreSQL;
   - porta padrão da API;
@@ -133,7 +133,7 @@ O próximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ### 9.2 - Checks
 
-- [x] `README.md`, `.env.example`, Makefile e Compose não se contradizem em porta, versão e comandos principais.
+- [x] `*README*.md`, `.env.example`, Makefile e Compose não se contradizem em porta, versão e comandos principais.
 - [x] Login "seedado" funciona ponta a ponta do Web para a API.
 - [x] `shared-types` espelha os enums atuais de auth, usuário e tenant sem uso excessivo de `string`.
 - [x] `sqlc generate` não gera parâmetros incorretos para filtros opcionais relevantes.
@@ -169,18 +169,18 @@ Nota: o seed da fase 10 agora inclui uma assinatura ativa para o plano atual da 
 - [x] Endpoint de módulos ativos reflete `company_modules`.
 - [x] Nenhuma rota de dados administrativos permanece publica sem necessidade.
 
-## Fase 11 - Primeiro Modulo de Negocio Real: Schedules
+## Fase 11 - Primeiro Modulo de Negocio Real: `schedules`
 
 ### 11.1 - Acoes
 
-- Implementar queries SQLC de `schedules` e tabelas associadas necessárias para o MVP:
+- Implementar queries SQLC de ``schedules`` e tabelas associadas necessárias para o MVP:
   - listagem;
   - criação;
   - consulta por id;
   - atualização;
   - soft delete;
   - histórico de status, se viável neste ciclo.
-- Criar service e handler de schedules seguindo tenant por `company_id`.
+- Criar service e handler de `schedules` seguindo tenant por `company_id`.
 - Adicionar validações de negocio minímas:
   - relação com company;
   - status valido;
@@ -191,21 +191,21 @@ Nota: o seed da fase 10 agora inclui uma assinatura ativa para o plano atual da 
 
 ### 11.2 - Checks
 
-- [x] `GET /api/v1/schedules` retorna somente registros do tenant.
-- [x] `POST /api/v1/schedules` cria registro com `company_id` derivado do token.
+- [x] `GET /api/v1/`schedules`` retorna somente registros do tenant.
+- [x] `POST /api/v1/`schedules`` cria registro com `company_id` derivado do token.
 - [x]x `PUT` e `DELETE` respeitam soft delete e ownership do tenant.
 - [x] Testes de integração cobrem ão menos listagem, criação e isolamento multi-tenant.
 
-Observação: além dos checks originais, a fase passou a expor `GET /api/v1/schedules/:id/history` para consulta do histórico de status por tenant e ganhou cobertura explicita para bloqueio de acesso quando o modulo `SCH` nao esta ativo.
+Observação: além dos checks originais, a fase passou a expor `GET /api/v1/`schedules`/:id/history` para consulta do histórico de status por tenant e ganhou cobertura explicita para bloqueio de acesso quando o modulo `SCH` nao esta ativo.
 
 ## Fase 12 - Web do Primeiro Fluxo Real
 
 ### 12.1 - Acoes
 
-- Criar camada de queries para empresa corrente e schedules.
+- Criar camada de queries para empresa corrente e `schedules`.
 - Implementar rotas do Web para:
   - dashboard conectado;
-  - listagem de schedules;
+  - listagem de `schedules`;
   - formulário de criação/edição.
 - Conectar login, sessão e tenant ão fluxo de dados real.
 - Substituir dados mockados do dashboard por dados vindos da API, mesmo que ainda simples.
@@ -214,11 +214,11 @@ Observação: além dos checks originais, a fase passou a expor `GET /api/v1/sch
 ### 12.2 - Checks
 
 - [x] Login leva a dashboard com dados reais da empresa corrente.
-- [x] Tela de schedules lista dados da API.
+- [x] Tela de `schedules` lista dados da API.
 - [x] Criação de schedule atualiza cache do Query corretamente.
 - [x] Nenhum dado de servidor e salvo em Zustand fora da sessão/auth e UI.
 
-Observação: além dos checks originais, a fase passou a contar com testes de componente para a dashboard conectada e testes de integração dos hooks de domínio para validar invalidação e recarga do cache de schedules via TanStack Query.
+Observação: além dos checks originais, a fase passou a contar com testes de componente para a dashboard conectada e testes de integração dos hooks de domínio para validar invalidação e recarga do cache de `schedules` via TanStack Query.
 
 ## Fase 13 - Auditoria, Erros e Observabilidade Básica
 
@@ -226,15 +226,17 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 - Implementar padrão unificado de erro HTTP no backend.
 - Criar middleware de auditoria para mutações importantes.
-- Registrar `audit_logs` ão menos para companies, company_users e schedules.
+- Registrar `audit_logs` ao menos para `companies`, `company_users` e `schedules`.
 - Melhorar logs estruturados na API e no Worker.
 - Adicionar correlation id básico por request, se o custo for baixo.
 
 ### 13.2 - Checks
 
-- Respostas de erro da API seguem formato consistente.
-- Mutações de schedules e company_users geram registros em `audit_logs`.
-- Logs da API e do Worker identificam tipo de operação, tenant e resultado.
+- [x] Respostas de erro da API seguem formato consistente.
+- [x] Mutações de `schedules` e `company_users` geram registros em `audit_logs`.
+- [x] Logs da API e do Worker identificam tipo de operação, tenant e resultado.
+
+Observação: a fase passou a incluir middleware de `correlation_id` por request, payload de erro unificado com `code` e `correlation_id`, e cobertura integrada para persistência de auditoria em `schedules` e `company_users`.
 
 ## Fase 14 - Worker com Evento de Negocio Real
 
@@ -263,11 +265,11 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 - Integrar Swaggo quando os handlers reais estiverem estáveis.
 - Gerar `apps/api/docs` e expor rota `/swagger/*any`.
-- Atualizar `README.md` para refletir:
+- Atualizar `*README*.md` para refletir:
   - o que ja esta implementado;
   - o que ainda e alvo arquitetural;
   - paths e versões realmente usados.
-- Atualizar `docs/CONTRIBUTING.md` com fluxo de:
+- Atualizar `docs/*CONTRIBUTING*.md` com fluxo de:
   - subir infraestrutura;
   - migrar;
   - seedar;
@@ -276,9 +278,9 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 ### 15.2 - Checks
 
-- Swagger abre localmente e documenta auth e schedules.
-- README deixa claro o que e implementado vs planejado.
-- CONTRIBUTING permite onboarding local sem conhecimento implícito.
+- Swagger abre localmente e documenta auth e `schedules`.
+- *README* deixa claro o que e implementado vs planejado.
+- *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
 
 ## Fase 16 - Endurecimento de Qualidade
 
@@ -291,7 +293,7 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
   - `dev`.
 - Expandir testes:
   - middlewares;
-  - schedules service/handler;
+  - `schedules` service/handler;
   - Web queries e formulários;
   - Worker com caso real.
 - Adicionar verificação de cobertura minima onde fizer sentido.
@@ -307,7 +309,7 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 1. Fase 9: coerência de contratos e ambiente.
 2. Fase 10: empresas, vínculos e plano ativo.
-3. Fase 11: modulo real de schedules na API.
+3. Fase 11: modulo real de `schedules` na API.
 4. Fase 12: Web conectado ão primeiro fluxo real.
 5. Fase 13: auditoria, erros e observabilidade.
 6. Fase 14: Worker com evento de negocio real.
@@ -316,14 +318,14 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 ## Checklist Consolidado do Próximo Ciclo
 
-- [ ] Ambientes, versões, portas e variáveis estão coerentes entre README, `.env.example`, Compose e código.
+- [ ] Ambientes, versões, portas e variáveis estão coerentes entre *README*, `.env.example`, Compose e código.
 - [ ] Seed local cria tenant funcional e usuário utilizável pelo Web.
 - [ ] Contratos compartilhados refletem enums e payloads reais.
-- [ ] API expõe módulo real de schedules com isolamento multi-tenant.
-- [ ] Web consome dados reais de empresa e schedules.
+- [ ] API expõe módulo real de `schedules` com isolamento multi-tenant.
+- [ ] Web consome dados reais de empresa e `schedules`.
 - [ ] Worker processa ao menos um evento real do negócio.
 - [ ] Swagger documenta os endpoints implementados.
-- [ ] README e CONTRIBUTING refletem o estado real do projeto.
+- [ ] *README* e *CONTRIBUTING* refletem o estado real do projeto.
 - [ ] Testes e CI cobrem os fluxos reais do primeiro modulo funcional.
 
 ## Riscos e Decisões Pendentes
