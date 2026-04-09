@@ -16,6 +16,16 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
+// @title PetControl API
+// @version 1.0
+// @description API HTTP do PetControl para autenticação, módulos de tenant e agendamentos.
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Use o formato: Bearer <token>
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -56,6 +66,7 @@ func main() {
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
+	registerSwaggerRoute(router)
 
 	v1 := router.Group("/api/v1")
 	v1.POST("/auth/login", authHandler.Login)

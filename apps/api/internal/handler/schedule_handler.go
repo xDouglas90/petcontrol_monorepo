@@ -47,6 +47,16 @@ func NewScheduleHandler(service *service.ScheduleService, publisher ...queue.Pub
 	return handler
 }
 
+// List godoc
+// @Summary List schedules
+// @Description Returns schedules from the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} ScheduleListResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules [get]
 func (h *ScheduleHandler) List(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -63,6 +73,19 @@ func (h *ScheduleHandler) List(c *gin.Context) {
 	middleware.JSONData(c, 200, items)
 }
 
+// GetByID godoc
+// @Summary Get schedule by ID
+// @Description Returns a single schedule from the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Schedule ID"
+// @Success 200 {object} ScheduleItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules/{id} [get]
 func (h *ScheduleHandler) GetByID(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -85,6 +108,19 @@ func (h *ScheduleHandler) GetByID(c *gin.Context) {
 	middleware.JSONData(c, 200, item)
 }
 
+// History godoc
+// @Summary Get schedule history
+// @Description Returns status history for a schedule in the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Schedule ID"
+// @Success 200 {object} ScheduleHistoryResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules/{id}/history [get]
 func (h *ScheduleHandler) History(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -107,6 +143,19 @@ func (h *ScheduleHandler) History(c *gin.Context) {
 	middleware.JSONData(c, 200, items)
 }
 
+// Create godoc
+// @Summary Create schedule
+// @Description Creates a schedule for the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body ScheduleCreateRequestDoc true "Schedule payload"
+// @Success 201 {object} ScheduleItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules [post]
 func (h *ScheduleHandler) Create(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -189,6 +238,21 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 	middleware.JSONData(c, 201, item)
 }
 
+// Update godoc
+// @Summary Update schedule
+// @Description Updates a schedule for the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Schedule ID"
+// @Param request body ScheduleUpdateRequestDoc true "Schedule payload"
+// @Success 200 {object} ScheduleItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules/{id} [put]
 func (h *ScheduleHandler) Update(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -283,6 +347,18 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 	middleware.JSONData(c, 200, item)
 }
 
+// Delete godoc
+// @Summary Delete schedule
+// @Description Soft deletes a schedule from the authenticated tenant.
+// @Tags schedules
+// @Security BearerAuth
+// @Param id path string true "Schedule ID"
+// @Success 204
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /schedules/{id} [delete]
 func (h *ScheduleHandler) Delete(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {

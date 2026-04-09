@@ -22,6 +22,19 @@ func NewAuthHandler(service *service.AuthService) *AuthHandler {
 	return &AuthHandler{service: service}
 }
 
+// Login godoc
+// @Summary Authenticate user
+// @Description Performs login and returns a bearer token and tenant context.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequestDoc true "Credentials"
+// @Success 200 {object} LoginResponseDoc
+// @Failure 401 {object} APIErrorResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
