@@ -119,7 +119,7 @@ O próximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ## Fase 9 - Coerência de Contratos e Ambiente
 
-### 9.1 - Acoes
+### 9.1 - Ações
 
 - Revisar divergências entre `*README*.md`, `.env.example`, Compose, Makefile e implementação atual.
 - Padronizar versões de runtime e imagens:
@@ -140,7 +140,7 @@ O próximo ciclo deve atacar quatro objetivos em paralelo leve:
 
 ## Fase 10 - Modulo Base de Empresas e Vínculos
 
-### 10.1 - Acoes
+### 10.1 - Ações
 
 - Implementar camada completa para:
   - `companies`;
@@ -171,7 +171,7 @@ Nota: o seed da fase 10 agora inclui uma assinatura ativa para o plano atual da 
 
 ## Fase 11 - Primeiro Modulo de Negocio Real: `schedules`
 
-### 11.1 - Acoes
+### 11.1 - Ações
 
 - Implementar queries SQLC de ``schedules`` e tabelas associadas necessárias para o MVP:
   - listagem;
@@ -200,7 +200,7 @@ Observação: além dos checks originais, a fase passou a expor `GET /api/v1/`sc
 
 ## Fase 12 - Web do Primeiro Fluxo Real
 
-### 12.1 - Acoes
+### 12.1 - Ações
 
 - Criar camada de queries para empresa corrente e `schedules`.
 - Implementar rotas do Web para:
@@ -222,7 +222,7 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 ## Fase 13 - Auditoria, Erros e Observabilidade Básica
 
-### 13.1 - Acoes
+### 13.1 - Ações
 
 - Implementar padrão unificado de erro HTTP no backend.
 - Criar middleware de auditoria para mutações importantes.
@@ -238,30 +238,35 @@ Observação: além dos checks originais, a fase passou a contar com testes de c
 
 Observação: a fase passou a incluir middleware de `correlation_id` por request, payload de erro unificado com `code` e `correlation_id`, e cobertura integrada para persistência de auditoria em `schedules` e `company_users`.
 
+Observação: embora a ação cite `companies`, o escopo efetivamente entregue nesta fase concentrou a auditoria nos fluxos mutáveis hoje expostos pela API, com cobertura aplicada em `schedules` e `company_users`.
+
 ## Fase 14 - Worker com Evento de Negocio Real
 
-### 14.1 - Acoes
+### 14.1 - Ações
 
 - Substituir ou complementar task dummy por evento real do domínio.
 - Recomendação: usar confirmação de schedule como primeiro caso real.
 - Na API:
-  - publicar task ão confirmar/agendar;
+  - publicar task ao confirmar/agendar;
   - versionar payload de task.
 - No Worker:
   - processar payload;
   - resolver dados mínimos da entidade;
+  - criar rota pública para `callback URL` necessária para o fluxo de notificação real do WhatsApp e add o `WHATSAPP_VERIFY_TOKEN`;
   - enviar via cliente WhatsApp placeholder ou logger estruturado.
 - Adicionar retentativa, timeout e testes de integração.
 
 ### 14.2 - Checks
 
-- Ação de negocio publica task real no Redis.
-- Worker consome task real com payload validado.
-- Falhas de payload e processamento são tratadas sem derrubar o processo.
+- [x] Ação de negocio publica task real no Redis.
+- [x] Worker consome task real com payload validado.
+- [x] Falhas de payload e processamento são tratadas sem derrubar o processo.
+
+Observação: a Fase 14 foi implementada com o evento de confirmação de schedule como primeiro fluxo real, incluindo task versionada na API, consumer dedicado no worker, callback HTTP de WhatsApp com `WHATSAPP_VERIFY_TOKEN` e testes unitários/integrados para publicação, consumo e verificação de webhook.
 
 ## Fase 15 - Swagger, Contribuição e Consistencia Documental
 
-### 15.1 - Acoes
+### 15.1 - Ações
 
 - Integrar Swaggo quando os handlers reais estiverem estáveis.
 - Gerar `apps/api/docs` e expor rota `/swagger/*any`.
@@ -278,13 +283,13 @@ Observação: a fase passou a incluir middleware de `correlation_id` por request
 
 ### 15.2 - Checks
 
-- Swagger abre localmente e documenta auth e `schedules`.
-- *README* deixa claro o que e implementado vs planejado.
-- *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
+- [] Swagger abre localmente e documenta auth e `schedules`.
+- [] *README* deixa claro o que e implementado vs planejado.
+- [] *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
 
 ## Fase 16 - Endurecimento de Qualidade
 
-### 16.1 - Acoes
+### 16.1 - Ações
 
 - Adicionar comandos agregados no Makefile para:
   - `test`;
