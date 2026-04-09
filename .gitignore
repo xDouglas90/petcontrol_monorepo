@@ -9,3 +9,5 @@ libs/*/dist
 .env
 
 secrets/*
+
+.codex

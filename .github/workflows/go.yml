@@ -60,6 +60,9 @@ jobs:
         run: go build ./...
       - name: Test
         run: go test ./...
+      - name: Enforce API coverage baseline
+        working-directory: .
+        run: make coverage-api
 
   worker:
     name: Worker Build and Test
@@ -86,6 +89,9 @@ jobs:
         run: go build ./...
       - name: Test
         run: go test ./...
+      - name: Enforce Worker coverage baseline
+        working-directory: .
+        run: make coverage-worker
 
   sqlc-check:
     name: SQLC Generation Check
