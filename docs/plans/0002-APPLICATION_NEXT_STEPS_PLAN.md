@@ -290,6 +290,8 @@ Observação: a Fase 14 foi implementada com o evento de confirmação de schedu
 Observação: a fase foi concluída com integração do Swaggo na API (rota `/swagger/*any`), geração versionada em `apps/api/docs` e cobertura de testes para configuração e exposição do endpoint Swagger, além da revisão documental de onboarding e estado atual do projeto.
 
 ## Fase 16 - Endurecimento de Qualidade
+\
+Observação: a Fase 16 foi concluída com a implementação dos comandos agregados no Makefile (`test`, `lint`, `build`, `dev`), expansão e validação dos testes unitários e de integração para middlewares, handlers e worker, além da revisão dos workflows de CI para garantir bloqueio de regressão em todos os módulos principais. O baseline de qualidade e previsibilidade foi consolidado, com cobertura mínima atendida e comandos de desenvolvimento local padronizados e documentados.
 
 ### 16.1 - Ações
 
@@ -308,9 +310,9 @@ Observação: a fase foi concluída com integração do Swaggo na API (rota `/sw
 
 ### 16.2 - Checks
 
-- CI bloqueia regressão em API, Web, Worker, SQLC e libs.
-- Casos principais do primeiro modulo real estão cobertos por testes.
-- Comandos de desenvolvimento local ficam previsíveis e curtos.
+- [x] CI bloqueia regressão em API, Web, Worker, SQLC e libs.
+- [x] Casos principais do primeiro modulo real estão cobertos por testes.
+- [x] Comandos de desenvolvimento local ficam previsíveis e curtos.
 
 ## Ordem Recomendada de Execução
 
@@ -324,16 +326,18 @@ Observação: a fase foi concluída com integração do Swaggo na API (rota `/sw
 8. Fase 16: endurecimento de qualidade.
 
 ## Checklist Consolidado do Próximo Ciclo
+\
+Observação: todos os itens do ciclo foram concluídos, consolidando o baseline de qualidade, integração contínua e previsibilidade de entrega para os módulos implementados. O projeto está pronto para expansão de domínios e endurecimento adicional conforme novas fases.
 
-- [ ] Ambientes, versões, portas e variáveis estão coerentes entre *README*, `.env.example`, Compose e código.
-- [ ] Seed local cria tenant funcional e usuário utilizável pelo Web.
-- [ ] Contratos compartilhados refletem enums e payloads reais.
-- [ ] API expõe módulo real de `schedules` com isolamento multi-tenant.
-- [ ] Web consome dados reais de empresa e `schedules`.
-- [ ] Worker processa ao menos um evento real do negócio.
-- [ ] Swagger documenta os endpoints implementados.
-- [ ] *README* e *CONTRIBUTING* refletem o estado real do projeto.
-- [ ] Testes e CI cobrem os fluxos reais do primeiro modulo funcional.
+- [x] Ambientes, versões, portas e variáveis estão coerentes entre *README*, `.env.example`, Compose e código.
+- [x] Seed local cria tenant funcional e usuário utilizável pelo Web.
+- [x] Contratos compartilhados refletem enums e payloads reais.
+- [x] API expõe módulo real de `schedules` com isolamento multi-tenant.
+- [x] Web consome dados reais de empresa e `schedules`.
+- [x] Worker processa ao menos um evento real do negócio.
+- [x] Swagger documenta os endpoints implementados.
+- [x] *README* e *CONTRIBUTING* refletem o estado real do projeto.
+- [x] Testes e CI cobrem os fluxos reais do primeiro modulo funcional.
 
 ## Riscos e Decisões Pendentes
 
