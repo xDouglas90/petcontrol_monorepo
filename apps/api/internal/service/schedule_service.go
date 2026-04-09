@@ -60,6 +60,17 @@ func (s *ScheduleService) GetScheduleByID(ctx context.Context, companyID pgtype.
 	return schedule, err
 }
 
+func (s *ScheduleService) ListScheduleStatusHistory(ctx context.Context, companyID pgtype.UUID, scheduleID pgtype.UUID) ([]sqlc.ScheduleStatusHistory, error) {
+	if _, err := s.GetScheduleByID(ctx, companyID, scheduleID); err != nil {
+		return nil, err
+	}
+
+	return s.queries.ListScheduleStatusHistoryByScheduleID(ctx, sqlc.ListScheduleStatusHistoryByScheduleIDParams{
+		ScheduleID: scheduleID,
+		CompanyID:  companyID,
+	})
+}
+
 func (s *ScheduleService) CreateSchedule(ctx context.Context, input CreateScheduleInput) (sqlc.GetScheduleByIDAndCompanyIDRow, error) {
 	if err := validateScheduleWindow(input.ScheduledAt, input.EstimatedEnd); err != nil {
 		return sqlc.GetScheduleByIDAndCompanyIDRow{}, err

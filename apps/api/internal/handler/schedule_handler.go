@@ -79,6 +79,28 @@ func (h *ScheduleHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
+func (h *ScheduleHandler) History(c *gin.Context) {
+	companyID, ok := middleware.GetCompanyID(c)
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		return
+	}
+
+	scheduleID, err := parseUUID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid schedule id"})
+		return
+	}
+
+	items, err := h.service.ListScheduleStatusHistory(c.Request.Context(), companyID, scheduleID)
+	if err != nil {
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": "failed to list schedule history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": items})
+}
+
 func (h *ScheduleHandler) Create(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {

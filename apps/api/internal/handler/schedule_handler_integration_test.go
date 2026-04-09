@@ -144,6 +144,52 @@ func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) 
 	require.True(t, deletedAt.Valid)
 }
 
+func TestScheduleEndpoints_HistoryIsTenantScoped(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenantA := mustCreateTenantFixture(t, ctx, pool, "tenant-history-a")
+	tenantB := mustCreateTenantFixture(t, ctx, pool, "tenant-history-b")
+	moduleID := mustCreateScheduleModule(t, ctx, pool)
+	mustAttachScheduleModule(t, ctx, pool, tenantA.companyID, moduleID)
+	mustAttachScheduleModule(t, ctx, pool, tenantB.companyID, moduleID)
+
+	scheduledAt := time.Now().UTC().Add(8 * time.Hour).Truncate(time.Second)
+	scheduleA := mustCreateScheduleRecord(t, ctx, queries, tenantA, scheduledAt, "tenant history")
+	scheduleB := mustCreateScheduleRecord(t, ctx, queries, tenantB, scheduledAt.Add(1*time.Hour), "other tenant history")
+
+	router := setupScheduleRouterForTenant(queries, tenantA)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules/"+scheduleA.String()+"/history", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "waiting")
+	require.Contains(t, res.Body.String(), scheduleA.String())
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/schedules/"+scheduleB.String()+"/history", nil)
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusNotFound, res.Code)
+}
+
+func TestScheduleEndpoints_RequireModuleForAccess(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-no-module")
+	router := setupScheduleRouterForTenant(queries, tenant)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "module not available for company")
+}
+
 func setupScheduleIntegrationPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	setup := integration.SetupPostgresWithMigrations(t)
@@ -173,6 +219,7 @@ func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenant
 	schedules.GET("", scheduleHandler.List)
 	schedules.POST("", scheduleHandler.Create)
 	schedules.GET("/:id", scheduleHandler.GetByID)
+	schedules.GET("/:id/history", scheduleHandler.History)
 	schedules.PUT("/:id", scheduleHandler.Update)
 	schedules.DELETE("/:id", scheduleHandler.Delete)
 

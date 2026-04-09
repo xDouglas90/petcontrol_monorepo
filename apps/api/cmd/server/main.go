@@ -31,6 +31,7 @@ func main() {
 	planService := service.NewPlanService(queries)
 	moduleService := service.NewModuleService(queries)
 	companyUserService := service.NewCompanyUserService(queries)
+	scheduleService := service.NewScheduleService(queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
 	defer func() {
@@ -42,6 +43,7 @@ func main() {
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
+	scheduleHandler := handler.NewScheduleHandler(scheduleService)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
@@ -67,6 +69,15 @@ func main() {
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
 	})
+
+	schedules := protected.Group("/schedules")
+	schedules.Use(middleware.RequireModule(queries, "SCH"))
+	schedules.GET("", scheduleHandler.List)
+	schedules.POST("", scheduleHandler.Create)
+	schedules.GET("/:id", scheduleHandler.GetByID)
+	schedules.GET("/:id/history", scheduleHandler.History)
+	schedules.PUT("/:id", scheduleHandler.Update)
+	schedules.DELETE("/:id", scheduleHandler.Delete)
 
 	log.Printf("api listening on %s", cfg.Address())
 	if err := router.Run(cfg.Address()); err != nil {

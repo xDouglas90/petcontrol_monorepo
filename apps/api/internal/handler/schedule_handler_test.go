@@ -96,6 +96,16 @@ func TestScheduleHandler_CreateAndGetByID(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
 			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, end, "banho", creatorRaw, now, nil, nil, sqlc.ScheduleStatusWaiting))
 
+	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, end, "banho", creatorRaw, now, nil, nil, sqlc.ScheduleStatusWaiting))
+
+	mock.ExpectQuery(`(?s)name: ListScheduleStatusHistoryByScheduleID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "schedule_id", "status", "changed_at", "changed_by", "notes"}).
+			AddRow(uuid.NewString(), scheduleID.String(), sqlc.ScheduleStatusWaiting, now, creatorRaw, ""))
+
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("company_id", companyID)
@@ -104,13 +114,14 @@ func TestScheduleHandler_CreateAndGetByID(t *testing.T) {
 	})
 	router.POST("/schedules", handlerUnderTest.Create)
 	router.GET("/schedules/:id", handlerUnderTest.GetByID)
+	router.GET("/schedules/:id/history", handlerUnderTest.History)
 
 	body, err := json.Marshal(map[string]any{
-		"client_id":    clientID.String(),
-		"pet_id":       petID.String(),
-		"scheduled_at": now.Format(time.RFC3339),
+		"client_id":     clientID.String(),
+		"pet_id":        petID.String(),
+		"scheduled_at":  now.Format(time.RFC3339),
 		"estimated_end": end.Format(time.RFC3339),
-		"notes":        "banho",
+		"notes":         "banho",
 	})
 	require.NoError(t, err)
 
@@ -127,6 +138,12 @@ func TestScheduleHandler_CreateAndGetByID(t *testing.T) {
 	router.ServeHTTP(res, req)
 	require.Equal(t, http.StatusOK, res.Code)
 	require.Contains(t, res.Body.String(), scheduleID.String())
+
+	req = httptest.NewRequest(http.MethodGet, "/schedules/"+scheduleID.String()+"/history", nil)
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "waiting")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

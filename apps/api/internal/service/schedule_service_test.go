@@ -145,3 +145,36 @@ func TestScheduleService_DeleteScheduleNotFound(t *testing.T) {
 	require.ErrorIs(t, err, apperror.ErrNotFound)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestScheduleService_ListScheduleStatusHistory(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	require.NoError(t, err)
+	defer mock.Close()
+
+	queries := sqlc.New(mock)
+	serviceUnderTest := NewScheduleService(queries)
+
+	companyID := newDomainUUID(t)
+	scheduleID := newDomainUUID(t)
+	clientID := newDomainUUID(t)
+	petID := newDomainUUID(t)
+	userID := newDomainUUID(t)
+	now := time.Now().UTC().Truncate(time.Second)
+
+	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, nil, "", userID.String(), now, nil, nil, sqlc.ScheduleStatusConfirmed))
+
+	mock.ExpectQuery(`(?s)name: ListScheduleStatusHistoryByScheduleID`).
+		WithArgs(scheduleID, companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "schedule_id", "status", "changed_at", "changed_by", "notes"}).
+			AddRow(newDomainUUID(t).String(), scheduleID.String(), sqlc.ScheduleStatusWaiting, now.Add(-time.Hour), userID.String(), "created").
+			AddRow(newDomainUUID(t).String(), scheduleID.String(), sqlc.ScheduleStatusConfirmed, now, userID.String(), "confirmed"))
+
+	items, err := serviceUnderTest.ListScheduleStatusHistory(context.Background(), companyID, scheduleID)
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	require.Equal(t, sqlc.ScheduleStatusConfirmed, items[1].Status)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
