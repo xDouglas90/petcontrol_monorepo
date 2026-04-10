@@ -1,6 +1,8 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
+  GENDER_IDENTITIES,
+  MARITAL_STATUSES,
   MODULE_CODES,
   PET_KINDS,
   PET_SIZES,
@@ -24,6 +26,11 @@ describe('shared-types domain contracts', () => {
     expect(PET_TEMPERAMENTS).toContain('playful');
   });
 
+  it('exports person enums required by the clients contract', () => {
+    expect(GENDER_IDENTITIES).toContain('woman_cisgender');
+    expect(MARITAL_STATUSES).toContain('single');
+  });
+
   it('keeps schedule statuses stable for shared consumers', () => {
     expect(SCHEDULE_STATUSES).toContain('confirmed');
     expect(SCHEDULE_STATUSES).toContain('delivered');
@@ -38,8 +45,12 @@ describe('shared-types DTO compatibility', () => {
       company_id: '33333333-3333-3333-3333-333333333333',
       full_name: 'Maria Silva',
       short_name: 'Maria',
+      gender_identity: 'woman_cisgender',
+      marital_status: 'single',
+      birth_date: '1992-06-15',
       cpf: '12345678901',
       email: 'maria@example.com',
+      phone: '+551130000000',
       cellphone: '+5511999999999',
       has_whatsapp: true,
       client_since: '2026-04-10',

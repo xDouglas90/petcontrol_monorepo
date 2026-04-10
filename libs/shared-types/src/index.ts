@@ -77,6 +77,30 @@ export const MODULE_CODES = ['SCH', 'CRM', 'FIN'] as const;
 
 export type ModuleCode = (typeof MODULE_CODES)[number];
 
+export const GENDER_IDENTITIES = [
+  'man_cisgender',
+  'woman_cisgender',
+  'transgender',
+  'non_binary',
+  'gender_fluid',
+  'gender_queer',
+  'agender',
+  'gender_non_conforming',
+  'not_to_expose',
+] as const;
+
+export type GenderIdentity = (typeof GENDER_IDENTITIES)[number];
+
+export const MARITAL_STATUSES = [
+  'single',
+  'married',
+  'divorced',
+  'widowed',
+  'separated',
+] as const;
+
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
+
 export interface CompanyDTO {
   id: UUID;
   slug: string;
@@ -97,13 +121,47 @@ export interface ClientDTO {
   company_id: UUID;
   full_name: string;
   short_name: string;
+  gender_identity: GenderIdentity;
+  marital_status: MaritalStatus;
+  birth_date: string;
   cpf: string;
   email: string;
+  phone?: string | null;
   cellphone: string;
   has_whatsapp: boolean;
   client_since?: string | null;
   notes?: string | null;
   is_active: boolean;
+}
+
+export interface CreateClientInput {
+  full_name: string;
+  short_name: string;
+  gender_identity: GenderIdentity;
+  marital_status: MaritalStatus;
+  birth_date: string;
+  cpf: string;
+  email: string;
+  phone?: string;
+  cellphone: string;
+  has_whatsapp: boolean;
+  client_since?: string;
+  notes?: string;
+}
+
+export interface UpdateClientInput {
+  full_name?: string;
+  short_name?: string;
+  gender_identity?: GenderIdentity;
+  marital_status?: MaritalStatus;
+  birth_date?: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+  cellphone?: string;
+  has_whatsapp?: boolean;
+  client_since?: string;
+  notes?: string;
 }
 
 export interface ClientListApiResponseDTO {
