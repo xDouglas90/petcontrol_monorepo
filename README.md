@@ -46,7 +46,7 @@ Implementado nesta etapa:
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
 - Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
 - Web conectado aos fluxos reais de login, dashboard e `schedules`.
-- Swagger operacional em `apps/api/docs` e disponível em `/swagger/index.html`.
+- Swagger operacional em `apps/api/docs`, com rota canônica em `/swagger/index.html` e alias compatível em `/api/v1/docs`.
 
 Ainda planejado para próximos ciclos:
 
@@ -512,8 +512,10 @@ Swagger está integrado na API e usa anotações dos handlers de `auth` e `sched
 
 Rota pública local:
 
-- `GET /swagger/index.html`
-- JSON bruto: `GET /swagger/doc.json`
+- Rota canônica: `GET /swagger/index.html`
+- JSON bruto canônico: `GET /swagger/doc.json`
+- Alias compatível: `GET /api/v1/docs`
+- Alias do JSON: `GET /api/v1/docs/doc.json`
 
 Gerar/atualizar docs:
 
