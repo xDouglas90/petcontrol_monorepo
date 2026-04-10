@@ -661,7 +661,14 @@ Regras importantes:
 - o `company_slug` na URL representa contexto de navegação e UX;
 - a autorização continua pertencendo ao backend via JWT e `company_id`;
 - `/login` permanece sem slug;
+- a URL autenticada deve ser tratada como canônica em lowercase;
+- o header da área autenticada deve deixar explícitos o tenant resolvido e o slug atual;
 - a migração do router é incremental, então a convenção pode existir em `shared-constants` antes de todas as rotas vivas adotarem o novo formato.
+
+Direção futura para mudança de slug:
+
+- o frontend continua resolvendo a empresa corrente pela sessão e corrige a URL quando houver divergência;
+- se links antigos precisarem continuar válidos após troca de slug, a compatibilidade ideal deve ser tratada no backend ou em uma camada dedicada de redirecionamento.
 
 Essa evolução não fazia parte do plano original de módulos funcionais da aplicação. Ela foi introduzida depois como melhoria de navegação, previsibilidade de URL e preparação para cenários multi-tenant mais explícitos no frontend.
 

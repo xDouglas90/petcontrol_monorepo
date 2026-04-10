@@ -9,6 +9,7 @@ import {
   COMPANY_ROUTE_PATTERNS,
   STORAGE_KEYS,
   buildCompanyRoute,
+  normalizeCompanySlug,
 } from '../src';
 
 describe('shared-constants', () => {
@@ -28,6 +29,7 @@ describe('shared-constants', () => {
     expect(buildCompanyRoute('company-x', 'dashboard')).toBe(
       '/company-x/dashboard',
     );
+    expect(normalizeCompanySlug(' Company-X ')).toBe('company-x');
   });
 
   it('expõe paths e chaves de storage estáveis', () => {

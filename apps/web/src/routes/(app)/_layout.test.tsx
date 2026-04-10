@@ -35,7 +35,11 @@ describe('AppLayout', () => {
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
       isError: false,
-      data: { slug: 'correct-slug' },
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+      },
       refetch: vi.fn(),
     });
     const session: LoginSession = {
@@ -83,7 +87,11 @@ describe('AppLayout', () => {
   it('redireciona para o slug correto se houver mismatch na URL', () => {
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
-      data: { slug: 'correct-slug' },
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+      },
     });
     
     vi.mocked(useParams).mockReturnValue({ companySlug: 'WRONG-SLUG' });
@@ -96,7 +104,11 @@ describe('AppLayout', () => {
   it('renderiza o layout e o outlet se o slug estiver correto', () => {
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
-      data: { slug: 'correct-slug' },
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+      },
     });
     
     vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
@@ -105,6 +117,27 @@ describe('AppLayout', () => {
     
     expect(screen.getByTestId('outlet')).toBeTruthy();
     expect(screen.getByText('PetControl')).toBeTruthy();
+    expect(
+      screen.getByText('Tenant atual: Correct Company (correct-slug)'),
+    ).toBeTruthy();
+    expect(screen.getByText('@correct-slug')).toBeTruthy();
+  });
+
+  it('normaliza o slug para lowercase na navegação canônica', () => {
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        slug: 'PETCONTROL-DEV',
+        fantasy_name: 'PetControl Dev',
+        name: 'PetControl Desenvolvimento LTDA',
+      },
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'petcontrol-dev-old' });
+
+    render(<AppLayout />);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/petcontrol-dev/dashboard', true);
   });
 
   it('exibe tela de erro se a query da empresa falhar', () => {

@@ -29,7 +29,25 @@ O backend continua confiando apenas em:
 
 ## Estado atual
 
-Após a Fase 1 do plano `0003`, a área autenticada do Web passou a ser roteada sob `/:companySlug`, e os links internos principais preservam esse prefixo de tenant.
+Após a Fase 5 do plano `0003`, a área autenticada do Web passou a ser roteada sob `/:companySlug`, com links internos preservando esse prefixo de tenant, normalização canônica em lowercase e confirmação visual do tenant atual no header.
+
+## Canonicalização da URL
+
+- O slug usado para navegação deve ser tratado como canônico em lowercase.
+- URLs acessadas com diferença apenas de caixa devem ser redirecionadas para a forma canônica.
+- A montagem de rotas autenticadas deve passar sempre por helpers compartilhados para evitar variações manuais entre apps.
+
+## Confirmação visual de tenant
+
+- O header da área autenticada deve exibir o nome da empresa resolvida e o `company_slug` atual.
+- Essa confirmação é de UX e orientação operacional.
+- Ela não substitui a validação de tenant pelo backend.
+
+## Direção futura para mudança de slug
+
+- Se a empresa puder alterar o slug no futuro, a fonte de verdade continua sendo a empresa corrente resolvida pela sessão.
+- O frontend deve corrigir a URL ativa quando detectar divergência entre slug da rota e slug real devolvido pelo backend.
+- Links compartilhados antigos podem exigir estratégia complementar de compatibilidade no backend, mas isso é uma evolução posterior e não muda a regra de autorização baseada em JWT e `company_id`.
 
 ## Relação com outros tipos de documento
 

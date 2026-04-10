@@ -20,9 +20,13 @@ export const COMPANY_ROUTE_PATTERNS = {
 
 // `companySlug` is URL/UX context only. Authorization remains JWT + company_id.
 // See docs/conventions/company-slug-routing.md for the routing convention.
+export function normalizeCompanySlug(companySlug: string) {
+  return companySlug.trim().toLowerCase();
+}
+
 export function buildCompanyRoute(
   companySlug: string,
   route: keyof typeof COMPANY_ROUTE_PATTERNS,
 ) {
-  return `/${companySlug}/${APP_ROUTE_SEGMENTS[route]}`;
+  return `/${normalizeCompanySlug(companySlug)}/${APP_ROUTE_SEGMENTS[route]}`;
 }

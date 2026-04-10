@@ -4,6 +4,7 @@ import {
   APP_ROUTES,
   COMPANY_ROUTE_PATTERNS,
   buildCompanyRoute,
+  normalizeCompanySlug,
 } from '../src';
 
 describe('APP_ROUTES', () => {
@@ -37,7 +38,14 @@ describe('buildCompanyRoute', () => {
 
   it('handles custom slugs and preserves them', () => {
     expect(buildCompanyRoute('PETCONTROL-DEV', 'dashboard')).toBe(
-      '/PETCONTROL-DEV/dashboard',
+      '/petcontrol-dev/dashboard',
     );
+  });
+
+  it('normalizes company slugs to canonical lowercase routes', () => {
+    expect(buildCompanyRoute('  Company-X  ', 'schedules')).toBe(
+      '/company-x/schedules',
+    );
+    expect(normalizeCompanySlug('  PETCONTROL-DEV  ')).toBe('petcontrol-dev');
   });
 });

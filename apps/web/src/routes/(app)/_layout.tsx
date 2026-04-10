@@ -3,6 +3,7 @@ import {
   APP_ROUTES,
   COMPANY_ROUTE_PARAM,
   buildCompanyRoute,
+  normalizeCompanySlug,
 } from '@petcontrol/shared-constants';
 import { isUnauthorizedApiError } from '@/lib/api/rest-client';
 import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
@@ -86,12 +87,14 @@ export function AppLayout() {
     );
   }
 
-  if (companyQuery.isLoading || !currentSlug) {
+  if (companyQuery.isLoading || !currentSlug || !companyQuery.data) {
     return <LoadingScreen />;
   }
 
-  const normalizedCurrentSlug = currentSlug.toLowerCase();
+  const company = companyQuery.data;
+  const normalizedCurrentSlug = normalizeCompanySlug(currentSlug);
   const normalizedUrlSlug = urlSlug?.toLowerCase();
+  const companyDisplayName = company.fantasy_name || company.name;
 
   if (normalizedUrlSlug !== normalizedCurrentSlug) {
     return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
@@ -190,10 +193,16 @@ export function AppLayout() {
                   <h1 className="font-display text-xl text-white">
                     Painel administrativo
                   </h1>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Tenant atual: {companyDisplayName} ({normalizedCurrentSlug})
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm text-slate-300">
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-emerald-100">
+                  @{normalizedCurrentSlug}
+                </span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                   {session?.companyId.slice(0, 8)}…
                 </span>

@@ -173,9 +173,11 @@ Observação: a Fase 4 foi concluída com consolidação da suíte do Web para o
 
 ### 5.2 - Checks
 
-- [ ] A URL final da area autenticada e canônica e previsível.
-- [ ] Existe direção documentada para futuras mudanças de slug.
-- [ ] A experiencia de navegação deixa explicito o tenant atual sem depender apenas do estado interno da aplicação.
+- [x] A URL final da area autenticada e canônica e previsível.
+- [x] Existe direção documentada para futuras mudanças de slug.
+- [x] A experiencia de navegação deixa explicito o tenant atual sem depender apenas do estado interno da aplicação.
+
+Observação: a Fase 5 foi concluída com canonicalização do `companySlug` em lowercase via helper compartilhado, exposição explícita do tenant atual no header da área autenticada e documentação da direção futura para correção de URL quando houver mudança de slug, mantendo a autorização exclusivamente baseada em JWT e `company_id`.
 
 ## Ordem Recomendada de Execução
 
