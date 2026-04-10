@@ -202,6 +202,8 @@ export type PetTemperament = (typeof PET_TEMPERAMENTS)[number];
 export interface PetDTO {
   id: UUID;
   owner_id: UUID;
+  company_id?: UUID;
+  owner_name?: string;
   name: string;
   size: PetSize;
   kind: PetKind;
@@ -210,6 +212,28 @@ export interface PetDTO {
   birth_date?: string | null;
   is_active: boolean;
   notes?: string | null;
+}
+
+export interface CreatePetInput {
+  owner_id: UUID;
+  name: string;
+  size: PetSize;
+  kind: PetKind;
+  temperament: PetTemperament;
+  image_url?: string;
+  birth_date?: string;
+  notes?: string;
+}
+
+export interface UpdatePetInput {
+  owner_id?: UUID;
+  name?: string;
+  size?: PetSize;
+  kind?: PetKind;
+  temperament?: PetTemperament;
+  image_url?: string;
+  birth_date?: string;
+  notes?: string;
 }
 
 export interface PetListApiResponseDTO {

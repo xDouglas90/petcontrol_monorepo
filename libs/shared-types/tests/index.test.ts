@@ -66,6 +66,8 @@ describe('shared-types DTO compatibility', () => {
     const pet: PetDTO = {
       id: '44444444-4444-4444-4444-444444444444',
       owner_id: '11111111-1111-1111-1111-111111111111',
+      company_id: '33333333-3333-3333-3333-333333333333',
+      owner_name: 'Maria Silva',
       name: 'Thor',
       size: 'medium',
       kind: 'dog',
@@ -77,6 +79,7 @@ describe('shared-types DTO compatibility', () => {
 
     expect(pet.kind).toBe('dog');
     expect(pet.temperament).toBe('playful');
+    expect(pet.owner_name).toBe('Maria Silva');
   });
 
   it('accepts a service payload with catalog pricing fields', () => {
