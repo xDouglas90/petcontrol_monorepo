@@ -49,12 +49,12 @@ export function LoginPage() {
     mutationFn: performLogin,
     onSuccess: (result) => {
       setSession(result);
-      void navigate({ to: APP_ROUTES.dashboard });
+      void navigate({ to: APP_ROUTES.home });
     },
   });
 
   if (hydrated && session) {
-    return <Navigate to={APP_ROUTES.dashboard} replace />;
+    return <Navigate to={APP_ROUTES.home} replace />;
   }
 
   return (

@@ -1,5 +1,13 @@
 import { Link, Navigate, Outlet } from '@tanstack/react-router';
-import { APP_ROUTES } from '@petcontrol/shared-constants';
+import {
+  APP_ROUTES,
+  COMPANY_ROUTE_PARAM,
+  buildCompanyRoute,
+  normalizeCompanySlug,
+} from '@petcontrol/shared-constants';
+import { isUnauthorizedApiError } from '@/lib/api/rest-client';
+import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
+import { useParams } from '@tanstack/react-router';
 import { cn } from '@petcontrol/ui/web';
 import {
   CalendarRange,
@@ -23,10 +31,20 @@ export function AppLayout() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
+  const params = useParams({ strict: false });
+  const companyQuery = useCurrentCompanyQuery();
+  const unauthorizedCompanyContext =
+    companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (unauthorizedCompanyContext) {
+      clearSession();
+    }
+  }, [clearSession, unauthorizedCompanyContext]);
 
   if (hydrated && !session) {
     return <Navigate to={APP_ROUTES.login} replace />;
@@ -34,6 +52,52 @@ export function AppLayout() {
 
   if (!hydrated) {
     return <LoadingScreen />;
+  }
+
+  if (unauthorizedCompanyContext) {
+    return <Navigate to={APP_ROUTES.login} replace />;
+  }
+
+  const currentSlug = companyQuery.data?.slug;
+  const urlSlug =
+    typeof params[COMPANY_ROUTE_PARAM] === 'string'
+      ? params[COMPANY_ROUTE_PARAM]
+      : undefined;
+
+  if (companyQuery.isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
+        <p className="text-xl font-medium text-rose-400">Erro de Contexto</p>
+        <p className="mt-2 text-sm text-slate-400">Não conseguimos identificar sua empresa atual.</p>
+        <div className="mt-6 flex gap-4">
+          <button 
+            onClick={() => void companyQuery.refetch()}
+            className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+          >
+            Tentar novamente
+          </button>
+          <button 
+            onClick={() => clearSession()}
+            className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (companyQuery.isLoading || !currentSlug || !companyQuery.data) {
+    return <LoadingScreen />;
+  }
+
+  const company = companyQuery.data;
+  const normalizedCurrentSlug = normalizeCompanySlug(currentSlug);
+  const normalizedUrlSlug = urlSlug?.toLowerCase();
+  const companyDisplayName = company.fantasy_name || company.name;
+
+  if (normalizedUrlSlug !== normalizedCurrentSlug) {
+    return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
   }
 
   return (
@@ -68,13 +132,13 @@ export function AppLayout() {
 
           <nav className="mt-6 space-y-2 text-sm">
             <SidebarLink
-              to={APP_ROUTES.dashboard}
+              to={buildCompanyRoute(currentSlug, 'dashboard')}
               icon={Menu}
               label="Dashboard"
               expanded={sidebarOpen}
             />
             <SidebarLink
-              to={APP_ROUTES.schedules}
+              to={buildCompanyRoute(currentSlug, 'schedules')}
               icon={CalendarRange}
               label="Schedules"
               expanded={sidebarOpen}
@@ -129,10 +193,16 @@ export function AppLayout() {
                   <h1 className="font-display text-xl text-white">
                     Painel administrativo
                   </h1>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Tenant atual: {companyDisplayName} ({normalizedCurrentSlug})
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm text-slate-300">
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-emerald-100">
+                  @{normalizedCurrentSlug}
+                </span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                   {session?.companyId.slice(0, 8)}…
                 </span>
@@ -158,7 +228,7 @@ function SidebarLink({
   label,
   expanded,
 }: {
-  to: typeof APP_ROUTES.dashboard | typeof APP_ROUTES.schedules;
+  to: string;
   icon: typeof Menu;
   label: string;
   expanded: boolean;

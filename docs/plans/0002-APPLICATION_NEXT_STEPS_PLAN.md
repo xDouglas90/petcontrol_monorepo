@@ -287,7 +287,7 @@ Observação: a Fase 14 foi implementada com o evento de confirmação de schedu
 - [x] *README* deixa claro o que e implementado vs planejado.
 - [x] *CONTRIBUTING* permite onboarding local sem conhecimento implícito.
 
-Observação: a fase foi concluída com integração do Swaggo na API (rota `/swagger/*any`), geração versionada em `apps/api/docs` e cobertura de testes para configuração e exposição do endpoint Swagger, além da revisão documental de onboarding e estado atual do projeto.
+Observação: a fase foi concluída com integração do Swaggo na API (rota canônica `/swagger/*any`), geração versionada em `apps/api/docs`, alias compatível em `/api/v1/docs` com cobertura de testes para evitar regressão, além da revisão documental de onboarding e estado atual do projeto.
 
 ## Fase 16 - Endurecimento de Qualidade
 \

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -18,4 +21,15 @@ func configureSwaggerInfo() {
 func registerSwaggerRoute(router *gin.Engine) {
 	configureSwaggerInfo()
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/api/v1/docs", redirectSwaggerAlias)
+	router.GET("/api/v1/docs/*any", redirectSwaggerAlias)
+}
+
+func redirectSwaggerAlias(c *gin.Context) {
+	target := "/swagger/index.html"
+	if path := strings.TrimPrefix(c.Param("any"), "/"); path != "" {
+		target = "/swagger/" + path
+	}
+
+	c.Redirect(http.StatusTemporaryRedirect, target)
 }

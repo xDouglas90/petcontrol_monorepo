@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import { QueryClient } from '@tanstack/react-query';
-import { APP_ROUTES, APP_ROUTE_SEGMENTS } from '@petcontrol/shared-constants';
 import {
   Navigate,
   Outlet,
@@ -8,12 +7,20 @@ import {
   createRootRoute,
   createRouter,
 } from '@tanstack/react-router';
+import {
+  APP_ROUTES,
+  APP_ROUTE_SEGMENTS,
+  buildCompanyRoute,
+} from '@petcontrol/shared-constants';
 
 import { AppLayout } from '@/routes/(app)/_layout';
 import { DashboardPage } from '@/routes/(app)/dashboard';
 import { SchedulesPage } from '@/routes/(app)/schedules';
 import { LoginPage } from '@/routes/(auth)/login';
+import { isUnauthorizedApiError } from '@/lib/api/rest-client';
+import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
 import { useAuthStore } from '@/lib/auth/auth.store';
+import { useEffect } from 'react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +40,7 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: APP_ROUTES.home,
+  path: '/',
   component: HomeRedirect,
 });
 
@@ -43,20 +50,20 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-const appRoute = createRoute({
+const companyRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: 'app',
+  path: '$companySlug',
   component: AppLayout,
 });
 
 const dashboardRoute = createRoute({
-  getParentRoute: () => appRoute,
+  getParentRoute: () => companyRoute,
   path: APP_ROUTE_SEGMENTS.dashboard,
   component: DashboardPage,
 });
 
 const schedulesRoute = createRoute({
-  getParentRoute: () => appRoute,
+  getParentRoute: () => companyRoute,
   path: APP_ROUTE_SEGMENTS.schedules,
   component: SchedulesPage,
 });
@@ -64,7 +71,7 @@ const schedulesRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
-  appRoute.addChildren([dashboardRoute, schedulesRoute]),
+  companyRoute.addChildren([dashboardRoute, schedulesRoute]),
 ]);
 
 export const router = createRouter({
@@ -92,14 +99,62 @@ function RootRoute() {
 function HomeRedirect() {
   const hydrated = useAuthStore((state) => state.hydrated);
   const session = useAuthStore((state) => state.session);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const companyQuery = useCurrentCompanyQuery();
+  const unauthorizedCompanyContext =
+    companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
+
+  useEffect(() => {
+    if (unauthorizedCompanyContext) {
+      clearSession();
+    }
+  }, [clearSession, unauthorizedCompanyContext]);
 
   if (!hydrated) {
     return <SplashScreen />;
   }
 
-  return (
-    <Navigate to={session ? APP_ROUTES.dashboard : APP_ROUTES.login} replace />
-  );
+  if (!session) {
+    return <Navigate to={APP_ROUTES.login} replace />;
+  }
+
+  if (unauthorizedCompanyContext) {
+    return <Navigate to={APP_ROUTES.login} replace />;
+  }
+
+  if (companyQuery.isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
+        <p className="text-xl font-medium text-rose-400">Falha ao carregar contexto</p>
+        <p className="mt-2 text-sm text-slate-400">Não foi possível recuperar os dados da sua empresa.</p>
+        <div className="mt-6 flex gap-4">
+          <button 
+            onClick={() => void companyQuery.refetch()}
+            className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+          >
+            Tentar novamente
+          </button>
+          <button 
+            onClick={() => clearSession()}
+            className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (companyQuery.data?.slug) {
+    return (
+      <Navigate
+        to={buildCompanyRoute(companyQuery.data.slug, 'dashboard')}
+        replace
+      />
+    );
+  }
+
+  return <SplashScreen />;
 }
 
 function SplashScreen() {

@@ -135,6 +135,8 @@ Após subir a API, validar localmente:
 
 - `http://localhost:8080/swagger/index.html`
 - `http://localhost:8080/swagger/doc.json`
+- `http://localhost:8080/api/v1/docs` (`alias` compatível do Swagger UI)
+- `http://localhost:8080/api/v1/docs/doc.json` (`alias` compatível do JSON)
 
 ## CI
 
