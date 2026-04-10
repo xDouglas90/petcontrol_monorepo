@@ -8,24 +8,26 @@ import (
 )
 
 type Config struct {
-	AppHost     string
-	AppPort     string
-	DatabaseURL string
-	RedisAddr   string
-	WorkerQueue string
-	JWTSecret   string
-	JWTTTL      time.Duration
+	AppHost            string
+	AppPort            string
+	CORSAllowedOrigins []string
+	DatabaseURL        string
+	RedisAddr          string
+	WorkerQueue        string
+	JWTSecret          string
+	JWTTTL             time.Duration
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		AppHost:     getEnv("API_HOST", "0.0.0.0"),
-		AppPort:     getEnv("API_PORT", "8080"),
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		RedisAddr:   resolveRedisAddr(),
-		WorkerQueue: getEnv("WORKER_QUEUE", "notifications"),
-		JWTSecret:   getEnv("JWT_SECRET", "dev-secret-change-me"),
-		JWTTTL:      30 * time.Minute,
+		AppHost:            getEnv("API_HOST", "0.0.0.0"),
+		AppPort:            getEnv("API_PORT", "8080"),
+		CORSAllowedOrigins: resolveAllowedOrigins(),
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
+		RedisAddr:          resolveRedisAddr(),
+		WorkerQueue:        getEnv("WORKER_QUEUE", "notifications"),
+		JWTSecret:          getEnv("JWT_SECRET", "dev-secret-change-me"),
+		JWTTTL:             30 * time.Minute,
 	}
 
 	rawTTL := firstNonEmptyEnv("JWT_ACCESS_TOKEN_TTL", "JWT_TTL")
@@ -80,4 +82,27 @@ func resolveRedisAddr() string {
 	host := getEnv("REDIS_HOST", "localhost")
 	port := getEnv("REDIS_PORT", "6379")
 	return host + ":" + port
+}
+
+func resolveAllowedOrigins() []string {
+	raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	if raw == "" {
+		return []string{"http://localhost:5173"}
+	}
+
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		origin := strings.TrimSpace(part)
+		if origin == "" {
+			continue
+		}
+		origins = append(origins, origin)
+	}
+
+	if len(origins) == 0 {
+		return []string{"http://localhost:5173"}
+	}
+
+	return origins
 }
