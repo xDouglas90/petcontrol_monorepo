@@ -37,6 +37,7 @@ func TestCompanyService_GetCurrentCompany(t *testing.T) {
 	company, err := serviceUnderTest.GetCurrentCompany(context.Background(), companyID)
 	require.NoError(t, err)
 	require.Equal(t, companyID, company.ID)
+	require.Equal(t, "petcontrol", company.Slug)
 	require.Equal(t, sqlc.ModulePackageStarter, company.ActivePackage)
 	require.NoError(t, mock.ExpectationsWereMet())
 }

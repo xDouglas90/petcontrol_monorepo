@@ -60,6 +60,7 @@ func TestCompanyHandler_Current(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, res.Code)
 	require.Contains(t, res.Body.String(), "PetControl")
+	require.Contains(t, res.Body.String(), "\"slug\":\"petcontrol\"")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
