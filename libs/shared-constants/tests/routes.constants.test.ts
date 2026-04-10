@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  API_PATHS,
   APP_ROUTES,
   COMPANY_ROUTE_PATTERNS,
+  MODULE_CODES,
+  PLANNED_COMPANY_ROUTE_PATTERNS,
   buildCompanyRoute,
   normalizeCompanySlug,
 } from '../src';
@@ -16,6 +19,12 @@ describe('APP_ROUTES', () => {
   it('documents the tenant-scoped route convention', () => {
     expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/$companySlug/dashboard');
     expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/$companySlug/schedules');
+  });
+
+  it('keeps future domain routes explicit as planned patterns', () => {
+    expect(PLANNED_COMPANY_ROUTE_PATTERNS.clients).toBe('/$companySlug/clients');
+    expect(PLANNED_COMPANY_ROUTE_PATTERNS.pets).toBe('/$companySlug/pets');
+    expect(PLANNED_COMPANY_ROUTE_PATTERNS.services).toBe('/$companySlug/services');
   });
 
   it('keeps /login without slug', () => {
@@ -47,5 +56,19 @@ describe('buildCompanyRoute', () => {
       '/company-x/schedules',
     );
     expect(normalizeCompanySlug('  PETCONTROL-DEV  ')).toBe('petcontrol-dev');
+  });
+});
+
+describe('domain constants', () => {
+  it('exports API paths for the next operational modules', () => {
+    expect(API_PATHS.clients).toBe('/clients');
+    expect(API_PATHS.pets).toBe('/pets');
+    expect(API_PATHS.services).toBe('/services');
+  });
+
+  it('exports stable module codes used across the monorepo', () => {
+    expect(MODULE_CODES.scheduling).toBe('SCH');
+    expect(MODULE_CODES.crm).toBe('CRM');
+    expect(MODULE_CODES.finance).toBe('FIN');
   });
 });
