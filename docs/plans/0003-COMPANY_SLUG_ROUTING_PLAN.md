@@ -152,10 +152,12 @@ Observação: a Fase 3 foi concluída com guardas robustas no `AppLayout`, inclu
 
 ### 4.2 - Checks
 
-- [ ] Testes do Web cobrem redirect pos-login e rotas com slug.
-- [ ] Testes cobrem mismatch entre slug da URL e slug real da empresa.
-- [ ] README e docs não continuam exibindo apenas rotas antigas planas.
-- [ ] Navegação com slug não quebra dashboard nem `schedules`.
+- [x] Testes do Web cobrem redirect pos-login e rotas com slug.
+- [x] Testes cobrem mismatch entre slug da URL e slug real da empresa.
+- [x] README e docs não continuam exibindo apenas rotas antigas planas.
+- [x] Navegação com slug não quebra dashboard nem `schedules`.
+
+Observação: a Fase 4 foi concluída com consolidação da suíte do Web para o fluxo com `companySlug`, incluindo integração do router para redirect da home, acesso a `/:companySlug/schedules`, preservação do slug nos links internos e revisão documental das rotas autenticadas no README e nas convenções.
 
 ## Fase 5 - Endurecimento de UX e Evolução Futura
 
