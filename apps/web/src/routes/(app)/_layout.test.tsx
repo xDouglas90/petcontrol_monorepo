@@ -3,9 +3,9 @@ import type { LoginSession } from '@petcontrol/shared-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AppLayout } from './_layout';
-import { useAuthStore } from '../../lib/auth/auth.store';
-import { useUIStore } from '../../stores/ui.store';
-import { ApiError } from '../../lib/api/rest-client';
+import { useAuthStore } from '@/lib/auth/auth.store';
+import { useUIStore } from '@/stores/ui.store';
+import { ApiError } from '@/lib/api/rest-client';
 
 // Mocking TanStack Router
 const mockNavigate = vi.fn();
