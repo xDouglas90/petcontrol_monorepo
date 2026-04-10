@@ -81,9 +81,11 @@ Essa direção é a mais coerente porque:
 
 ### 17.2 - Checks
 
-- [ ] `shared-types` cobre os contratos reais de `clients`, `pets` e `services`.
-- [ ] O seed local permite usar o Web sem precisar descobrir UUIDs manualmente no banco.
-- [ ] Os novos tipos compartilhados não duplicam contratos já existentes no backend.
+- [x] `shared-types` cobre os contratos reais de `clients`, `pets` e `services`.
+- [x] O seed local permite usar o Web sem precisar descobrir UUIDs manualmente no banco.
+- [x] Os novos tipos compartilhados não duplicam contratos já existentes no backend.
+
+Observação: a Fase 17 foi concluída com expansão dos contratos compartilhados para `clients`, `pets`, `services` e payload enriquecível de `schedules`, adição de constantes de domínio e módulos em `shared-constants`, atualização do seed local com massa mínima operacional (`client`, `pet`, `service` e `schedule` confirmado) e cobertura automatizada por testes de contrato e por teste de integração que executa o `seed.sh` real contra PostgreSQL isolado.
 
 ## Fase 18 - Módulo Base de `clients`
 

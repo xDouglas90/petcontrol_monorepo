@@ -42,6 +42,14 @@ make migrate-up DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/pe
 make seed DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
 ```
 
+Após o seed, o ambiente local fica com uma massa mínima pronta para uso:
+
+- tenant `petcontrol-dev`;
+- usuários `admin@petcontrol.local` e `root@petcontrol.local` com senha `password123`;
+- 1 cliente ativo com pet vinculado;
+- 1 serviço ativo de catálogo;
+- 1 agendamento confirmado para validação do fluxo de `schedules`.
+
 ## Comandos de desenvolvimento
 
 API:
