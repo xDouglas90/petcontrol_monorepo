@@ -8,7 +8,36 @@ MIGRATIONS_DIR := $(INFRA_DIR)/migrations
 SCRIPTS_DIR := $(INFRA_DIR)/scripts
 DATABASE_URL ?=
 
-.PHONY: dev-api test-api dev-worker test-worker test lint lint-go lint-ts sqlc docker-up docker-down docker-logs docker-ps go-work-sync migrate-up migrate-down migrate-create seed
+# Coverage gates intentionally focus on deterministic unit-level packages.
+API_COVERAGE_MIN ?= 70
+WORKER_COVERAGE_MIN ?= 60
+API_COVERAGE_PACKAGES := ./internal/apperror ./internal/jwt ./internal/middleware
+WORKER_COVERAGE_PACKAGES := ./internal/config ./internal/queue ./internal/whatsapp
+
+.PHONY: \
+	build \
+	dev \
+	dev-api \
+	dev-worker \
+	docker-down \
+	docker-logs \
+	docker-ps \
+	docker-up \
+	go-work-sync \
+	lint \
+	lint-go \
+	lint-ts \
+	migrate-create \
+	migrate-down \
+	migrate-up \
+	seed \
+	sqlc \
+	test \
+	test-api \
+	test-worker \
+	coverage \
+	coverage-api \
+	coverage-worker
 
 dev-api:
 	cd $(API_DIR) && \
@@ -40,6 +69,23 @@ test: test-api test-worker
 		echo "pnpm not found, skipping JS/TS tests"; \
 	fi
 
+build:
+	cd $(API_DIR) && go build ./...
+	cd $(WORKER_DIR) && go build ./...
+	@if command -v pnpm >/dev/null 2>&1; then \
+		pnpm --filter @petcontrol/shared-types build && \
+		pnpm --filter @petcontrol/shared-utils build && \
+		pnpm --filter @petcontrol/shared-constants build && \
+		pnpm --filter @petcontrol/ui build && \
+		pnpm --filter web build; \
+	else \
+		echo "pnpm not found, skipping TS/JS builds"; \
+	fi
+
+dev:
+	@echo "Starting API, Worker and Web (use separate terminals for logs)"
+	@echo "Run 'make dev-api', 'make dev-worker' and 'pnpm --filter web dev' in separate terminals for local development."
+
 lint: lint-go lint-ts
 
 lint-go:
@@ -57,6 +103,32 @@ lint-ts:
 	else \
 		echo "pnpm not found, skipping TS lint"; \
 	fi
+
+coverage: coverage-api coverage-worker
+
+coverage-api:
+	cd $(API_DIR) && \
+		go test -coverprofile=coverage.out $(API_COVERAGE_PACKAGES) && \
+		total="$$(go tool cover -func=coverage.out | awk '/^total:/ {print substr($$3, 1, length($$3)-1)}')" && \
+		awk -v total="$$total" -v min="$(API_COVERAGE_MIN)" 'BEGIN { \
+			if (total + 0 < min + 0) { \
+				printf "API coverage %.1f%% is below minimum %.1f%%\n", total, min; \
+				exit 1; \
+			} \
+			printf "API coverage %.1f%% meets minimum %.1f%%\n", total, min; \
+		}'
+
+coverage-worker:
+	cd $(WORKER_DIR) && \
+		go test -coverprofile=coverage.out $(WORKER_COVERAGE_PACKAGES) && \
+		total="$$(go tool cover -func=coverage.out | awk '/^total:/ {print substr($$3, 1, length($$3)-1)}')" && \
+		awk -v total="$$total" -v min="$(WORKER_COVERAGE_MIN)" 'BEGIN { \
+			if (total + 0 < min + 0) { \
+				printf "Worker coverage %.1f%% is below minimum %.1f%%\n", total, min; \
+				exit 1; \
+			} \
+			printf "Worker coverage %.1f%% meets minimum %.1f%%\n", total, min; \
+		}'
 
 sqlc:
 	cd $(API_DIR) && sqlc generate

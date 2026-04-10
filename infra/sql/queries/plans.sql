@@ -69,6 +69,59 @@ WHERE
 ORDER BY
     p.created_at DESC;
 
+-- name: ListPlansByPackage :many
+SELECT
+    p.id,
+    p.plan_type_id,
+    p.name,
+    p.description,
+    p.package,
+    p.price,
+    p.billing_cycle_days,
+    p.max_users,
+    p.is_active,
+    p.image_url,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    plans p
+WHERE
+    p.deleted_at IS NULL
+    AND p.package = sqlc.arg('Package')
+ORDER BY
+    p.created_at DESC;
+
+-- name: GetCurrentPlanByCompanyID :one
+SELECT
+    p.id,
+    p.plan_type_id,
+    p.name,
+    p.description,
+    p.package,
+    p.price,
+    p.billing_cycle_days,
+    p.max_users,
+    p.is_active,
+    p.image_url,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    company_subscriptions cs
+    INNER JOIN plans p ON p.id = cs.plan_id
+WHERE
+    cs.company_id = sqlc.arg('CompanyID')
+    AND cs.is_active = TRUE
+    AND cs.canceled_at IS NULL
+    AND cs.started_at <= now()
+    AND cs.expires_at > now()
+    AND p.is_active = TRUE
+    AND p.deleted_at IS NULL
+ORDER BY
+    cs.started_at DESC
+LIMIT 1;
+
 -- name: UpdatePlan :execrows
 UPDATE
     plans

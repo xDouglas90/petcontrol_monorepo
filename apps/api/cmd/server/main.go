@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/config"
@@ -13,6 +15,16 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
+
+// @title PetControl API
+// @version 1.0
+// @description API HTTP do PetControl para autenticação, módulos de tenant e agendamentos.
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Use o formato: Bearer <token>
 
 func main() {
 	cfg, err := config.Load()
@@ -27,7 +39,11 @@ func main() {
 	defer pool.Close()
 
 	queries := sqlc.New(pool)
-	userService := service.NewUserService(queries)
+	companyService := service.NewCompanyService(queries)
+	planService := service.NewPlanService(queries)
+	moduleService := service.NewModuleService(queries)
+	companyUserService := service.NewCompanyUserService(queries)
+	scheduleService := service.NewScheduleService(queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
 	defer func() {
@@ -35,28 +51,47 @@ func main() {
 			log.Printf("close worker publisher: %v", err)
 		}
 	}()
-	userHandler := handler.NewUserHandler(userService)
+	companyHandler := handler.NewCompanyHandler(companyService)
+	planHandler := handler.NewPlanHandler(planService)
+	moduleHandler := handler.NewModuleHandler(moduleService)
+	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
+	scheduleHandler := handler.NewScheduleHandler(scheduleService, workerPublisher)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	router := gin.New()
-	router.Use(gin.Logger(), middleware.Recovery())
+	router.Use(middleware.RequestContext(), middleware.RequestLogger(logger), middleware.Recovery(logger))
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
+	registerSwaggerRoute(router)
 
 	v1 := router.Group("/api/v1")
 	v1.POST("/auth/login", authHandler.Login)
 
 	protected := v1.Group("/")
-	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
-	protected.GET("/users", userHandler.List)
-	protected.GET("/company-users", userHandler.ListCompanyUsers)
+	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant(), middleware.Audit(queries, logger))
+	protected.GET("/companies/current", companyHandler.Current)
+	protected.GET("/plans/current", planHandler.Current)
+	protected.GET("/modules/active", moduleHandler.Active)
+	protected.GET("/company-users", companyUserHandler.List)
+	protected.POST("/company-users", middleware.RequireCompanyOwner(queries), companyUserHandler.Create)
+	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
-		c.JSON(200, gin.H{"data": gin.H{"allowed": true, "module": c.Param("code")}})
+		middleware.JSONData(c, 200, gin.H{"allowed": true, "module": c.Param("code")})
 	})
+
+	schedules := protected.Group("/schedules")
+	schedules.Use(middleware.RequireModule(queries, "SCH"))
+	schedules.GET("", scheduleHandler.List)
+	schedules.POST("", scheduleHandler.Create)
+	schedules.GET("/:id", scheduleHandler.GetByID)
+	schedules.GET("/:id/history", scheduleHandler.History)
+	schedules.PUT("/:id", scheduleHandler.Update)
+	schedules.DELETE("/:id", scheduleHandler.Delete)
 
 	log.Printf("api listening on %s", cfg.Address())
 	if err := router.Run(cfg.Address()); err != nil {

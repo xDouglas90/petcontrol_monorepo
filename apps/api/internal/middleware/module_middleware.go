@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 )
@@ -14,13 +12,13 @@ func RequireModule(queries sqlc.Querier, moduleCode string) gin.HandlerFunc {
 			code = c.Param("code")
 		}
 		if code == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "module code is required"})
+			JSONError(c, 400, "module_code_required", "module code is required")
 			return
 		}
 
 		companyID, ok := GetCompanyID(c)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "company context required"})
+			JSONError(c, 403, "company_context_required", "company context required")
 			return
 		}
 
@@ -29,11 +27,11 @@ func RequireModule(queries sqlc.Querier, moduleCode string) gin.HandlerFunc {
 			Code:      code,
 		})
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to verify module access"})
+			JSONError(c, 500, "module_access_verification_failed", "failed to verify module access")
 			return
 		}
 		if !hasAccess {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "module not available for company"})
+			JSONError(c, 403, "module_not_available", "module not available for company")
 			return
 		}
 

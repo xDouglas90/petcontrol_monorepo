@@ -24,9 +24,37 @@ func NewNotificationsProcessor(logger *slog.Logger, sender DummySender) *Notific
 func (p *NotificationsProcessor) HandleDummyNotification(ctx context.Context, task *asynq.Task) error {
 	payload, err := queue.ParseDummyNotificationTask(task)
 	if err != nil {
+		p.logger.Error("worker task failed",
+			"operation", "dummy_notification",
+			"result", "invalid_payload",
+			"error", err.Error(),
+		)
 		return err
 	}
 
-	p.logger.Info("processing dummy notification", "company_id", payload.CompanyID, "user_id", payload.UserID)
-	return p.sender.SendDummyNotification(ctx, payload)
+	p.logger.Info("worker task started",
+		"operation", "dummy_notification",
+		"company_id", payload.CompanyID,
+		"user_id", payload.UserID,
+	)
+
+	if err := p.sender.SendDummyNotification(ctx, payload); err != nil {
+		p.logger.Error("worker task failed",
+			"operation", "dummy_notification",
+			"company_id", payload.CompanyID,
+			"user_id", payload.UserID,
+			"result", "failed",
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	p.logger.Info("worker task completed",
+		"operation", "dummy_notification",
+		"company_id", payload.CompanyID,
+		"user_id", payload.UserID,
+		"result", "success",
+	)
+
+	return nil
 }

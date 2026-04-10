@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres18_data:/var/lib/postgresql
 
   redis:
     image: redis:7-alpine
@@ -15,5 +15,5 @@ services:
       - redis_data:/data
 
 volumes:
-  postgres_data:
+  postgres18_data:
   redis_data:

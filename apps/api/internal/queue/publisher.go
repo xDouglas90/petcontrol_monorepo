@@ -8,6 +8,7 @@ import (
 
 type Publisher interface {
 	EnqueueDummyNotification(ctx context.Context, payload DummyNotificationPayload) error
+	EnqueueScheduleConfirmation(ctx context.Context, payload ScheduleConfirmationPayload) error
 	Close() error
 }
 
@@ -25,6 +26,16 @@ func NewAsynqPublisher(redisAddr string, queueName string) *AsynqPublisher {
 
 func (p *AsynqPublisher) EnqueueDummyNotification(ctx context.Context, payload DummyNotificationPayload) error {
 	task, err := NewDummyNotificationTask(payload, p.queueName)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.client.EnqueueContext(ctx, task)
+	return err
+}
+
+func (p *AsynqPublisher) EnqueueScheduleConfirmation(ctx context.Context, payload ScheduleConfirmationPayload) error {
+	task, err := NewScheduleConfirmationTask(payload, p.queueName)
 	if err != nil {
 		return err
 	}

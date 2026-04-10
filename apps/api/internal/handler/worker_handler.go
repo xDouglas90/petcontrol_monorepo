@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,19 +23,19 @@ type enqueueDummyRequest struct {
 func (h *WorkerHandler) EnqueueDummyNotification(c *gin.Context) {
 	claims, ok := middleware.GetClaims(c)
 	if !ok || claims.UserID == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "user context required"})
+		middleware.JSONError(c, 403, "user_context_required", "user context required")
 		return
 	}
 
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok || !companyID.Valid {
-		c.JSON(http.StatusForbidden, gin.H{"error": "company context required"})
+		middleware.JSONError(c, 403, "company_context_required", "company context required")
 		return
 	}
 
 	var req enqueueDummyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request body"})
+		middleware.JSONError(c, 422, "invalid_request_body", "invalid request body")
 		return
 	}
 	if req.Message == "" {
@@ -51,9 +50,9 @@ func (h *WorkerHandler) EnqueueDummyNotification(c *gin.Context) {
 	}
 
 	if err := h.publisher.EnqueueDummyNotification(c.Request.Context(), payload); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to enqueue task"})
+		middleware.JSONError(c, 500, "enqueue_task_failed", "failed to enqueue task")
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"data": gin.H{"enqueued": true, "task": queue.TypeNotificationDummy}})
+	middleware.JSONData(c, 202, gin.H{"enqueued": true, "task": queue.TypeNotificationDummy})
 }

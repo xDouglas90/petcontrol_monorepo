@@ -8,18 +8,22 @@ import (
 )
 
 type Config struct {
-	RedisAddr       string
-	WorkerQueue     string
-	WorkerQueueType string
-	Concurrency     int
+	RedisAddr           string
+	WebhookAddr         string
+	WhatsAppVerifyToken string
+	WorkerQueue         string
+	WorkerQueueType     string
+	Concurrency         int
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		RedisAddr:       resolveRedisAddr(),
-		WorkerQueue:     envWithDefault("WORKER_QUEUE", "notifications"),
-		WorkerQueueType: envWithDefault("WORKER_QUEUE_TYPE", "notifications:dummy"),
-		Concurrency:     5,
+		RedisAddr:           resolveRedisAddr(),
+		WebhookAddr:         envWithDefault("WORKER_HTTP_ADDR", ":8091"),
+		WhatsAppVerifyToken: os.Getenv("WHATSAPP_VERIFY_TOKEN"),
+		WorkerQueue:         envWithDefault("WORKER_QUEUE", "notifications"),
+		WorkerQueueType:     envWithDefault("WORKER_QUEUE_TYPE", "notifications:dummy"),
+		Concurrency:         5,
 	}
 
 	if raw := envWithDefault("WORKER_CONCURRENCY", "5"); raw != "" {

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
@@ -22,10 +22,23 @@ func NewAuthHandler(service *service.AuthService) *AuthHandler {
 	return &AuthHandler{service: service}
 }
 
+// Login godoc
+// @Summary Authenticate user
+// @Description Performs login and returns a bearer token and tenant context.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequestDoc true "Credentials"
+// @Success 200 {object} LoginResponseDoc
+// @Failure 401 {object} APIErrorResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request body"})
+		middleware.JSONError(c, 422, "invalid_request_body", "invalid request body")
 		return
 	}
 
@@ -47,9 +60,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		case errors.Is(err, apperror.ErrUnprocessableEntity):
 			message = "invalid credentials payload"
 		}
-		c.JSON(status, gin.H{"error": message})
+		middleware.JSONError(c, status, "login_failed", message)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	middleware.JSONData(c, 200, result)
 }

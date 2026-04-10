@@ -2,6 +2,7 @@ import { Link, Navigate, Outlet } from '@tanstack/react-router';
 import { APP_ROUTES } from '@petcontrol/shared-constants';
 import { cn } from '@petcontrol/ui/web';
 import {
+  CalendarRange,
   LogOut,
   Menu,
   MoonStar,
@@ -70,6 +71,12 @@ export function AppLayout() {
               to={APP_ROUTES.dashboard}
               icon={Menu}
               label="Dashboard"
+              expanded={sidebarOpen}
+            />
+            <SidebarLink
+              to={APP_ROUTES.schedules}
+              icon={CalendarRange}
+              label="Schedules"
               expanded={sidebarOpen}
             />
           </nav>
@@ -151,7 +158,7 @@ function SidebarLink({
   label,
   expanded,
 }: {
-  to: typeof APP_ROUTES.dashboard;
+  to: typeof APP_ROUTES.dashboard | typeof APP_ROUTES.schedules;
   icon: typeof Menu;
   label: string;
   expanded: boolean;

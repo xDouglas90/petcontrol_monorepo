@@ -35,6 +35,13 @@ pnpm install
 make docker-up
 ```
 
+1. Aplique migrations e seed para obter um tenant funcional:
+
+```bash
+make migrate-up DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
+make seed DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontrol?sslmode=disable"
+```
+
 ## Comandos de desenvolvimento
 
 API:
@@ -54,6 +61,12 @@ Frontend:
 ```bash
 pnpm --filter web dev
 ```
+
+Sequência recomendada para desenvolvimento local:
+
+1. `make dev-api`
+2. `make dev-worker`
+3. `pnpm --filter web dev`
 
 ## Banco de dados
 
@@ -100,6 +113,28 @@ Lint padrão (Go e TypeScript):
 ```bash
 make lint
 ```
+
+Testes por app (execução direta):
+
+```bash
+cd apps/api && go test ./... -count=1
+cd apps/worker && go test ./... -count=1
+pnpm --filter web test
+```
+
+## Swagger (API)
+
+Gerar/atualizar especificação OpenAPI:
+
+```bash
+cd apps/api
+go run github.com/swaggo/swag/cmd/swag@latest init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
+```
+
+Após subir a API, validar localmente:
+
+- `http://localhost:8080/swagger/index.html`
+- `http://localhost:8080/swagger/doc.json`
 
 ## CI
 
