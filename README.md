@@ -143,8 +143,10 @@ Ainda planejado para próximos ciclos:
 │       ├── web/                    # Componentes React (usa Tailwind + Radix)
 │       └── native/                 # Componentes React Native (usa NativeWind)
 │
-├── docs/                           # ADRs, diagramas, guia de contribuição
+├── docs/                           # Documentação do projeto
 │   ├── adr/                        # Architecture Decision Records
+│   ├── conventions/                # Convenções compartilhadas entre apps e libs
+│   ├── plans/                      # Planos de execução por fases
 │   ├── diagrams/                   # Diagramas de entidade e fluxo
 │   └── CONTRIBUTING.md
 │
@@ -169,6 +171,15 @@ Ainda planejado para próximos ciclos:
 │
 └── .env.example                    # Variáveis de ambiente documentadas
 ```
+
+### 3.1 Taxonomia de `docs/`
+
+Para evitar misturar documento operacional, decisão arquitetural e plano de execução, a pasta `docs/` segue esta divisão:
+
+- `docs/plans/`: planos incrementais de implementação, com fases, checks e ordem recomendada de execução.
+- `docs/adr/`: decisões arquiteturais relevantes e duradouras, registrando contexto, trade-offs e decisão final.
+- `docs/conventions/`: convenções e regras compartilhadas de operação, navegação, contratos de uso e organização entre apps e libs.
+- `docs/CONTRIBUTING.md`: onboarding local, fluxo de desenvolvimento e comandos principais do repositório.
 
 ---
 
@@ -239,6 +250,8 @@ Constantes de domínio que precisam ser consistentes entre front e back.
     pagination.constants.ts  # PAGE_SIZE_DEFAULT = 20, MAX_PAGE_SIZE = 100
     index.ts
 ```
+
+Além das rotas vivas da aplicação, `shared-constants` também pode expor padrões de navegação ainda em adoção incremental, como a convenção de rotas com `company_slug`. Quando isso acontecer, a regra funcional deve ser documentada em `docs/conventions/`, e o código deve conter apenas o contexto mínimo necessário para uso seguro.
 
 ### 4.4 `libs/ui` — Design System Cross-Platform
 
@@ -629,6 +642,26 @@ docker run --rm \
 | Auth (token, user)                  | Zustand + persistência em `localStorage`   |
 
 > **Regra:** nenhum dado que vem do servidor entra no Zustand. Se veio da API, fica no TanStack Query.
+
+### 6.3 Convenção de `company_slug` nas rotas autenticadas
+
+Foi introduzida uma convenção de roteamento para explicitar o tenant também na URL do frontend Web, usando o `company_slug` antes dos recursos autenticados.
+
+Exemplos planejados:
+
+- `/:companySlug/dashboard`
+- `/:companySlug/schedules`
+
+Essa convenção foi documentada em [docs/conventions/company-slug-routing.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/conventions/company-slug-routing.md) e detalhada no plano [docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
+
+Regras importantes:
+
+- o `company_slug` na URL representa contexto de navegação e UX;
+- a autorização continua pertencendo ao backend via JWT e `company_id`;
+- `/login` permanece sem slug;
+- a migração do router é incremental, então a convenção pode existir em `shared-constants` antes de todas as rotas vivas adotarem o novo formato.
+
+Essa evolução não fazia parte do plano original de módulos funcionais da aplicação. Ela foi introduzida depois como melhoria de navegação, previsibilidade de URL e preparação para cenários multi-tenant mais explícitos no frontend.
 
 ---
 
