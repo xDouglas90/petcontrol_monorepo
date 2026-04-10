@@ -86,13 +86,19 @@ func SetupPostgresWithMigrations(t *testing.T) PostgresSetup {
 func resolveMigrationsPath(t *testing.T) string {
 	t.Helper()
 
+	repoRoot := resolveRepoRoot(t)
+	return filepath.Join(repoRoot, "infra", "migrations")
+}
+
+func resolveRepoRoot(t *testing.T) string {
+	t.Helper()
+
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("failed to resolve caller file path")
 	}
 
-	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", "..", "..", ".."))
-	return filepath.Join(repoRoot, "infra", "migrations")
+	return filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", "..", "..", ".."))
 }
 
 func waitForPostgres(ctx context.Context, connString string) error {
