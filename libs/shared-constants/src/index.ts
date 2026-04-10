@@ -1,4 +1,4 @@
-export * from './routes.constants';
+export * from './routes.constants.js';
 
 export const API_PATHS = {
   authLogin: '/auth/login',
