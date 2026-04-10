@@ -15,8 +15,8 @@ describe('shared-constants', () => {
   it('expõe rotas e segmentos esperados', () => {
     expect(APP_ROUTES.home).toBe('/');
     expect(APP_ROUTES.login).toBe('/login');
-    expect(APP_ROUTES.dashboard).toBe('/dashboard');
-    expect(APP_ROUTES.schedules).toBe('/schedules');
+    expect(APP_ROUTES.dashboard).toBe('/$companySlug/dashboard');
+    expect(APP_ROUTES.schedules).toBe('/$companySlug/schedules');
 
     expect(APP_ROUTE_SEGMENTS.login).toBe('login');
     expect(APP_ROUTE_SEGMENTS.dashboard).toBe('dashboard');

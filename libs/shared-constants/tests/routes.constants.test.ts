@@ -7,9 +7,9 @@ import {
 } from '../src';
 
 describe('APP_ROUTES', () => {
-  it('keeps current live app routes unchanged until the router migration starts', () => {
-    expect(APP_ROUTES.dashboard).toBe('/dashboard');
-    expect(APP_ROUTES.schedules).toBe('/schedules');
+  it('defines authenticated routes with companySlug in the path', () => {
+    expect(APP_ROUTES.dashboard).toBe('/$companySlug/dashboard');
+    expect(APP_ROUTES.schedules).toBe('/$companySlug/schedules');
   });
 
   it('documents the tenant-scoped route convention for the upcoming migration', () => {
