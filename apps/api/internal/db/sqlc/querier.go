@@ -11,15 +11,18 @@ import (
 )
 
 type Querier interface {
+	CreateCompanyClient(ctx context.Context, arg CreateCompanyClientParams) (CompanyClient, error)
 	CreateCompanyUser(ctx context.Context, arg CreateCompanyUserParams) (CompanyUser, error)
 	CreateModule(ctx context.Context, arg CreateModuleParams) (Module, error)
 	CreateSchedule(ctx context.Context, arg CreateScheduleParams) (Schedule, error)
+	DeactivateClient(ctx context.Context, arg DeactivateClientParams) (int64, error)
 	DeactivateCompanyUser(ctx context.Context, arg DeactivateCompanyUserParams) error
 	DeleteCompany(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteModule(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteSchedule(ctx context.Context, arg DeleteScheduleParams) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	GetActiveCompanyUserByUserID(ctx context.Context, userid pgtype.UUID) (CompanyUser, error)
+	GetClientByIDAndCompanyID(ctx context.Context, arg GetClientByIDAndCompanyIDParams) (GetClientByIDAndCompanyIDRow, error)
 	GetCompanyByID(ctx context.Context, id pgtype.UUID) (Company, error)
 	GetCompanyBySlug(ctx context.Context, slug string) (Company, error)
 	GetCompanyUser(ctx context.Context, arg GetCompanyUserParams) (CompanyUser, error)
@@ -34,6 +37,10 @@ type Querier interface {
 	HasActiveCompanyModuleByCode(ctx context.Context, arg HasActiveCompanyModuleByCodeParams) (bool, error)
 	IncrementUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
+	InsertClientIdentification(ctx context.Context, arg InsertClientIdentificationParams) (PeopleIdentification, error)
+	InsertClientPerson(ctx context.Context) (Person, error)
+	InsertClientPrimaryContact(ctx context.Context, arg InsertClientPrimaryContactParams) (PeopleContact, error)
+	InsertClientRecord(ctx context.Context, arg InsertClientRecordParams) (Client, error)
 	InsertCompany(ctx context.Context, arg InsertCompanyParams) (Company, error)
 	InsertLoginHistory(ctx context.Context, arg InsertLoginHistoryParams) error
 	InsertPlan(ctx context.Context, arg InsertPlanParams) (Plan, error)
@@ -41,6 +48,7 @@ type Querier interface {
 	InsertScheduleStatusHistory(ctx context.Context, arg InsertScheduleStatusHistoryParams) (ScheduleStatusHistory, error)
 	InsertUser(ctx context.Context, arg InsertUserParams) (User, error)
 	ListActiveModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error)
+	ListClientsByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListClientsByCompanyIDRow, error)
 	ListCompanies(ctx context.Context) ([]Company, error)
 	ListCompaniesByPackage(ctx context.Context, activepackage ModulePackage) ([]Company, error)
 	ListCompanyUsersByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]CompanyUser, error)
@@ -54,6 +62,9 @@ type Querier interface {
 	ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) ([]User, error)
 	ResetUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
 	SetUserAuthLockedUntil(ctx context.Context, arg SetUserAuthLockedUntilParams) error
+	UpdateClientIdentification(ctx context.Context, arg UpdateClientIdentificationParams) (int64, error)
+	UpdateClientPrimaryContact(ctx context.Context, arg UpdateClientPrimaryContactParams) (int64, error)
+	UpdateClientRecord(ctx context.Context, arg UpdateClientRecordParams) (int64, error)
 	UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (int64, error)
 	UpdateModule(ctx context.Context, arg UpdateModuleParams) (Module, error)
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (int64, error)
