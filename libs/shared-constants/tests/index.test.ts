@@ -23,8 +23,8 @@ describe('shared-constants', () => {
     expect(APP_ROUTE_SEGMENTS.schedules).toBe('schedules');
 
     expect(COMPANY_ROUTE_PARAM).toBe('companySlug');
-    expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/:companySlug/dashboard');
-    expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/:companySlug/schedules');
+    expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/$companySlug/dashboard');
+    expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/$companySlug/schedules');
     expect(buildCompanyRoute('company-x', 'dashboard')).toBe(
       '/company-x/dashboard',
     );

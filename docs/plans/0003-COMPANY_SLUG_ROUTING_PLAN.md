@@ -107,10 +107,12 @@ Observação: a Fase 1 foi concluída com a migração do router da área autent
 
 ### 2.2 - Checks
 
-- [ ] Login com sucesso leva para `/:companySlug/dashboard`.
-- [ ] Reload da pagina preserva navegação correta quando a sessão esta persistida.
-- [ ] O frontend não depende de mock manual do slug para navegar apos login.
-- [ ] Não ha espelhamento desnecessário do objeto `company` fora do Query.
+- [x] Login com sucesso leva para `/:companySlug/dashboard`.
+- [x] Reload da pagina preserva navegação correta quando a sessão esta persistida.
+- [x] O frontend não depende de mock manual do slug para navegar apos login.
+- [x] Não ha espelhamento desnecessário do objeto `company` fora do Query.
+
+Observação: a Fase 2 foi concluída com o ajuste do fluxo de rotas pós-auth e a garantia de que o slug é derivado corretamente da query de empresa corrente sem duplicação de estado.
 
 ## Fase 3 - Guardas, Correção de URL e Robustez
 
@@ -128,10 +130,12 @@ Observação: a Fase 1 foi concluída com a migração do router da área autent
 
 ### 3.2 - Checks
 
-- [ ] Acesso com slug incorreto redireciona para o slug verdadeiro da empresa.
-- [ ] Rota autenticada sem sessão continua redirecionando para `/login`.
-- [ ] Logout remove o contexto autenticado e sai da area com slug.
-- [ ] Erros de carregamento da empresa não causam loop infinito de navegação.
+- [x] Acesso com slug incorreto redireciona para o slug verdadeiro da empresa.
+- [x] Rota autenticada sem sessão continua redirecionando para `/login`.
+- [x] Logout remove o contexto autenticado e sai da area com slug.
+- [x] Erros de carregamento da empresa não causam loop infinito de navegação.
+
+Observação: a Fase 3 foi concluída com guardas robustas no `AppLayout`, incluindo correção automática de slug de forma case-insensitive, redirecionamento para `/login` sem sessão, limpeza da sessão em contexto inválido (`401`) e cobertura via Vitest para mismatch de slug, logout e saída segura da área autenticada.
 
 ## Fase 4 - Cobertura de Testes e Consistencia
 

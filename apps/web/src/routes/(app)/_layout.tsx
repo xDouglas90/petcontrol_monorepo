@@ -68,12 +68,20 @@ export function AppLayout() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
         <p className="text-xl font-medium text-rose-400">Erro de Contexto</p>
         <p className="mt-2 text-sm text-slate-400">Não conseguimos identificar sua empresa atual.</p>
-        <button 
-          onClick={() => clearSession()}
-          className="mt-6 rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
-        >
-          Sair e tentar novamente
-        </button>
+        <div className="mt-6 flex gap-4">
+          <button 
+            onClick={() => void companyQuery.refetch()}
+            className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+          >
+            Tentar novamente
+          </button>
+          <button 
+            onClick={() => clearSession()}
+            className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     );
   }
@@ -82,7 +90,10 @@ export function AppLayout() {
     return <LoadingScreen />;
   }
 
-  if (currentSlug && urlSlug && urlSlug !== currentSlug) {
+  const normalizedCurrentSlug = currentSlug.toLowerCase();
+  const normalizedUrlSlug = urlSlug?.toLowerCase();
+
+  if (normalizedUrlSlug !== normalizedCurrentSlug) {
     return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
   }
 

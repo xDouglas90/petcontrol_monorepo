@@ -12,15 +12,32 @@ describe('APP_ROUTES', () => {
     expect(APP_ROUTES.schedules).toBe('/$companySlug/schedules');
   });
 
-  it('documents the tenant-scoped route convention for the upcoming migration', () => {
-    expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/:companySlug/dashboard');
-    expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/:companySlug/schedules');
-    expect(buildCompanyRoute('company-x', 'schedules')).toBe(
-      '/company-x/schedules',
-    );
+  it('documents the tenant-scoped route convention', () => {
+    expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/$companySlug/dashboard');
+    expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/$companySlug/schedules');
   });
 
   it('keeps /login without slug', () => {
     expect(APP_ROUTES.login).toBe('/login');
+  });
+});
+
+describe('buildCompanyRoute', () => {
+  it('builds a dashboard route correctly', () => {
+    expect(buildCompanyRoute('my-company', 'dashboard')).toBe(
+      '/my-company/dashboard',
+    );
+  });
+
+  it('builds a schedules route correctly', () => {
+    expect(buildCompanyRoute('test-slug', 'schedules')).toBe(
+      '/test-slug/schedules',
+    );
+  });
+
+  it('handles custom slugs and preserves them', () => {
+    expect(buildCompanyRoute('PETCONTROL-DEV', 'dashboard')).toBe(
+      '/PETCONTROL-DEV/dashboard',
+    );
   });
 });
