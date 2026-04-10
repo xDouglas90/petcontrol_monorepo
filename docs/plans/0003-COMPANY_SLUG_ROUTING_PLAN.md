@@ -56,7 +56,7 @@ Ao final deste plano, o comportamento desejado e:
 
 ## Fase 0 - Alinhamento de Contrato e Direção
 
-### 0.1 - Acoes
+### 0.1 - Ações
 
 - Confirmar que o `slug` da empresa corrente ja esta disponível no contrato consumido pelo Web.
 - Revisar se `shared-types` e `shared-constants` precisam refletir essa nova estrategia de roteamento.
@@ -68,13 +68,15 @@ Ao final deste plano, o comportamento desejado e:
 
 ### 0.2 - Checks
 
-- [ ] O endpoint de empresa corrente retorna `slug` de forma estável.
-- [ ] A documentação interna deixa claro que autorização continua baseada em JWT e `company_id`.
-- [ ] Existe uma convenção única de rota para os módulos autenticados.
+- [x] O endpoint de empresa corrente retorna `slug` de forma estável.
+- [x] A documentação interna deixa claro que autorização continua baseada em JWT e `company_id`.
+- [x] Existe uma convenção única de rota para os módulos autenticados.
+
+Observação: a Fase 0 foi concluída com a validação explícita do `slug` no contrato da empresa corrente, formalização da convenção futura de rotas com `company_slug` em `shared-constants` e documentação separando claramente contexto de navegação de autorização de tenant.
 
 ## Fase 1 - Base de Roteamento com Prefixo de Tenant
 
-### 1.1 - Acoes
+### 1.1 - Ações
 
 - Refatorar o router do Web para agrupar a area autenticada sob `/:companySlug`.
 - Atualizar `APP_ROUTES` e segmentos compartilhados para refletir o novo formato.
@@ -92,7 +94,7 @@ Ao final deste plano, o comportamento desejado e:
 
 ## Fase 2 - Pos-Login e Hidratação de Sessão
 
-### 2.1 - Acoes
+### 2.1 - Ações
 
 - Ajustar o fluxo de login para redirecionar para `/:companySlug/dashboard` apos autenticação bem-sucedida.
 - Garantir que o slug seja obtido de forma confiável:
@@ -110,7 +112,7 @@ Ao final deste plano, o comportamento desejado e:
 
 ## Fase 3 - Guardas, Correção de URL e Robustez
 
-### 3.1 - Acoes
+### 3.1 - Ações
 
 - Implementar validação no layout autenticado para comparar:
   - slug da rota;
@@ -131,7 +133,7 @@ Ao final deste plano, o comportamento desejado e:
 
 ## Fase 4 - Cobertura de Testes e Consistencia
 
-### 4.1 - Acoes
+### 4.1 - Ações
 
 - Atualizar testes do router, login, layout e paginas autenticadas para o novo formato com slug.
 - Adicionar testes de navegação para:
@@ -151,7 +153,7 @@ Ao final deste plano, o comportamento desejado e:
 
 ## Fase 5 - Endurecimento de UX e Evolução Futura
 
-### 5.1 - Acoes
+### 5.1 - Ações
 
 - Avaliar exibição do `company_slug` e/ou nome da empresa no header como confirmação visual de contexto.
 - Revisar se a URL deve ser tratada como canonicamente minuscula e normalizada.
