@@ -4,6 +4,7 @@ import {
   COMPANY_ROUTE_PARAM,
   buildCompanyRoute,
 } from '@petcontrol/shared-constants';
+import { isUnauthorizedApiError } from '@/lib/api/rest-client';
 import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
 import { useParams } from '@tanstack/react-router';
 import { cn } from '@petcontrol/ui/web';
@@ -31,10 +32,18 @@ export function AppLayout() {
   const setTheme = useUIStore((state) => state.setTheme);
   const params = useParams({ strict: false });
   const companyQuery = useCurrentCompanyQuery();
+  const unauthorizedCompanyContext =
+    companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (unauthorizedCompanyContext) {
+      clearSession();
+    }
+  }, [clearSession, unauthorizedCompanyContext]);
 
   if (hydrated && !session) {
     return <Navigate to={APP_ROUTES.login} replace />;
@@ -42,6 +51,10 @@ export function AppLayout() {
 
   if (!hydrated) {
     return <LoadingScreen />;
+  }
+
+  if (unauthorizedCompanyContext) {
+    return <Navigate to={APP_ROUTES.login} replace />;
   }
 
   const currentSlug = companyQuery.data?.slug;

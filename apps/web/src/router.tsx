@@ -18,8 +18,10 @@ import { AppLayout } from '@/routes/(app)/_layout';
 import { DashboardPage } from '@/routes/(app)/dashboard';
 import { SchedulesPage } from '@/routes/(app)/schedules';
 import { LoginPage } from '@/routes/(auth)/login';
+import { isUnauthorizedApiError } from '@/lib/api/rest-client';
 import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
 import { useAuthStore } from '@/lib/auth/auth.store';
+import { useEffect } from 'react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,13 +100,26 @@ function RootRoute() {
 function HomeRedirect() {
   const hydrated = useAuthStore((state) => state.hydrated);
   const session = useAuthStore((state) => state.session);
+  const clearSession = useAuthStore((state) => state.clearSession);
   const companyQuery = useCurrentCompanyQuery();
+  const unauthorizedCompanyContext =
+    companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
+
+  useEffect(() => {
+    if (unauthorizedCompanyContext) {
+      clearSession();
+    }
+  }, [clearSession, unauthorizedCompanyContext]);
 
   if (!hydrated) {
     return <SplashScreen />;
   }
 
   if (!session) {
+    return <Navigate to={APP_ROUTES.login} replace />;
+  }
+
+  if (unauthorizedCompanyContext) {
     return <Navigate to={APP_ROUTES.login} replace />;
   }
 
