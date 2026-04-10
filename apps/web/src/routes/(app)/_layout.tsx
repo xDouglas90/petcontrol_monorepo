@@ -1,5 +1,11 @@
 import { Link, Navigate, Outlet } from '@tanstack/react-router';
-import { APP_ROUTES } from '@petcontrol/shared-constants';
+import {
+  APP_ROUTES,
+  COMPANY_ROUTE_PARAM,
+  buildCompanyRoute,
+} from '@petcontrol/shared-constants';
+import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
+import { useParams } from '@tanstack/react-router';
 import { cn } from '@petcontrol/ui/web';
 import {
   CalendarRange,
@@ -23,6 +29,8 @@ export function AppLayout() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
+  const params = useParams({ strict: false });
+  const companyQuery = useCurrentCompanyQuery();
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -34,6 +42,35 @@ export function AppLayout() {
 
   if (!hydrated) {
     return <LoadingScreen />;
+  }
+
+  const currentSlug = companyQuery.data?.slug;
+  const urlSlug =
+    typeof params[COMPANY_ROUTE_PARAM] === 'string'
+      ? params[COMPANY_ROUTE_PARAM]
+      : undefined;
+
+  if (companyQuery.isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
+        <p className="text-xl font-medium text-rose-400">Erro de Contexto</p>
+        <p className="mt-2 text-sm text-slate-400">Não conseguimos identificar sua empresa atual.</p>
+        <button 
+          onClick={() => clearSession()}
+          className="mt-6 rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+        >
+          Sair e tentar novamente
+        </button>
+      </div>
+    );
+  }
+
+  if (companyQuery.isLoading || !currentSlug) {
+    return <LoadingScreen />;
+  }
+
+  if (currentSlug && urlSlug && urlSlug !== currentSlug) {
+    return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
   }
 
   return (
@@ -68,13 +105,13 @@ export function AppLayout() {
 
           <nav className="mt-6 space-y-2 text-sm">
             <SidebarLink
-              to={APP_ROUTES.dashboard}
+              to={buildCompanyRoute(currentSlug, 'dashboard')}
               icon={Menu}
               label="Dashboard"
               expanded={sidebarOpen}
             />
             <SidebarLink
-              to={APP_ROUTES.schedules}
+              to={buildCompanyRoute(currentSlug, 'schedules')}
               icon={CalendarRange}
               label="Schedules"
               expanded={sidebarOpen}
@@ -158,7 +195,7 @@ function SidebarLink({
   label,
   expanded,
 }: {
-  to: typeof APP_ROUTES.dashboard | typeof APP_ROUTES.schedules;
+  to: string;
   icon: typeof Menu;
   label: string;
   expanded: boolean;
