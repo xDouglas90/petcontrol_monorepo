@@ -82,6 +82,59 @@ type ClientDoc struct {
 	LeftAt         *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
 }
 
+// PetCreateRequestDoc documents pet creation payload for Swagger.
+type PetCreateRequestDoc struct {
+	OwnerID     string `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
+	Name        string `json:"name" example:"Thor"`
+	Size        string `json:"size" example:"medium"`
+	Kind        string `json:"kind" example:"dog"`
+	Temperament string `json:"temperament" example:"playful"`
+	ImageURL    string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	BirthDate   string `json:"birth_date,omitempty" example:"2021-08-20"`
+	Notes       string `json:"notes,omitempty" example:"Gosta de brincar"`
+}
+
+// PetUpdateRequestDoc documents pet update payload for Swagger.
+type PetUpdateRequestDoc struct {
+	OwnerID     *string `json:"owner_id,omitempty" example:"44444444-4444-4444-4444-444444444444"`
+	Name        *string `json:"name,omitempty" example:"Thorzinho"`
+	Size        *string `json:"size,omitempty" example:"large"`
+	Kind        *string `json:"kind,omitempty" example:"dog"`
+	Temperament *string `json:"temperament,omitempty" example:"loving"`
+	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	BirthDate   *string `json:"birth_date,omitempty" example:"2021-08-20"`
+	Notes       *string `json:"notes,omitempty" example:"Atualizado após consulta"`
+}
+
+// PetListResponseDoc documents the list pets response envelope for Swagger.
+type PetListResponseDoc struct {
+	Data []PetDoc `json:"data"`
+}
+
+// PetItemResponseDoc documents a single pet response envelope for Swagger.
+type PetItemResponseDoc struct {
+	Data PetDoc `json:"data"`
+}
+
+// PetDoc describes the public pet shape returned by API responses.
+type PetDoc struct {
+	ID          string  `json:"id" example:"77777777-7777-7777-7777-777777777777"`
+	OwnerID     string  `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
+	CompanyID   string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	OwnerName   string  `json:"owner_name" example:"Maria Silva"`
+	Name        string  `json:"name" example:"Thor"`
+	Size        string  `json:"size" example:"medium"`
+	Kind        string  `json:"kind" example:"dog"`
+	Temperament string  `json:"temperament" example:"playful"`
+	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	BirthDate   *string `json:"birth_date,omitempty" example:"2021-08-20"`
+	IsActive    bool    `json:"is_active" example:"true"`
+	Notes       *string `json:"notes,omitempty" example:"Gosta de brincar"`
+	CreatedAt   string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt   *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	DeletedAt   *string `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
 // ScheduleCreateRequestDoc documents schedule creation payload for Swagger.
 type ScheduleCreateRequestDoc struct {
 	ClientID     string  `json:"client_id" example:"11111111-1111-1111-1111-111111111111"`

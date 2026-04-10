@@ -1,0 +1,237 @@
+package handler_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/require"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
+	"github.com/xdouglas90/petcontrol_monorepo/test/integration"
+)
+
+func TestPetEndpoints_ListIsTenantScoped(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-list-a")
+	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-list-b")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
+	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
+	clientA := mustCreateClientRecord(t, ctx, pool, queries, tenantA.companyID, "Ana Lima", "12345678922")
+	clientB := mustCreateClientRecord(t, ctx, pool, queries, tenantB.companyID, "Bruno Costa", "12345678923")
+
+	petA := mustCreatePetRecord(t, ctx, queries, clientA, "Thor")
+	petB := mustCreatePetRecord(t, ctx, queries, clientB, "Mingau")
+
+	router := setupPetRouterForTenant(queries, tenantA)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pets", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), petA.String())
+	require.Contains(t, res.Body.String(), "Thor")
+	require.NotContains(t, res.Body.String(), petB.String())
+	require.NotContains(t, res.Body.String(), "Mingau")
+}
+
+func TestPetEndpoints_CreateRejectsOwnerFromAnotherTenant(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-create-a")
+	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-create-b")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
+	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
+	clientB := mustCreateClientRecord(t, ctx, pool, queries, tenantB.companyID, "Bruno Costa", "12345678925")
+
+	router := setupPetRouterForTenant(queries, tenantA)
+	body, err := json.Marshal(map[string]any{
+		"owner_id":    clientB.String(),
+		"name":        "Thor",
+		"size":        "medium",
+		"kind":        "dog",
+		"temperament": "playful",
+		"birth_date":  "2021-08-20",
+		"notes":       "Cross tenant should fail",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/pets", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+
+	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
+	require.NoError(t, err)
+	require.Len(t, items, 0)
+}
+
+func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-crud-a")
+	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-crud-b")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
+	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
+	clientA := mustCreateClientRecord(t, ctx, pool, queries, tenantA.companyID, "Ana Lima", "12345678926")
+	clientB := mustCreateClientRecord(t, ctx, pool, queries, tenantB.companyID, "Bruno Costa", "12345678927")
+
+	petB := mustCreatePetRecord(t, ctx, queries, clientB, "Mingau")
+	router := setupPetRouterForTenant(queries, tenantA)
+
+	createBody, err := json.Marshal(map[string]any{
+		"owner_id":    clientA.String(),
+		"name":        "Thor",
+		"size":        "medium",
+		"kind":        "dog",
+		"temperament": "playful",
+		"birth_date":  "2021-08-20",
+		"notes":       "Criado no teste",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/pets", bytes.NewReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusCreated, res.Code)
+	require.Contains(t, res.Body.String(), "Thor")
+	require.Contains(t, res.Body.String(), "\"owner_name\":")
+
+	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+
+	var petAID pgtype.UUID
+	for _, item := range items {
+		if item.Name == "Thor" {
+			petAID = item.ID
+		}
+	}
+	require.True(t, petAID.Valid)
+
+	updateBody, err := json.Marshal(map[string]any{
+		"name":        "Thor Atualizado",
+		"temperament": "loving",
+		"notes":       "Atualizado no teste",
+	})
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPut, "/api/v1/pets/"+petAID.String(), bytes.NewReader(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "Thor Atualizado")
+	require.Contains(t, res.Body.String(), "loving")
+
+	req = httptest.NewRequest(http.MethodPut, "/api/v1/pets/"+petB.String(), bytes.NewReader(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusNotFound, res.Code)
+
+	req = httptest.NewRequest(http.MethodDelete, "/api/v1/pets/"+petAID.String(), nil)
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusNoContent, res.Code)
+
+	_, err = queries.GetPetByIDAndCompanyID(ctx, sqlc.GetPetByIDAndCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		ID:        petAID,
+	})
+	require.Error(t, err)
+
+	var updateAuditCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'pets' AND action = 'update' AND company_id = $1`, tenantA.companyID).Scan(&updateAuditCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, updateAuditCount)
+
+	var deleteAuditCount int
+	err = pool.QueryRow(ctx, `SELECT count(*) FROM audit_logs WHERE entity_table = 'pets' AND action = 'delete' AND company_id = $1`, tenantA.companyID).Scan(&deleteAuditCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, deleteAuditCount)
+}
+
+func TestPetEndpoints_RequireModuleForAccess(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "pet-no-module")
+	router := setupPetRouterForTenant(queries, tenant)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pets", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "module not available for company")
+}
+
+func setupPetIntegrationPool(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	setup := integration.SetupPostgresWithMigrations(t)
+	return setup.Pool
+}
+
+func setupPetRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixture) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+
+	petService := service.NewPetService(queries)
+	petHandler := handler.NewPetHandler(petService)
+
+	router := gin.New()
+	router.Use(middleware.RequestContext())
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", tenant.companyID)
+		c.Next()
+	})
+	router.Use(middleware.Audit(queries, nil))
+
+	pets := router.Group("/api/v1/pets")
+	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.GET("", petHandler.List)
+	pets.POST("", petHandler.Create)
+	pets.GET("/:id", petHandler.GetByID)
+	pets.PUT("/:id", petHandler.Update)
+	pets.DELETE("/:id", petHandler.Delete)
+
+	return router
+}
+
+func mustCreatePetRecord(t *testing.T, ctx context.Context, queries *sqlc.Queries, ownerID pgtype.UUID, name string) pgtype.UUID {
+	t.Helper()
+	pet, err := queries.CreatePet(ctx, sqlc.CreatePetParams{
+		Name:        name,
+		Size:        sqlc.PetSizeMedium,
+		Kind:        sqlc.PetKindDog,
+		Temperament: sqlc.PetTemperamentPlayful,
+		BirthDate:   pgtype.Date{Time: time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), Valid: true},
+		OwnerID:     ownerID,
+		Notes:       pgtype.Text{String: "Criado no teste", Valid: true},
+	})
+	require.NoError(t, err)
+	return pet.ID
+}
