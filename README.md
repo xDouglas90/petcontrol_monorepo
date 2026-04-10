@@ -652,7 +652,7 @@ Exemplos planejados:
 - `/:companySlug/dashboard`
 - `/:companySlug/schedules`
 
-Essa convenção foi documentada em [docs/conventions/company-slug-routing.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/conventions/company-slug-routing.md) e detalhada no plano [docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
+Essa convenção foi documentada em [docs/conventions/company-slug-routing.md](./docs/conventions/company-slug-routing.md) e detalhada no plano [docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md](./docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
 
 Regras importantes:
 

@@ -2,7 +2,7 @@
 
 ## Contexto
 
-Esta documentação registra a convenção planejada para a area autenticada do Web, conforme o plano [0003-COMPANY_SLUG_ROUTING_PLAN.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
+Esta documentação registra a convenção planejada para a area autenticada do Web, conforme o plano [0003-COMPANY_SLUG_ROUTING_PLAN.md](../plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
 
 Ela nao substitui o plano de execução. O objetivo aqui é documentar a regra funcional e arquitetural que deve permanecer valida mesmo depois da implementação.
 
