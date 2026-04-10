@@ -43,6 +43,7 @@ func main() {
 	planService := service.NewPlanService(queries)
 	moduleService := service.NewModuleService(queries)
 	companyUserService := service.NewCompanyUserService(queries)
+	clientService := service.NewClientService(pool, queries)
 	scheduleService := service.NewScheduleService(queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
@@ -55,6 +56,7 @@ func main() {
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
+	clientHandler := handler.NewClientHandler(clientService)
 	scheduleHandler := handler.NewScheduleHandler(scheduleService, workerPublisher)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
@@ -88,6 +90,14 @@ func main() {
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
 		middleware.JSONData(c, 200, gin.H{"allowed": true, "module": c.Param("code")})
 	})
+
+	clients := protected.Group("/clients")
+	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.GET("", clientHandler.List)
+	clients.POST("", clientHandler.Create)
+	clients.GET("/:id", clientHandler.GetByID)
+	clients.PUT("/:id", clientHandler.Update)
+	clients.DELETE("/:id", clientHandler.Delete)
 
 	schedules := protected.Group("/schedules")
 	schedules.Use(middleware.RequireModule(queries, "SCH"))

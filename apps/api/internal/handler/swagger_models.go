@@ -16,6 +16,72 @@ type LoginResponseDoc struct {
 	Data service.LoginResult `json:"data"`
 }
 
+// ClientCreateRequestDoc documents client creation payload for Swagger.
+type ClientCreateRequestDoc struct {
+	FullName       string `json:"full_name" example:"Maria Silva"`
+	ShortName      string `json:"short_name" example:"Maria"`
+	GenderIdentity string `json:"gender_identity" example:"woman_cisgender"`
+	MaritalStatus  string `json:"marital_status" example:"single"`
+	BirthDate      string `json:"birth_date" example:"1992-06-15"`
+	CPF            string `json:"cpf" example:"12345678901"`
+	Email          string `json:"email" example:"maria.silva@petcontrol.local"`
+	Phone          string `json:"phone,omitempty" example:"+551130000000"`
+	Cellphone      string `json:"cellphone" example:"+5511999990001"`
+	HasWhatsapp    bool   `json:"has_whatsapp" example:"true"`
+	ClientSince    string `json:"client_since,omitempty" example:"2026-04-01"`
+	Notes          string `json:"notes,omitempty" example:"Cliente recorrente"`
+}
+
+// ClientUpdateRequestDoc documents client update payload for Swagger.
+type ClientUpdateRequestDoc struct {
+	FullName       *string `json:"full_name,omitempty" example:"Maria Souza"`
+	ShortName      *string `json:"short_name,omitempty" example:"Mari"`
+	GenderIdentity *string `json:"gender_identity,omitempty" example:"woman_cisgender"`
+	MaritalStatus  *string `json:"marital_status,omitempty" example:"married"`
+	BirthDate      *string `json:"birth_date,omitempty" example:"1992-06-15"`
+	CPF            *string `json:"cpf,omitempty" example:"12345678901"`
+	Email          *string `json:"email,omitempty" example:"maria.souza@petcontrol.local"`
+	Phone          *string `json:"phone,omitempty" example:"+551130000000"`
+	Cellphone      *string `json:"cellphone,omitempty" example:"+5511999990002"`
+	HasWhatsapp    *bool   `json:"has_whatsapp,omitempty" example:"true"`
+	ClientSince    *string `json:"client_since,omitempty" example:"2026-04-01"`
+	Notes          *string `json:"notes,omitempty" example:"Preferência por contato via WhatsApp"`
+}
+
+// ClientListResponseDoc documents the list clients response envelope for Swagger.
+type ClientListResponseDoc struct {
+	Data []ClientDoc `json:"data"`
+}
+
+// ClientItemResponseDoc documents a single client response envelope for Swagger.
+type ClientItemResponseDoc struct {
+	Data ClientDoc `json:"data"`
+}
+
+// ClientDoc describes the public client shape returned by API responses.
+type ClientDoc struct {
+	ID             string  `json:"id" example:"44444444-4444-4444-4444-444444444444"`
+	PersonID       string  `json:"person_id" example:"55555555-5555-5555-5555-555555555555"`
+	CompanyID      string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	FullName       string  `json:"full_name" example:"Maria Silva"`
+	ShortName      string  `json:"short_name" example:"Maria"`
+	GenderIdentity string  `json:"gender_identity" example:"woman_cisgender"`
+	MaritalStatus  string  `json:"marital_status" example:"single"`
+	BirthDate      string  `json:"birth_date" example:"1992-06-15"`
+	CPF            string  `json:"cpf" example:"12345678901"`
+	Email          string  `json:"email" example:"maria.silva@petcontrol.local"`
+	Phone          *string `json:"phone,omitempty" example:"+551130000000"`
+	Cellphone      string  `json:"cellphone" example:"+5511999990001"`
+	HasWhatsapp    bool    `json:"has_whatsapp" example:"true"`
+	ClientSince    *string `json:"client_since,omitempty" example:"2026-04-01"`
+	Notes          *string `json:"notes,omitempty" example:"Cliente recorrente"`
+	IsActive       bool    `json:"is_active" example:"true"`
+	CreatedAt      string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt      *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	JoinedAt       string  `json:"joined_at" example:"2026-04-10T10:00:00Z"`
+	LeftAt         *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
 // ScheduleCreateRequestDoc documents schedule creation payload for Swagger.
 type ScheduleCreateRequestDoc struct {
 	ClientID     string  `json:"client_id" example:"11111111-1111-1111-1111-111111111111"`
