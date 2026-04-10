@@ -5,7 +5,10 @@ import {
   APP_ROUTES,
   API_PATHS,
   AUTH_MODES,
+  COMPANY_ROUTE_PARAM,
+  COMPANY_ROUTE_PATTERNS,
   STORAGE_KEYS,
+  buildCompanyRoute,
 } from '../src';
 
 describe('shared-constants', () => {
@@ -13,9 +16,18 @@ describe('shared-constants', () => {
     expect(APP_ROUTES.home).toBe('/');
     expect(APP_ROUTES.login).toBe('/login');
     expect(APP_ROUTES.dashboard).toBe('/dashboard');
+    expect(APP_ROUTES.schedules).toBe('/schedules');
 
     expect(APP_ROUTE_SEGMENTS.login).toBe('login');
     expect(APP_ROUTE_SEGMENTS.dashboard).toBe('dashboard');
+    expect(APP_ROUTE_SEGMENTS.schedules).toBe('schedules');
+
+    expect(COMPANY_ROUTE_PARAM).toBe('companySlug');
+    expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/:companySlug/dashboard');
+    expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/:companySlug/schedules');
+    expect(buildCompanyRoute('company-x', 'dashboard')).toBe(
+      '/company-x/dashboard',
+    );
   });
 
   it('expõe paths e chaves de storage estáveis', () => {
