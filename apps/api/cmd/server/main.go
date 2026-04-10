@@ -62,7 +62,12 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	router := gin.New()
-	router.Use(middleware.RequestContext(), middleware.RequestLogger(logger), middleware.Recovery(logger))
+	router.Use(
+		middleware.RequestContext(),
+		middleware.CORS(cfg.CORSAllowedOrigins),
+		middleware.RequestLogger(logger),
+		middleware.Recovery(logger),
+	)
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
