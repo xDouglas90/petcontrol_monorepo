@@ -45,13 +45,14 @@ Implementado nesta etapa:
 
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
 - API com módulo base de `clients` protegido por `CRM`, incluindo CRUD tenant-aware e auditoria das mutações.
+- API com módulo base de `pets` protegido por `CRM`, incluindo ownership validado por tenant, soft delete e payload com `owner_name`.
 - Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
 - Web conectado aos fluxos reais de login, dashboard e `schedules`.
 - Swagger operacional em `apps/api/docs`, com rota canônica em `/swagger/index.html` e alias compatível em `/api/v1/docs`.
 
 Ainda planejado para próximos ciclos:
 
-- Expansão dos domínios além do núcleo atual, com `pets`, `services` e `reports` completos de ponta a ponta, além da camada Web operacional de `clients`.
+- Expansão dos domínios além do núcleo atual, com `services` e `reports` completos de ponta a ponta, além das camadas Web operacionais de `clients` e `pets`.
 - Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
 - Hardening de qualidade/CI e consolidação documental contínua.
 

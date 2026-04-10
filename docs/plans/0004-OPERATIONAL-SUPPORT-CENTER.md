@@ -126,10 +126,12 @@ Observação: a Fase 18 foi concluída com o módulo base de `clients` ativo na 
 
 ### 19.2 - Checks
 
-- [ ] `GET /api/v1/pets` lista apenas pets associados a clientes do tenant.
-- [ ] `POST /api/v1/pets` falha ao tentar vincular pet a cliente de outro tenant.
-- [ ] `PUT` e `DELETE` de pet preservam o histórico e o isolamento multi-tenant.
-- [ ] O backend consegue validar ownership de pet sem depender de suposições frágeis no frontend.
+- [x] `GET /api/v1/pets` lista apenas pets associados a clientes do tenant.
+- [x] `POST /api/v1/pets` falha ao tentar vincular pet a cliente de outro tenant.
+- [x] `PUT` e `DELETE` de pet preservam o histórico e o isolamento multi-tenant.
+- [x] O backend consegue validar ownership de pet sem depender de suposições frágeis no frontend.
+
+Observação: a Fase 19 foi concluída com o módulo base de `pets` ativo na API, incluindo queries SQLC para listagem, consulta, criação, atualização, desativação e validação de ownership por tenant, `PetService` com enforcement explícito de que o `owner_id` pertença a um cliente visível da empresa, `PetHandler` exposto em `/api/v1/pets` sob guarda de módulo `CRM`, payload enriquecido com `owner_name`, soft delete para preservar histórico e cobertura por testes unitários de service e integração do handler para escopo multi-tenant, bloqueio cross-tenant, atualização e remoção lógica.
 
 ## Fase 20 - Catálogo de `services` e Enriquecimento de `schedules`
 
