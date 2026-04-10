@@ -54,6 +54,13 @@ Ainda planejado para próximos ciclos:
 - Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
 - Hardening de qualidade/CI e consolidação documental contínua.
 
+O seed local agora também prepara massa operacional mínima para desenvolvimento:
+
+- 1 cliente ativo vinculado ao tenant `petcontrol-dev`;
+- 1 pet ativo desse cliente;
+- 1 serviço ativo disponível para a empresa;
+- 1 `schedule` de exemplo já confirmado para validar listagem e integração local.
+
 ---
 
 ## 2. Stack Tecnológica
@@ -649,10 +656,16 @@ docker run --rm \
 
 Foi introduzida uma convenção de roteamento para explicitar o tenant também na URL do frontend Web, usando o `company_slug` antes dos recursos autenticados.
 
-Exemplos planejados:
+Rotas atualmente ativas:
 
 - `/:companySlug/dashboard`
 - `/:companySlug/schedules`
+
+Rotas de domínio já previstas nos contratos compartilhados, mas ainda não expostas no Web desta etapa:
+
+- `/:companySlug/clients`
+- `/:companySlug/pets`
+- `/:companySlug/services`
 
 Essa convenção foi documentada em [docs/conventions/company-slug-routing.md](./docs/conventions/company-slug-routing.md) e detalhada no plano [docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md](./docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
 

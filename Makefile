@@ -61,6 +61,7 @@ test-worker:
 
 test: test-api test-worker
 	@if command -v pnpm >/dev/null 2>&1; then \
+		pnpm --filter @petcontrol/shared-types test && \
 		pnpm --filter @petcontrol/shared-utils test && \
 		pnpm --filter @petcontrol/shared-constants test && \
 		pnpm --filter @petcontrol/ui test && \
