@@ -29,7 +29,7 @@ O backend continua confiando apenas em:
 
 ## Estado atual
 
-Durante a Fase 0 do plano `0003`, a convenção foi formalizada em `shared-constants`, mas as rotas vivas da aplicação ainda podem permanecer planas ate o inicio da migração do router na Fase 1.
+Após a Fase 1 do plano `0003`, a área autenticada do Web passou a ser roteada sob `/:companySlug`, e os links internos principais preservam esse prefixo de tenant.
 
 ## Relação com outros tipos de documento
 

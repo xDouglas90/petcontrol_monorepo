@@ -87,10 +87,12 @@ Observação: a Fase 0 foi concluída com a validação explícita do `slug` no 
 
 ### 1.2 - Checks
 
-- [ ] `dashboard` passa a responder em `/:companySlug/dashboard`.
-- [ ] `schedules` passa a responder em `/:companySlug/schedules`.
-- [ ] Links internos da sidebar preservam o prefixo `/:companySlug`.
-- [ ] Home redirect respeita o slug da empresa autenticada.
+- [x] `dashboard` passa a responder em `/:companySlug/dashboard`.
+- [x] `schedules` passa a responder em `/:companySlug/schedules`.
+- [x] Links internos da sidebar preservam o prefixo `/:companySlug`.
+- [x] Home redirect respeita o slug da empresa autenticada.
+
+Observação: a Fase 1 foi concluída com a migração do router da área autenticada para `/:companySlug`, atualização das rotas compartilhadas para o novo formato, adaptação do `AppLayout` para preservar o slug nos links internos e redirecionamento da home para o dashboard da empresa corrente autenticada.
 
 ## Fase 2 - Pos-Login e Hidratação de Sessão
 
