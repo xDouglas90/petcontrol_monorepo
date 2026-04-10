@@ -73,6 +73,10 @@ export const MODULE_PACKAGES = [
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
 
+export const MODULE_CODES = ['SCH', 'CRM', 'FIN'] as const;
+
+export type ModuleCode = (typeof MODULE_CODES)[number];
+
 export interface CompanyDTO {
   id: UUID;
   slug: string;
@@ -85,6 +89,104 @@ export interface CompanyDTO {
 
 export interface CurrentCompanyApiResponseDTO {
   data: CompanyDTO;
+}
+
+export interface ClientDTO {
+  id: UUID;
+  person_id: UUID;
+  company_id: UUID;
+  full_name: string;
+  short_name: string;
+  cpf: string;
+  email: string;
+  cellphone: string;
+  has_whatsapp: boolean;
+  client_since?: string | null;
+  notes?: string | null;
+  is_active: boolean;
+}
+
+export interface ClientListApiResponseDTO {
+  data: ClientDTO[];
+}
+
+export interface ClientApiResponseDTO {
+  data: ClientDTO;
+}
+
+export const PET_SIZES = ['small', 'medium', 'large', 'giant'] as const;
+
+export type PetSize = (typeof PET_SIZES)[number];
+
+export const PET_KINDS = [
+  'dog',
+  'cat',
+  'bird',
+  'fish',
+  'reptile',
+  'rodent',
+  'rabbit',
+  'other',
+] as const;
+
+export type PetKind = (typeof PET_KINDS)[number];
+
+export const PET_TEMPERAMENTS = [
+  'calm',
+  'nervous',
+  'aggressive',
+  'playful',
+  'loving',
+] as const;
+
+export type PetTemperament = (typeof PET_TEMPERAMENTS)[number];
+
+export interface PetDTO {
+  id: UUID;
+  owner_id: UUID;
+  name: string;
+  size: PetSize;
+  kind: PetKind;
+  temperament: PetTemperament;
+  image_url?: string | null;
+  birth_date?: string | null;
+  is_active: boolean;
+  notes?: string | null;
+}
+
+export interface PetListApiResponseDTO {
+  data: PetDTO[];
+}
+
+export interface PetApiResponseDTO {
+  data: PetDTO;
+}
+
+export interface ServiceTypeDTO {
+  id: UUID;
+  name: string;
+  description?: string | null;
+}
+
+export interface ServiceDTO {
+  id: UUID;
+  type_id: UUID;
+  type_name: string;
+  title: string;
+  description: string;
+  notes?: string | null;
+  price: string;
+  discount_rate: string;
+  image_url?: string | null;
+  is_active: boolean;
+}
+
+export interface ServiceListApiResponseDTO {
+  data: ServiceDTO[];
+}
+
+export interface ServiceApiResponseDTO {
+  data: ServiceDTO;
 }
 
 export const SCHEDULE_STATUSES = [
@@ -103,6 +205,10 @@ export interface ScheduleDTO {
   company_id: UUID;
   client_id: UUID;
   pet_id: UUID;
+  client_name?: string | null;
+  pet_name?: string | null;
+  service_ids?: UUID[];
+  service_titles?: string[];
   scheduled_at: string;
   estimated_end?: string | null;
   notes?: string | null;
