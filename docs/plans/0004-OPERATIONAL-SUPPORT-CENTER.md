@@ -104,10 +104,12 @@ Observação: a Fase 17 foi concluída com expansão dos contratos compartilhado
 
 ### 18.2 - Checks
 
-- [ ] `GET /api/v1/clients` retorna apenas clientes do tenant autenticado.
-- [ ] `POST /api/v1/clients` cria cliente e vínculo com a empresa sem depender de `company_id` no body.
-- [ ] `GET`, `PUT` e `DELETE` de cliente respeitam tenant e soft delete.
-- [ ] Testes cobrem criação, listagem, atualização e bloqueio de acesso cruzado entre tenants.
+- [x] `GET /api/v1/clients` retorna apenas clientes do tenant autenticado.
+- [x] `POST /api/v1/clients` cria cliente e vínculo com a empresa sem depender de `company_id` no body.
+- [x] `GET`, `PUT` e `DELETE` de cliente respeitam tenant e soft delete.
+- [x] Testes cobrem criação, listagem, atualização e bloqueio de acesso cruzado entre tenants.
+
+Observação: a Fase 18 foi concluída com o módulo base de `clients` ativo na API, incluindo queries SQLC para listagem, consulta, criação, atualização e desativação por tenant, `ClientService` com criação transacional sobre `people`, `people_identifications`, `people_contacts`, `clients` e `company_clients`, `ClientHandler` exposto em `/api/v1/clients` com guarda de módulo `CRM`, auditoria das mutações e cobertura por testes unitários de service e testes de integração do handler para isolamento multi-tenant, `RequireModule`, atualização e desativação controlada.
 
 ## Fase 19 - Módulo Base de `pets`
 

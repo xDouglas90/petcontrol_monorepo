@@ -44,13 +44,14 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 Implementado nesta etapa:
 
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
+- API com módulo base de `clients` protegido por `CRM`, incluindo CRUD tenant-aware e auditoria das mutações.
 - Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
 - Web conectado aos fluxos reais de login, dashboard e `schedules`.
 - Swagger operacional em `apps/api/docs`, com rota canônica em `/swagger/index.html` e alias compatível em `/api/v1/docs`.
 
 Ainda planejado para próximos ciclos:
 
-- Expansão de domínios de negócio além de `schedules` (clients/pets/services/reports completos de ponta a ponta).
+- Expansão dos domínios além do núcleo atual, com `pets`, `services` e `reports` completos de ponta a ponta, além da camada Web operacional de `clients`.
 - Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
 - Hardening de qualidade/CI e consolidação documental contínua.
 
