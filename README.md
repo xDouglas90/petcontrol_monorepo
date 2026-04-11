@@ -46,13 +46,15 @@ Implementado nesta etapa:
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
 - API com módulo base de `clients` protegido por `CRM`, incluindo CRUD tenant-aware e auditoria das mutações.
 - API com módulo base de `pets` protegido por `CRM`, incluindo ownership validado por tenant, soft delete e payload com `owner_name`.
-- Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
-- Web conectado aos fluxos reais de login, dashboard e `schedules`.
+- API com módulo base de `services` protegido por `SCH`, incluindo catálogo por tenant, resolução de `service_types` e auditoria das mutações.
+- `schedules` enriquecido com `client_name`, `pet_name`, `service_ids` e `service_titles`, além de persistência real em `schedule_services`.
+- Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado em `v2` e callback HTTP de WhatsApp (`/webhook/whatsapp`).
+- Web conectado aos fluxos reais de login, dashboard, `schedules`, `clients`, `pets` e `services`, com seletores reais de cliente, pet e serviço em vez de UUID digitado manualmente.
 - Swagger operacional em `apps/api/docs`, com rota canônica em `/swagger/index.html` e alias compatível em `/api/v1/docs`.
 
 Ainda planejado para próximos ciclos:
 
-- Expansão dos domínios além do núcleo atual, com `services` e `reports` completos de ponta a ponta, além das camadas Web operacionais de `clients` e `pets`.
+- Rotas Web operacionais para `reports` e próximos verticais de produto.
 - Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
 - Hardening de qualidade/CI e consolidação documental contínua.
 
@@ -1050,7 +1052,7 @@ func (m *mockQuerier) GetSchedulesByCompany(ctx context.Context, arg sqlc.GetSch
 }
 
 func TestScheduleService_ListByCompany(t *testing.T) {
-    svc := NewScheduleService(&mockQuerier{}, nil)
+    svc := NewScheduleService(mockPool, sqlc.New(mockPool))
     result, err := svc.ListByCompany(context.Background(), testCompanyID, 20, 0)
     assert.NoError(t, err)
     assert.NotNil(t, result)

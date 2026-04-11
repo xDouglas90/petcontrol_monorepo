@@ -147,10 +147,12 @@ Observação: a Fase 19 foi concluída com o módulo base de `pets` ativo na API
 
 ### 20.2 - Checks
 
-- [ ] Existe `GET /api/v1/services` funcional por tenant.
-- [ ] A tela de `schedules` deixa de exigir digitação manual de UUID para os fluxos principais.
-- [ ] O payload retornado por `schedules` passa a exibir contexto humano suficiente para uso operacional.
-- [ ] Eventos do Worker continuam compatíveis e versionados após o enriquecimento do domínio.
+- [x] Existe `GET /api/v1/services` funcional por tenant.
+- [x] A tela de `schedules` deixa de exigir digitação manual de UUID para os fluxos principais.
+- [x] O payload retornado por `schedules` passa a exibir contexto humano suficiente para uso operacional.
+- [x] Eventos do Worker continuam compatíveis e versionados após o enriquecimento do domínio.
+
+Observação: a Fase 20 foi concluída com o módulo base de `services` ativo na API sob guarda de módulo `SCH`, incluindo queries SQLC para listagem, consulta, criação, atualização e desativação por tenant, `ServiceService` transacional com resolução automática de `service_types`, `ServiceHandler` exposto em `/api/v1/services`, auditoria das mutações e cobertura por testes unitários e de integração. O fluxo de `schedules` também passou a persistir `schedule_services`, retornar `client_name`, `pet_name`, `service_ids` e `service_titles`, publicar evento `schedules:confirmed` na versão `2` com contexto operacional adicional e alimentar o Web com seletores reais de cliente, pet e serviço, removendo a necessidade de digitar UUIDs manualmente no fluxo principal.
 
 ## Fase 21 - Web Operacional para `clients`, `pets` e `services`
 
@@ -167,10 +169,12 @@ Observação: a Fase 19 foi concluída com o módulo base de `pets` ativo na API
 
 ### 21.2 - Checks
 
-- [ ] O Web passa a ter fluxos reais de cadastro e consulta para `clients`, `pets` e `services`.
-- [ ] O módulo de `schedules` usa entidades reais do domínio em vez de ids digitados manualmente.
-- [ ] Query cache e invalidação seguem o padrão já usado hoje.
-- [ ] Rotas com `company_slug` continuam corretas e cobertas por testes.
+- [x] O Web passa a ter fluxos reais de cadastro e consulta para `clients`, `pets` e `services`.
+- [x] O módulo de `schedules` usa entidades reais do domínio em vez de ids digitados manualmente.
+- [x] Query cache e invalidação seguem o padrão já usado hoje.
+- [x] Rotas com `company_slug` continuam corretas e cobertas por testes.
+
+Observação: a Fase 21 foi concluída com rotas autenticadas em `/:companySlug/clients`, `/:companySlug/pets` e `/:companySlug/services`, navegação ativa na sidebar, contratos compartilhados promovidos para rotas operacionais, camada de queries/mutations com invalidação de cache por domínio e telas Web com listagem, criação, edição, exclusão, loading, erro e estado vazio. O fluxo de `schedules`, já enriquecido na Fase 20, passou a compartilhar a mesma base operacional de clientes, pets e serviços, e a cobertura foi reforçada por testes de rotas, layout, páginas operacionais e constantes compartilhadas.
 
 ## Fase 22 - Fechamento de Produto, Qualidade e Direção Seguinte
 
