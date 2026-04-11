@@ -181,15 +181,19 @@ export async function getCurrentCompany(
 
 export async function listSchedules(
   accessToken: string,
-): Promise<ScheduleDTO[]> {
+): Promise<ScheduleListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(160);
-    return [...mockSchedules].sort((a, b) =>
+    const mockData = [...mockSchedules].sort((a, b) =>
       a.scheduled_at.localeCompare(b.scheduled_at),
     );
+    return {
+      data: mockData,
+      meta: { total: mockData.length, page: 1, limit: 100, total_pages: 1 }
+    };
   }
 
-  const payload = await request<ScheduleListApiResponseDTO>(
+  const payload = await request<{ data: ScheduleListApiResponseDTO }>(
     API_PATHS.schedules,
     {
       method: 'GET',
@@ -199,39 +203,48 @@ export async function listSchedules(
   return payload.data;
 }
 
-export async function listClients(accessToken: string): Promise<ClientDTO[]> {
+export async function listClients(accessToken: string): Promise<ClientListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
-    return [...mockClients];
+    return {
+      data: [...mockClients],
+      meta: { total: mockClients.length, page: 1, limit: 100, total_pages: 1 }
+    };
   }
 
-  const payload = await request<ClientListApiResponseDTO>(API_PATHS.clients, {
+  const payload = await request<{ data: ClientListApiResponseDTO }>(API_PATHS.clients, {
     method: 'GET',
     accessToken,
   });
   return payload.data;
 }
 
-export async function listPets(accessToken: string): Promise<PetDTO[]> {
+export async function listPets(accessToken: string): Promise<PetListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
-    return [...mockPets];
+    return {
+      data: [...mockPets],
+      meta: { total: mockPets.length, page: 1, limit: 100, total_pages: 1 }
+    };
   }
 
-  const payload = await request<PetListApiResponseDTO>(API_PATHS.pets, {
+  const payload = await request<{ data: PetListApiResponseDTO }>(API_PATHS.pets, {
     method: 'GET',
     accessToken,
   });
   return payload.data;
 }
 
-export async function listServices(accessToken: string): Promise<ServiceDTO[]> {
+export async function listServices(accessToken: string): Promise<ServiceListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
-    return [...mockServices];
+    return {
+      data: [...mockServices],
+      meta: { total: mockServices.length, page: 1, limit: 100, total_pages: 1 }
+    };
   }
 
-  const payload = await request<ServiceListApiResponseDTO>(API_PATHS.services, {
+  const payload = await request<{ data: ServiceListApiResponseDTO }>(API_PATHS.services, {
     method: 'GET',
     accessToken,
   });

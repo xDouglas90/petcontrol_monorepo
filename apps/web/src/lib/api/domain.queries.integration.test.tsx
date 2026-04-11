@@ -36,7 +36,7 @@ function QueryHarness() {
   return (
     <div>
       <span data-testid="schedule-count">
-        {String(schedulesQuery.data?.length ?? 0)}
+        {String(schedulesQuery.data?.data?.length ?? 0)}
       </span>
       <button
         type="button"
@@ -86,7 +86,10 @@ describe('domain queries integration', () => {
     listSchedulesMock.mockReset();
     createScheduleMock.mockReset();
 
-    listSchedulesMock.mockImplementation(async () => [...schedulesFixture]);
+    listSchedulesMock.mockImplementation(async () => ({
+      data: [...schedulesFixture],
+      meta: { total: schedulesFixture.length, limit: 10, page: 1, total_pages: 1 }
+    }));
     createScheduleMock.mockImplementation(
       async (_token: string, input: CreateScheduleInput) => {
         const created: ScheduleDTO = {
