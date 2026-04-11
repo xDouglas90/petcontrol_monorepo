@@ -81,7 +81,8 @@ func TestPetEndpoints_CreateRejectsOwnerFromAnotherTenant(t *testing.T) {
 
 	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
 	require.NoError(t, err)
-	require.Len(t, items, 0)
+	require.Len(t, items, 1)
+	require.Equal(t, "Rex", items[0].Name)
 }
 
 func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
@@ -121,7 +122,7 @@ func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
 
 	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
 	require.NoError(t, err)
-	require.Len(t, items, 1)
+	require.Len(t, items, 2)
 
 	var petAID pgtype.UUID
 	for _, item := range items {

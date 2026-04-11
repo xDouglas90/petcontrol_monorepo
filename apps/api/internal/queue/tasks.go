@@ -20,13 +20,16 @@ type DummyNotificationPayload struct {
 }
 
 type ScheduleConfirmationPayload struct {
-	Version     int       `json:"version"`
-	ScheduleID  string    `json:"schedule_id"`
-	CompanyID   string    `json:"company_id"`
-	ChangedBy   string    `json:"changed_by"`
-	Status      string    `json:"status"`
-	StatusNotes string    `json:"status_notes"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	Version       int       `json:"version"`
+	ScheduleID    string    `json:"schedule_id"`
+	CompanyID     string    `json:"company_id"`
+	ChangedBy     string    `json:"changed_by"`
+	ClientName    string    `json:"client_name,omitempty"`
+	PetName       string    `json:"pet_name,omitempty"`
+	ServiceTitles []string  `json:"service_titles,omitempty"`
+	Status        string    `json:"status"`
+	StatusNotes   string    `json:"status_notes"`
+	OccurredAt    time.Time `json:"occurred_at"`
 }
 
 func NewDummyNotificationTask(payload DummyNotificationPayload, queueName string) (*asynq.Task, error) {

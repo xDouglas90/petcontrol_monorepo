@@ -45,7 +45,8 @@ func main() {
 	companyUserService := service.NewCompanyUserService(queries)
 	clientService := service.NewClientService(pool, queries)
 	petService := service.NewPetService(queries)
-	scheduleService := service.NewScheduleService(queries)
+	serviceService := service.NewServiceService(pool, queries)
+	scheduleService := service.NewScheduleService(pool, queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
 	defer func() {
@@ -59,6 +60,7 @@ func main() {
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
 	clientHandler := handler.NewClientHandler(clientService)
 	petHandler := handler.NewPetHandler(petService)
+	serviceHandler := handler.NewServiceHandler(serviceService)
 	scheduleHandler := handler.NewScheduleHandler(scheduleService, workerPublisher)
 	authHandler := handler.NewAuthHandler(authService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
@@ -108,6 +110,14 @@ func main() {
 	pets.GET("/:id", petHandler.GetByID)
 	pets.PUT("/:id", petHandler.Update)
 	pets.DELETE("/:id", petHandler.Delete)
+
+	services := protected.Group("/services")
+	services.Use(middleware.RequireModule(queries, "SCH"))
+	services.GET("", serviceHandler.List)
+	services.POST("", serviceHandler.Create)
+	services.GET("/:id", serviceHandler.GetByID)
+	services.PUT("/:id", serviceHandler.Update)
+	services.DELETE("/:id", serviceHandler.Delete)
 
 	schedules := protected.Group("/schedules")
 	schedules.Use(middleware.RequireModule(queries, "SCH"))

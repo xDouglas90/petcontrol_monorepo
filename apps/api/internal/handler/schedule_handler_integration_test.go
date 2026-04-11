@@ -46,7 +46,7 @@ func TestScheduleEndpoints_ListIsTenantScoped(t *testing.T) {
 	scheduleA := mustCreateScheduleRecord(t, ctx, queries, tenantA, scheduledAt, "tenant A schedule")
 	scheduleB := mustCreateScheduleRecord(t, ctx, queries, tenantB, scheduledAt.Add(1*time.Hour), "tenant B schedule")
 
-	router := setupScheduleRouterForTenant(queries, tenantA)
+	router := setupScheduleRouterForTenant(pool, queries, tenantA)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
 	res := httptest.NewRecorder()
 	router.ServeHTTP(res, req)
@@ -67,7 +67,7 @@ func TestScheduleEndpoints_CreateUsesTenantFromContext(t *testing.T) {
 	mustAttachScheduleModule(t, ctx, pool, tenantA.companyID, moduleID)
 	mustAttachScheduleModule(t, ctx, pool, tenantB.companyID, moduleID)
 
-	router := setupScheduleRouterForTenant(queries, tenantA)
+	router := setupScheduleRouterForTenant(pool, queries, tenantA)
 	scheduledAt := time.Now().UTC().Add(4 * time.Hour).Truncate(time.Second)
 	estimatedEnd := scheduledAt.Add(75 * time.Minute)
 
@@ -103,6 +103,32 @@ func TestScheduleEndpoints_CreateUsesTenantFromContext(t *testing.T) {
 	require.Equal(t, 1, createdCount)
 }
 
+func TestScheduleEndpoints_ListReturnsOperationalContext(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-context")
+	moduleID := mustCreateScheduleModule(t, ctx, pool)
+	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, moduleID)
+
+	scheduledAt := time.Now().UTC().Add(4 * time.Hour).Truncate(time.Second)
+	scheduleID := mustCreateScheduleRecord(t, ctx, queries, tenant, scheduledAt, "context schedule")
+	serviceID := mustInsertServiceCatalogRecord(t, ctx, pool, tenant.companyID, "Banho premium")
+	_, err := pool.Exec(ctx, `INSERT INTO schedule_services (schedule_id, service_id) VALUES ($1, $2)`, scheduleID, serviceID)
+	require.NoError(t, err)
+
+	router := setupScheduleRouterForTenant(pool, queries, tenant)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "Cliente tenant-context")
+	require.Contains(t, res.Body.String(), "Rex")
+	require.Contains(t, res.Body.String(), "Banho premium")
+}
+
 func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) {
 	ctx := context.Background()
 	pool := setupScheduleIntegrationPool(t)
@@ -118,7 +144,7 @@ func TestScheduleEndpoints_UpdateDeleteRespectTenantAndSoftDelete(t *testing.T) 
 	scheduleA := mustCreateScheduleRecord(t, ctx, queries, tenantA, scheduledAt, "original")
 	scheduleB := mustCreateScheduleRecord(t, ctx, queries, tenantB, scheduledAt.Add(1*time.Hour), "other tenant")
 
-	router := setupScheduleRouterForTenant(queries, tenantA)
+	router := setupScheduleRouterForTenant(pool, queries, tenantA)
 	updateBody, err := json.Marshal(map[string]any{
 		"notes":  "updated-note",
 		"status": "confirmed",
@@ -173,7 +199,7 @@ func TestScheduleEndpoints_ConfirmPublishesScheduleTask(t *testing.T) {
 	scheduleID := mustCreateScheduleRecord(t, ctx, queries, tenant, scheduledAt, "confirm")
 
 	pub := &schedulePublisherStub{}
-	router := setupScheduleRouterForTenant(queries, tenant, pub)
+	router := setupScheduleRouterForTenant(pool, queries, tenant, pub)
 
 	body, err := json.Marshal(map[string]any{"status": "confirmed", "status_notes": "confirmed by customer"})
 	require.NoError(t, err)
@@ -190,7 +216,7 @@ func TestScheduleEndpoints_ConfirmPublishesScheduleTask(t *testing.T) {
 	require.Equal(t, tenant.userID.String(), pub.captured.ChangedBy)
 	require.Equal(t, "confirmed", pub.captured.Status)
 	require.Equal(t, "confirmed by customer", pub.captured.StatusNotes)
-	require.Equal(t, 1, pub.captured.Version)
+	require.Equal(t, 2, pub.captured.Version)
 	require.NotZero(t, pub.captured.OccurredAt)
 
 	var auditCount int
@@ -205,7 +231,7 @@ func TestScheduleEndpoints_CorrelationIDHeaderAndErrorPayload(t *testing.T) {
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-correlation")
-	router := setupScheduleRouterForTenant(queries, tenant)
+	router := setupScheduleRouterForTenant(pool, queries, tenant)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
 	req.Header.Set("X-Correlation-ID", "corr-test-123")
@@ -232,7 +258,7 @@ func TestScheduleEndpoints_HistoryIsTenantScoped(t *testing.T) {
 	scheduleA := mustCreateScheduleRecord(t, ctx, queries, tenantA, scheduledAt, "tenant history")
 	scheduleB := mustCreateScheduleRecord(t, ctx, queries, tenantB, scheduledAt.Add(1*time.Hour), "other tenant history")
 
-	router := setupScheduleRouterForTenant(queries, tenantA)
+	router := setupScheduleRouterForTenant(pool, queries, tenantA)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules/"+scheduleA.String()+"/history", nil)
 	res := httptest.NewRecorder()
@@ -253,7 +279,7 @@ func TestScheduleEndpoints_RequireModuleForAccess(t *testing.T) {
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-no-module")
-	router := setupScheduleRouterForTenant(queries, tenant)
+	router := setupScheduleRouterForTenant(pool, queries, tenant)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/schedules", nil)
 	res := httptest.NewRecorder()
@@ -269,10 +295,10 @@ func setupScheduleIntegrationPool(t *testing.T) *pgxpool.Pool {
 	return setup.Pool
 }
 
-func setupScheduleRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixture, publisher ...queue.Publisher) *gin.Engine {
+func setupScheduleRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queries, tenant integrationTenantFixture, publisher ...queue.Publisher) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 
-	scheduleService := service.NewScheduleService(queries)
+	scheduleService := service.NewScheduleService(pool, queries)
 	scheduleHandler := handler.NewScheduleHandler(scheduleService, publisher...)
 
 	router := gin.New()
@@ -327,6 +353,7 @@ func mustCreateTenantFixture(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	companyID := mustInsertCompany(t, ctx, pool, slug, responsible)
 	userID := mustInsertUser(t, ctx, pool, slug)
 	clientPerson := mustInsertPerson(t, ctx, pool, "client")
+	mustInsertClientIdentification(t, ctx, pool, clientPerson, slug)
 	clientID := mustInsertClient(t, ctx, pool, clientPerson)
 	mustLinkCompanyClient(t, ctx, pool, companyID, clientID)
 	petID := mustInsertPet(t, ctx, pool, clientID)
@@ -379,6 +406,15 @@ func mustInsertClient(t *testing.T, ctx context.Context, pool *pgxpool.Pool, per
 	err := pool.QueryRow(ctx, "INSERT INTO clients (person_id) VALUES ($1) RETURNING id", personID).Scan(&id)
 	require.NoError(t, err)
 	return id
+}
+
+func mustInsertClientIdentification(t *testing.T, ctx context.Context, pool *pgxpool.Pool, personID pgtype.UUID, slug string) {
+	t.Helper()
+	_, err := pool.Exec(ctx, `
+		INSERT INTO people_identifications (person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
+		VALUES ($1, $2, $3, 'woman_cisgender', 'single', DATE '1992-06-15', $4)
+	`, personID, "Cliente "+slug, "Cliente", fmt.Sprintf("%011d", time.Now().UnixNano()%100000000000))
+	require.NoError(t, err)
 }
 
 func mustLinkCompanyClient(t *testing.T, ctx context.Context, pool *pgxpool.Pool, companyID pgtype.UUID, clientID pgtype.UUID) {

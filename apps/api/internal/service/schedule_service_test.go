@@ -18,7 +18,7 @@ func TestScheduleService_CreateSchedule(t *testing.T) {
 	defer mock.Close()
 
 	queries := sqlc.New(mock)
-	serviceUnderTest := NewScheduleService(queries)
+	serviceUnderTest := NewScheduleService(mock, queries)
 
 	companyID := newDomainUUID(t)
 	clientID := newDomainUUID(t)
@@ -33,6 +33,8 @@ func TestScheduleService_CreateSchedule(t *testing.T) {
 		WithArgs(petID, companyID, clientID).
 		WillReturnRows(pgxmock.NewRows([]string{"is_valid"}).AddRow(true))
 
+	mock.ExpectBegin()
+
 	mock.ExpectQuery(`(?s)name: CreateSchedule`).
 		WithArgs(companyID, clientID, petID, pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), creatorID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at"}).
@@ -43,10 +45,16 @@ func TestScheduleService_CreateSchedule(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "schedule_id", "status", "changed_at", "changed_by", "notes"}).
 			AddRow(statusHistoryID.String(), scheduleID.String(), sqlc.ScheduleStatusWaiting, now, creatorID.String(), "status inicial"))
 
+	mock.ExpectExec(`(?s)name: DeleteScheduleServicesByScheduleID`).
+		WithArgs(scheduleID).
+		WillReturnResult(pgxmock.NewResult("DELETE", 0))
+
+	mock.ExpectCommit()
+
 	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
 		WithArgs(scheduleID, companyID).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
-			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, end, "Banho e tosa", creatorID.String(), now, nil, nil, sqlc.ScheduleStatusWaiting))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "client_name", "pet_name", "service_ids", "service_titles", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), "Maria Silva", "Thor", []string{}, []string{}, now, end, "Banho e tosa", creatorID.String(), now, nil, nil, sqlc.ScheduleStatusWaiting))
 
 	result, err := serviceUnderTest.CreateSchedule(context.Background(), CreateScheduleInput{
 		CompanyID:    companyID,
@@ -71,7 +79,7 @@ func TestScheduleService_CreateScheduleRejectsInvalidWindow(t *testing.T) {
 	defer mock.Close()
 
 	queries := sqlc.New(mock)
-	serviceUnderTest := NewScheduleService(queries)
+	serviceUnderTest := NewScheduleService(mock, queries)
 
 	companyID := newDomainUUID(t)
 	clientID := newDomainUUID(t)
@@ -98,7 +106,7 @@ func TestScheduleService_UpdateScheduleRejectsInvalidStatus(t *testing.T) {
 	defer mock.Close()
 
 	queries := sqlc.New(mock)
-	serviceUnderTest := NewScheduleService(queries)
+	serviceUnderTest := NewScheduleService(mock, queries)
 
 	companyID := newDomainUUID(t)
 	scheduleID := newDomainUUID(t)
@@ -109,8 +117,8 @@ func TestScheduleService_UpdateScheduleRejectsInvalidStatus(t *testing.T) {
 
 	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
 		WithArgs(scheduleID, companyID).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
-			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, nil, "", nil, now, nil, nil, sqlc.ScheduleStatusWaiting))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "client_name", "pet_name", "service_ids", "service_titles", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), "Maria Silva", "Thor", []string{}, []string{}, now, nil, "", nil, now, nil, nil, sqlc.ScheduleStatusWaiting))
 
 	mock.ExpectQuery(`(?s)name: ValidateScheduleOwnership`).
 		WithArgs(petID, companyID, clientID).
@@ -132,7 +140,7 @@ func TestScheduleService_DeleteScheduleNotFound(t *testing.T) {
 	defer mock.Close()
 
 	queries := sqlc.New(mock)
-	serviceUnderTest := NewScheduleService(queries)
+	serviceUnderTest := NewScheduleService(mock, queries)
 
 	companyID := newDomainUUID(t)
 	scheduleID := newDomainUUID(t)
@@ -152,7 +160,7 @@ func TestScheduleService_ListScheduleStatusHistory(t *testing.T) {
 	defer mock.Close()
 
 	queries := sqlc.New(mock)
-	serviceUnderTest := NewScheduleService(queries)
+	serviceUnderTest := NewScheduleService(mock, queries)
 
 	companyID := newDomainUUID(t)
 	scheduleID := newDomainUUID(t)
@@ -163,8 +171,8 @@ func TestScheduleService_ListScheduleStatusHistory(t *testing.T) {
 
 	mock.ExpectQuery(`(?s)name: GetScheduleByIDAndCompanyID`).
 		WithArgs(scheduleID, companyID).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
-			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), now, nil, "", userID.String(), now, nil, nil, sqlc.ScheduleStatusConfirmed))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "client_name", "pet_name", "service_ids", "service_titles", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), "Maria Silva", "Thor", []string{}, []string{}, now, nil, "", userID.String(), now, nil, nil, sqlc.ScheduleStatusConfirmed))
 
 	mock.ExpectQuery(`(?s)name: ListScheduleStatusHistoryByScheduleID`).
 		WithArgs(scheduleID, companyID).

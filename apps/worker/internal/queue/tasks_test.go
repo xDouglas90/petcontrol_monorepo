@@ -28,3 +28,14 @@ func TestParseScheduleConfirmationTask_InvalidPayload(t *testing.T) {
 	_, err := ParseScheduleConfirmationTask(task)
 	require.Error(t, err)
 }
+
+func TestParseScheduleConfirmationTask_Version2Context(t *testing.T) {
+	task := asynq.NewTask(TypeScheduleConfirmed, []byte(`{"version":2,"schedule_id":"schedule-1","company_id":"company-1","changed_by":"user-1","client_name":"Maria Silva","pet_name":"Thor","service_titles":["Banho completo"],"status":"confirmed","status_notes":"ok","occurred_at":"2026-01-01T00:00:00Z"}`))
+
+	payload, err := ParseScheduleConfirmationTask(task)
+	require.NoError(t, err)
+	require.Equal(t, 2, payload.Version)
+	require.Equal(t, "Maria Silva", payload.ClientName)
+	require.Equal(t, "Thor", payload.PetName)
+	require.Equal(t, []string{"Banho completo"}, payload.ServiceTitles)
+}
