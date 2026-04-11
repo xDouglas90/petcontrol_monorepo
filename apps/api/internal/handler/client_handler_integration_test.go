@@ -83,13 +83,19 @@ func TestClientEndpoints_CreateUsesTenantContextAndAudits(t *testing.T) {
 	require.Contains(t, res.Body.String(), "Maria Souza")
 	require.Contains(t, res.Body.String(), "\"company_id\":\""+tenantA.companyID.String()+"\"")
 
-	listA, err := queries.ListClientsByCompanyID(ctx, tenantA.companyID)
+	listA, err := queries.ListClientsByCompanyID(ctx, sqlc.ListClientsByCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, listA, 1)
 	require.Equal(t, "Maria Souza", listA[0].FullName)
 	require.Equal(t, "12345678904", listA[0].Cpf)
 
-	listB, err := queries.ListClientsByCompanyID(ctx, tenantB.companyID)
+	listB, err := queries.ListClientsByCompanyID(ctx, sqlc.ListClientsByCompanyIDParams{
+		CompanyID: tenantB.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, listB, 0)
 

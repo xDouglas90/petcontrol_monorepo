@@ -33,9 +33,9 @@ func TestScheduleHandler_List(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 
 	mock.ExpectQuery(`(?s)name: ListSchedulesByCompanyID`).
-		WithArgs(companyID).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "pet_id", "client_name", "pet_name", "service_ids", "service_titles", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
-			AddRow(scheduleID.String(), companyID.String(), clientID.String(), petID.String(), "Maria Silva", "Thor", []string{"service-1"}, []string{"Banho"}, now, nil, "banho", nil, now, nil, nil, sqlc.ScheduleStatusWaiting))
+		WithArgs(companyID, "", int32(0), int32(20)).
+		WillReturnRows(pgxmock.NewRows([]string{"total_count", "id", "company_id", "client_id", "pet_id", "client_name", "pet_name", "service_ids", "service_titles", "scheduled_at", "estimated_end", "notes", "created_by", "created_at", "updated_at", "deleted_at", "current_status"}).
+			AddRow(int64(1), scheduleID.String(), companyID.String(), clientID.String(), petID.String(), "Maria Silva", "Thor", []string{"service-1"}, []string{"Banho"}, now, nil, "banho", nil, now, nil, nil, sqlc.ScheduleStatusWaiting))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {

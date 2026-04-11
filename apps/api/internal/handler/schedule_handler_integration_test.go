@@ -87,13 +87,19 @@ func TestScheduleEndpoints_CreateUsesTenantFromContext(t *testing.T) {
 
 	require.Equal(t, http.StatusCreated, res.Code)
 
-	listA, err := queries.ListSchedulesByCompanyID(ctx, tenantA.companyID)
+	listA, err := queries.ListSchedulesByCompanyID(ctx, sqlc.ListSchedulesByCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, listA, 1)
 	require.Equal(t, tenantA.companyID, listA[0].CompanyID)
 	require.Equal(t, tenantA.clientID, listA[0].ClientID)
 
-	listB, err := queries.ListSchedulesByCompanyID(ctx, tenantB.companyID)
+	listB, err := queries.ListSchedulesByCompanyID(ctx, sqlc.ListSchedulesByCompanyIDParams{
+		CompanyID: tenantB.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, listB, 0)
 

@@ -79,7 +79,10 @@ func TestPetEndpoints_CreateRejectsOwnerFromAnotherTenant(t *testing.T) {
 
 	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
 
-	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
+	items, err := queries.ListPetsByCompanyID(ctx, sqlc.ListPetsByCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	require.Equal(t, "Rex", items[0].Name)
@@ -120,7 +123,10 @@ func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
 	require.Contains(t, res.Body.String(), "Thor")
 	require.Contains(t, res.Body.String(), "\"owner_name\":")
 
-	items, err := queries.ListPetsByCompanyID(ctx, tenantA.companyID)
+	items, err := queries.ListPetsByCompanyID(ctx, sqlc.ListPetsByCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		Limit:     10,
+	})
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 
