@@ -17,6 +17,13 @@ func JSONData(c *gin.Context, status int, data any) {
 	c.JSON(status, gin.H{"data": data})
 }
 
+func JSONPaginated(c *gin.Context, status int, data any, meta any) {
+	c.JSON(status, gin.H{
+		"data": data,
+		"meta": meta,
+	})
+}
+
 func JSONError(c *gin.Context, status int, code string, message string) {
 	if message == "" {
 		message = http.StatusText(status)
