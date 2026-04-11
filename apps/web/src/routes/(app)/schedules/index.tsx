@@ -6,22 +6,31 @@ import {
   cn,
 } from '@petcontrol/ui/web';
 import type { ScheduleStatus } from '@petcontrol/shared-types';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { type ReactNode, useMemo, useState } from 'react';
 
 import {
+  useClientsQuery,
   useCreateScheduleMutation,
+  usePetsQuery,
   useDeleteScheduleMutation,
   useSchedulesQuery,
+  useServicesQuery,
   useUpdateScheduleMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
+import { useListParams } from '@/hooks/use-list-params';
+import { SearchBar } from '@/ui/search-bar';
+import { PaginationBar } from '@/ui/pagination-bar';
 
 const scheduleSchema = z
   .object({
-    clientId: z.string().uuid('Informe um client_id válido'),
-    petId: z.string().uuid('Informe um pet_id válido'),
+    clientId: z.string().min(1, 'Selecione um cliente'),
+    petId: z.string().min(1, 'Selecione um pet'),
+    serviceIds: z
+      .array(z.string().uuid('Selecione serviços válidos'))
+      .default([]),
     scheduledAt: z.string().min(1, 'Informe data/hora do agendamento'),
     estimatedEnd: z.string().optional(),
     notes: z.string().max(500, 'Máximo de 500 caracteres').optional(),
@@ -47,7 +56,8 @@ const scheduleSchema = z
     },
   );
 
-type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+type ScheduleFormInput = z.input<typeof scheduleSchema>;
+type ScheduleFormValues = z.output<typeof scheduleSchema>;
 
 const scheduleStatusOptions: Array<{ value: ScheduleStatus; label: string }> = [
   { value: 'waiting', label: 'Aguardando' },
@@ -59,7 +69,11 @@ const scheduleStatusOptions: Array<{ value: ScheduleStatus; label: string }> = [
 ];
 
 export function SchedulesPage() {
-  const schedulesQuery = useSchedulesQuery();
+  const { params, search, setSearch, goToPage } = useListParams();
+  const clientsQuery = useClientsQuery();
+  const petsQuery = usePetsQuery();
+  const servicesQuery = useServicesQuery();
+  const schedulesQuery = useSchedulesQuery(params);
   const createMutation = useCreateScheduleMutation();
   const updateMutation = useUpdateScheduleMutation();
   const deleteMutation = useDeleteScheduleMutation();
@@ -67,11 +81,12 @@ export function SchedulesPage() {
     null,
   );
 
-  const form = useForm<ScheduleFormValues>({
+  const form = useForm<ScheduleFormInput, unknown, ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       clientId: '',
       petId: '',
+      serviceIds: [],
       scheduledAt: '',
       estimatedEnd: '',
       notes: '',
@@ -81,10 +96,22 @@ export function SchedulesPage() {
 
   const schedules = useMemo(
     () =>
-      [...(schedulesQuery.data ?? [])].sort((a, b) =>
+      [...(schedulesQuery.data?.data ?? [])].sort((a, b) =>
         a.scheduled_at.localeCompare(b.scheduled_at),
       ),
     [schedulesQuery.data],
+  );
+
+  const selectedClientId = useWatch({
+    control: form.control,
+    name: 'clientId',
+  });
+  const availablePets = useMemo(
+    () =>
+      (petsQuery.data?.data ?? []).filter(
+        (pet) => !selectedClientId || pet.owner_id === selectedClientId,
+      ),
+    [petsQuery.data, selectedClientId],
   );
 
   const viewState = resolveAsyncViewState({
@@ -103,6 +130,7 @@ export function SchedulesPage() {
     form.reset({
       clientId: '',
       petId: '',
+      serviceIds: [],
       scheduledAt: '',
       estimatedEnd: '',
       notes: '',
@@ -114,6 +142,7 @@ export function SchedulesPage() {
     const payload = {
       client_id: values.clientId,
       pet_id: values.petId,
+      service_ids: values.serviceIds,
       scheduled_at: new Date(values.scheduledAt).toISOString(),
       estimated_end: values.estimatedEnd
         ? new Date(values.estimatedEnd).toISOString()
@@ -145,6 +174,7 @@ export function SchedulesPage() {
     form.reset({
       clientId: schedule.client_id,
       petId: schedule.pet_id,
+      serviceIds: schedule.service_ids ?? [],
       scheduledAt: toLocalDateTimeInput(schedule.scheduled_at),
       estimatedEnd: schedule.estimated_end
         ? toLocalDateTimeInput(schedule.estimated_end)
@@ -180,7 +210,16 @@ export function SchedulesPage() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-white/10">
+        <div className="mt-4">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por cliente, pet ou serviço..."
+            id="schedules-search"
+          />
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-3xl border border-white/10">
           <table className="w-full border-collapse text-left text-sm">
             <thead className="bg-white/5 text-slate-300">
               <tr>
@@ -238,10 +277,15 @@ export function SchedulesPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-300">
-                        {schedule.client_id.slice(0, 8)}...
+                        {schedule.client_name || schedule.client_id}
                       </td>
                       <td className="px-4 py-3 text-slate-300">
-                        {schedule.pet_id.slice(0, 8)}...
+                        <div>{schedule.pet_name || schedule.pet_id}</div>
+                        {schedule.service_titles?.length ? (
+                          <div className="mt-1 text-xs text-slate-400">
+                            {schedule.service_titles.join(', ')}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -277,6 +321,11 @@ export function SchedulesPage() {
             </tbody>
           </table>
         </div>
+
+        <PaginationBar
+          meta={schedulesQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
@@ -294,32 +343,73 @@ export function SchedulesPage() {
           })}
         >
           <FormField
-            label="Client ID"
+            label="Cliente"
+            htmlFor="schedule-client"
             error={form.formState.errors.clientId?.message}
           >
-            <input
+            <select
+              id="schedule-client"
+              title="Selecione o cliente"
               {...form.register('clientId')}
               className={fieldClassName}
-              placeholder="UUID do client"
-            />
+            >
+              <option value="">Selecione um cliente</option>
+              {(clientsQuery.data?.data ?? []).map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.full_name}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField
-            label="Pet ID"
+            label="Pet"
+            htmlFor="schedule-pet"
             error={form.formState.errors.petId?.message}
           >
-            <input
+            <select
+              id="schedule-pet"
+              title="Selecione o pet"
               {...form.register('petId')}
               className={fieldClassName}
-              placeholder="UUID do pet"
-            />
+            >
+              <option value="">Selecione um pet</option>
+              {availablePets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField
-            label="scheduled_at"
+            label="Serviços"
+            htmlFor="schedule-services"
+            error={form.formState.errors.serviceIds?.message}
+          >
+            <select
+              id="schedule-services"
+              title="Selecione os serviços (segure Ctrl para múltiplos)"
+              {...form.register('serviceIds')}
+              multiple
+              className={`${fieldClassName} min-h-32`}
+            >
+              {(servicesQuery.data?.data ?? []).map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.title}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField
+            label="Data/Hora"
+            htmlFor="schedule-at"
             error={form.formState.errors.scheduledAt?.message}
           >
             <input
+              id="schedule-at"
+              title="Data e hora do agendamento"
               {...form.register('scheduledAt')}
               type="datetime-local"
               className={fieldClassName}
@@ -327,10 +417,13 @@ export function SchedulesPage() {
           </FormField>
 
           <FormField
-            label="estimated_end"
+            label="Fim estimado"
+            htmlFor="schedule-end"
             error={form.formState.errors.estimatedEnd?.message}
           >
             <input
+              id="schedule-end"
+              title="Previsão de término"
               {...form.register('estimatedEnd')}
               type="datetime-local"
               className={fieldClassName}
@@ -339,9 +432,15 @@ export function SchedulesPage() {
 
           <FormField
             label="Status"
+            htmlFor="schedule-status"
             error={form.formState.errors.status?.message}
           >
-            <select {...form.register('status')} className={fieldClassName}>
+            <select
+              id="schedule-status"
+              title="Status do agendamento"
+              {...form.register('status')}
+              className={fieldClassName}
+            >
               {scheduleStatusOptions.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
@@ -352,13 +451,16 @@ export function SchedulesPage() {
 
           <FormField
             label="Observações"
+            htmlFor="schedule-notes"
             error={form.formState.errors.notes?.message}
           >
             <textarea
+              id="schedule-notes"
+              title="Observações do agendamento"
               {...form.register('notes')}
               className={fieldClassName}
               rows={3}
-              placeholder="Observações opcionais"
+              placeholder="Ex: Trazer toalha própria, alérgico a tal produto..."
             />
           </FormField>
 
@@ -401,13 +503,15 @@ function FormField({
   label,
   error,
   children,
+  htmlFor,
 }: {
   label: string;
   error?: string;
   children: ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-2" htmlFor={htmlFor}>
       <span className="text-sm font-medium text-slate-200">{label}</span>
       {children}
       {error ? <span className="text-sm text-rose-300">{error}</span> : null}

@@ -120,6 +120,27 @@ func TestModuleHandler_Active(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestModuleHandler_Access(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewModuleService(queries)
+	handlerUnderTest := NewModuleHandler(serviceUnderTest)
+
+	router := gin.New()
+	router.GET("/modules/:code/access", handlerUnderTest.Access)
+
+	req := httptest.NewRequest(http.MethodGet, "/modules/SCH/access", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.JSONEq(t, `{"data":{"allowed":true,"module":"SCH"}}`, res.Body.String())
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestCompanyUserHandler_CreateAndDeactivate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

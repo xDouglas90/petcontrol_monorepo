@@ -1,23 +1,41 @@
 export const USER_ROLES = [
-  'root',
-  'admin',
-  'manager',
-  'employee',
-  'aux',
-  'general',
+  "root",
+  "admin",
+  "manager",
+  "employee",
+  "aux",
+  "general",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const USER_KINDS = ['internal', 'owner', 'staff', 'free'] as const;
+export const USER_KINDS = ["internal", "owner", "staff", "free"] as const;
 
 export type UserKind = (typeof USER_KINDS)[number];
 
-export const TOKEN_TYPES = ['Bearer'] as const;
+export const TOKEN_TYPES = ["Bearer"] as const;
 
 export type TokenType = (typeof TOKEN_TYPES)[number];
 
 export type UUID = string;
+ 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+ 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
+export interface ListQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
 
 export interface AuthAccessClaims {
   user_id: UUID;
@@ -64,14 +82,42 @@ export interface ApiErrorPayloadDTO {
 }
 
 export const MODULE_PACKAGES = [
-  'internal',
-  'starter',
-  'basic',
-  'essential',
-  'premium',
+  "internal",
+  "starter",
+  "basic",
+  "essential",
+  "premium",
 ] as const;
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
+
+export const MODULE_CODES = ["SCH", "CRM", "FIN"] as const;
+
+export type ModuleCode = (typeof MODULE_CODES)[number];
+
+export const GENDER_IDENTITIES = [
+  "man_cisgender",
+  "woman_cisgender",
+  "transgender",
+  "non_binary",
+  "gender_fluid",
+  "gender_queer",
+  "agender",
+  "gender_non_conforming",
+  "not_to_expose",
+] as const;
+
+export type GenderIdentity = (typeof GENDER_IDENTITIES)[number];
+
+export const MARITAL_STATUSES = [
+  "single",
+  "married",
+  "divorced",
+  "widowed",
+  "separated",
+] as const;
+
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
 
 export interface CompanyDTO {
   id: UUID;
@@ -87,13 +133,185 @@ export interface CurrentCompanyApiResponseDTO {
   data: CompanyDTO;
 }
 
+export interface ClientDTO {
+  id: UUID;
+  person_id: UUID;
+  company_id: UUID;
+  full_name: string;
+  short_name: string;
+  gender_identity: GenderIdentity;
+  marital_status: MaritalStatus;
+  birth_date: string;
+  cpf: string;
+  email: string;
+  phone?: string | null;
+  cellphone: string;
+  has_whatsapp: boolean;
+  client_since?: string | null;
+  notes?: string | null;
+  is_active: boolean;
+}
+
+export interface CreateClientInput {
+  full_name: string;
+  short_name: string;
+  gender_identity: GenderIdentity;
+  marital_status: MaritalStatus;
+  birth_date: string;
+  cpf: string;
+  email: string;
+  phone?: string;
+  cellphone: string;
+  has_whatsapp: boolean;
+  client_since?: string;
+  notes?: string;
+}
+
+export interface UpdateClientInput {
+  full_name?: string;
+  short_name?: string;
+  gender_identity?: GenderIdentity;
+  marital_status?: MaritalStatus;
+  birth_date?: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+  cellphone?: string;
+  has_whatsapp?: boolean;
+  client_since?: string;
+  notes?: string;
+}
+
+export interface ClientListApiResponseDTO extends PaginatedResponse<ClientDTO> {}
+
+export interface ClientApiResponseDTO {
+  data: ClientDTO;
+}
+
+export const PET_SIZES = ["small", "medium", "large", "giant"] as const;
+
+export type PetSize = (typeof PET_SIZES)[number];
+
+export const PET_KINDS = [
+  "dog",
+  "cat",
+  "bird",
+  "fish",
+  "reptile",
+  "rodent",
+  "rabbit",
+  "other",
+] as const;
+
+export type PetKind = (typeof PET_KINDS)[number];
+
+export const PET_TEMPERAMENTS = [
+  "calm",
+  "nervous",
+  "aggressive",
+  "playful",
+  "loving",
+] as const;
+
+export type PetTemperament = (typeof PET_TEMPERAMENTS)[number];
+
+export interface PetDTO {
+  id: UUID;
+  owner_id: UUID;
+  company_id?: UUID;
+  owner_name?: string;
+  name: string;
+  size: PetSize;
+  kind: PetKind;
+  temperament: PetTemperament;
+  image_url?: string | null;
+  birth_date?: string | null;
+  is_active: boolean;
+  notes?: string | null;
+}
+
+export interface CreatePetInput {
+  owner_id: UUID;
+  name: string;
+  size: PetSize;
+  kind: PetKind;
+  temperament: PetTemperament;
+  image_url?: string;
+  birth_date?: string;
+  notes?: string;
+}
+
+export interface UpdatePetInput {
+  owner_id?: UUID;
+  name?: string;
+  size?: PetSize;
+  kind?: PetKind;
+  temperament?: PetTemperament;
+  image_url?: string;
+  birth_date?: string;
+  notes?: string;
+}
+
+export interface PetListApiResponseDTO extends PaginatedResponse<PetDTO> {}
+
+export interface PetApiResponseDTO {
+  data: PetDTO;
+}
+
+export interface ServiceTypeDTO {
+  id: UUID;
+  name: string;
+  description?: string | null;
+}
+
+export interface ServiceDTO {
+  id: UUID;
+  type_id: UUID;
+  type_name: string;
+  title: string;
+  description: string;
+  notes?: string | null;
+  price: string;
+  discount_rate: string;
+  image_url?: string | null;
+  is_active: boolean;
+}
+
+export interface CreateServiceInput {
+  type_name: string;
+  title: string;
+  description: string;
+  notes?: string;
+  price: string;
+  discount_rate?: string;
+  image_url?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateServiceInput {
+  type_name?: string;
+  title?: string;
+  description?: string;
+  notes?: string;
+  price?: string;
+  discount_rate?: string;
+  image_url?: string;
+  is_active?: boolean;
+}
+
+export interface ServiceListApiResponseDTO extends PaginatedResponse<ServiceDTO> {}
+
+export interface ServiceApiResponseDTO {
+  data: ServiceDTO;
+}
+
 export const SCHEDULE_STATUSES = [
-  'waiting',
-  'confirmed',
-  'canceled',
-  'in_progress',
-  'finished',
-  'delivered',
+  "waiting",
+  "confirmed",
+  "canceled",
+  "in_progress",
+  "finished",
+  "delivered",
 ] as const;
 
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
@@ -103,15 +321,17 @@ export interface ScheduleDTO {
   company_id: UUID;
   client_id: UUID;
   pet_id: UUID;
+  client_name?: string | null;
+  pet_name?: string | null;
+  service_ids?: UUID[];
+  service_titles?: string[];
   scheduled_at: string;
   estimated_end?: string | null;
   notes?: string | null;
   current_status: ScheduleStatus;
 }
 
-export interface ScheduleListApiResponseDTO {
-  data: ScheduleDTO[];
-}
+export interface ScheduleListApiResponseDTO extends PaginatedResponse<ScheduleDTO> {}
 
 export interface ScheduleApiResponseDTO {
   data: ScheduleDTO;
@@ -120,6 +340,7 @@ export interface ScheduleApiResponseDTO {
 export interface CreateScheduleInput {
   client_id: UUID;
   pet_id: UUID;
+  service_ids?: UUID[];
   scheduled_at: string;
   estimated_end?: string;
   notes?: string;
@@ -130,6 +351,7 @@ export interface CreateScheduleInput {
 export interface UpdateScheduleInput {
   client_id?: UUID;
   pet_id?: UUID;
+  service_ids?: UUID[];
   scheduled_at?: string;
   estimated_end?: string;
   notes?: string;

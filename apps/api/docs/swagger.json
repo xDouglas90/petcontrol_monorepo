@@ -70,6 +70,876 @@
                 }
             }
         },
+        "/clients": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns clients from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "List clients",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a client for the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Create client",
+                "parameters": [
+                    {
+                        "description": "Client payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/clients/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a single client from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Get client by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Client ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a client from the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Update client",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Client ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Client payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ClientItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivates the tenant association for a client.",
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Deactivate client",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Client ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/companies/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the company resolved from the authenticated tenant context.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "companies"
+                ],
+                "summary": "Get current company",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists users linked to the authenticated tenant company.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "List company users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Links an existing user to the authenticated tenant company. Requires company owner access.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "Create company user link",
+                "parameters": [
+                    {
+                        "description": "Company user payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-users/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivates a user link for the authenticated tenant company. Requires company owner access.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "Deactivate company user link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/modules/active": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists the active modules available to the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "List active modules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ModuleListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/modules/{code}/access": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checks whether the authenticated tenant has access to the requested module code.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "Check module access",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ModuleAccessResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/pets": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns pets from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pets"
+                ],
+                "summary": "List pets",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a pet for the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Create pet",
+                "parameters": [
+                    {
+                        "description": "Pet payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/pets/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a single pet from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Get pet by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pet ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a pet from the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Update pet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pet ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pet payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PetItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Soft deletes a pet from the authenticated tenant.",
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Delete pet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pet ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/plans/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the active subscription plan for the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Get current plan",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PlanItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
         "/schedules": {
             "get": {
                 "security": [
@@ -395,6 +1265,286 @@
                     }
                 }
             }
+        },
+        "/services": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns services from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "List services",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a service for the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Create service",
+                "parameters": [
+                    {
+                        "description": "Service payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a single service from the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Get service by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a service from the authenticated tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Update service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Service payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ServiceItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivates a service from the authenticated tenant.",
+                "tags": [
+                    "services"
+                ],
+                "summary": "Delete service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -409,6 +1559,346 @@
                 },
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.ClientCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "client_since": {
+                    "type": "string",
+                    "example": "2026-04-01"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria.silva@petcontrol.local"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "single"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Cliente recorrente"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+551130000000"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                }
+            }
+        },
+        "handler.ClientDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "client_since": {
+                    "type": "string",
+                    "example": "2026-04-01"
+                },
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria.silva@petcontrol.local"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "id": {
+                    "type": "string",
+                    "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "joined_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "left_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "single"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Cliente recorrente"
+                },
+                "person_id": {
+                    "type": "string",
+                    "example": "55555555-5555-5555-5555-555555555555"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+551130000000"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.ClientItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.ClientDoc"
+                }
+            }
+        },
+        "handler.ClientListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ClientDoc"
+                    }
+                }
+            }
+        },
+        "handler.ClientUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990002"
+                },
+                "client_since": {
+                    "type": "string",
+                    "example": "2026-04-01"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria.souza@petcontrol.local"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Souza"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "married"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Preferência por contato via WhatsApp"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+551130000000"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Mari"
+                }
+            }
+        },
+        "handler.CompanyDoc": {
+            "type": "object",
+            "properties": {
+                "active_package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "cnpj": {
+                    "type": "string",
+                    "example": "12345678000195"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "fantasy_name": {
+                    "type": "string",
+                    "example": "PetControl"
+                },
+                "foundation_date": {
+                    "type": "string",
+                    "example": "2026-01-01"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "logo_url": {
+                    "type": "string",
+                    "example": "https://example.com/logo.png"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "PetControl Dev"
+                },
+                "responsible_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "petcontrol-dev"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.CompanyItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanyDoc"
+                }
+            }
+        },
+        "handler.CompanyUserCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "is_owner": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.CompanyUserDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_owner": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "joined_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "left_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.CompanyUserItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanyUserDoc"
+                }
+            }
+        },
+        "handler.CompanyUserListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CompanyUserDoc"
+                    }
                 }
             }
         },
@@ -430,6 +1920,302 @@
             "properties": {
                 "data": {
                     "$ref": "#/definitions/service.LoginResult"
+                }
+            }
+        },
+        "handler.ModuleAccessDoc": {
+            "type": "object",
+            "properties": {
+                "allowed": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "module": {
+                    "type": "string",
+                    "example": "SCH"
+                }
+            }
+        },
+        "handler.ModuleAccessResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.ModuleAccessDoc"
+                }
+            }
+        },
+        "handler.ModuleDoc": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "SCH"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Gestao de agenda e servicos"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "min_package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Agendamentos"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.ModuleListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ModuleDoc"
+                    }
+                }
+            }
+        },
+        "handler.PetCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "2021-08-20"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/thor.png"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "dog"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Thor"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Gosta de brincar"
+                },
+                "owner_id": {
+                    "type": "string",
+                    "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "size": {
+                    "type": "string",
+                    "example": "medium"
+                },
+                "temperament": {
+                    "type": "string",
+                    "example": "playful"
+                }
+            }
+        },
+        "handler.PetDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "2021-08-20"
+                },
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "77777777-7777-7777-7777-777777777777"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/thor.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "dog"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Thor"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Gosta de brincar"
+                },
+                "owner_id": {
+                    "type": "string",
+                    "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "owner_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "size": {
+                    "type": "string",
+                    "example": "medium"
+                },
+                "temperament": {
+                    "type": "string",
+                    "example": "playful"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PetItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.PetDoc"
+                }
+            }
+        },
+        "handler.PetListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PetDoc"
+                    }
+                }
+            }
+        },
+        "handler.PetUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string",
+                    "example": "2021-08-20"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/thor.png"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "dog"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Thorzinho"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Atualizado após consulta"
+                },
+                "owner_id": {
+                    "type": "string",
+                    "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "size": {
+                    "type": "string",
+                    "example": "large"
+                },
+                "temperament": {
+                    "type": "string",
+                    "example": "loving"
+                }
+            }
+        },
+        "handler.PlanDoc": {
+            "type": "object",
+            "properties": {
+                "billing_cycle_days": {
+                    "type": "integer",
+                    "example": 30
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Plano inicial para operacao enxuta"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/plans/starter.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "max_users": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Starter"
+                },
+                "package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "plan_type_id": {
+                    "type": "string",
+                    "example": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "99.90"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PlanItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.PlanDoc"
                 }
             }
         },
@@ -456,6 +2242,12 @@
                     "type": "string",
                     "example": "2026-04-10T15:00:00Z"
                 },
+                "service_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "status": {
                     "type": "string",
                     "example": "waiting"
@@ -472,6 +2264,10 @@
                 "client_id": {
                     "type": "string",
                     "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "client_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
                 },
                 "company_id": {
                     "type": "string",
@@ -505,9 +2301,25 @@
                     "type": "string",
                     "example": "55555555-5555-5555-5555-555555555555"
                 },
+                "pet_name": {
+                    "type": "string",
+                    "example": "Thor"
+                },
                 "scheduled_at": {
                     "type": "string",
                     "example": "2026-04-10T15:00:00Z"
+                },
+                "service_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "service_titles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "updated_at": {
                     "type": "string",
@@ -597,6 +2409,12 @@
                     "type": "string",
                     "example": "2026-04-10T15:00:00Z"
                 },
+                "service_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "status": {
                     "type": "string",
                     "example": "confirmed"
@@ -604,6 +2422,144 @@
                 "status_notes": {
                     "type": "string",
                     "example": "Confirmado por telefone"
+                }
+            }
+        },
+        "handler.ServiceCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Banho com secagem e perfume"
+                },
+                "discount_rate": {
+                    "type": "string",
+                    "example": "0.00"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/services/bath.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Inclui perfume hipoalergênico"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "89.90"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Banho completo"
+                },
+                "type_name": {
+                    "type": "string",
+                    "example": "Banho"
+                }
+            }
+        },
+        "handler.ServiceDoc": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Banho com secagem e perfume"
+                },
+                "discount_rate": {
+                    "type": "string",
+                    "example": "0.00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "88888888-8888-8888-8888-888888888888"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/services/bath.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Inclui perfume hipoalergênico"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "89.90"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Banho completo"
+                },
+                "type_id": {
+                    "type": "string",
+                    "example": "99999999-9999-9999-9999-999999999999"
+                },
+                "type_name": {
+                    "type": "string",
+                    "example": "Banho"
+                }
+            }
+        },
+        "handler.ServiceItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.ServiceDoc"
+                }
+            }
+        },
+        "handler.ServiceListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceDoc"
+                    }
+                }
+            }
+        },
+        "handler.ServiceUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Tosa leve para manutenção"
+                },
+                "discount_rate": {
+                    "type": "string",
+                    "example": "10.00"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/services/tosa.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Adicionar avaliação do pelo"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "59.90"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Tosa higiênica"
+                },
+                "type_name": {
+                    "type": "string",
+                    "example": "Tosa"
                 }
             }
         },

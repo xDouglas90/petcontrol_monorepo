@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react';
 import type { LoginSession } from '@petcontrol/shared-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { AppLayout } from './_layout';
 import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
@@ -10,8 +16,17 @@ import { ApiError } from '@/lib/api/rest-client';
 // Mocking TanStack Router
 const mockNavigate = vi.fn();
 vi.mock('@tanstack/react-router', () => ({
-  Navigate: ({ to, replace }: { to: string; replace: boolean }) => {
-    mockNavigate(to, replace);
+  Navigate: (props: {
+    to: string;
+    replace?: boolean;
+    search?: Record<string, unknown>;
+    hash?: string;
+  }) => {
+    const args = [props.to, props.replace];
+    if (props.search !== undefined || props.hash !== undefined) {
+      args.push(props.search, props.hash);
+    }
+    mockNavigate(...args);
     return null;
   },
   Link: ({ children, to }: { children: ReactNode; to: string }) => (
@@ -19,9 +34,10 @@ vi.mock('@tanstack/react-router', () => ({
   ),
   Outlet: () => <div data-testid="outlet">Content</div>,
   useParams: vi.fn(() => ({})),
+  useLocation: vi.fn(() => ({ pathname: '', search: {}, hash: '' })),
 }));
 
-import { useParams } from '@tanstack/react-router';
+import { useParams, useLocation } from '@tanstack/react-router';
 
 // Mocking queries
 const mockUseCurrentCompanyQuery = vi.fn();
@@ -67,9 +83,9 @@ describe('AppLayout', () => {
 
   it('redireciona para /login se não houver sessão', () => {
     useAuthStore.setState({ session: null, hydrated: true });
-    
+
     render(<AppLayout />);
-    
+
     expect(mockNavigate).toHaveBeenCalledWith('/login', true);
   });
 
@@ -78,9 +94,9 @@ describe('AppLayout', () => {
       isLoading: true,
       data: undefined,
     });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByText('Carregando painel')).toBeTruthy();
   });
 
@@ -93,12 +109,20 @@ describe('AppLayout', () => {
         name: 'Correct Company LTDA',
       },
     });
-    
+
     vi.mocked(useParams).mockReturnValue({ companySlug: 'WRONG-SLUG' });
-    
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/WRONG-SLUG/schedules',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'test',
+      href: '/WRONG-SLUG/schedules',
+    } as unknown as ReturnType<typeof useLocation>);
+
     render(<AppLayout />);
-    
-    expect(mockNavigate).toHaveBeenCalledWith('/correct-slug/dashboard', true);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/correct-slug/schedules', true, {}, '');
   });
 
   it('renderiza o layout e o outlet se o slug estiver correto', () => {
@@ -110,13 +134,16 @@ describe('AppLayout', () => {
         name: 'Correct Company LTDA',
       },
     });
-    
+
     vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByTestId('outlet')).toBeTruthy();
     expect(screen.getByText('PetControl')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Pets' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Services' })).toBeTruthy();
     expect(
       screen.getByText('Tenant atual: Correct Company (correct-slug)'),
     ).toBeTruthy();
@@ -134,10 +161,23 @@ describe('AppLayout', () => {
     });
 
     vi.mocked(useParams).mockReturnValue({ companySlug: 'petcontrol-dev-old' });
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/petcontrol-dev-old/dashboard',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'test',
+      href: '/petcontrol-dev-old/dashboard',
+    } as unknown as ReturnType<typeof useLocation>);
 
     render(<AppLayout />);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/petcontrol-dev/dashboard', true);
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/petcontrol-dev/dashboard',
+      true,
+      {},
+      ''
+    );
   });
 
   it('exibe tela de erro se a query da empresa falhar', () => {
@@ -146,9 +186,9 @@ describe('AppLayout', () => {
       error: new Error('API Error'),
       refetch: vi.fn(),
     });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByText('Erro de Contexto')).toBeTruthy();
     expect(screen.getByText('Sair')).toBeTruthy();
   });

@@ -3,12 +3,31 @@ import { describe, expect, it } from 'vitest';
 import { domainQueryKeys } from './domain.queries';
 
 describe('domain query keys', () => {
-  it('mantém chaves estáveis para empresa corrente e schedules', () => {
+  it('mantém chaves estáveis para empresa corrente e domínios operacionais', () => {
     expect(domainQueryKeys.currentCompany()).toEqual([
       'domain',
       'company',
       'current',
     ]);
-    expect(domainQueryKeys.schedules()).toEqual(['domain', 'schedules']);
+    expect(domainQueryKeys.clients()).toEqual(['domain', 'clients', {}]);
+    expect(domainQueryKeys.pets()).toEqual(['domain', 'pets', {}]);
+    expect(domainQueryKeys.services()).toEqual(['domain', 'services', {}]);
+    expect(domainQueryKeys.schedules()).toEqual(['domain', 'schedules', {}]);
+  });
+
+  it('inclui params na queryKey quando fornecidos', () => {
+    const params = { page: 2, limit: 10, search: 'Thor' };
+    expect(domainQueryKeys.clients(params)).toEqual([
+      'domain',
+      'clients',
+      params,
+    ]);
+  });
+
+  it('mantém chaves de prefixo para invalidação em lote', () => {
+    expect(domainQueryKeys.allClients()).toEqual(['domain', 'clients']);
+    expect(domainQueryKeys.allPets()).toEqual(['domain', 'pets']);
+    expect(domainQueryKeys.allServices()).toEqual(['domain', 'services']);
+    expect(domainQueryKeys.allSchedules()).toEqual(['domain', 'schedules']);
   });
 });

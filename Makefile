@@ -7,6 +7,7 @@ COMPOSE_FILE := $(ROOT_DIR)/infra/docker/docker-compose.yml
 MIGRATIONS_DIR := $(INFRA_DIR)/migrations
 SCRIPTS_DIR := $(INFRA_DIR)/scripts
 DATABASE_URL ?=
+GO_CACHE_DIR ?= /tmp/petcontrol-go-cache
 
 # Coverage gates intentionally focus on deterministic unit-level packages.
 API_COVERAGE_MIN ?= 70
@@ -19,6 +20,8 @@ WORKER_COVERAGE_PACKAGES := ./internal/config ./internal/queue ./internal/whatsa
 	dev \
 	dev-api \
 	dev-worker \
+	diagrams \
+	diagrams-check \
 	docker-down \
 	docker-logs \
 	docker-ps \
@@ -61,6 +64,7 @@ test-worker:
 
 test: test-api test-worker
 	@if command -v pnpm >/dev/null 2>&1; then \
+		pnpm --filter @petcontrol/shared-types test && \
 		pnpm --filter @petcontrol/shared-utils test && \
 		pnpm --filter @petcontrol/shared-constants test && \
 		pnpm --filter @petcontrol/ui test && \
@@ -132,6 +136,12 @@ coverage-worker:
 
 sqlc:
 	cd $(API_DIR) && sqlc generate
+
+diagrams:
+	cd $(API_DIR) && GOCACHE=$(GO_CACHE_DIR) go run ./cmd/erdiagram -input ../../infra/migrations/000001_init_schema.up.sql > $(ROOT_DIR)/docs/diagrams/er-diagram.mmd
+
+diagrams-check:
+	GOCACHE=$(GO_CACHE_DIR) go run github.com/sammcj/go-mermaid/cmd/go-mermaid@v0.0.2 docs/diagrams/er-diagram.mmd
 
 docker-up:
 	cd $(DOCKER_DIR) && docker compose up -d

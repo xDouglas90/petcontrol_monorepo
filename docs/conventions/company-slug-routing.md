@@ -18,10 +18,17 @@ O backend continua confiando apenas em:
 - `company_id` presente no token;
 - middlewares de tenant e permissão.
 
-## Convenção planejada para a area autenticada
+## Rotas autenticadas ativas
 
 - `/:companySlug/dashboard`
 - `/:companySlug/schedules`
+- `/:companySlug/clients`
+- `/:companySlug/pets`
+- `/:companySlug/services`
+
+## Rotas previstas para proximos ciclos
+
+- `/:companySlug/reports`
 
 ## Rotas que permanecem sem slug
 

@@ -44,15 +44,26 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 Implementado nesta etapa:
 
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
-- Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado e callback HTTP de WhatsApp (`/webhook/whatsapp`).
-- Web conectado aos fluxos reais de login, dashboard e `schedules`.
+- API com módulo base de `clients` protegido por `CRM`, incluindo CRUD tenant-aware e auditoria das mutações.
+- API com módulo base de `pets` protegido por `CRM`, incluindo ownership validado por tenant, soft delete e payload com `owner_name`.
+- API com módulo base de `services` protegido por `SCH`, incluindo catálogo por tenant, resolução de `service_types` e auditoria das mutações.
+- `schedules` enriquecido com `client_name`, `pet_name`, `service_ids` e `service_titles`, além de persistência real em `schedule_services`.
+- Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado em `v2` e callback HTTP de WhatsApp (`/webhook/whatsapp`).
+- Web conectado aos fluxos reais de login, dashboard, `schedules`, `clients`, `pets` e `services`, com seletores reais de cliente, pet e serviço em vez de UUID digitado manualmente.
 - Swagger operacional em `apps/api/docs`, com rota canônica em `/swagger/index.html` e alias compatível em `/api/v1/docs`.
 
 Ainda planejado para próximos ciclos:
 
-- Expansão de domínios de negócio além de `schedules` (clients/pets/services/reports completos de ponta a ponta).
-- Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
+- Rotas Web e endpoints operacionais para `reports`, escolhido como próximo vertical recomendado.
+- Endpoints adicionais documentados no Swagger conforme novos handlers forem estabilizados.
 - Hardening de qualidade/CI e consolidação documental contínua.
+
+O seed local agora também prepara massa operacional mínima para desenvolvimento:
+
+- 1 cliente ativo vinculado ao tenant `petcontrol-dev`;
+- 1 pet ativo desse cliente;
+- 1 serviço ativo disponível para a empresa;
+- 1 `schedule` de exemplo já confirmado para validar listagem e integração local.
 
 ---
 
@@ -70,7 +81,7 @@ Ainda planejado para próximos ciclos:
 | Driver PG      | `pgx/v5`                        | Driver nativo PostgreSQL, máxima performance, suporte a pgxpool            |
 | Docs REST      | Swaggo (`swag` + `gin-swagger`) | Geração automática de OpenAPI a partir de anotações no código              |
 | Filas          | Asynq + Redis                   | Jobs assíncronos: notificações, expiração de planos, relatórios            |
-| Auth           | JWT (`golang-jwt`) + bcrypt     | Tokens stateless, refresh token em Redis, hash de senha com bcrypt         |
+| Auth           | JWT (`golang-jwt`) + bcrypt     | Access token stateless, hash de senha com bcrypt; refresh token ainda planejado |
 | Validação      | `go-playground/validator`       | Tags de validação struct-based, integradas ao binding do Gin               |
 | Storage        | Google Cloud Storage SDK        | Upload de arquivos (fotos de pets, documentos)                             |
 | Config         | `godotenv` + `os.Getenv`        | Leitura de `.env` em desenvolvimento; variáveis de ambiente em produção    |
@@ -454,7 +465,6 @@ r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 // Rotas públicas
 r.POST("/auth/login", authHandler.Login)
-r.POST("/auth/refresh", authHandler.Refresh)
 
 // Rotas autenticadas
 api := r.Group("/api/v1")
@@ -470,8 +480,11 @@ api.Use(middleware.Tenant())
     sch.PUT("/:id", scheduleHandler.Update)
     sch.DELETE("/:id", scheduleHandler.SoftDelete)
 
-    api.GET("/clients", clientHandler.List)
-    api.POST("/clients", clientHandler.Create)
+    // Clientes — requer módulo CRM
+    clients := api.Group("/clients")
+    clients.Use(middleware.RequireModule(queries, "CRM"))
+    clients.GET("", clientHandler.List)
+    clients.POST("", clientHandler.Create)
     // ...
 }
 ```
@@ -508,7 +521,7 @@ No estado atual da implementação, os handlers de mutação ainda registram exp
 
 ### 5.6 Swagger com Swaggo
 
-Swagger está integrado na API e usa anotações dos handlers de `auth` e `schedules`.
+Swagger está integrado na API e usa anotações dos handlers de `auth`, `clients`, `pets`, `services` e `schedules`.
 
 Rota pública local:
 
@@ -521,7 +534,7 @@ Gerar/atualizar docs:
 
 ```bash
 cd apps/api
-go run github.com/swaggo/swag/cmd/swag@latest init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
+go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
 ```
 
 Arquivos gerados:
@@ -649,10 +662,13 @@ docker run --rm \
 
 Foi introduzida uma convenção de roteamento para explicitar o tenant também na URL do frontend Web, usando o `company_slug` antes dos recursos autenticados.
 
-Exemplos planejados:
+Rotas atualmente ativas:
 
 - `/:companySlug/dashboard`
 - `/:companySlug/schedules`
+- `/:companySlug/clients`
+- `/:companySlug/pets`
+- `/:companySlug/services`
 
 Essa convenção foi documentada em [docs/conventions/company-slug-routing.md](./docs/conventions/company-slug-routing.md) e detalhada no plano [docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md](./docs/plans/0003-COMPANY_SLUG_ROUTING_PLAN.md).
 
@@ -663,7 +679,7 @@ Regras importantes:
 - `/login` permanece sem slug;
 - a URL autenticada deve ser tratada como canônica em lowercase;
 - o header da área autenticada deve deixar explícitos o tenant resolvido e o slug atual;
-- a migração do router é incremental, então a convenção pode existir em `shared-constants` antes de todas as rotas vivas adotarem o novo formato.
+- a migração do router foi incremental; novas rotas autenticadas devem seguir o mesmo formato `/:companySlug/<recurso>`.
 
 Direção futura para mudança de slug:
 
@@ -904,7 +920,6 @@ swagger:
 # JWT
 JWT_SECRET=change-me
 JWT_ACCESS_TOKEN_TTL=15m
-JWT_REFRESH_TOKEN_TTL=720h
 
 # App
 API_PORT=8080
@@ -1035,7 +1050,7 @@ func (m *mockQuerier) GetSchedulesByCompany(ctx context.Context, arg sqlc.GetSch
 }
 
 func TestScheduleService_ListByCompany(t *testing.T) {
-    svc := NewScheduleService(&mockQuerier{}, nil)
+    svc := NewScheduleService(mockPool, sqlc.New(mockPool))
     result, err := svc.ListByCompany(context.Background(), testCompanyID, 20, 0)
     assert.NoError(t, err)
     assert.NotNil(t, result)
@@ -1152,11 +1167,23 @@ func TestCreateSchedule(t *testing.T) {
 
 **Decisão:** Zustand gerencia exclusivamente estado de UI (sidebar, tema, modal stack). Nenhum dado de servidor entra no Zustand.
 
-**Justificativa:** TanStack Query já resolve cache, revalidação, loading e error states para dados de servidor. Misturar os dois cria inconsistências e sincronização manual desnecessária.
+**Justificativa:** Manter uma única fonte de verdade para os dados da API (TanStack Query) previne bugs de sincronização, stale data e race conditions que surgem frequentemente ao copiar dados async para um state manager global.
+
+**Consequências:** Qualquer componente React que precise de dados do servidor deve acessar via hooks do TanStack Query. A store global fica menor, previsível e dedicada apenas à experiência do usuário, tornando-se mais fácil de debugar e testar.
 
 ---
 
-### ADR-006: `libs/ui` com camada core agnóstica de plataforma
+### ADR-006: Módulo `pets` sob a guarda do `CRM` (Customer Relationship Management)
+
+**Contexto:** O projeto possui módulos de faturamento e agendamento (`SCH`) e gestão de clientes (`CRM`). O recurso `pets` semanticamente pode ter relação forte com `schedules` (pois atendimentos são feitos aos pets), o que gerou a dúvida se deveria estar isolado ou sob a guarda de `SCH`.
+
+**Decisão:** O módulo `pets` está formalmente registrado e protegido no código pelo módulo `CRM`, sendo tratado arquiteturalmente como uma extensão estrutural do cadastro de clientes.
+
+**Justificativa:** Em Petshops e Clínicas Veterinárias, um "Pet" é uma entidade dependente de um "Cliente" (tutor). Assim como os dados cadastrais, endereço e histórico de contatos do tutor ficam no CRM, os dados do pet (raça, peso, alergias, espécie) são informacionais e cadastrais, compondo a "Ficha do Cliente". Um pet pode existir no sistema mesmo que nunca mais faça um atendimento (ex: óbito, adoção), e a posse dos dados é ligada ao relacionamento com o consumidor.
+
+**Consequências:** Todas as rotas base de `/pets` utilizarão `RequireModule(..., "CRM")`. Se, num cenário futuro, o domínio de `schedules` precisar acessar dados de `pets` para regras de conflito de agenda rígidas, o contexto de `SCH` deverá apenas consultar (read-only) os dados cadastrais vindos de `CRM`, ou invocar regras de domínio cruzadas, mantendo a mutação de ficha exclusividade do `CRM`.
+
+### ADR-007: `libs/ui` com camada core agnóstica de plataforma
 
 **Contexto:** Mobile com React Native é planejado para o futuro.
 

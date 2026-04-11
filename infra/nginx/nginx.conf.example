@@ -1,0 +1,4 @@
+# Reverse proxy configuration placeholder for production deployments.
+# Copy this file to nginx.conf and adapt upstreams, hostnames, TLS and headers
+# before mounting it into an Nginx container or host-level reverse proxy.
+

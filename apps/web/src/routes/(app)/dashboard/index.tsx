@@ -27,7 +27,7 @@ export function DashboardPage() {
   const companyQuery = useCurrentCompanyQuery();
   const schedulesQuery = useSchedulesQuery();
 
-  const schedules = schedulesQuery.data ?? [];
+  const schedules = schedulesQuery.data?.data ?? [];
   const today = new Date();
   const todaySchedules = schedules.filter((item) => {
     const scheduleDate = new Date(item.scheduled_at);

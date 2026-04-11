@@ -25,6 +25,17 @@ func (h *CompanyHandler) List(c *gin.Context) {
 	middleware.JSONData(c, 200, companies)
 }
 
+// Current godoc
+// @Summary Get current company
+// @Description Returns the company resolved from the authenticated tenant context.
+// @Tags companies
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} CompanyItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /companies/current [get]
 func (h *CompanyHandler) Current(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {

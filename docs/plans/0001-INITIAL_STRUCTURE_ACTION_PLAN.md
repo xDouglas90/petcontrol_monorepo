@@ -36,7 +36,7 @@ O foco deste plano e criar uma base consistente para desenvolvimento incremental
 - Criar `.env.example` na raiz com variáveis documentadas para API, Worker, Postgres, Redis, JWT, GCS e WhatsApp.
 - Decidir a localização oficial das migrations:
   - mover para `infra/migrations` e ajustar `apps/api/sqlc.yaml`.
-- Padronizar versões de runtime: Go `1.26.1`, Node LTS, pnpm e PostgreSQL `17`.
+- Padronizar versões de runtime: Go `1.26.1`, Node LTS, pnpm e PostgreSQL `18`.
 
 ### 0.2 - Checks
 
@@ -373,16 +373,18 @@ Objetivo: iniciar os testes de integração pelo pacote gerado em `apps/api/inte
 
 ## Checklist Consolidado
 
-- [ ] Estrutura raiz possui `apps`, `libs`, `docs`, `infra` e `.github`.
-- [ ] `Makefile` centraliza comandos de dev, build, test, lint, sqlc, migrations e Docker.
-- [ ] `.env.example` documenta todas as variáveis locais.
-- [ ] Docker Compose sobe Postgres, Redis, pgAdmin e asynqmon.
-- [ ] API inicia com `go run ./cmd/server`.
-- [ ] API expõe `/health` e `/ready`.
-- [ ] SQLC gera código a partir das queries e migrations padronizadas.
-- [ ] Migrations aplicam e revertem em banco limpo.
-- [ ] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
-- [ ] Web inicia com Vite e consome `VITE_API_URL`.
+- [x] Estrutura raiz possui `apps`, `libs`, `docs`, `infra` e `.github`.
+- [x] Makefile centraliza comandos de dev, build, test, lint, sqlc, migrations e Docker.
+- [x] .env.example documenta todas as variáveis locais.
+- [x] docker-compose.yml configura Postgres 18 e Redis 7 com healthchecks.
+- [x] API possui estrutura `cmd/server`, `internal/handler`, `internal/service`, `internal/db/sqlc`.
+- [x] Web possui `apps/web` com TypeScript, Vite e roteamento funcional.
+- [x] Libs compartilhadas (`shared-types`, `shared-utils`, `ui`) configuradas e consumidas.
+- [x] Worker configurado com Asynq esperando por eventos de agendamento.
+- [x] Migrations e Seed automatizados no Makefile.
+- [x] CI via GitHub Actions valida lint, tests e builds em Go e Node.
+- [x] Auth JWT e middleware de tenant estão implementados antes de rotas multi-tenant reais.
+- [x] Web inicia com Vite e consome `VITE_API_URL`.
 - [x] Libs TS exportam tipos, constantes, utils e base de UI sem acoplamento indevido.
 - [x] Worker inicia separado e consome task dummy do Redis.
 - [x] CI executa checks de Go, TypeScript, SQLC e Docker Compose.

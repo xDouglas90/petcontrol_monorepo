@@ -10,6 +10,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/pagination"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
@@ -20,23 +21,40 @@ type ScheduleHandler struct {
 }
 
 type createScheduleRequest struct {
-	ClientID     string  `json:"client_id"`
-	PetID        string  `json:"pet_id"`
-	ScheduledAt  string  `json:"scheduled_at"`
-	EstimatedEnd *string `json:"estimated_end"`
-	Notes        string  `json:"notes"`
-	Status       string  `json:"status"`
-	StatusNotes  string  `json:"status_notes"`
+	ClientID     string   `json:"client_id"`
+	PetID        string   `json:"pet_id"`
+	ServiceIDs   []string `json:"service_ids"`
+	ScheduledAt  string   `json:"scheduled_at"`
+	EstimatedEnd *string  `json:"estimated_end"`
+	Notes        string   `json:"notes"`
+	Status       string   `json:"status"`
+	StatusNotes  string   `json:"status_notes"`
 }
 
 type updateScheduleRequest struct {
-	ClientID     *string `json:"client_id"`
-	PetID        *string `json:"pet_id"`
-	ScheduledAt  *string `json:"scheduled_at"`
-	EstimatedEnd *string `json:"estimated_end"`
-	Notes        *string `json:"notes"`
-	Status       *string `json:"status"`
-	StatusNotes  *string `json:"status_notes"`
+	ClientID     *string   `json:"client_id"`
+	PetID        *string   `json:"pet_id"`
+	ServiceIDs   *[]string `json:"service_ids"`
+	ScheduledAt  *string   `json:"scheduled_at"`
+	EstimatedEnd *string   `json:"estimated_end"`
+	Notes        *string   `json:"notes"`
+	Status       *string   `json:"status"`
+	StatusNotes  *string   `json:"status_notes"`
+}
+
+type scheduleResponse struct {
+	ID            string     `json:"id"`
+	CompanyID     string     `json:"company_id"`
+	ClientID      string     `json:"client_id"`
+	PetID         string     `json:"pet_id"`
+	ClientName    string     `json:"client_name"`
+	PetName       string     `json:"pet_name"`
+	ServiceIDs    []string   `json:"service_ids"`
+	ServiceTitles []string   `json:"service_titles"`
+	ScheduledAt   time.Time  `json:"scheduled_at"`
+	EstimatedEnd  *time.Time `json:"estimated_end,omitempty"`
+	Notes         *string    `json:"notes,omitempty"`
+	CurrentStatus string     `json:"current_status"`
 }
 
 func NewScheduleHandler(service *service.ScheduleService, publisher ...queue.Publisher) *ScheduleHandler {
@@ -64,13 +82,19 @@ func (h *ScheduleHandler) List(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.ListSchedulesByCompanyID(c.Request.Context(), companyID)
+	params := pagination.ParseParams(c)
+	items, err := h.service.ListSchedulesByCompanyID(c.Request.Context(), companyID, params)
 	if err != nil {
 		middleware.JSONError(c, 500, "list_schedules_failed", "failed to list schedules")
 		return
 	}
 
-	middleware.JSONData(c, 200, items)
+	total := 0
+	if len(items) > 0 {
+		total = int(items[0].TotalCount)
+	}
+
+	middleware.JSONPaginated(c, 200, mapScheduleList(items), pagination.NewMeta(total, params.Page, params.Limit))
 }
 
 // GetByID godoc
@@ -105,7 +129,7 @@ func (h *ScheduleHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	middleware.JSONData(c, 200, item)
+	middleware.JSONData(c, 200, mapScheduleItem(item))
 }
 
 // History godoc
@@ -205,11 +229,18 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	serviceIDs, err := parseUUIDList(req.ServiceIDs)
+	if err != nil {
+		middleware.JSONError(c, 422, "invalid_service_ids", "invalid service_ids")
+		return
+	}
+
 	status := sqlc.ScheduleStatus(strings.TrimSpace(req.Status))
 	item, err := h.service.CreateSchedule(c.Request.Context(), service.CreateScheduleInput{
 		CompanyID:    companyID,
 		ClientID:     clientID,
 		PetID:        petID,
+		ServiceIDs:   serviceIDs,
 		ScheduledAt:  scheduledAt,
 		EstimatedEnd: estimatedEnd,
 		Notes:        strings.TrimSpace(req.Notes),
@@ -235,7 +266,7 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, 201, item)
+	middleware.JSONData(c, 201, mapScheduleItem(item))
 }
 
 // Update godoc
@@ -314,11 +345,18 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 		return
 	}
 
+	serviceIDs, err := parseOptionalUUIDList(req.ServiceIDs)
+	if err != nil {
+		middleware.JSONError(c, 422, "invalid_service_ids", "invalid service_ids")
+		return
+	}
+
 	item, err := h.service.UpdateSchedule(c.Request.Context(), service.UpdateScheduleInput{
 		CompanyID:    companyID,
 		ScheduleID:   scheduleID,
 		ClientID:     clientID,
 		PetID:        petID,
+		ServiceIDs:   serviceIDs,
 		ScheduledAt:  scheduledAt,
 		EstimatedEnd: estimatedEnd,
 		Notes:        parseOptionalTrimmed(req.Notes),
@@ -344,7 +382,7 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, 200, item)
+	middleware.JSONData(c, 200, mapScheduleItem(item))
 }
 
 // Delete godoc
@@ -410,13 +448,16 @@ func (h *ScheduleHandler) publishScheduleConfirmationIfNeeded(c *gin.Context, be
 	}
 
 	if err := h.publisher.EnqueueScheduleConfirmation(c.Request.Context(), queue.ScheduleConfirmationPayload{
-		Version:     1,
-		ScheduleID:  after.ID.String(),
-		CompanyID:   after.CompanyID.String(),
-		ChangedBy:   changedBy.String(),
-		Status:      string(after.CurrentStatus),
-		StatusNotes: statusNotes,
-		OccurredAt:  time.Now().UTC(),
+		Version:       2,
+		ScheduleID:    after.ID.String(),
+		CompanyID:     after.CompanyID.String(),
+		ChangedBy:     changedBy.String(),
+		ClientName:    after.ClientName,
+		PetName:       after.PetName,
+		ServiceTitles: stringSliceFromAny(after.ServiceTitles),
+		Status:        string(after.CurrentStatus),
+		StatusNotes:   statusNotes,
+		OccurredAt:    time.Now().UTC(),
 	}); err != nil {
 		middleware.JSONError(c, 500, "enqueue_schedule_confirmation_failed", "failed to enqueue schedule confirmation")
 		return err
@@ -430,6 +471,36 @@ func parseOptionalString(raw *string) string {
 		return ""
 	}
 	return strings.TrimSpace(*raw)
+}
+
+func parseUUIDList(raw []string) ([]pgtype.UUID, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	items := make([]pgtype.UUID, 0, len(raw))
+	for _, item := range raw {
+		parsed, err := parseUUID(strings.TrimSpace(item))
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, parsed)
+	}
+
+	return items, nil
+}
+
+func parseOptionalUUIDList(raw *[]string) (*[]pgtype.UUID, error) {
+	if raw == nil {
+		return nil, nil
+	}
+
+	items, err := parseUUIDList(*raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return &items, nil
 }
 
 func parseOptionalTime(raw *string) (*time.Time, error) {
@@ -479,4 +550,72 @@ func parseOptionalScheduleStatus(raw *string) *sqlc.ScheduleStatus {
 	}
 	value := sqlc.ScheduleStatus(strings.TrimSpace(*raw))
 	return &value
+}
+
+func mapScheduleList(items []sqlc.ListSchedulesByCompanyIDRow) []scheduleResponse {
+	mapped := make([]scheduleResponse, 0, len(items))
+	for _, item := range items {
+		mapped = append(mapped, scheduleResponse{
+			ID:            item.ID.String(),
+			CompanyID:     item.CompanyID.String(),
+			ClientID:      item.ClientID.String(),
+			PetID:         item.PetID.String(),
+			ClientName:    item.ClientName,
+			PetName:       item.PetName,
+			ServiceIDs:    stringSliceFromAny(item.ServiceIds),
+			ServiceTitles: stringSliceFromAny(item.ServiceTitles),
+			ScheduledAt:   item.ScheduledAt.Time,
+			EstimatedEnd:  nullableTime(item.EstimatedEnd),
+			Notes:         nullableText(item.Notes),
+			CurrentStatus: string(item.CurrentStatus),
+		})
+	}
+	return mapped
+}
+
+func mapScheduleItem(item sqlc.GetScheduleByIDAndCompanyIDRow) scheduleResponse {
+	return scheduleResponse{
+		ID:            item.ID.String(),
+		CompanyID:     item.CompanyID.String(),
+		ClientID:      item.ClientID.String(),
+		PetID:         item.PetID.String(),
+		ClientName:    item.ClientName,
+		PetName:       item.PetName,
+		ServiceIDs:    stringSliceFromAny(item.ServiceIds),
+		ServiceTitles: stringSliceFromAny(item.ServiceTitles),
+		ScheduledAt:   item.ScheduledAt.Time,
+		EstimatedEnd:  nullableTime(item.EstimatedEnd),
+		Notes:         nullableText(item.Notes),
+		CurrentStatus: string(item.CurrentStatus),
+	}
+}
+
+func nullableTime(value pgtype.Timestamptz) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	timestamp := value.Time
+	return &timestamp
+}
+
+func stringSliceFromAny(raw interface{}) []string {
+	switch value := raw.(type) {
+	case nil:
+		return nil
+	case []string:
+		return append([]string(nil), value...)
+	case []any:
+		result := make([]string, 0, len(value))
+		for _, item := range value {
+			switch typed := item.(type) {
+			case string:
+				result = append(result, typed)
+			case []byte:
+				result = append(result, string(typed))
+			}
+		}
+		return result
+	default:
+		return nil
+	}
 }

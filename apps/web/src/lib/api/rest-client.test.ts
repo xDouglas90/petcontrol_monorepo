@@ -4,7 +4,10 @@ import {
   createSchedule,
   deleteSchedule,
   getCurrentCompany,
+  listClients,
+  listPets,
   listSchedules,
+  listServices,
   login,
   updateSchedule,
 } from './rest-client';
@@ -105,18 +108,25 @@ describe('rest-client login', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: [
-              {
-                id: 's-1',
-                company_id: 'c-1',
-                client_id: 'cli-1',
-                pet_id: 'pet-1',
-                scheduled_at: '2026-04-08T10:00:00.000Z',
-                estimated_end: null,
-                notes: 'banho',
-                current_status: 'waiting',
-              },
-            ],
+            data: {
+              data: [
+                {
+                  id: 's-1',
+                  company_id: 'c-1',
+                  client_id: 'cli-1',
+                  pet_id: 'pet-1',
+                  client_name: 'Maria',
+                  pet_name: 'Thor',
+                  service_ids: ['svc-1'],
+                  service_titles: ['Banho'],
+                  scheduled_at: '2026-04-08T10:00:00.000Z',
+                  estimated_end: null,
+                  notes: 'banho',
+                  current_status: 'waiting',
+                },
+              ],
+              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
+            },
           }),
           { status: 200 },
         ),
@@ -129,6 +139,10 @@ describe('rest-client login', () => {
               company_id: 'c-1',
               client_id: 'cli-2',
               pet_id: 'pet-2',
+              client_name: 'João',
+              pet_name: 'Luna',
+              service_ids: ['svc-2'],
+              service_titles: ['Tosa'],
               scheduled_at: '2026-04-08T12:00:00.000Z',
               estimated_end: null,
               notes: 'consulta',
@@ -146,6 +160,10 @@ describe('rest-client login', () => {
               company_id: 'c-1',
               client_id: 'cli-2',
               pet_id: 'pet-2',
+              client_name: 'João',
+              pet_name: 'Luna',
+              service_ids: ['svc-2'],
+              service_titles: ['Tosa'],
               scheduled_at: '2026-04-08T12:00:00.000Z',
               estimated_end: null,
               notes: 'consulta atualizada',
@@ -158,11 +176,12 @@ describe('rest-client login', () => {
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const schedules = await listSchedules('token-123');
-    expect(schedules).toHaveLength(1);
+    expect(schedules.data).toHaveLength(1);
 
     const created = await createSchedule('token-123', {
       client_id: 'cli-2',
       pet_id: 'pet-2',
+      service_ids: ['svc-2'],
       scheduled_at: '2026-04-08T12:00:00.000Z',
       notes: 'consulta',
     });
@@ -177,5 +196,86 @@ describe('rest-client login', () => {
     await expect(deleteSchedule('token-123', 's-2')).resolves.toBeUndefined();
 
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('busca catálogos operacionais com bearer token', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              data: [
+                {
+                  id: 'cli-1',
+                  person_id: 'p-1',
+                  company_id: 'c-1',
+                  full_name: 'Maria',
+                  short_name: 'Maria',
+                  gender_identity: 'woman_cisgender',
+                  marital_status: 'single',
+                  birth_date: '1992-06-15',
+                  cpf: '12345678901',
+                  email: 'maria@example.com',
+                  cellphone: '+5511999999999',
+                  has_whatsapp: true,
+                  is_active: true,
+                },
+              ],
+              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              data: [
+                {
+                  id: 'pet-1',
+                  owner_id: 'cli-1',
+                  owner_name: 'Maria',
+                  name: 'Thor',
+                  size: 'medium',
+                  kind: 'dog',
+                  temperament: 'playful',
+                  is_active: true,
+                },
+              ],
+              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              data: [
+                {
+                  id: 'svc-1',
+                  type_id: 'type-1',
+                  type_name: 'Banho',
+                  title: 'Banho completo',
+                  description: 'Banho com secagem',
+                  price: '89.90',
+                  discount_rate: '0.00',
+                  is_active: true,
+                },
+              ],
+              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+
+    await expect(listClients('token-123').then(res => res.data)).resolves.toHaveLength(1);
+    await expect(listPets('token-123').then(res => res.data)).resolves.toHaveLength(1);
+    await expect(listServices('token-123').then(res => res.data)).resolves.toHaveLength(1);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });

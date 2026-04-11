@@ -1,4 +1,4 @@
-import { Link, Navigate, Outlet } from '@tanstack/react-router';
+import { Link, Navigate, Outlet, useLocation } from '@tanstack/react-router';
 import {
   APP_ROUTES,
   COMPANY_ROUTE_PARAM,
@@ -11,12 +11,15 @@ import { useParams } from '@tanstack/react-router';
 import { cn } from '@petcontrol/ui/web';
 import {
   CalendarRange,
+  ClipboardList,
   LogOut,
   Menu,
   MoonStar,
+  PawPrint,
   PanelLeftClose,
   PanelLeftOpen,
   SunMedium,
+  Users,
 } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -32,6 +35,7 @@ export function AppLayout() {
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
   const params = useParams({ strict: false });
+  const location = useLocation();
   const companyQuery = useCurrentCompanyQuery();
   const unauthorizedCompanyContext =
     companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
@@ -68,15 +72,17 @@ export function AppLayout() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
         <p className="text-xl font-medium text-rose-400">Erro de Contexto</p>
-        <p className="mt-2 text-sm text-slate-400">Não conseguimos identificar sua empresa atual.</p>
+        <p className="mt-2 text-sm text-slate-400">
+          Não conseguimos identificar sua empresa atual.
+        </p>
         <div className="mt-6 flex gap-4">
-          <button 
+          <button
             onClick={() => void companyQuery.refetch()}
             className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
           >
             Tentar novamente
           </button>
-          <button 
+          <button
             onClick={() => clearSession()}
             className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
           >
@@ -96,8 +102,23 @@ export function AppLayout() {
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
 
-  if (normalizedUrlSlug !== normalizedCurrentSlug) {
-    return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
+  if (urlSlug && normalizedCurrentSlug && normalizedUrlSlug !== normalizedCurrentSlug) {
+    const segments = location.pathname.split('/');
+    if (segments.length > 1) {
+      segments[1] = normalizedCurrentSlug;
+    }
+    const targetPath = segments.length > 1 ? segments.join('/') : buildCompanyRoute(normalizedCurrentSlug, 'dashboard');
+
+    if (location.pathname.toLowerCase() === targetPath.toLowerCase()) {
+      // Já estamos no caminho correto (considerando case-insensitivity), 
+      // mas por algum motivo o urlSlug ainda é diferente (race condition no params?).
+      // Evita disparar um Navigate que pode causar loop.
+      return null; 
+    }
+
+    return (
+      <Navigate to={targetPath} search={{ ...location.search }} hash={location.hash} replace />
+    );
   }
 
   return (
@@ -141,6 +162,24 @@ export function AppLayout() {
               to={buildCompanyRoute(currentSlug, 'schedules')}
               icon={CalendarRange}
               label="Schedules"
+              expanded={sidebarOpen}
+            />
+            <SidebarLink
+              to={buildCompanyRoute(currentSlug, 'clients')}
+              icon={Users}
+              label="Clients"
+              expanded={sidebarOpen}
+            />
+            <SidebarLink
+              to={buildCompanyRoute(currentSlug, 'pets')}
+              icon={PawPrint}
+              label="Pets"
+              expanded={sidebarOpen}
+            />
+            <SidebarLink
+              to={buildCompanyRoute(currentSlug, 'services')}
+              icon={ClipboardList}
+              label="Services"
               expanded={sidebarOpen}
             />
           </nav>
