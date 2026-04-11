@@ -138,8 +138,10 @@ export function PetsPage() {
           className="mt-6 space-y-4"
           onSubmit={(event) => void submit(event)}
         >
-          <Field label="Tutor">
+          <Field label="Tutor" htmlFor="pet-owner">
             <select
+              id="pet-owner"
+              title="Selecione o tutor do pet"
               required
               className={fieldClassName}
               value={form.owner_id}
@@ -155,8 +157,11 @@ export function PetsPage() {
               ))}
             </select>
           </Field>
-          <Field label="Nome">
+          <Field label="Nome" htmlFor="pet-name">
             <input
+              id="pet-name"
+              title="Nome do pet"
+              placeholder="Ex: Thor"
               required
               className={fieldClassName}
               value={form.name}
@@ -166,8 +171,10 @@ export function PetsPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Porte">
+            <Field label="Porte" htmlFor="pet-size">
               <select
+                id="pet-size"
+                title="Porte do pet"
                 className={fieldClassName}
                 value={form.size}
                 onChange={(event) =>
@@ -183,8 +190,10 @@ export function PetsPage() {
                 <option value="giant">Gigante</option>
               </select>
             </Field>
-            <Field label="Espécie">
+            <Field label="Espécie" htmlFor="pet-kind">
               <select
+                id="pet-kind"
+                title="Espécie do pet"
                 className={fieldClassName}
                 value={form.kind}
                 onChange={(event) =>
@@ -200,8 +209,10 @@ export function PetsPage() {
               </select>
             </Field>
           </div>
-          <Field label="Temperamento">
+          <Field label="Temperamento" htmlFor="pet-temperament">
             <select
+              id="pet-temperament"
+              title="Temperamento do pet"
               className={fieldClassName}
               value={form.temperament}
               onChange={(event) =>
@@ -219,8 +230,10 @@ export function PetsPage() {
               <option value="loving">Carinhoso</option>
             </select>
           </Field>
-          <Field label="Nascimento">
+          <Field label="Nascimento" htmlFor="pet-birth">
             <input
+              id="pet-birth"
+              title="Data de nascimento"
               type="date"
               className={fieldClassName}
               value={form.birth_date}
@@ -229,8 +242,11 @@ export function PetsPage() {
               }
             />
           </Field>
-          <Field label="Observações">
+          <Field label="Observações" htmlFor="pet-notes">
             <textarea
+              id="pet-notes"
+              title="Observações adicionais"
+              placeholder="Ex: Alergias, cuidados especiais..."
               className={fieldClassName}
               rows={3}
               value={form.notes}
@@ -257,12 +273,14 @@ const fieldClassName =
 function Field({
   label,
   children,
+  htmlFor,
 }: {
   label: string;
   children: React.ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-2" htmlFor={htmlFor}>
       <span className="text-sm font-medium text-slate-200">{label}</span>
       {children}
     </label>

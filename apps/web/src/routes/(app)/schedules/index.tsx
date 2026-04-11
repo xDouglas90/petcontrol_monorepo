@@ -326,9 +326,15 @@ export function SchedulesPage() {
         >
           <FormField
             label="Cliente"
+            htmlFor="schedule-client"
             error={form.formState.errors.clientId?.message}
           >
-            <select {...form.register('clientId')} className={fieldClassName}>
+            <select
+              id="schedule-client"
+              title="Selecione o cliente"
+              {...form.register('clientId')}
+              className={fieldClassName}
+            >
               <option value="">Selecione um cliente</option>
               {(clientsQuery.data?.data ?? []).map((client) => (
                 <option key={client.id} value={client.id}>
@@ -338,8 +344,17 @@ export function SchedulesPage() {
             </select>
           </FormField>
 
-          <FormField label="Pet" error={form.formState.errors.petId?.message}>
-            <select {...form.register('petId')} className={fieldClassName}>
+          <FormField
+            label="Pet"
+            htmlFor="schedule-pet"
+            error={form.formState.errors.petId?.message}
+          >
+            <select
+              id="schedule-pet"
+              title="Selecione o pet"
+              {...form.register('petId')}
+              className={fieldClassName}
+            >
               <option value="">Selecione um pet</option>
               {availablePets.map((pet) => (
                 <option key={pet.id} value={pet.id}>
@@ -351,9 +366,12 @@ export function SchedulesPage() {
 
           <FormField
             label="Serviços"
+            htmlFor="schedule-services"
             error={form.formState.errors.serviceIds?.message}
           >
             <select
+              id="schedule-services"
+              title="Selecione os serviços (segure Ctrl para múltiplos)"
               {...form.register('serviceIds')}
               multiple
               className={`${fieldClassName} min-h-32`}
@@ -367,10 +385,13 @@ export function SchedulesPage() {
           </FormField>
 
           <FormField
-            label="scheduled_at"
+            label="Data/Hora"
+            htmlFor="schedule-at"
             error={form.formState.errors.scheduledAt?.message}
           >
             <input
+              id="schedule-at"
+              title="Data e hora do agendamento"
               {...form.register('scheduledAt')}
               type="datetime-local"
               className={fieldClassName}
@@ -378,10 +399,13 @@ export function SchedulesPage() {
           </FormField>
 
           <FormField
-            label="estimated_end"
+            label="Fim estimado"
+            htmlFor="schedule-end"
             error={form.formState.errors.estimatedEnd?.message}
           >
             <input
+              id="schedule-end"
+              title="Previsão de término"
               {...form.register('estimatedEnd')}
               type="datetime-local"
               className={fieldClassName}
@@ -390,9 +414,15 @@ export function SchedulesPage() {
 
           <FormField
             label="Status"
+            htmlFor="schedule-status"
             error={form.formState.errors.status?.message}
           >
-            <select {...form.register('status')} className={fieldClassName}>
+            <select
+              id="schedule-status"
+              title="Status do agendamento"
+              {...form.register('status')}
+              className={fieldClassName}
+            >
               {scheduleStatusOptions.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
@@ -403,13 +433,16 @@ export function SchedulesPage() {
 
           <FormField
             label="Observações"
+            htmlFor="schedule-notes"
             error={form.formState.errors.notes?.message}
           >
             <textarea
+              id="schedule-notes"
+              title="Observações do agendamento"
               {...form.register('notes')}
               className={fieldClassName}
               rows={3}
-              placeholder="Observações opcionais"
+              placeholder="Ex: Trazer toalha própria, alérgico a tal produto..."
             />
           </FormField>
 
@@ -452,13 +485,15 @@ function FormField({
   label,
   error,
   children,
+  htmlFor,
 }: {
   label: string;
   error?: string;
   children: ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-2" htmlFor={htmlFor}>
       <span className="text-sm font-medium text-slate-200">{label}</span>
       {children}
       {error ? <span className="text-sm text-rose-300">{error}</span> : null}

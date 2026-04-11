@@ -147,8 +147,11 @@ export function ClientsPage() {
           className="mt-6 space-y-4"
           onSubmit={(event) => void submit(event)}
         >
-          <Field label="Nome completo">
+          <Field label="Nome completo" htmlFor="client-full-name">
             <input
+              id="client-full-name"
+              title="Nome completo do cliente"
+              placeholder="Ex: João da Silva"
               className={fieldClassName}
               required
               value={form.full_name}
@@ -157,8 +160,11 @@ export function ClientsPage() {
               }
             />
           </Field>
-          <Field label="Nome curto">
+          <Field label="Nome curto" htmlFor="client-short-name">
             <input
+              id="client-short-name"
+              title="Nome curto ou apelido"
+              placeholder="Ex: João"
               className={fieldClassName}
               required
               value={form.short_name}
@@ -168,8 +174,10 @@ export function ClientsPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nascimento">
+            <Field label="Nascimento" htmlFor="client-birth">
               <input
+                id="client-birth"
+                title="Data de nascimento"
                 className={fieldClassName}
                 required
                 type="date"
@@ -179,8 +187,11 @@ export function ClientsPage() {
                 }
               />
             </Field>
-            <Field label="CPF">
+            <Field label="CPF" htmlFor="client-cpf">
               <input
+                id="client-cpf"
+                title="Número do CPF"
+                placeholder="000.000.000-00"
                 className={fieldClassName}
                 required
                 value={form.cpf}
@@ -190,8 +201,11 @@ export function ClientsPage() {
               />
             </Field>
           </div>
-          <Field label="E-mail">
+          <Field label="E-mail" htmlFor="client-email">
             <input
+              id="client-email"
+              title="Endereço de e-mail"
+              placeholder="exemplo@email.com"
               className={fieldClassName}
               required
               type="email"
@@ -202,8 +216,11 @@ export function ClientsPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Celular">
+            <Field label="Celular" htmlFor="client-cellphone">
               <input
+                id="client-cellphone"
+                title="Número de celular"
+                placeholder="(00) 00000-0000"
                 className={fieldClassName}
                 required
                 value={form.cellphone}
@@ -212,8 +229,10 @@ export function ClientsPage() {
                 }
               />
             </Field>
-            <Field label="Cliente desde">
+            <Field label="Cliente desde" htmlFor="client-since">
               <input
+                id="client-since"
+                title="Data em que se tornou cliente"
                 className={fieldClassName}
                 type="date"
                 value={form.client_since}
@@ -223,8 +242,11 @@ export function ClientsPage() {
               />
             </Field>
           </div>
-          <Field label="Observações">
+          <Field label="Observações" htmlFor="client-notes">
             <textarea
+              id="client-notes"
+              title="Observações adicionais"
+              placeholder="Ex: Preferências, restrições..."
               className={fieldClassName}
               rows={3}
               value={form.notes}
@@ -233,8 +255,10 @@ export function ClientsPage() {
               }
             />
           </Field>
-          <label className="flex items-center gap-3 text-sm text-slate-200">
+          <label className="flex items-center gap-3 text-sm text-slate-200" htmlFor="client-has-whatsapp">
             <input
+              id="client-has-whatsapp"
+              title="O cliente possui WhatsApp?"
               type="checkbox"
               checked={form.has_whatsapp}
               onChange={(event) =>
@@ -261,12 +285,14 @@ const fieldClassName =
 function Field({
   label,
   children,
+  htmlFor,
 }: {
   label: string;
   children: React.ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-2" htmlFor={htmlFor}>
       <span className="text-sm font-medium text-slate-200">{label}</span>
       {children}
     </label>

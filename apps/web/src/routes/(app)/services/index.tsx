@@ -138,8 +138,11 @@ export function ServicesPage() {
           className="mt-6 space-y-4"
           onSubmit={(event) => void submit(event)}
         >
-          <Field label="Tipo">
+          <Field label="Tipo" htmlFor="service-type">
             <input
+              id="service-type"
+              title="Tipo de serviço"
+              placeholder="Ex: Banho, Tosa, Consulta"
               required
               className={fieldClassName}
               value={form.type_name}
@@ -148,8 +151,11 @@ export function ServicesPage() {
               }
             />
           </Field>
-          <Field label="Título">
+          <Field label="Título" htmlFor="service-title">
             <input
+              id="service-title"
+              title="Título do serviço"
+              placeholder="Ex: Banho Completo G"
               required
               className={fieldClassName}
               value={form.title}
@@ -158,8 +164,11 @@ export function ServicesPage() {
               }
             />
           </Field>
-          <Field label="Descrição">
+          <Field label="Descrição" htmlFor="service-description">
             <textarea
+              id="service-description"
+              title="Descrição detalhada do serviço"
+              placeholder="Descreva o que está incluso no serviço..."
               required
               className={fieldClassName}
               rows={3}
@@ -170,8 +179,11 @@ export function ServicesPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Preço">
+            <Field label="Preço" htmlFor="service-price">
               <input
+                id="service-price"
+                title="Preço base do serviço"
+                placeholder="0.00"
                 required
                 className={fieldClassName}
                 value={form.price}
@@ -180,8 +192,11 @@ export function ServicesPage() {
                 }
               />
             </Field>
-            <Field label="Desconto (%)">
+            <Field label="Desconto (%)" htmlFor="service-discount">
               <input
+                id="service-discount"
+                title="Taxa de desconto padrão"
+                placeholder="0.00"
                 className={fieldClassName}
                 value={form.discount_rate}
                 onChange={(event) =>
@@ -190,8 +205,11 @@ export function ServicesPage() {
               />
             </Field>
           </div>
-          <Field label="Notas">
+          <Field label="Notas" htmlFor="service-notes">
             <textarea
+              id="service-notes"
+              title="Notas internas"
+              placeholder="Observações administrativas..."
               className={fieldClassName}
               rows={3}
               value={form.notes}
@@ -218,12 +236,14 @@ const fieldClassName =
 function Field({
   label,
   children,
+  htmlFor,
 }: {
   label: string;
   children: React.ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-2" htmlFor={htmlFor}>
       <span className="text-sm font-medium text-slate-200">{label}</span>
       {children}
     </label>
