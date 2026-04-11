@@ -25,6 +25,10 @@ SELECT
     s.company_id,
     s.client_id,
     s.pet_id,
+    pi.full_name AS client_name,
+    p.name AS pet_name,
+    COALESCE(service_context.service_ids, '{}'::text[]) AS service_ids,
+    COALESCE(service_context.service_titles, '{}'::text[]) AS service_titles,
     s.scheduled_at,
     s.estimated_end,
     s.notes,
@@ -35,6 +39,9 @@ SELECT
     COALESCE(ssh_current.status, 'waiting'::schedule_status) AS current_status
 FROM
     schedules s
+    INNER JOIN clients c ON c.id = s.client_id
+    INNER JOIN people_identifications pi ON pi.person_id = c.person_id
+    INNER JOIN pets p ON p.id = s.pet_id
     LEFT JOIN LATERAL (
         SELECT
             ssh.status
@@ -46,6 +53,17 @@ FROM
             ssh.changed_at DESC
         LIMIT 1
     ) ssh_current ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
+            array_agg(svc.title ORDER BY svc.title) AS service_titles
+        FROM
+            schedule_services ss
+            INNER JOIN services svc ON svc.id = ss.service_id
+        WHERE
+            ss.schedule_id = s.id
+            AND svc.deleted_at IS NULL
+    ) service_context ON TRUE
 WHERE
     s.id = sqlc.arg('ID')
     AND s.company_id = sqlc.arg('CompanyID')
@@ -58,6 +76,10 @@ SELECT
     s.company_id,
     s.client_id,
     s.pet_id,
+    pi.full_name AS client_name,
+    p.name AS pet_name,
+    COALESCE(service_context.service_ids, '{}'::text[]) AS service_ids,
+    COALESCE(service_context.service_titles, '{}'::text[]) AS service_titles,
     s.scheduled_at,
     s.estimated_end,
     s.notes,
@@ -68,6 +90,9 @@ SELECT
     COALESCE(ssh_current.status, 'waiting'::schedule_status) AS current_status
 FROM
     schedules s
+    INNER JOIN clients c ON c.id = s.client_id
+    INNER JOIN people_identifications pi ON pi.person_id = c.person_id
+    INNER JOIN pets p ON p.id = s.pet_id
     LEFT JOIN LATERAL (
         SELECT
             ssh.status
@@ -79,6 +104,17 @@ FROM
             ssh.changed_at DESC
         LIMIT 1
     ) ssh_current ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
+            array_agg(svc.title ORDER BY svc.title) AS service_titles
+        FROM
+            schedule_services ss
+            INNER JOIN services svc ON svc.id = ss.service_id
+        WHERE
+            ss.schedule_id = s.id
+            AND svc.deleted_at IS NULL
+    ) service_context ON TRUE
 WHERE
     s.company_id = sqlc.arg('CompanyID')
     AND s.deleted_at IS NULL
@@ -125,6 +161,22 @@ VALUES (
     sqlc.narg('Notes')
 )
 RETURNING *;
+
+-- name: InsertScheduleService :one
+INSERT INTO schedule_services (
+    schedule_id,
+    service_id
+)
+VALUES (
+    sqlc.arg('ScheduleID'),
+    sqlc.arg('ServiceID')
+)
+RETURNING *;
+
+-- name: DeleteScheduleServicesByScheduleID :execrows
+DELETE FROM schedule_services
+WHERE
+    schedule_id = sqlc.arg('ScheduleID');
 
 -- name: ListScheduleStatusHistoryByScheduleID :many
 SELECT

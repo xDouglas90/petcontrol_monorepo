@@ -95,12 +95,30 @@ func (q *Queries) DeleteSchedule(ctx context.Context, arg DeleteScheduleParams) 
 	return result.RowsAffected(), nil
 }
 
+const deleteScheduleServicesByScheduleID = `-- name: DeleteScheduleServicesByScheduleID :execrows
+DELETE FROM schedule_services
+WHERE
+    schedule_id = $1
+`
+
+func (q *Queries) DeleteScheduleServicesByScheduleID(ctx context.Context, scheduleid pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteScheduleServicesByScheduleID, scheduleid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getScheduleByIDAndCompanyID = `-- name: GetScheduleByIDAndCompanyID :one
 SELECT
     s.id,
     s.company_id,
     s.client_id,
     s.pet_id,
+    pi.full_name AS client_name,
+    p.name AS pet_name,
+    COALESCE(service_context.service_ids, '{}'::text[]) AS service_ids,
+    COALESCE(service_context.service_titles, '{}'::text[]) AS service_titles,
     s.scheduled_at,
     s.estimated_end,
     s.notes,
@@ -111,6 +129,9 @@ SELECT
     COALESCE(ssh_current.status, 'waiting'::schedule_status) AS current_status
 FROM
     schedules s
+    INNER JOIN clients c ON c.id = s.client_id
+    INNER JOIN people_identifications pi ON pi.person_id = c.person_id
+    INNER JOIN pets p ON p.id = s.pet_id
     LEFT JOIN LATERAL (
         SELECT
             ssh.status
@@ -122,6 +143,17 @@ FROM
             ssh.changed_at DESC
         LIMIT 1
     ) ssh_current ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
+            array_agg(svc.title ORDER BY svc.title) AS service_titles
+        FROM
+            schedule_services ss
+            INNER JOIN services svc ON svc.id = ss.service_id
+        WHERE
+            ss.schedule_id = s.id
+            AND svc.deleted_at IS NULL
+    ) service_context ON TRUE
 WHERE
     s.id = $1
     AND s.company_id = $2
@@ -139,6 +171,10 @@ type GetScheduleByIDAndCompanyIDRow struct {
 	CompanyID     pgtype.UUID        `db:"company_id" json:"company_id"`
 	ClientID      pgtype.UUID        `db:"client_id" json:"client_id"`
 	PetID         pgtype.UUID        `db:"pet_id" json:"pet_id"`
+	ClientName    string             `db:"client_name" json:"client_name"`
+	PetName       string             `db:"pet_name" json:"pet_name"`
+	ServiceIds    interface{}        `db:"service_ids" json:"service_ids"`
+	ServiceTitles interface{}        `db:"service_titles" json:"service_titles"`
 	ScheduledAt   pgtype.Timestamptz `db:"scheduled_at" json:"scheduled_at"`
 	EstimatedEnd  pgtype.Timestamptz `db:"estimated_end" json:"estimated_end"`
 	Notes         pgtype.Text        `db:"notes" json:"notes"`
@@ -157,6 +193,10 @@ func (q *Queries) GetScheduleByIDAndCompanyID(ctx context.Context, arg GetSchedu
 		&i.CompanyID,
 		&i.ClientID,
 		&i.PetID,
+		&i.ClientName,
+		&i.PetName,
+		&i.ServiceIds,
+		&i.ServiceTitles,
 		&i.ScheduledAt,
 		&i.EstimatedEnd,
 		&i.Notes,
@@ -165,6 +205,35 @@ func (q *Queries) GetScheduleByIDAndCompanyID(ctx context.Context, arg GetSchedu
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.CurrentStatus,
+	)
+	return i, err
+}
+
+const insertScheduleService = `-- name: InsertScheduleService :one
+INSERT INTO schedule_services (
+    schedule_id,
+    service_id
+)
+VALUES (
+    $1,
+    $2
+)
+RETURNING id, schedule_id, service_id, created_at
+`
+
+type InsertScheduleServiceParams struct {
+	ScheduleID pgtype.UUID `db:"ScheduleID" json:"ScheduleID"`
+	ServiceID  pgtype.UUID `db:"ServiceID" json:"ServiceID"`
+}
+
+func (q *Queries) InsertScheduleService(ctx context.Context, arg InsertScheduleServiceParams) (ScheduleService, error) {
+	row := q.db.QueryRow(ctx, insertScheduleService, arg.ScheduleID, arg.ServiceID)
+	var i ScheduleService
+	err := row.Scan(
+		&i.ID,
+		&i.ScheduleID,
+		&i.ServiceID,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -267,6 +336,10 @@ SELECT
     s.company_id,
     s.client_id,
     s.pet_id,
+    pi.full_name AS client_name,
+    p.name AS pet_name,
+    COALESCE(service_context.service_ids, '{}'::text[]) AS service_ids,
+    COALESCE(service_context.service_titles, '{}'::text[]) AS service_titles,
     s.scheduled_at,
     s.estimated_end,
     s.notes,
@@ -277,6 +350,9 @@ SELECT
     COALESCE(ssh_current.status, 'waiting'::schedule_status) AS current_status
 FROM
     schedules s
+    INNER JOIN clients c ON c.id = s.client_id
+    INNER JOIN people_identifications pi ON pi.person_id = c.person_id
+    INNER JOIN pets p ON p.id = s.pet_id
     LEFT JOIN LATERAL (
         SELECT
             ssh.status
@@ -288,6 +364,17 @@ FROM
             ssh.changed_at DESC
         LIMIT 1
     ) ssh_current ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
+            array_agg(svc.title ORDER BY svc.title) AS service_titles
+        FROM
+            schedule_services ss
+            INNER JOIN services svc ON svc.id = ss.service_id
+        WHERE
+            ss.schedule_id = s.id
+            AND svc.deleted_at IS NULL
+    ) service_context ON TRUE
 WHERE
     s.company_id = $1
     AND s.deleted_at IS NULL
@@ -300,6 +387,10 @@ type ListSchedulesByCompanyIDRow struct {
 	CompanyID     pgtype.UUID        `db:"company_id" json:"company_id"`
 	ClientID      pgtype.UUID        `db:"client_id" json:"client_id"`
 	PetID         pgtype.UUID        `db:"pet_id" json:"pet_id"`
+	ClientName    string             `db:"client_name" json:"client_name"`
+	PetName       string             `db:"pet_name" json:"pet_name"`
+	ServiceIds    interface{}        `db:"service_ids" json:"service_ids"`
+	ServiceTitles interface{}        `db:"service_titles" json:"service_titles"`
 	ScheduledAt   pgtype.Timestamptz `db:"scheduled_at" json:"scheduled_at"`
 	EstimatedEnd  pgtype.Timestamptz `db:"estimated_end" json:"estimated_end"`
 	Notes         pgtype.Text        `db:"notes" json:"notes"`
@@ -324,6 +415,10 @@ func (q *Queries) ListSchedulesByCompanyID(ctx context.Context, companyid pgtype
 			&i.CompanyID,
 			&i.ClientID,
 			&i.PetID,
+			&i.ClientName,
+			&i.PetName,
+			&i.ServiceIds,
+			&i.ServiceTitles,
 			&i.ScheduledAt,
 			&i.EstimatedEnd,
 			&i.Notes,
