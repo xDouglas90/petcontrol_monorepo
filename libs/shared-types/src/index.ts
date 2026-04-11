@@ -18,6 +18,18 @@ export const TOKEN_TYPES = ["Bearer"] as const;
 export type TokenType = (typeof TOKEN_TYPES)[number];
 
 export type UUID = string;
+ 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+ 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
 
 export interface AuthAccessClaims {
   user_id: UUID;
@@ -164,9 +176,7 @@ export interface UpdateClientInput {
   notes?: string;
 }
 
-export interface ClientListApiResponseDTO {
-  data: ClientDTO[];
-}
+export interface ClientListApiResponseDTO extends PaginatedResponse<ClientDTO> {}
 
 export interface ClientApiResponseDTO {
   data: ClientDTO;
@@ -236,9 +246,7 @@ export interface UpdatePetInput {
   notes?: string;
 }
 
-export interface PetListApiResponseDTO {
-  data: PetDTO[];
-}
+export interface PetListApiResponseDTO extends PaginatedResponse<PetDTO> {}
 
 export interface PetApiResponseDTO {
   data: PetDTO;
@@ -285,9 +293,7 @@ export interface UpdateServiceInput {
   is_active?: boolean;
 }
 
-export interface ServiceListApiResponseDTO {
-  data: ServiceDTO[];
-}
+export interface ServiceListApiResponseDTO extends PaginatedResponse<ServiceDTO> {}
 
 export interface ServiceApiResponseDTO {
   data: ServiceDTO;
@@ -319,9 +325,7 @@ export interface ScheduleDTO {
   current_status: ScheduleStatus;
 }
 
-export interface ScheduleListApiResponseDTO {
-  data: ScheduleDTO[];
-}
+export interface ScheduleListApiResponseDTO extends PaginatedResponse<ScheduleDTO> {}
 
 export interface ScheduleApiResponseDTO {
   data: ScheduleDTO;
