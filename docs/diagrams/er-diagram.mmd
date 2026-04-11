@@ -1,0 +1,902 @@
+erDiagram
+  ADDRESSES ||--o{ COMPANY_ADDRESSES : address_id_to_id
+  ADDRESSES ||--o{ COMPANY_PEOPLE_ADDRESSES : address_id_to_id
+  ADDRESSES ||--o{ PEOPLE_ADDRESSES : address_id_to_id
+  CLIENTS ||--o{ CLIENT_PLANS : client_id_to_id
+  CLIENTS ||--o{ CLIENT_SERVICE_PLANS : client_id_to_id
+  CLIENTS ||--o{ CLIENTS : recommended_by_to_id
+  CLIENTS ||--o{ COMPANY_CLIENTS : client_id_to_id
+  CLIENTS ||--o{ PETS : owner_id_to_id
+  CLIENTS ||--o{ SCHEDULES : client_id_to_id
+  COMPANIES ||--o{ AUDIT_LOGS : company_id_to_id
+  COMPANIES ||--o{ AUTH_LOGS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_ADDRESSES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_BUSINESS_COSTS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_CLIENTS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_EMPLOYEES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_FINANCES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_MODULES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_PEOPLE : company_id_to_id
+  COMPANIES ||--o{ COMPANY_PEOPLE_ADDRESSES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_PRODUCTS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_SERVICE_PLANS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_SERVICES : company_id_to_id
+  COMPANIES ||--o{ COMPANY_SUBSCRIPTIONS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_SYSTEM_CONFIGS : company_id_to_id
+  COMPANIES ||--o{ COMPANY_USERS : company_id_to_id
+  COMPANIES ||--o{ NOTIFICATIONS : company_id_to_id
+  COMPANIES ||--o{ SCHEDULES : company_id_to_id
+  COMPANIES ||--o{ WARNINGS : company_id_to_id
+  COMPANY_EMPLOYEES ||--o{ COMPANY_EMPLOYEE_COSTS : company_employee_id_to_id
+  COMPANY_EMPLOYEES ||--o{ EMPLOYEE_BENEFITS : company_employee_id_to_id
+  COMPANY_EMPLOYEES ||--o{ EMPLOYMENTS : company_employee_id_to_id
+  COMPANY_SUBSCRIPTIONS ||--o{ COMPANY_MODULES : subscription_id_to_id
+  FINANCES ||--o{ COMPANY_FINANCES : finance_id_to_id
+  FINANCES ||--o{ PEOPLE_FINANCES : finance_id_to_id
+  LANGUAGES ||--o{ TRANSLATIONS : language_code_to_code
+  LOGIN_HISTORY ||--o{ USER_SESSIONS : login_history_id_to_id
+  MODULES ||--o{ COMPANY_MODULES : module_id_to_id
+  MODULES ||--o{ PLAN_MODULES : module_id_to_id
+  NOTIFICATIONS ||--o{ NOTIFICATION_RECEIVERS : notification_id_to_id
+  PEOPLE ||--o{ CLIENTS : person_id_to_id
+  PEOPLE ||--o{ COMPANIES : responsible_id_to_id
+  PEOPLE ||--o{ COMPANY_EMPLOYEES : person_id_to_id
+  PEOPLE ||--o{ COMPANY_PEOPLE : person_id_to_id
+  PEOPLE ||--o{ COMPANY_PEOPLE_ADDRESSES : person_id_to_id
+  PEOPLE ||--o{ EMPLOYEE_DOCUMENTS : person_id_to_id
+  PEOPLE ||--o{ PEOPLE_ADDRESSES : person_id_to_id
+  PEOPLE ||--o{ PEOPLE_CONTACTS : person_id_to_id
+  PEOPLE ||--o{ PEOPLE_FINANCES : person_id_to_id
+  PEOPLE ||--o{ PEOPLE_IDENTIFICATIONS : person_id_to_id
+  PEOPLE ||--o{ PETS : guardian_id_to_id
+  PEOPLE ||--o{ SCHEDULE_CHECKINS : service_executor_person_id_to_id
+  PEOPLE ||--o{ USER_PROFILES : person_id_to_id
+  PERMISSIONS ||--o{ PLAN_PERMISSIONS : permission_id_to_id
+  PERMISSIONS ||--o{ USERS_PERMISSIONS : permission_id_to_id
+  PETS ||--o{ SCHEDULES : pet_id_to_id
+  PLAN_TYPES ||--o{ PLANS : plan_type_id_to_id
+  PLAN_TYPES ||--o{ SERVICE_PLANS : plan_type_id_to_id
+  PLANS ||--o{ CLIENT_PLANS : plan_id_to_id
+  PLANS ||--o{ COMPANY_SUBSCRIPTIONS : plan_id_to_id
+  PLANS ||--o{ PLAN_MODULES : plan_id_to_id
+  PLANS ||--o{ PLAN_PERMISSIONS : plan_id_to_id
+  PRODUCTS ||--o{ COMPANY_PRODUCTS : product_id_to_id
+  SCHEDULES ||--o{ SCHEDULE_CHECKINS : schedule_id_to_id
+  SCHEDULES ||--o{ SCHEDULE_PAYMENTS : schedule_id_to_id
+  SCHEDULES ||--o{ SCHEDULE_SERVICES : schedule_id_to_id
+  SCHEDULES ||--o{ SCHEDULE_STATUS_HISTORY : schedule_id_to_id
+  SCHEDULES ||--o{ SCHEDULE_SUB_SERVICES : schedule_id_to_id
+  SCHEDULES ||--o{ SERVICE_ORDERS : schedule_id_to_id
+  SERVICE_PLANS ||--o{ CLIENT_SERVICE_PLANS : service_plan_id_to_id
+  SERVICE_PLANS ||--o{ COMPANY_SERVICE_PLANS : service_plan_id_to_id
+  SERVICE_PLANS ||--o{ SERVICE_PLAN_BONUSES : service_plan_id_to_id
+  SERVICE_PLANS ||--o{ SERVICE_PLAN_SERVICES : service_plan_id_to_id
+  SERVICE_PLANS ||--o{ SERVICE_PLAN_SUB_SERVICES : service_plan_id_to_id
+  SERVICE_TYPES ||--o{ SERVICES : type_id_to_id
+  SERVICE_TYPES ||--o{ SUB_SERVICES : type_id_to_id
+  SERVICES ||--o{ COMPANY_SERVICES : service_id_to_id
+  SERVICES ||--o{ SCHEDULE_SERVICES : service_id_to_id
+  SERVICES ||--o{ SCHEDULE_SUB_SERVICES : service_id_to_id
+  SERVICES ||--o{ SERVICE_PLAN_BONUSES : service_id_to_id
+  SERVICES ||--o{ SERVICE_PLAN_SERVICES : service_id_to_id
+  SERVICES ||--o{ SUB_SERVICES : service_id_to_id
+  SUB_SERVICES ||--o{ SCHEDULE_SUB_SERVICES : sub_service_id_to_id
+  SUB_SERVICES ||--o{ SERVICE_PLAN_BONUSES : sub_service_id_to_id
+  SUB_SERVICES ||--o{ SERVICE_PLAN_SUB_SERVICES : sub_service_id_to_id
+  USER_SESSIONS ||--o{ AUTH_LOGS : session_id_to_id
+  USERS ||--o{ AUDIT_LOGS : changed_by_to_id
+  USERS ||--o{ AUTH_LOGS : user_id_to_id
+  USERS ||--o{ COMPANY_USERS : user_id_to_id
+  USERS ||--o{ EMAIL_VERIFICATION_TOKENS : user_id_to_id
+  USERS ||--o{ LOGIN_HISTORY : user_id_to_id
+  USERS ||--o{ NOTIFICATION_RECEIVERS : user_id_to_id
+  USERS ||--o{ NOTIFICATIONS : created_by_to_id
+  USERS ||--o{ PASSWORD_RECOVERY_TOKENS : triggered_by_user_id_to_id
+  USERS ||--o{ PASSWORD_RECOVERY_TOKENS : user_id_to_id
+  USERS ||--o{ SCHEDULE_STATUS_HISTORY : changed_by_to_id
+  USERS ||--o{ SCHEDULES : created_by_to_id
+  USERS ||--o{ SERVICE_ORDERS : printed_by_to_id
+  USERS ||--o{ USER_AUTH : user_id_to_id
+  USERS ||--o{ USER_PROFILES : user_id_to_id
+  USERS ||--o{ USER_SESSIONS : user_id_to_id
+  USERS ||--o{ USER_SETTINGS : user_id_to_id
+  USERS ||--o{ USERS_PERMISSIONS : granted_by_to_id
+  USERS ||--o{ USERS_PERMISSIONS : user_id_to_id
+  USERS ||--o{ WARNINGS : sender_id_to_id
+
+  ADDRESSES {
+    varchar CITY
+    varchar COMPLEMENT
+    varchar COUNTRY
+    timestamptz CREATED_AT
+    varchar DISTRICT
+    uuid ID PK
+    varchar NUMBER
+    char STATE
+    varchar STREET
+    timestamptz UPDATED_AT
+    varchar ZIP_CODE
+  }
+
+  AUDIT_LOGS {
+    log_action ACTION
+    timestamptz CHANGED_AT
+    uuid CHANGED_BY FK
+    uuid COMPANY_ID FK
+    uuid ENTITY_ID
+    varchar ENTITY_TABLE
+    uuid ID PK
+    inet IP_ADDRESS
+    jsonb NEW_DATA
+    jsonb OLD_DATA
+    text USER_AGENT
+  }
+
+  AUTH_LOGS {
+    log_action ACTION
+    uuid COMPANY_ID FK
+    varchar DETAIL
+    uuid ID PK
+    inet IP_ADDRESS
+    timestamptz OCCURRED_AT
+    login_result RESULT
+    uuid SESSION_ID FK
+    text USER_AGENT
+    uuid USER_ID FK
+  }
+
+  CLIENT_PLANS {
+    uuid CLIENT_ID FK
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid PLAN_ID FK
+    numeric PRICE_PAID
+    timestamptz STARTED_AT
+    timestamptz UPDATED_AT
+  }
+
+  CLIENT_SERVICE_PLANS {
+    uuid CLIENT_ID FK
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    numeric PRICE_PAID
+    uuid SERVICE_PLAN_ID FK
+    timestamptz STARTED_AT
+    timestamptz UPDATED_AT
+  }
+
+  CLIENTS {
+    date CLIENT_SINCE
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    uuid ID PK
+    varchar NOTES
+    uuid PERSON_ID FK
+    uuid RECOMMENDED_BY FK
+    timestamptz UPDATED_AT
+  }
+
+  COMPANIES {
+    module_package ACTIVE_PACKAGE
+    varchar CNPJ
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar FANTASY_NAME
+    date FOUNDATION_DATE
+    uuid ID PK
+    boolean IS_ACTIVE
+    varchar LOGO_URL
+    varchar NAME
+    uuid RESPONSIBLE_ID FK
+    varchar SLUG
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_ADDRESSES {
+    uuid ADDRESS_ID FK
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_MAIN
+    varchar LABEL
+  }
+
+  COMPANY_BUSINESS_COSTS {
+    varchar COMMENTS
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    varchar INVOICE_NUMBER
+    varchar INVOICE_URL
+    date REFERENCE_MONTH
+    numeric TOTAL_COST
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_CLIENTS {
+    uuid CLIENT_ID FK
+    uuid COMPANY_ID FK
+    uuid ID PK
+    boolean IS_ACTIVE
+    timestamptz JOINED_AT
+    timestamptz LEFT_AT
+  }
+
+  COMPANY_EMPLOYEE_COSTS {
+    varchar COMMENTS
+    uuid COMPANY_EMPLOYEE_ID FK
+    numeric COSTS
+    timestamptz CREATED_AT
+    uuid ID PK
+    date REFERENCE_MONTH
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_EMPLOYEES {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    uuid ID PK
+    employee_kind KIND
+    uuid PERSON_ID FK
+  }
+
+  COMPANY_FINANCES {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid FINANCE_ID FK
+    uuid ID PK
+    boolean IS_PRIMARY
+  }
+
+  COMPANY_MODULES {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    boolean GRANTED_MANUALLY
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid MODULE_ID FK
+    timestamptz STARTS_AT
+    uuid SUBSCRIPTION_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_PEOPLE {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid PERSON_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_PEOPLE_ADDRESSES {
+    uuid ADDRESS_ID FK
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_MAIN
+    uuid PERSON_ID FK
+  }
+
+  COMPANY_PRODUCTS {
+    uuid COMPANY_ID FK
+    numeric COST_PER_UNIT
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    boolean FOR_SALE
+    boolean HAS_STOCK
+    uuid ID PK
+    product_kind KIND
+    uuid PRODUCT_ID FK
+    numeric PROFIT_MARGIN
+    numeric SALE_PRICE
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_SERVICE_PLANS {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid SERVICE_PLAN_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_SERVICES {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid SERVICE_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_SUBSCRIPTIONS {
+    timestamptz CANCELED_AT
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    varchar NOTES
+    uuid PLAN_ID FK
+    numeric PRICE_PAID
+    timestamptz STARTED_AT
+    timestamptz UPDATED_AT
+  }
+
+  COMPANY_SYSTEM_CONFIGS {
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    boolean DYNAMIC_CAGES
+    uuid ID PK
+    smallint MAX_SCHEDULES_PER_DAY
+    smallint MIN_SCHEDULES_PER_DAY
+    week_day_array SCHEDULE_DAYS
+    time SCHEDULE_END_TIME
+    time SCHEDULE_INIT_TIME
+    time SCHEDULE_PAUSE_END_TIME
+    time SCHEDULE_PAUSE_INIT_TIME
+    smallint TOTAL_GIANT_CAGES
+    smallint TOTAL_LARGE_CAGES
+    smallint TOTAL_MEDIUM_CAGES
+    smallint TOTAL_SMALL_CAGES
+    timestamptz UPDATED_AT
+    varchar WHATSAPP_BUSINESS_PHONE
+    boolean WHATSAPP_CONVERSATION
+    boolean WHATSAPP_NOTIFICATIONS
+  }
+
+  COMPANY_USERS {
+    uuid COMPANY_ID FK
+    uuid ID PK
+    boolean IS_ACTIVE
+    boolean IS_OWNER
+    timestamptz JOINED_AT
+    timestamptz LEFT_AT
+    uuid USER_ID FK
+  }
+
+  EMAIL_VERIFICATION_TOKENS {
+    inet CONSUMED_IP
+    text CONSUMED_USER_AGENT
+    timestamptz CREATED_AT
+    text EMAIL
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    inet REQUEST_IP
+    text REQUEST_USER_AGENT
+    timestamptz REVOKED_AT
+    text TOKEN_HASH
+    timestamptz USED_AT
+    uuid USER_ID FK
+  }
+
+  EMPLOYEE_BENEFITS {
+    uuid COMPANY_EMPLOYEE_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean MEAL_TICKET
+    numeric MEAL_TICKET_VALUE
+    boolean TRANSPORT_VOUCHER
+    smallint TRANSPORT_VOUCHER_QTY
+    numeric TRANSPORT_VOUCHER_VALUE
+    timestamptz UPDATED_AT
+    date VALID_FROM
+    date VALID_UNTIL
+  }
+
+  EMPLOYEE_DOCUMENTS {
+    smallint CHILDREN_QTY
+    date CNH_EXPIRATION_DATE
+    varchar CNH_NUMBER
+    varchar CNH_TYPE
+    timestamptz CREATED_AT
+    varchar CTPS
+    varchar CTPS_SERIES
+    char CTPS_STATE
+    graduation_level GRADUATION
+    boolean HAS_CHILDREN
+    boolean HAS_CHILDREN_UNDER_18
+    boolean HAS_CNH
+    boolean HAS_FAMILY_SPECIAL_NEEDS
+    boolean HAS_SPECIAL_NEEDS
+    uuid ID PK
+    varchar ISSUING_BODY
+    date ISSUING_DATE
+    char MILITARY_CATEGORY
+    varchar MILITARY_CERTIFICATE
+    varchar MILITARY_SERIES
+    uuid PERSON_ID FK
+    varchar PIS
+    varchar RG
+    timestamptz UPDATED_AT
+    varchar VOTE_SECTION
+    varchar VOTE_ZONE
+    varchar VOTER_REGISTRATION
+  }
+
+  EMPLOYMENTS {
+    date ADMISSION_DATE
+    uuid COMPANY_EMPLOYEE_ID FK
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    uuid ID PK
+    date RESIGNATION_DATE
+    varchar ROLE
+    numeric SALARY
+    timestamptz UPDATED_AT
+  }
+
+  FINANCES {
+    varchar BANK_ACCOUNT
+    varchar BANK_ACCOUNT_DIGIT
+    bank_account_kind BANK_ACCOUNT_TYPE
+    varchar BANK_BRANCH
+    varchar BANK_CODE
+    varchar BANK_NAME
+    timestamptz CREATED_AT
+    boolean HAS_PIX
+    uuid ID PK
+    varchar PIX_KEY
+    pix_key_kind PIX_KEY_TYPE
+    timestamptz UPDATED_AT
+  }
+
+  LANGUAGES {
+    varchar CODE
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    varchar NAME
+    varchar NATIVE_NAME
+  }
+
+  LOGIN_HISTORY {
+    timestamptz ATTEMPTED_AT
+    varchar FAILURE_DETAIL
+    uuid ID PK
+    inet IP_ADDRESS
+    login_result RESULT
+    text USER_AGENT
+    uuid USER_ID FK
+  }
+
+  MODULES {
+    varchar CODE
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    boolean IS_ACTIVE
+    module_package MIN_PACKAGE
+    varchar NAME
+    timestamptz UPDATED_AT
+  }
+
+  NOTIFICATION_RECEIVERS {
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid NOTIFICATION_ID FK
+    timestamptz READ_AT
+    uuid USER_ID FK
+  }
+
+  NOTIFICATIONS {
+    uuid COMPANY_ID FK
+    text CONTENT
+    timestamptz CREATED_AT
+    uuid CREATED_BY FK
+    timestamptz DELETED_AT
+    uuid ID PK
+    boolean SEND_TO_WHATSAPP
+    varchar SUMMARY
+    varchar TITLE
+    timestamptz UPDATED_AT
+  }
+
+  PASSWORD_RECOVERY_TOKENS {
+    inet CONSUMED_IP
+    text CONSUMED_USER_AGENT
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    inet REQUEST_IP
+    text REQUEST_USER_AGENT
+    text REQUESTED_EMAIL
+    timestamptz REVOKED_AT
+    text TOKEN_HASH
+    uuid TRIGGERED_BY_USER_ID FK
+    timestamptz USED_AT
+    uuid USER_ID FK
+  }
+
+  PEOPLE {
+    timestamptz CREATED_AT
+    boolean HAS_SYSTEM_USER
+    uuid ID PK
+    boolean IS_ACTIVE
+    person_kind KIND
+    timestamptz UPDATED_AT
+  }
+
+  PEOPLE_ADDRESSES {
+    uuid ADDRESS_ID FK
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_MAIN
+    varchar LABEL
+    uuid PERSON_ID FK
+  }
+
+  PEOPLE_CONTACTS {
+    varchar CELLPHONE
+    timestamptz CREATED_AT
+    varchar EMAIL
+    varchar EMERGENCY_CONTACT
+    varchar EMERGENCY_PHONE
+    boolean HAS_WHATSAPP
+    uuid ID PK
+    varchar INSTAGRAM_USER
+    boolean IS_PRIMARY
+    uuid PERSON_ID FK
+    varchar PHONE
+    timestamptz UPDATED_AT
+  }
+
+  PEOPLE_FINANCES {
+    timestamptz CREATED_AT
+    uuid FINANCE_ID FK
+    uuid ID PK
+    boolean IS_PRIMARY
+    uuid PERSON_ID FK
+  }
+
+  PEOPLE_IDENTIFICATIONS {
+    date BIRTH_DATE
+    varchar CPF
+    timestamptz CREATED_AT
+    varchar FULL_NAME
+    gender_identity GENDER_IDENTITY
+    uuid ID PK
+    varchar IMAGE_URL
+    marital_status MARITAL_STATUS
+    uuid PERSON_ID FK
+    varchar SHORT_NAME
+    timestamptz UPDATED_AT
+  }
+
+  PERMISSIONS {
+    varchar CODE
+    timestamptz CREATED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    varchar NAME
+    timestamptz UPDATED_AT
+  }
+
+  PETS {
+    date BIRTH_DATE
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    uuid GUARDIAN_ID FK
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    pet_kind KIND
+    varchar NAME
+    varchar NOTES
+    uuid OWNER_ID FK
+    pet_size SIZE
+    pet_temperament TEMPERAMENT
+    timestamptz UPDATED_AT
+  }
+
+  PLAN_MODULES {
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid MODULE_ID FK
+    uuid PLAN_ID FK
+  }
+
+  PLAN_PERMISSIONS {
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid PERMISSION_ID FK
+    uuid PLAN_ID FK
+  }
+
+  PLAN_TYPES {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    varchar NAME
+    timestamptz UPDATED_AT
+  }
+
+  PLANS {
+    integer BILLING_CYCLE_DAYS
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    integer MAX_USERS
+    varchar NAME
+    module_package PACKAGE
+    uuid PLAN_TYPE_ID FK
+    numeric PRICE
+    timestamptz UPDATED_AT
+  }
+
+  PRODUCTS {
+    varchar BATCH_NUMBER
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    date EXPIRATION_DATE
+    uuid ID PK
+    varchar IMAGE_URL
+    varchar NAME
+    integer QUANTITY
+    timestamptz UPDATED_AT
+  }
+
+  SCHEDULE_CHECKINS {
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid SCHEDULE_ID FK
+    uuid SERVICE_EXECUTOR_PERSON_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  SCHEDULE_PAYMENTS {
+    chk_payment_values CONSTRAINT
+    numeric AMOUNT_PAID
+    numeric AMOUNT_REMAINING
+    timestamptz CREATED_AT
+    numeric DISCOUNT_VALUE
+    numeric GROSS_VALUE
+    uuid ID PK
+    numeric NET_VALUE
+    varchar NOTES
+    timestamptz PAYMENT_DATE
+    payment_method PAYMENT_METHOD_ONE
+    payment_method PAYMENT_METHOD_THREE
+    payment_method PAYMENT_METHOD_TWO
+    uuid SCHEDULE_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  SCHEDULE_SERVICES {
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid SCHEDULE_ID FK
+    uuid SERVICE_ID FK
+  }
+
+  SCHEDULE_STATUS_HISTORY {
+    timestamptz CHANGED_AT
+    uuid CHANGED_BY FK
+    uuid ID PK
+    varchar NOTES
+    uuid SCHEDULE_ID FK
+    schedule_status STATUS
+  }
+
+  SCHEDULE_SUB_SERVICES {
+    timestamptz CREATED_AT
+    uuid ID PK
+    uuid SCHEDULE_ID FK
+    uuid SERVICE_ID FK
+    uuid SUB_SERVICE_ID FK
+  }
+
+  SCHEDULES {
+    uuid CLIENT_ID FK
+    uuid COMPANY_ID FK
+    timestamptz CREATED_AT
+    uuid CREATED_BY FK
+    timestamptz DELETED_AT
+    timestamptz ESTIMATED_END
+    uuid ID PK
+    varchar NOTES
+    uuid PET_ID FK
+    timestamptz SCHEDULED_AT
+    timestamptz UPDATED_AT
+  }
+
+  SERVICE_ORDERS {
+    numeric AMOUNT_PAID
+    numeric AMOUNT_TO_PAY
+    timestamptz CREATED_AT
+    numeric GROSS_TOTAL
+    boolean HAS_ORNAMENT
+    boolean HAS_PERFUME
+    uuid ID PK
+    varchar NOTES
+    timestamptz PRINTED_AT
+    uuid PRINTED_BY FK
+    uuid SCHEDULE_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  SERVICE_PLAN_BONUSES {
+    chk_bonus_has_one CONSTRAINT
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid SERVICE_ID FK
+    uuid SERVICE_PLAN_ID FK
+    uuid SUB_SERVICE_ID FK
+  }
+
+  SERVICE_PLAN_SERVICES {
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid SERVICE_ID FK
+    uuid SERVICE_PLAN_ID FK
+  }
+
+  SERVICE_PLAN_SUB_SERVICES {
+    timestamptz CREATED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid SERVICE_PLAN_ID FK
+    uuid SUB_SERVICE_ID FK
+  }
+
+  SERVICE_PLANS {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    numeric DISCOUNT_RATE
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    varchar NOTES
+    uuid PLAN_TYPE_ID FK
+    numeric PRICE
+    varchar TITLE
+    timestamptz UPDATED_AT
+  }
+
+  SERVICE_TYPES {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    uuid ID PK
+    varchar NAME
+    timestamptz UPDATED_AT
+  }
+
+  SERVICES {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    numeric DISCOUNT_RATE
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    varchar NOTES
+    numeric PRICE
+    varchar TITLE
+    uuid TYPE_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  SUB_SERVICES {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar DESCRIPTION
+    numeric DISCOUNT_RATE
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    varchar NOTES
+    numeric PRICE
+    uuid SERVICE_ID FK
+    varchar TITLE
+    uuid TYPE_ID FK
+    timestamptz UPDATED_AT
+  }
+
+  TRANSLATIONS {
+    text CONTENT
+    timestamptz CREATED_AT
+    uuid ENTITY_ID
+    varchar ENTITY_TABLE
+    varchar FIELD
+    uuid ID PK
+    varchar LANGUAGE_CODE FK
+    timestamptz UPDATED_AT
+  }
+
+  USER_AUTH {
+    timestamptz CREATED_AT
+    timestamptz LAST_LOGIN_AT
+    timestamptz LOCKED_UNTIL
+    smallint LOGIN_ATTEMPTS
+    boolean MUST_CHANGE_PASSWORD
+    timestamptz PASSWORD_CHANGED_AT
+    text PASSWORD_HASH
+    timestamptz UPDATED_AT
+    uuid USER_ID PK,FK
+  }
+
+  USER_PROFILES {
+    timestamptz CREATED_AT
+    uuid PERSON_ID FK
+    uuid USER_ID PK,FK
+  }
+
+  USER_SESSIONS {
+    timestamptz CREATED_AT
+    timestamptz EXPIRES_AT
+    uuid ID PK
+    inet IP_ADDRESS
+    timestamptz LAST_ACTIVITY_AT
+    timestamptz LOGGED_OUT_AT
+    uuid LOGIN_HISTORY_ID FK
+    logout_reason LOGOUT_REASON
+    text SESSION_TOKEN
+    text USER_AGENT
+    uuid USER_ID FK
+  }
+
+  USER_SETTINGS {
+    timestamptz CREATED_AT
+    varchar LANGUAGE
+    boolean NOTIFICATIONS_ENABLED
+    varchar THEME
+    varchar TIMEZONE
+    timestamptz UPDATED_AT
+    uuid USER_ID PK,FK
+  }
+
+  USERS {
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    varchar EMAIL
+    boolean EMAIL_VERIFIED
+    timestamptz EMAIL_VERIFIED_AT
+    uuid ID PK
+    boolean IS_ACTIVE
+    user_kind KIND
+    user_role_type ROLE
+    timestamptz UPDATED_AT
+  }
+
+  USERS_PERMISSIONS {
+    timestamptz GRANTED_AT
+    uuid GRANTED_BY FK
+    uuid ID PK
+    boolean IS_ACTIVE
+    uuid PERMISSION_ID FK
+    timestamptz REVOKED_AT
+    uuid USER_ID FK
+  }
+
+  WARNINGS {
+    uuid COMPANY_ID FK
+    text CONTENT
+    timestamptz CREATED_AT
+    timestamptz DELETED_AT
+    uuid ID PK
+    varchar IMAGE_URL
+    boolean IS_ACTIVE
+    uuid SENDER_ID FK
+    varchar TITLE
+    timestamptz UPDATED_AT
+  }

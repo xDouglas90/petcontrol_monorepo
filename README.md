@@ -81,7 +81,7 @@ O seed local agora também prepara massa operacional mínima para desenvolviment
 | Driver PG      | `pgx/v5`                        | Driver nativo PostgreSQL, máxima performance, suporte a pgxpool            |
 | Docs REST      | Swaggo (`swag` + `gin-swagger`) | Geração automática de OpenAPI a partir de anotações no código              |
 | Filas          | Asynq + Redis                   | Jobs assíncronos: notificações, expiração de planos, relatórios            |
-| Auth           | JWT (`golang-jwt`) + bcrypt     | Tokens stateless, refresh token em Redis, hash de senha com bcrypt         |
+| Auth           | JWT (`golang-jwt`) + bcrypt     | Access token stateless, hash de senha com bcrypt; refresh token ainda planejado |
 | Validação      | `go-playground/validator`       | Tags de validação struct-based, integradas ao binding do Gin               |
 | Storage        | Google Cloud Storage SDK        | Upload de arquivos (fotos de pets, documentos)                             |
 | Config         | `godotenv` + `os.Getenv`        | Leitura de `.env` em desenvolvimento; variáveis de ambiente em produção    |
@@ -465,7 +465,6 @@ r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 // Rotas públicas
 r.POST("/auth/login", authHandler.Login)
-r.POST("/auth/refresh", authHandler.Refresh)
 
 // Rotas autenticadas
 api := r.Group("/api/v1")
@@ -481,8 +480,11 @@ api.Use(middleware.Tenant())
     sch.PUT("/:id", scheduleHandler.Update)
     sch.DELETE("/:id", scheduleHandler.SoftDelete)
 
-    api.GET("/clients", clientHandler.List)
-    api.POST("/clients", clientHandler.Create)
+    // Clientes — requer módulo CRM
+    clients := api.Group("/clients")
+    clients.Use(middleware.RequireModule(queries, "CRM"))
+    clients.GET("", clientHandler.List)
+    clients.POST("", clientHandler.Create)
     // ...
 }
 ```
@@ -664,9 +666,6 @@ Rotas atualmente ativas:
 
 - `/:companySlug/dashboard`
 - `/:companySlug/schedules`
-
-Rotas de domínio já previstas nos contratos compartilhados, mas ainda não expostas no Web desta etapa:
-
 - `/:companySlug/clients`
 - `/:companySlug/pets`
 - `/:companySlug/services`
@@ -680,7 +679,7 @@ Regras importantes:
 - `/login` permanece sem slug;
 - a URL autenticada deve ser tratada como canônica em lowercase;
 - o header da área autenticada deve deixar explícitos o tenant resolvido e o slug atual;
-- a migração do router é incremental, então a convenção pode existir em `shared-constants` antes de todas as rotas vivas adotarem o novo formato.
+- a migração do router foi incremental; novas rotas autenticadas devem seguir o mesmo formato `/:companySlug/<recurso>`.
 
 Direção futura para mudança de slug:
 
@@ -921,7 +920,6 @@ swagger:
 # JWT
 JWT_SECRET=change-me
 JWT_ACCESS_TOKEN_TTL=15m
-JWT_REFRESH_TOKEN_TTL=720h
 
 # App
 API_PORT=8080
@@ -1169,11 +1167,23 @@ func TestCreateSchedule(t *testing.T) {
 
 **Decisão:** Zustand gerencia exclusivamente estado de UI (sidebar, tema, modal stack). Nenhum dado de servidor entra no Zustand.
 
-**Justificativa:** TanStack Query já resolve cache, revalidação, loading e error states para dados de servidor. Misturar os dois cria inconsistências e sincronização manual desnecessária.
+**Justificativa:** Manter uma única fonte de verdade para os dados da API (TanStack Query) previne bugs de sincronização, stale data e race conditions que surgem frequentemente ao copiar dados async para um state manager global.
+
+**Consequências:** Qualquer componente React que precise de dados do servidor deve acessar via hooks do TanStack Query. A store global fica menor, previsível e dedicada apenas à experiência do usuário, tornando-se mais fácil de debugar e testar.
 
 ---
 
-### ADR-006: `libs/ui` com camada core agnóstica de plataforma
+### ADR-006: Módulo `pets` sob a guarda do `CRM` (Customer Relationship Management)
+
+**Contexto:** O projeto possui módulos de faturamento e agendamento (`SCH`) e gestão de clientes (`CRM`). O recurso `pets` semanticamente pode ter relação forte com `schedules` (pois atendimentos são feitos aos pets), o que gerou a dúvida se deveria estar isolado ou sob a guarda de `SCH`.
+
+**Decisão:** O módulo `pets` está formalmente registrado e protegido no código pelo módulo `CRM`, sendo tratado arquiteturalmente como uma extensão estrutural do cadastro de clientes.
+
+**Justificativa:** Em Petshops e Clínicas Veterinárias, um "Pet" é uma entidade dependente de um "Cliente" (tutor). Assim como os dados cadastrais, endereço e histórico de contatos do tutor ficam no CRM, os dados do pet (raça, peso, alergias, espécie) são informacionais e cadastrais, compondo a "Ficha do Cliente". Um pet pode existir no sistema mesmo que nunca mais faça um atendimento (ex: óbito, adoção), e a posse dos dados é ligada ao relacionamento com o consumidor.
+
+**Consequências:** Todas as rotas base de `/pets` utilizarão `RequireModule(..., "CRM")`. Se, num cenário futuro, o domínio de `schedules` precisar acessar dados de `pets` para regras de conflito de agenda rígidas, o contexto de `SCH` deverá apenas consultar (read-only) os dados cadastrais vindos de `CRM`, ou invocar regras de domínio cruzadas, mantendo a mutação de ficha exclusividade do `CRM`.
+
+### ADR-007: `libs/ui` com camada core agnóstica de plataforma
 
 **Contexto:** Mobile com React Native é planejado para o futuro.
 

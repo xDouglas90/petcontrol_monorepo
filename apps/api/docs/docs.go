@@ -353,6 +353,273 @@ const docTemplate = `{
                 }
             }
         },
+        "/companies/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the company resolved from the authenticated tenant context.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "companies"
+                ],
+                "summary": "Get current company",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists users linked to the authenticated tenant company.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "List company users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Links an existing user to the authenticated tenant company. Requires company owner access.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "Create company user link",
+                "parameters": [
+                    {
+                        "description": "Company user payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-users/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivates a user link for the authenticated tenant company. Requires company owner access.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "Deactivate company user link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/modules/active": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists the active modules available to the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "List active modules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ModuleListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/modules/{code}/access": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checks whether the authenticated tenant has access to the requested module code.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "Check module access",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ModuleAccessResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
         "/pets": {
             "get": {
                 "security": [
@@ -620,6 +887,49 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/plans/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the active subscription plan for the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Get current plan",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PlanItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/handler.APIErrorResponseDoc"
                         }
@@ -1465,6 +1775,136 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CompanyDoc": {
+            "type": "object",
+            "properties": {
+                "active_package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "cnpj": {
+                    "type": "string",
+                    "example": "12345678000195"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "fantasy_name": {
+                    "type": "string",
+                    "example": "PetControl"
+                },
+                "foundation_date": {
+                    "type": "string",
+                    "example": "2026-01-01"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "logo_url": {
+                    "type": "string",
+                    "example": "https://example.com/logo.png"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "PetControl Dev"
+                },
+                "responsible_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "petcontrol-dev"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.CompanyItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanyDoc"
+                }
+            }
+        },
+        "handler.CompanyUserCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "is_owner": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.CompanyUserDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_owner": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "joined_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "left_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.CompanyUserItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanyUserDoc"
+                }
+            }
+        },
+        "handler.CompanyUserListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CompanyUserDoc"
+                    }
+                }
+            }
+        },
         "handler.LoginRequestDoc": {
             "type": "object",
             "properties": {
@@ -1483,6 +1923,79 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/service.LoginResult"
+                }
+            }
+        },
+        "handler.ModuleAccessDoc": {
+            "type": "object",
+            "properties": {
+                "allowed": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "module": {
+                    "type": "string",
+                    "example": "SCH"
+                }
+            }
+        },
+        "handler.ModuleAccessResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.ModuleAccessDoc"
+                }
+            }
+        },
+        "handler.ModuleDoc": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "SCH"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Gestao de agenda e servicos"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "min_package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Agendamentos"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.ModuleListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ModuleDoc"
+                    }
                 }
             }
         },
@@ -1641,6 +2154,71 @@ const docTemplate = `{
                 "temperament": {
                     "type": "string",
                     "example": "loving"
+                }
+            }
+        },
+        "handler.PlanDoc": {
+            "type": "object",
+            "properties": {
+                "billing_cycle_days": {
+                    "type": "integer",
+                    "example": 30
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2026-04-11T11:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Plano inicial para operacao enxuta"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/plans/starter.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "max_users": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Starter"
+                },
+                "package": {
+                    "type": "string",
+                    "example": "starter"
+                },
+                "plan_type_id": {
+                    "type": "string",
+                    "example": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "99.90"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PlanItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.PlanDoc"
                 }
             }
         },
