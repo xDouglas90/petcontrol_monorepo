@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/pagination"
 )
 
 type ScheduleService struct {
@@ -48,8 +49,13 @@ func NewScheduleService(db clientTxStarter, queries *sqlc.Queries) *ScheduleServ
 	return &ScheduleService{db: db, queries: queries}
 }
 
-func (s *ScheduleService) ListSchedulesByCompanyID(ctx context.Context, companyID pgtype.UUID) ([]sqlc.ListSchedulesByCompanyIDRow, error) {
-	return s.queries.ListSchedulesByCompanyID(ctx, companyID)
+func (s *ScheduleService) ListSchedulesByCompanyID(ctx context.Context, companyID pgtype.UUID, p pagination.Params) ([]sqlc.ListSchedulesByCompanyIDRow, error) {
+	return s.queries.ListSchedulesByCompanyID(ctx, sqlc.ListSchedulesByCompanyIDParams{
+		CompanyID: companyID,
+		Search:    p.Search,
+		Offset:    int32(p.Offset),
+		Limit:     int32(p.Limit),
+	})
 }
 
 func (s *ScheduleService) GetScheduleByID(ctx context.Context, companyID pgtype.UUID, scheduleID pgtype.UUID) (sqlc.GetScheduleByIDAndCompanyIDRow, error) {

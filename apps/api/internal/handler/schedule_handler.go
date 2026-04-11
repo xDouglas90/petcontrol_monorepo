@@ -10,6 +10,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/pagination"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
@@ -81,13 +82,19 @@ func (h *ScheduleHandler) List(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.ListSchedulesByCompanyID(c.Request.Context(), companyID)
+	params := pagination.ParseParams(c)
+	items, err := h.service.ListSchedulesByCompanyID(c.Request.Context(), companyID, params)
 	if err != nil {
 		middleware.JSONError(c, 500, "list_schedules_failed", "failed to list schedules")
 		return
 	}
 
-	middleware.JSONData(c, 200, mapScheduleList(items))
+	total := 0
+	if len(items) > 0 {
+		total = int(items[0].TotalCount)
+	}
+
+	middleware.JSONPaginated(c, 200, mapScheduleList(items), pagination.NewMeta(total, params.Page, params.Limit))
 }
 
 // GetByID godoc

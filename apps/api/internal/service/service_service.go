@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/pagination"
 )
 
 type ServiceService struct {
@@ -46,8 +47,13 @@ func NewServiceService(db clientTxStarter, queries *sqlc.Queries) *ServiceServic
 	return &ServiceService{db: db, queries: queries}
 }
 
-func (s *ServiceService) ListServicesByCompanyID(ctx context.Context, companyID pgtype.UUID) ([]sqlc.ListServicesByCompanyIDRow, error) {
-	return s.queries.ListServicesByCompanyID(ctx, companyID)
+func (s *ServiceService) ListServicesByCompanyID(ctx context.Context, companyID pgtype.UUID, p pagination.Params) ([]sqlc.ListServicesByCompanyIDRow, error) {
+	return s.queries.ListServicesByCompanyID(ctx, sqlc.ListServicesByCompanyIDParams{
+		CompanyID: companyID,
+		Search:    p.Search,
+		Offset:    int32(p.Offset),
+		Limit:     int32(p.Limit),
+	})
 }
 
 func (s *ServiceService) GetServiceByID(ctx context.Context, companyID pgtype.UUID, serviceID pgtype.UUID) (sqlc.GetServiceByIDAndCompanyIDRow, error) {

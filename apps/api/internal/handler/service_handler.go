@@ -9,6 +9,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/pagination"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
@@ -72,13 +73,19 @@ func (h *ServiceHandler) List(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.ListServicesByCompanyID(c.Request.Context(), companyID)
+	params := pagination.ParseParams(c)
+	items, err := h.service.ListServicesByCompanyID(c.Request.Context(), companyID, params)
 	if err != nil {
 		middleware.JSONError(c, http.StatusInternalServerError, "list_services_failed", "failed to list services")
 		return
 	}
 
-	middleware.JSONData(c, http.StatusOK, mapServiceList(items))
+	total := 0
+	if len(items) > 0 {
+		total = int(items[0].TotalCount)
+	}
+
+	middleware.JSONPaginated(c, http.StatusOK, mapServiceList(items), pagination.NewMeta(total, params.Page, params.Limit))
 }
 
 // GetByID godoc

@@ -25,6 +25,17 @@ func (h *PlanHandler) List(c *gin.Context) {
 	middleware.JSONData(c, 200, plans)
 }
 
+// Current godoc
+// @Summary Get current plan
+// @Description Returns the active subscription plan for the authenticated tenant.
+// @Tags plans
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} PlanItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /plans/current [get]
 func (h *PlanHandler) Current(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {

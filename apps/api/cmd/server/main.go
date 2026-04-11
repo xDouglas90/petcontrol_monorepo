@@ -91,9 +91,7 @@ func main() {
 	protected.POST("/company-users", middleware.RequireCompanyOwner(queries), companyUserHandler.Create)
 	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
-	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), func(c *gin.Context) {
-		middleware.JSONData(c, 200, gin.H{"allowed": true, "module": c.Param("code")})
-	})
+	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), moduleHandler.Access)
 
 	clients := protected.Group("/clients")
 	clients.Use(middleware.RequireModule(queries, "CRM"))

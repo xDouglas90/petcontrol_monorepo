@@ -26,6 +26,16 @@ func NewCompanyUserHandler(service *service.CompanyUserService) *CompanyUserHand
 	return &CompanyUserHandler{service: service}
 }
 
+// List godoc
+// @Summary List company users
+// @Description Lists users linked to the authenticated tenant company.
+// @Tags company_users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} CompanyUserListResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /company-users [get]
 func (h *CompanyUserHandler) List(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -42,6 +52,19 @@ func (h *CompanyUserHandler) List(c *gin.Context) {
 	middleware.JSONData(c, 200, users)
 }
 
+// Create godoc
+// @Summary Create company user link
+// @Description Links an existing user to the authenticated tenant company. Requires company owner access.
+// @Tags company_users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body CompanyUserCreateRequestDoc true "Company user payload"
+// @Success 201 {object} CompanyUserItemResponseDoc
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /company-users [post]
 func (h *CompanyUserHandler) Create(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -84,6 +107,19 @@ func (h *CompanyUserHandler) Create(c *gin.Context) {
 	middleware.JSONData(c, 201, created)
 }
 
+// Deactivate godoc
+// @Summary Deactivate company user link
+// @Description Deactivates a user link for the authenticated tenant company. Requires company owner access.
+// @Tags company_users
+// @Security BearerAuth
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 204
+// @Failure 403 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /company-users/{user_id} [delete]
 func (h *CompanyUserHandler) Deactivate(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {

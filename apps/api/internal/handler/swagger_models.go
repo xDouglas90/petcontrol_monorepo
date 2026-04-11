@@ -251,5 +251,105 @@ type ScheduleHistoryItemDoc struct {
 	Notes      *string `json:"notes,omitempty" example:"Confirmado por telefone"`
 }
 
+// CompanyItemResponseDoc documents the current company response envelope for Swagger.
+type CompanyItemResponseDoc struct {
+	Data CompanyDoc `json:"data"`
+}
+
+// CompanyDoc describes the public company shape returned by API responses.
+type CompanyDoc struct {
+	ID             string  `json:"id" example:"11111111-1111-1111-1111-111111111111"`
+	Slug           string  `json:"slug" example:"petcontrol-dev"`
+	Name           string  `json:"name" example:"PetControl Dev"`
+	FantasyName    string  `json:"fantasy_name" example:"PetControl"`
+	CNPJ           string  `json:"cnpj" example:"12345678000195"`
+	FoundationDate *string `json:"foundation_date,omitempty" example:"2026-01-01"`
+	LogoURL        *string `json:"logo_url,omitempty" example:"https://example.com/logo.png"`
+	ResponsibleID  string  `json:"responsible_id" example:"22222222-2222-2222-2222-222222222222"`
+	ActivePackage  string  `json:"active_package" example:"starter"`
+	IsActive       bool    `json:"is_active" example:"true"`
+	CreatedAt      string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt      *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	DeletedAt      *string `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
+// ModuleListResponseDoc documents the active modules response envelope for Swagger.
+type ModuleListResponseDoc struct {
+	Data []ModuleDoc `json:"data"`
+}
+
+// ModuleAccessResponseDoc documents a module access check response envelope for Swagger.
+type ModuleAccessResponseDoc struct {
+	Data ModuleAccessDoc `json:"data"`
+}
+
+// ModuleAccessDoc describes a module access check result.
+type ModuleAccessDoc struct {
+	Allowed bool   `json:"allowed" example:"true"`
+	Module  string `json:"module" example:"SCH"`
+}
+
+// ModuleDoc describes the public module shape returned by API responses.
+type ModuleDoc struct {
+	ID          string  `json:"id" example:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"`
+	Code        string  `json:"code" example:"SCH"`
+	Name        string  `json:"name" example:"Agendamentos"`
+	Description string  `json:"description" example:"Gestao de agenda e servicos"`
+	MinPackage  string  `json:"min_package" example:"starter"`
+	IsActive    bool    `json:"is_active" example:"true"`
+	CreatedAt   string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt   *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	DeletedAt   *string `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
+// PlanItemResponseDoc documents the current plan response envelope for Swagger.
+type PlanItemResponseDoc struct {
+	Data PlanDoc `json:"data"`
+}
+
+// PlanDoc describes the public plan shape returned by API responses.
+type PlanDoc struct {
+	ID               string  `json:"id" example:"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"`
+	PlanTypeID       string  `json:"plan_type_id" example:"cccccccc-cccc-cccc-cccc-cccccccccccc"`
+	Name             string  `json:"name" example:"Starter"`
+	Description      string  `json:"description" example:"Plano inicial para operacao enxuta"`
+	Package          string  `json:"package" example:"starter"`
+	Price            string  `json:"price" example:"99.90"`
+	BillingCycleDays int     `json:"billing_cycle_days" example:"30"`
+	MaxUsers         *int    `json:"max_users,omitempty" example:"5"`
+	IsActive         bool    `json:"is_active" example:"true"`
+	ImageURL         *string `json:"image_url,omitempty" example:"https://example.com/plans/starter.png"`
+	CreatedAt        string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt        *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	DeletedAt        *string `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
+// CompanyUserCreateRequestDoc documents company user creation payload for Swagger.
+type CompanyUserCreateRequestDoc struct {
+	UserID  string `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
+	IsOwner bool   `json:"is_owner" example:"false"`
+}
+
+// CompanyUserListResponseDoc documents the company users response envelope for Swagger.
+type CompanyUserListResponseDoc struct {
+	Data []CompanyUserDoc `json:"data"`
+}
+
+// CompanyUserItemResponseDoc documents a single company user response envelope for Swagger.
+type CompanyUserItemResponseDoc struct {
+	Data CompanyUserDoc `json:"data"`
+}
+
+// CompanyUserDoc describes the public company user shape returned by API responses.
+type CompanyUserDoc struct {
+	ID        string  `json:"id" example:"dddddddd-dddd-dddd-dddd-dddddddddddd"`
+	CompanyID string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	UserID    string  `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
+	IsOwner   bool    `json:"is_owner" example:"false"`
+	IsActive  bool    `json:"is_active" example:"true"`
+	JoinedAt  string  `json:"joined_at" example:"2026-04-10T10:00:00Z"`
+	LeftAt    *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
 // APIErrorResponseDoc documents unified API error envelope for Swagger.
 type APIErrorResponseDoc = middleware.ErrorResponse
