@@ -31,6 +31,12 @@ export interface PaginatedResponse<T> {
   meta: PaginationMeta;
 }
 
+export interface ListQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface AuthAccessClaims {
   user_id: UUID;
   company_id: UUID;
