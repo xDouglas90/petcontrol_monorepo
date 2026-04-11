@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react';
 import type { LoginSession } from '@petcontrol/shared-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { AppLayout } from './_layout';
 import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
@@ -67,9 +73,9 @@ describe('AppLayout', () => {
 
   it('redireciona para /login se não houver sessão', () => {
     useAuthStore.setState({ session: null, hydrated: true });
-    
+
     render(<AppLayout />);
-    
+
     expect(mockNavigate).toHaveBeenCalledWith('/login', true);
   });
 
@@ -78,9 +84,9 @@ describe('AppLayout', () => {
       isLoading: true,
       data: undefined,
     });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByText('Carregando painel')).toBeTruthy();
   });
 
@@ -93,11 +99,11 @@ describe('AppLayout', () => {
         name: 'Correct Company LTDA',
       },
     });
-    
+
     vi.mocked(useParams).mockReturnValue({ companySlug: 'WRONG-SLUG' });
-    
+
     render(<AppLayout />);
-    
+
     expect(mockNavigate).toHaveBeenCalledWith('/correct-slug/dashboard', true);
   });
 
@@ -110,13 +116,16 @@ describe('AppLayout', () => {
         name: 'Correct Company LTDA',
       },
     });
-    
+
     vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByTestId('outlet')).toBeTruthy();
     expect(screen.getByText('PetControl')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Pets' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Services' })).toBeTruthy();
     expect(
       screen.getByText('Tenant atual: Correct Company (correct-slug)'),
     ).toBeTruthy();
@@ -137,7 +146,10 @@ describe('AppLayout', () => {
 
     render(<AppLayout />);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/petcontrol-dev/dashboard', true);
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/petcontrol-dev/dashboard',
+      true,
+    );
   });
 
   it('exibe tela de erro se a query da empresa falhar', () => {
@@ -146,9 +158,9 @@ describe('AppLayout', () => {
       error: new Error('API Error'),
       refetch: vi.fn(),
     });
-    
+
     render(<AppLayout />);
-    
+
     expect(screen.getByText('Erro de Contexto')).toBeTruthy();
     expect(screen.getByText('Sair')).toBeTruthy();
   });

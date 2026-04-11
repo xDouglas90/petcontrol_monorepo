@@ -14,8 +14,11 @@ import {
 } from '@petcontrol/shared-constants';
 
 import { AppLayout } from '@/routes/(app)/_layout';
+import { ClientsPage } from '@/routes/(app)/clients';
 import { DashboardPage } from '@/routes/(app)/dashboard';
+import { PetsPage } from '@/routes/(app)/pets';
 import { SchedulesPage } from '@/routes/(app)/schedules';
+import { ServicesPage } from '@/routes/(app)/services';
 import { LoginPage } from '@/routes/(auth)/login';
 import { isUnauthorizedApiError } from '@/lib/api/rest-client';
 import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
@@ -68,10 +71,34 @@ const schedulesRoute = createRoute({
   component: SchedulesPage,
 });
 
+const clientsRoute = createRoute({
+  getParentRoute: () => companyRoute,
+  path: APP_ROUTE_SEGMENTS.clients,
+  component: ClientsPage,
+});
+
+const petsRoute = createRoute({
+  getParentRoute: () => companyRoute,
+  path: APP_ROUTE_SEGMENTS.pets,
+  component: PetsPage,
+});
+
+const servicesRoute = createRoute({
+  getParentRoute: () => companyRoute,
+  path: APP_ROUTE_SEGMENTS.services,
+  component: ServicesPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
-  companyRoute.addChildren([dashboardRoute, schedulesRoute]),
+  companyRoute.addChildren([
+    dashboardRoute,
+    schedulesRoute,
+    clientsRoute,
+    petsRoute,
+    servicesRoute,
+  ]),
 ]);
 
 export const router = createRouter({
@@ -125,16 +152,20 @@ function HomeRedirect() {
   if (companyQuery.isError) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
-        <p className="text-xl font-medium text-rose-400">Falha ao carregar contexto</p>
-        <p className="mt-2 text-sm text-slate-400">Não foi possível recuperar os dados da sua empresa.</p>
+        <p className="text-xl font-medium text-rose-400">
+          Falha ao carregar contexto
+        </p>
+        <p className="mt-2 text-sm text-slate-400">
+          Não foi possível recuperar os dados da sua empresa.
+        </p>
         <div className="mt-6 flex gap-4">
-          <button 
+          <button
             onClick={() => void companyQuery.refetch()}
             className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
           >
             Tentar novamente
           </button>
-          <button 
+          <button
             onClick={() => clearSession()}
             className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
           >

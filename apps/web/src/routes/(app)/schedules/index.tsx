@@ -11,17 +11,23 @@ import { z } from 'zod';
 import { type ReactNode, useMemo, useState } from 'react';
 
 import {
+  useClientsQuery,
   useCreateScheduleMutation,
+  usePetsQuery,
   useDeleteScheduleMutation,
   useSchedulesQuery,
+  useServicesQuery,
   useUpdateScheduleMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
 
 const scheduleSchema = z
   .object({
-    clientId: z.string().uuid('Informe um client_id válido'),
-    petId: z.string().uuid('Informe um pet_id válido'),
+    clientId: z.string().min(1, 'Selecione um cliente'),
+    petId: z.string().min(1, 'Selecione um pet'),
+    serviceIds: z
+      .array(z.string().uuid('Selecione serviços válidos'))
+      .default([]),
     scheduledAt: z.string().min(1, 'Informe data/hora do agendamento'),
     estimatedEnd: z.string().optional(),
     notes: z.string().max(500, 'Máximo de 500 caracteres').optional(),
@@ -47,7 +53,8 @@ const scheduleSchema = z
     },
   );
 
-type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+type ScheduleFormInput = z.input<typeof scheduleSchema>;
+type ScheduleFormValues = z.output<typeof scheduleSchema>;
 
 const scheduleStatusOptions: Array<{ value: ScheduleStatus; label: string }> = [
   { value: 'waiting', label: 'Aguardando' },
@@ -59,6 +66,9 @@ const scheduleStatusOptions: Array<{ value: ScheduleStatus; label: string }> = [
 ];
 
 export function SchedulesPage() {
+  const clientsQuery = useClientsQuery();
+  const petsQuery = usePetsQuery();
+  const servicesQuery = useServicesQuery();
   const schedulesQuery = useSchedulesQuery();
   const createMutation = useCreateScheduleMutation();
   const updateMutation = useUpdateScheduleMutation();
@@ -67,11 +77,12 @@ export function SchedulesPage() {
     null,
   );
 
-  const form = useForm<ScheduleFormValues>({
+  const form = useForm<ScheduleFormInput, unknown, ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       clientId: '',
       petId: '',
+      serviceIds: [],
       scheduledAt: '',
       estimatedEnd: '',
       notes: '',
@@ -85,6 +96,15 @@ export function SchedulesPage() {
         a.scheduled_at.localeCompare(b.scheduled_at),
       ),
     [schedulesQuery.data],
+  );
+
+  const selectedClientId = form.watch('clientId');
+  const availablePets = useMemo(
+    () =>
+      (petsQuery.data ?? []).filter(
+        (pet) => !selectedClientId || pet.owner_id === selectedClientId,
+      ),
+    [petsQuery.data, selectedClientId],
   );
 
   const viewState = resolveAsyncViewState({
@@ -103,6 +123,7 @@ export function SchedulesPage() {
     form.reset({
       clientId: '',
       petId: '',
+      serviceIds: [],
       scheduledAt: '',
       estimatedEnd: '',
       notes: '',
@@ -114,6 +135,7 @@ export function SchedulesPage() {
     const payload = {
       client_id: values.clientId,
       pet_id: values.petId,
+      service_ids: values.serviceIds,
       scheduled_at: new Date(values.scheduledAt).toISOString(),
       estimated_end: values.estimatedEnd
         ? new Date(values.estimatedEnd).toISOString()
@@ -145,6 +167,7 @@ export function SchedulesPage() {
     form.reset({
       clientId: schedule.client_id,
       petId: schedule.pet_id,
+      serviceIds: schedule.service_ids ?? [],
       scheduledAt: toLocalDateTimeInput(schedule.scheduled_at),
       estimatedEnd: schedule.estimated_end
         ? toLocalDateTimeInput(schedule.estimated_end)
@@ -238,10 +261,15 @@ export function SchedulesPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-300">
-                        {schedule.client_id.slice(0, 8)}...
+                        {schedule.client_name || schedule.client_id}
                       </td>
                       <td className="px-4 py-3 text-slate-300">
-                        {schedule.pet_id.slice(0, 8)}...
+                        <div>{schedule.pet_name || schedule.pet_id}</div>
+                        {schedule.service_titles?.length ? (
+                          <div className="mt-1 text-xs text-slate-400">
+                            {schedule.service_titles.join(', ')}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -294,25 +322,45 @@ export function SchedulesPage() {
           })}
         >
           <FormField
-            label="Client ID"
+            label="Cliente"
             error={form.formState.errors.clientId?.message}
           >
-            <input
-              {...form.register('clientId')}
-              className={fieldClassName}
-              placeholder="UUID do client"
-            />
+            <select {...form.register('clientId')} className={fieldClassName}>
+              <option value="">Selecione um cliente</option>
+              {(clientsQuery.data ?? []).map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.full_name}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="Pet" error={form.formState.errors.petId?.message}>
+            <select {...form.register('petId')} className={fieldClassName}>
+              <option value="">Selecione um pet</option>
+              {availablePets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField
-            label="Pet ID"
-            error={form.formState.errors.petId?.message}
+            label="Serviços"
+            error={form.formState.errors.serviceIds?.message}
           >
-            <input
-              {...form.register('petId')}
-              className={fieldClassName}
-              placeholder="UUID do pet"
-            />
+            <select
+              {...form.register('serviceIds')}
+              multiple
+              className={`${fieldClassName} min-h-32`}
+            >
+              {(servicesQuery.data ?? []).map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.title}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField

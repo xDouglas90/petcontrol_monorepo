@@ -9,6 +9,9 @@ import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
 const mockUseCurrentCompanyQuery = vi.fn();
+const mockUseClientsQuery = vi.fn();
+const mockUsePetsQuery = vi.fn();
+const mockUseServicesQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockCreateScheduleMutation = vi.fn();
 const mockUpdateScheduleMutation = vi.fn();
@@ -16,12 +19,18 @@ const mockDeleteScheduleMutation = vi.fn();
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanyQuery: () => mockUseCurrentCompanyQuery(),
+  useClientsQuery: () => mockUseClientsQuery(),
+  usePetsQuery: () => mockUsePetsQuery(),
+  useServicesQuery: () => mockUseServicesQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
   useCreateScheduleMutation: () => mockCreateScheduleMutation(),
   useUpdateScheduleMutation: () => mockUpdateScheduleMutation(),
   useDeleteScheduleMutation: () => mockDeleteScheduleMutation(),
   domainQueryKeys: {
     currentCompany: () => ['domain', 'company', 'current'] as const,
+    clients: () => ['domain', 'clients'] as const,
+    pets: () => ['domain', 'pets'] as const,
+    services: () => ['domain', 'services'] as const,
     schedules: () => ['domain', 'schedules'] as const,
   },
 }));
@@ -47,6 +56,10 @@ describe('Router integration', () => {
         company_id: 'company-1',
         client_id: '11111111-1111-1111-1111-111111111111',
         pet_id: '22222222-2222-2222-2222-222222222222',
+        client_name: 'Maria Silva',
+        pet_name: 'Thor',
+        service_ids: ['service-1'],
+        service_titles: ['Banho completo'],
         scheduled_at: new Date('2026-04-10T13:00:00Z').toISOString(),
         estimated_end: null,
         notes: 'Banho e tosa',
@@ -55,6 +68,9 @@ describe('Router integration', () => {
     ];
 
     mockUseCurrentCompanyQuery.mockReset();
+    mockUseClientsQuery.mockReset();
+    mockUsePetsQuery.mockReset();
+    mockUseServicesQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockCreateScheduleMutation.mockReset();
     mockUpdateScheduleMutation.mockReset();
@@ -85,6 +101,32 @@ describe('Router integration', () => {
 
     mockUseSchedulesQuery.mockReturnValue({
       data: schedules,
+      isLoading: false,
+      isError: false,
+    });
+    mockUseClientsQuery.mockReturnValue({
+      data: [
+        {
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Maria Silva',
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    mockUsePetsQuery.mockReturnValue({
+      data: [
+        {
+          id: '22222222-2222-2222-2222-222222222222',
+          owner_id: '11111111-1111-1111-1111-111111111111',
+          name: 'Thor',
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseServicesQuery.mockReturnValue({
+      data: [{ id: 'service-1', title: 'Banho completo' }],
       isLoading: false,
       isError: false,
     });
@@ -140,12 +182,24 @@ describe('Router integration', () => {
 
     expect(screen.getByText('Agendamentos do tenant')).toBeTruthy();
     expect(screen.getByText('Criar agendamento')).toBeTruthy();
-    expect(screen.getByText('11111111...')).toBeTruthy();
+    expect(screen.getAllByText('Maria Silva')).not.toHaveLength(0);
+    expect(screen.getAllByText('Thor')).not.toHaveLength(0);
+    expect(screen.getAllByText('Banho completo')).not.toHaveLength(0);
 
     const dashboardLink = screen.getByRole('link', { name: 'Dashboard' });
     const schedulesLink = screen.getByRole('link', { name: 'Schedules' });
+    const clientsLink = screen.getByRole('link', { name: 'Clients' });
+    const petsLink = screen.getByRole('link', { name: 'Pets' });
+    const servicesLink = screen.getByRole('link', { name: 'Services' });
 
-    expect(dashboardLink.getAttribute('href')).toBe('/petcontrol-dev/dashboard');
-    expect(schedulesLink.getAttribute('href')).toBe('/petcontrol-dev/schedules');
+    expect(dashboardLink.getAttribute('href')).toBe(
+      '/petcontrol-dev/dashboard',
+    );
+    expect(schedulesLink.getAttribute('href')).toBe(
+      '/petcontrol-dev/schedules',
+    );
+    expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
+    expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
+    expect(servicesLink.getAttribute('href')).toBe('/petcontrol-dev/services');
   });
 });
