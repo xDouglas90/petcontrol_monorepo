@@ -8,6 +8,9 @@ import {
   useUpdateClientMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
+import { useListParams } from '@/hooks/use-list-params';
+import { SearchBar } from '@/ui/search-bar';
+import { PaginationBar } from '@/ui/pagination-bar';
 
 type ClientFormState = CreateClientInput;
 
@@ -27,7 +30,8 @@ const initialClientForm: ClientFormState = {
 };
 
 export function ClientsPage() {
-  const clientsQuery = useClientsQuery();
+  const { params, search, setSearch, goToPage } = useListParams();
+  const clientsQuery = useClientsQuery(params);
   const createMutation = useCreateClientMutation();
   const updateMutation = useUpdateClientMutation();
   const deleteMutation = useDeleteClientMutation();
@@ -98,7 +102,16 @@ export function ClientsPage() {
           tenant no backend.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-4">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por nome, email ou CPF..."
+            id="clients-search"
+          />
+        </div>
+
+        <div className="mt-4 space-y-3">
           {clientsQuery.isLoading ? (
             <StateMessage message="Carregando clientes..." />
           ) : null}
@@ -133,6 +146,11 @@ export function ClientsPage() {
             </article>
           ))}
         </div>
+
+        <PaginationBar
+          meta={clientsQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">

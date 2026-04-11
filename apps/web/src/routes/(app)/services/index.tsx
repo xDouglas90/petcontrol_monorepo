@@ -8,6 +8,9 @@ import {
   useUpdateServiceMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
+import { useListParams } from '@/hooks/use-list-params';
+import { SearchBar } from '@/ui/search-bar';
+import { PaginationBar } from '@/ui/pagination-bar';
 
 type ServiceFormState = CreateServiceInput;
 
@@ -23,7 +26,8 @@ const initialServiceForm: ServiceFormState = {
 };
 
 export function ServicesPage() {
-  const servicesQuery = useServicesQuery();
+  const { params, search, setSearch, goToPage } = useListParams();
+  const servicesQuery = useServicesQuery(params);
   const createMutation = useCreateServiceMutation();
   const updateMutation = useUpdateServiceMutation();
   const deleteMutation = useDeleteServiceMutation();
@@ -88,7 +92,16 @@ export function ServicesPage() {
           Catálogo ativo por tenant, usado diretamente pelos agendamentos.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-4">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por título ou descrição..."
+            id="services-search"
+          />
+        </div>
+
+        <div className="mt-4 space-y-3">
           {servicesQuery.isLoading ? (
             <StateMessage message="Carregando serviços..." />
           ) : null}
@@ -124,6 +137,11 @@ export function ServicesPage() {
             </article>
           ))}
         </div>
+
+        <PaginationBar
+          meta={servicesQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">

@@ -9,6 +9,9 @@ import {
   useUpdatePetMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
+import { useListParams } from '@/hooks/use-list-params';
+import { SearchBar } from '@/ui/search-bar';
+import { PaginationBar } from '@/ui/pagination-bar';
 
 type PetFormState = CreatePetInput;
 
@@ -24,8 +27,9 @@ const initialPetForm: PetFormState = {
 };
 
 export function PetsPage() {
+  const { params, search, setSearch, goToPage } = useListParams();
   const clientsQuery = useClientsQuery();
-  const petsQuery = usePetsQuery();
+  const petsQuery = usePetsQuery(params);
   const createMutation = useCreatePetMutation();
   const updateMutation = useUpdatePetMutation();
   const deleteMutation = useDeletePetMutation();
@@ -89,7 +93,16 @@ export function PetsPage() {
           agendamentos.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-4">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por nome do pet ou tutor..."
+            id="pets-search"
+          />
+        </div>
+
+        <div className="mt-4 space-y-3">
           {petsQuery.isLoading ? (
             <StateMessage message="Carregando pets..." />
           ) : null}
@@ -124,6 +137,11 @@ export function PetsPage() {
             </article>
           ))}
         </div>
+
+        <PaginationBar
+          meta={petsQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">

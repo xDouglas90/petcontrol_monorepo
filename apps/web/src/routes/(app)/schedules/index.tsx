@@ -20,6 +20,9 @@ import {
   useUpdateScheduleMutation,
 } from '@/lib/api/domain.queries';
 import { ApiError } from '@/lib/api/rest-client';
+import { useListParams } from '@/hooks/use-list-params';
+import { SearchBar } from '@/ui/search-bar';
+import { PaginationBar } from '@/ui/pagination-bar';
 
 const scheduleSchema = z
   .object({
@@ -66,10 +69,11 @@ const scheduleStatusOptions: Array<{ value: ScheduleStatus; label: string }> = [
 ];
 
 export function SchedulesPage() {
+  const { params, search, setSearch, goToPage } = useListParams();
   const clientsQuery = useClientsQuery();
   const petsQuery = usePetsQuery();
   const servicesQuery = useServicesQuery();
-  const schedulesQuery = useSchedulesQuery();
+  const schedulesQuery = useSchedulesQuery(params);
   const createMutation = useCreateScheduleMutation();
   const updateMutation = useUpdateScheduleMutation();
   const deleteMutation = useDeleteScheduleMutation();
@@ -206,7 +210,16 @@ export function SchedulesPage() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-white/10">
+        <div className="mt-4">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por cliente, pet ou serviço..."
+            id="schedules-search"
+          />
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-3xl border border-white/10">
           <table className="w-full border-collapse text-left text-sm">
             <thead className="bg-white/5 text-slate-300">
               <tr>
@@ -308,6 +321,11 @@ export function SchedulesPage() {
             </tbody>
           </table>
         </div>
+
+        <PaginationBar
+          meta={schedulesQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
