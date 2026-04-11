@@ -9,6 +9,7 @@ import type {
   CreatePetInput,
   CreateScheduleInput,
   CreateServiceInput,
+  ListQueryParams,
   PetDTO,
   PetApiResponseDTO,
   PetListApiResponseDTO,
@@ -181,6 +182,7 @@ export async function getCurrentCompany(
 
 export async function listSchedules(
   accessToken: string,
+  params?: ListQueryParams,
 ): Promise<ScheduleListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(160);
@@ -198,12 +200,16 @@ export async function listSchedules(
     {
       method: 'GET',
       accessToken,
+      queryParams: params,
     },
   );
   return payload.data;
 }
 
-export async function listClients(accessToken: string): Promise<ClientListApiResponseDTO> {
+export async function listClients(
+  accessToken: string,
+  params?: ListQueryParams,
+): Promise<ClientListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
     return {
@@ -215,11 +221,15 @@ export async function listClients(accessToken: string): Promise<ClientListApiRes
   const payload = await request<{ data: ClientListApiResponseDTO }>(API_PATHS.clients, {
     method: 'GET',
     accessToken,
+    queryParams: params,
   });
   return payload.data;
 }
 
-export async function listPets(accessToken: string): Promise<PetListApiResponseDTO> {
+export async function listPets(
+  accessToken: string,
+  params?: ListQueryParams,
+): Promise<PetListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
     return {
@@ -231,11 +241,15 @@ export async function listPets(accessToken: string): Promise<PetListApiResponseD
   const payload = await request<{ data: PetListApiResponseDTO }>(API_PATHS.pets, {
     method: 'GET',
     accessToken,
+    queryParams: params,
   });
   return payload.data;
 }
 
-export async function listServices(accessToken: string): Promise<ServiceListApiResponseDTO> {
+export async function listServices(
+  accessToken: string,
+  params?: ListQueryParams,
+): Promise<ServiceListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
     return {
@@ -247,6 +261,7 @@ export async function listServices(accessToken: string): Promise<ServiceListApiR
   const payload = await request<{ data: ServiceListApiResponseDTO }>(API_PATHS.services, {
     method: 'GET',
     accessToken,
+    queryParams: params,
   });
   return payload.data;
 }
@@ -636,10 +651,21 @@ type RequestOptions = {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   accessToken: string;
   body?: unknown;
+  queryParams?: ListQueryParams;
 };
 
+function buildQueryString(params?: ListQueryParams): string {
+  if (!params) return '';
+  const entries: string[] = [];
+  if (params.page != null) entries.push(`page=${params.page}`);
+  if (params.limit != null) entries.push(`limit=${params.limit}`);
+  if (params.search) entries.push(`search=${encodeURIComponent(params.search)}`);
+  return entries.length > 0 ? `?${entries.join('&')}` : '';
+}
+
 async function request<T>(path: string, options: RequestOptions): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
+  const qs = buildQueryString(options.queryParams);
+  const response = await fetch(`${apiUrl}${path}${qs}`, {
     method: options.method,
     headers: {
       Authorization: `Bearer ${options.accessToken}`,
