@@ -1,5 +1,6 @@
 -- name: ListClientsByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     c.id,
     c.person_id,
     cc.company_id,
@@ -31,8 +32,15 @@ WHERE
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
     AND p.is_active = TRUE
+    AND (
+        sqlc.arg('Search')::text = ''
+        OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR pi.cpf ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR pc.email ILIKE '%' || sqlc.arg('Search')::text || '%'
+    )
 ORDER BY
-    pi.full_name ASC;
+    pi.full_name ASC
+LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
 
 -- name: GetClientByIDAndCompanyID :one
 SELECT

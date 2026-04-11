@@ -72,6 +72,7 @@ LIMIT 1;
 
 -- name: ListSchedulesByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     s.id,
     s.company_id,
     s.client_id,
@@ -118,8 +119,15 @@ FROM
 WHERE
     s.company_id = sqlc.arg('CompanyID')
     AND s.deleted_at IS NULL
+    AND (
+        sqlc.arg('Search')::text = ''
+        OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR p.name ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR s.notes ILIKE '%' || sqlc.arg('Search')::text || '%'
+    )
 ORDER BY
-    s.scheduled_at ASC;
+    s.scheduled_at ASC
+LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
 
 -- name: UpdateSchedule :execrows
 UPDATE
@@ -211,4 +219,5 @@ SELECT
             AND cc.is_active = TRUE
             AND c.deleted_at IS NULL
             AND p.deleted_at IS NULL
+            AND p.is_active = TRUE
     ) AS is_valid;

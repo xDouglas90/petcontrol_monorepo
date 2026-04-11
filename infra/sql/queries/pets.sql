@@ -1,5 +1,6 @@
 -- name: ListPetsByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     p.id,
     p.owner_id,
     cc.company_id,
@@ -26,8 +27,14 @@ WHERE
     AND c.deleted_at IS NULL
     AND p.deleted_at IS NULL
     AND p.is_active = TRUE
+    AND (
+        sqlc.arg('Search')::text = ''
+        OR p.name ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
+    )
 ORDER BY
-    p.name ASC;
+    p.name ASC
+LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
 
 -- name: GetPetByIDAndCompanyID :one
 SELECT

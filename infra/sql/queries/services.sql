@@ -1,5 +1,6 @@
 -- name: ListServicesByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     s.id,
     s.type_id,
     st.name AS type_name,
@@ -19,8 +20,14 @@ WHERE
     AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
+    AND (
+        sqlc.arg('Search')::text = ''
+        OR s.title ILIKE '%' || sqlc.arg('Search')::text || '%'
+        OR s.description ILIKE '%' || sqlc.arg('Search')::text || '%'
+    )
 ORDER BY
-    s.title ASC;
+    s.title ASC
+LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
 
 -- name: GetServiceByIDAndCompanyID :one
 SELECT
