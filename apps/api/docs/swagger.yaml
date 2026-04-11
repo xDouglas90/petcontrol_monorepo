@@ -9,6 +9,159 @@ definitions:
       error:
         type: string
     type: object
+  handler.ClientCreateRequestDoc:
+    properties:
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      cellphone:
+        example: "+5511999990001"
+        type: string
+      client_since:
+        example: "2026-04-01"
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      email:
+        example: maria.silva@petcontrol.local
+        type: string
+      full_name:
+        example: Maria Silva
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      has_whatsapp:
+        example: true
+        type: boolean
+      marital_status:
+        example: single
+        type: string
+      notes:
+        example: Cliente recorrente
+        type: string
+      phone:
+        example: "+551130000000"
+        type: string
+      short_name:
+        example: Maria
+        type: string
+    type: object
+  handler.ClientDoc:
+    properties:
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      cellphone:
+        example: "+5511999990001"
+        type: string
+      client_since:
+        example: "2026-04-01"
+        type: string
+      company_id:
+        example: 11111111-1111-1111-1111-111111111111
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      created_at:
+        example: "2026-04-10T10:00:00Z"
+        type: string
+      email:
+        example: maria.silva@petcontrol.local
+        type: string
+      full_name:
+        example: Maria Silva
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      has_whatsapp:
+        example: true
+        type: boolean
+      id:
+        example: 44444444-4444-4444-4444-444444444444
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      joined_at:
+        example: "2026-04-10T10:00:00Z"
+        type: string
+      left_at:
+        example: "2026-04-11T11:00:00Z"
+        type: string
+      marital_status:
+        example: single
+        type: string
+      notes:
+        example: Cliente recorrente
+        type: string
+      person_id:
+        example: 55555555-5555-5555-5555-555555555555
+        type: string
+      phone:
+        example: "+551130000000"
+        type: string
+      short_name:
+        example: Maria
+        type: string
+      updated_at:
+        example: "2026-04-10T11:00:00Z"
+        type: string
+    type: object
+  handler.ClientItemResponseDoc:
+    properties:
+      data:
+        $ref: '#/definitions/handler.ClientDoc'
+    type: object
+  handler.ClientListResponseDoc:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handler.ClientDoc'
+        type: array
+    type: object
+  handler.ClientUpdateRequestDoc:
+    properties:
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      cellphone:
+        example: "+5511999990002"
+        type: string
+      client_since:
+        example: "2026-04-01"
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      email:
+        example: maria.souza@petcontrol.local
+        type: string
+      full_name:
+        example: Maria Souza
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      has_whatsapp:
+        example: true
+        type: boolean
+      marital_status:
+        example: married
+        type: string
+      notes:
+        example: Preferência por contato via WhatsApp
+        type: string
+      phone:
+        example: "+551130000000"
+        type: string
+      short_name:
+        example: Mari
+        type: string
+    type: object
   handler.LoginRequestDoc:
     properties:
       email:
@@ -22,6 +175,120 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/service.LoginResult'
+    type: object
+  handler.PetCreateRequestDoc:
+    properties:
+      birth_date:
+        example: "2021-08-20"
+        type: string
+      image_url:
+        example: https://example.com/thor.png
+        type: string
+      kind:
+        example: dog
+        type: string
+      name:
+        example: Thor
+        type: string
+      notes:
+        example: Gosta de brincar
+        type: string
+      owner_id:
+        example: 44444444-4444-4444-4444-444444444444
+        type: string
+      size:
+        example: medium
+        type: string
+      temperament:
+        example: playful
+        type: string
+    type: object
+  handler.PetDoc:
+    properties:
+      birth_date:
+        example: "2021-08-20"
+        type: string
+      company_id:
+        example: 11111111-1111-1111-1111-111111111111
+        type: string
+      created_at:
+        example: "2026-04-10T10:00:00Z"
+        type: string
+      deleted_at:
+        example: "2026-04-11T11:00:00Z"
+        type: string
+      id:
+        example: 77777777-7777-7777-7777-777777777777
+        type: string
+      image_url:
+        example: https://example.com/thor.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      kind:
+        example: dog
+        type: string
+      name:
+        example: Thor
+        type: string
+      notes:
+        example: Gosta de brincar
+        type: string
+      owner_id:
+        example: 44444444-4444-4444-4444-444444444444
+        type: string
+      owner_name:
+        example: Maria Silva
+        type: string
+      size:
+        example: medium
+        type: string
+      temperament:
+        example: playful
+        type: string
+      updated_at:
+        example: "2026-04-10T11:00:00Z"
+        type: string
+    type: object
+  handler.PetItemResponseDoc:
+    properties:
+      data:
+        $ref: '#/definitions/handler.PetDoc'
+    type: object
+  handler.PetListResponseDoc:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handler.PetDoc'
+        type: array
+    type: object
+  handler.PetUpdateRequestDoc:
+    properties:
+      birth_date:
+        example: "2021-08-20"
+        type: string
+      image_url:
+        example: https://example.com/thor.png
+        type: string
+      kind:
+        example: dog
+        type: string
+      name:
+        example: Thorzinho
+        type: string
+      notes:
+        example: Atualizado após consulta
+        type: string
+      owner_id:
+        example: 44444444-4444-4444-4444-444444444444
+        type: string
+      size:
+        example: large
+        type: string
+      temperament:
+        example: loving
+        type: string
     type: object
   handler.ScheduleCreateRequestDoc:
     properties:
@@ -40,6 +307,10 @@ definitions:
       scheduled_at:
         example: "2026-04-10T15:00:00Z"
         type: string
+      service_ids:
+        items:
+          type: string
+        type: array
       status:
         example: waiting
         type: string
@@ -51,6 +322,9 @@ definitions:
     properties:
       client_id:
         example: 44444444-4444-4444-4444-444444444444
+        type: string
+      client_name:
+        example: Maria Silva
         type: string
       company_id:
         example: 11111111-1111-1111-1111-111111111111
@@ -76,9 +350,20 @@ definitions:
       pet_id:
         example: 55555555-5555-5555-5555-555555555555
         type: string
+      pet_name:
+        example: Thor
+        type: string
       scheduled_at:
         example: "2026-04-10T15:00:00Z"
         type: string
+      service_ids:
+        items:
+          type: string
+        type: array
+      service_titles:
+        items:
+          type: string
+        type: array
       updated_at:
         example: "2026-04-10T11:00:00Z"
         type: string
@@ -140,11 +425,114 @@ definitions:
       scheduled_at:
         example: "2026-04-10T15:00:00Z"
         type: string
+      service_ids:
+        items:
+          type: string
+        type: array
       status:
         example: confirmed
         type: string
       status_notes:
         example: Confirmado por telefone
+        type: string
+    type: object
+  handler.ServiceCreateRequestDoc:
+    properties:
+      description:
+        example: Banho com secagem e perfume
+        type: string
+      discount_rate:
+        example: "0.00"
+        type: string
+      image_url:
+        example: https://example.com/services/bath.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      notes:
+        example: Inclui perfume hipoalergênico
+        type: string
+      price:
+        example: "89.90"
+        type: string
+      title:
+        example: Banho completo
+        type: string
+      type_name:
+        example: Banho
+        type: string
+    type: object
+  handler.ServiceDoc:
+    properties:
+      description:
+        example: Banho com secagem e perfume
+        type: string
+      discount_rate:
+        example: "0.00"
+        type: string
+      id:
+        example: 88888888-8888-8888-8888-888888888888
+        type: string
+      image_url:
+        example: https://example.com/services/bath.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      notes:
+        example: Inclui perfume hipoalergênico
+        type: string
+      price:
+        example: "89.90"
+        type: string
+      title:
+        example: Banho completo
+        type: string
+      type_id:
+        example: 99999999-9999-9999-9999-999999999999
+        type: string
+      type_name:
+        example: Banho
+        type: string
+    type: object
+  handler.ServiceItemResponseDoc:
+    properties:
+      data:
+        $ref: '#/definitions/handler.ServiceDoc'
+    type: object
+  handler.ServiceListResponseDoc:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handler.ServiceDoc'
+        type: array
+    type: object
+  handler.ServiceUpdateRequestDoc:
+    properties:
+      description:
+        example: Tosa leve para manutenção
+        type: string
+      discount_rate:
+        example: "10.00"
+        type: string
+      image_url:
+        example: https://example.com/services/tosa.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      notes:
+        example: Adicionar avaliação do pelo
+        type: string
+      price:
+        example: "59.90"
+        type: string
+      title:
+        example: Tosa higiênica
+        type: string
+      type_name:
+        example: Tosa
         type: string
     type: object
   service.LoginResult:
@@ -206,6 +594,364 @@ paths:
       summary: Authenticate user
       tags:
       - auth
+  /clients:
+    get:
+      description: Returns clients from the authenticated tenant.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ClientListResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: List clients
+      tags:
+      - clients
+    post:
+      consumes:
+      - application/json
+      description: Creates a client for the authenticated tenant.
+      parameters:
+      - description: Client payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ClientCreateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.ClientItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Create client
+      tags:
+      - clients
+  /clients/{id}:
+    delete:
+      description: Deactivates the tenant association for a client.
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Deactivate client
+      tags:
+      - clients
+    get:
+      description: Returns a single client from the authenticated tenant.
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ClientItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Get client by ID
+      tags:
+      - clients
+    put:
+      consumes:
+      - application/json
+      description: Updates a client from the authenticated tenant.
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Client payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ClientUpdateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ClientItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Update client
+      tags:
+      - clients
+  /pets:
+    get:
+      description: Returns pets from the authenticated tenant.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PetListResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: List pets
+      tags:
+      - pets
+    post:
+      consumes:
+      - application/json
+      description: Creates a pet for the authenticated tenant.
+      parameters:
+      - description: Pet payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PetCreateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.PetItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Create pet
+      tags:
+      - pets
+  /pets/{id}:
+    delete:
+      description: Soft deletes a pet from the authenticated tenant.
+      parameters:
+      - description: Pet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Delete pet
+      tags:
+      - pets
+    get:
+      description: Returns a single pet from the authenticated tenant.
+      parameters:
+      - description: Pet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PetItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Get pet by ID
+      tags:
+      - pets
+    put:
+      consumes:
+      - application/json
+      description: Updates a pet from the authenticated tenant.
+      parameters:
+      - description: Pet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pet payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PetUpdateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PetItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Update pet
+      tags:
+      - pets
   /schedules:
     get:
       description: Returns schedules from the authenticated tenant.
@@ -414,6 +1160,185 @@ paths:
       summary: Get schedule history
       tags:
       - schedules
+  /services:
+    get:
+      description: Returns services from the authenticated tenant.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ServiceListResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: List services
+      tags:
+      - services
+    post:
+      consumes:
+      - application/json
+      description: Creates a service for the authenticated tenant.
+      parameters:
+      - description: Service payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ServiceCreateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.ServiceItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Create service
+      tags:
+      - services
+  /services/{id}:
+    delete:
+      description: Deactivates a service from the authenticated tenant.
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Delete service
+      tags:
+      - services
+    get:
+      description: Returns a single service from the authenticated tenant.
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ServiceItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Get service by ID
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Updates a service from the authenticated tenant.
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Service payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ServiceUpdateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ServiceItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Update service
+      tags:
+      - services
 schemes:
 - http
 - https
