@@ -173,7 +173,7 @@ describe('AppLayout', () => {
     render(<AppLayout />);
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      '/PETCONTROL-DEV/dashboard',
+      '/petcontrol-dev/dashboard',
       true,
       {},
       ''
