@@ -50,6 +50,8 @@ Após o seed, o ambiente local fica com uma massa mínima pronta para uso:
 - 1 serviço ativo de catálogo;
 - 1 agendamento confirmado para validação do fluxo de `schedules`.
 
+Com essa massa, o Web já permite validar o núcleo operacional completo em `/:companySlug/clients`, `/:companySlug/pets`, `/:companySlug/services` e `/:companySlug/schedules`.
+
 ## Comandos de desenvolvimento
 
 API:
@@ -136,8 +138,10 @@ Gerar/atualizar especificação OpenAPI:
 
 ```bash
 cd apps/api
-go run github.com/swaggo/swag/cmd/swag@latest init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
+go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
 ```
+
+A especificação versionada cobre os handlers reais de `auth`, `clients`, `pets`, `services` e `schedules`.
 
 Após subir a API, validar localmente:
 

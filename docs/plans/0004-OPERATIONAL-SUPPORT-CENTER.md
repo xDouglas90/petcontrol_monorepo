@@ -194,10 +194,12 @@ Observação: a Fase 21 foi concluída com rotas autenticadas em `/:companySlug/
 
 ### 22.2 - Checks
 
-- [ ] Swagger cobre os módulos reais adicionados nesta fase.
-- [ ] O onboarding local continua simples após a expansão do domínio.
-- [ ] Existe um fluxo funcional completo de atendimento do cadastro ao agendamento.
-- [ ] O projeto encerra a fase com clareza objetiva sobre o próximo vertical do produto.
+- [x] Swagger cobre os módulos reais adicionados nesta fase.
+- [x] O onboarding local continua simples após a expansão do domínio.
+- [x] Existe um fluxo funcional completo de atendimento do cadastro ao agendamento.
+- [x] O projeto encerra a fase com clareza objetiva sobre o próximo vertical do produto.
+
+Observação: a Fase 22 foi concluída com a especificação Swagger regenerada para cobrir `auth`, `clients`, `pets`, `services` e `schedules`, revisão do `README.md` e do `docs/CONTRIBUTING.md` para refletir os módulos operacionais ativos e adição de teste integrado do fluxo completo `cliente -> pet -> serviço -> agendamento`. O teste também valida o impacto operacional de desativar um serviço e remover um pet em novos agendamentos, exercitando os módulos `CRM` e `SCH` juntos. Como próximo vertical recomendado, o projeto deve seguir para `reports` operacionais, pois é o caminho mais direto para transformar o núcleo de atendimento já funcional em visibilidade gerencial.
 
 ## Ordem Recomendada de Execução
 
