@@ -341,6 +341,7 @@ func (q *Queries) InsertClientRecord(ctx context.Context, arg InsertClientRecord
 
 const listClientsByCompanyID = `-- name: ListClientsByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     c.id,
     c.person_id,
     cc.company_id,
@@ -372,11 +373,26 @@ WHERE
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
     AND p.is_active = TRUE
+    AND (
+        $2::text = ''
+        OR pi.full_name ILIKE '%' || $2::text || '%'
+        OR pi.cpf ILIKE '%' || $2::text || '%'
+        OR pc.email ILIKE '%' || $2::text || '%'
+    )
 ORDER BY
     pi.full_name ASC
+LIMIT $4 OFFSET $3
 `
 
+type ListClientsByCompanyIDParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	Search    string      `db:"Search" json:"Search"`
+	Offset    int32       `db:"Offset" json:"Offset"`
+	Limit     int32       `db:"Limit" json:"Limit"`
+}
+
 type ListClientsByCompanyIDRow struct {
+	TotalCount     int64              `db:"total_count" json:"total_count"`
 	ID             pgtype.UUID        `db:"id" json:"id"`
 	PersonID       pgtype.UUID        `db:"person_id" json:"person_id"`
 	CompanyID      pgtype.UUID        `db:"company_id" json:"company_id"`
@@ -399,8 +415,13 @@ type ListClientsByCompanyIDRow struct {
 	LeftAt         pgtype.Timestamptz `db:"left_at" json:"left_at"`
 }
 
-func (q *Queries) ListClientsByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListClientsByCompanyIDRow, error) {
-	rows, err := q.db.Query(ctx, listClientsByCompanyID, companyid)
+func (q *Queries) ListClientsByCompanyID(ctx context.Context, arg ListClientsByCompanyIDParams) ([]ListClientsByCompanyIDRow, error) {
+	rows, err := q.db.Query(ctx, listClientsByCompanyID,
+		arg.CompanyID,
+		arg.Search,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -409,6 +430,7 @@ func (q *Queries) ListClientsByCompanyID(ctx context.Context, companyid pgtype.U
 	for rows.Next() {
 		var i ListClientsByCompanyIDRow
 		if err := rows.Scan(
+			&i.TotalCount,
 			&i.ID,
 			&i.PersonID,
 			&i.CompanyID,

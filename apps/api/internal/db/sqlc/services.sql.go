@@ -257,6 +257,7 @@ func (q *Queries) GetServiceByIDAndCompanyID(ctx context.Context, arg GetService
 
 const listServicesByCompanyID = `-- name: ListServicesByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     s.id,
     s.type_id,
     st.name AS type_name,
@@ -276,11 +277,25 @@ WHERE
     AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
+    AND (
+        $2::text = ''
+        OR s.title ILIKE '%' || $2::text || '%'
+        OR s.description ILIKE '%' || $2::text || '%'
+    )
 ORDER BY
     s.title ASC
+LIMIT $4 OFFSET $3
 `
 
+type ListServicesByCompanyIDParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	Search    string      `db:"Search" json:"Search"`
+	Offset    int32       `db:"Offset" json:"Offset"`
+	Limit     int32       `db:"Limit" json:"Limit"`
+}
+
 type ListServicesByCompanyIDRow struct {
+	TotalCount   int64          `db:"total_count" json:"total_count"`
 	ID           pgtype.UUID    `db:"id" json:"id"`
 	TypeID       pgtype.UUID    `db:"type_id" json:"type_id"`
 	TypeName     string         `db:"type_name" json:"type_name"`
@@ -293,8 +308,13 @@ type ListServicesByCompanyIDRow struct {
 	IsActive     bool           `db:"is_active" json:"is_active"`
 }
 
-func (q *Queries) ListServicesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListServicesByCompanyIDRow, error) {
-	rows, err := q.db.Query(ctx, listServicesByCompanyID, companyid)
+func (q *Queries) ListServicesByCompanyID(ctx context.Context, arg ListServicesByCompanyIDParams) ([]ListServicesByCompanyIDRow, error) {
+	rows, err := q.db.Query(ctx, listServicesByCompanyID,
+		arg.CompanyID,
+		arg.Search,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +323,7 @@ func (q *Queries) ListServicesByCompanyID(ctx context.Context, companyid pgtype.
 	for rows.Next() {
 		var i ListServicesByCompanyIDRow
 		if err := rows.Scan(
+			&i.TotalCount,
 			&i.ID,
 			&i.TypeID,
 			&i.TypeName,

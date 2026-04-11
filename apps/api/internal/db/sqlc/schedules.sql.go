@@ -332,6 +332,7 @@ func (q *Queries) ListScheduleStatusHistoryByScheduleID(ctx context.Context, arg
 
 const listSchedulesByCompanyID = `-- name: ListSchedulesByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     s.id,
     s.company_id,
     s.client_id,
@@ -378,11 +379,26 @@ FROM
 WHERE
     s.company_id = $1
     AND s.deleted_at IS NULL
+    AND (
+        $2::text = ''
+        OR pi.full_name ILIKE '%' || $2::text || '%'
+        OR p.name ILIKE '%' || $2::text || '%'
+        OR s.notes ILIKE '%' || $2::text || '%'
+    )
 ORDER BY
     s.scheduled_at ASC
+LIMIT $4 OFFSET $3
 `
 
+type ListSchedulesByCompanyIDParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	Search    string      `db:"Search" json:"Search"`
+	Offset    int32       `db:"Offset" json:"Offset"`
+	Limit     int32       `db:"Limit" json:"Limit"`
+}
+
 type ListSchedulesByCompanyIDRow struct {
+	TotalCount    int64              `db:"total_count" json:"total_count"`
 	ID            pgtype.UUID        `db:"id" json:"id"`
 	CompanyID     pgtype.UUID        `db:"company_id" json:"company_id"`
 	ClientID      pgtype.UUID        `db:"client_id" json:"client_id"`
@@ -401,8 +417,13 @@ type ListSchedulesByCompanyIDRow struct {
 	CurrentStatus ScheduleStatus     `db:"current_status" json:"current_status"`
 }
 
-func (q *Queries) ListSchedulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListSchedulesByCompanyIDRow, error) {
-	rows, err := q.db.Query(ctx, listSchedulesByCompanyID, companyid)
+func (q *Queries) ListSchedulesByCompanyID(ctx context.Context, arg ListSchedulesByCompanyIDParams) ([]ListSchedulesByCompanyIDRow, error) {
+	rows, err := q.db.Query(ctx, listSchedulesByCompanyID,
+		arg.CompanyID,
+		arg.Search,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -411,6 +432,7 @@ func (q *Queries) ListSchedulesByCompanyID(ctx context.Context, companyid pgtype
 	for rows.Next() {
 		var i ListSchedulesByCompanyIDRow
 		if err := rows.Scan(
+			&i.TotalCount,
 			&i.ID,
 			&i.CompanyID,
 			&i.ClientID,
@@ -496,6 +518,7 @@ SELECT
             AND cc.is_active = TRUE
             AND c.deleted_at IS NULL
             AND p.deleted_at IS NULL
+            AND p.is_active = TRUE
     ) AS is_valid
 `
 

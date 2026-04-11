@@ -180,6 +180,7 @@ func (q *Queries) GetPetByIDAndCompanyID(ctx context.Context, arg GetPetByIDAndC
 
 const listPetsByCompanyID = `-- name: ListPetsByCompanyID :many
 SELECT
+    COUNT(*) OVER() AS total_count,
     p.id,
     p.owner_id,
     cc.company_id,
@@ -206,11 +207,25 @@ WHERE
     AND c.deleted_at IS NULL
     AND p.deleted_at IS NULL
     AND p.is_active = TRUE
+    AND (
+        $2::text = ''
+        OR p.name ILIKE '%' || $2::text || '%'
+        OR pi.full_name ILIKE '%' || $2::text || '%'
+    )
 ORDER BY
     p.name ASC
+LIMIT $4 OFFSET $3
 `
 
+type ListPetsByCompanyIDParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	Search    string      `db:"Search" json:"Search"`
+	Offset    int32       `db:"Offset" json:"Offset"`
+	Limit     int32       `db:"Limit" json:"Limit"`
+}
+
 type ListPetsByCompanyIDRow struct {
+	TotalCount  int64              `db:"total_count" json:"total_count"`
 	ID          pgtype.UUID        `db:"id" json:"id"`
 	OwnerID     pgtype.UUID        `db:"owner_id" json:"owner_id"`
 	CompanyID   pgtype.UUID        `db:"company_id" json:"company_id"`
@@ -228,8 +243,13 @@ type ListPetsByCompanyIDRow struct {
 	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
-func (q *Queries) ListPetsByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListPetsByCompanyIDRow, error) {
-	rows, err := q.db.Query(ctx, listPetsByCompanyID, companyid)
+func (q *Queries) ListPetsByCompanyID(ctx context.Context, arg ListPetsByCompanyIDParams) ([]ListPetsByCompanyIDRow, error) {
+	rows, err := q.db.Query(ctx, listPetsByCompanyID,
+		arg.CompanyID,
+		arg.Search,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +258,7 @@ func (q *Queries) ListPetsByCompanyID(ctx context.Context, companyid pgtype.UUID
 	for rows.Next() {
 		var i ListPetsByCompanyIDRow
 		if err := rows.Scan(
+			&i.TotalCount,
 			&i.ID,
 			&i.OwnerID,
 			&i.CompanyID,
