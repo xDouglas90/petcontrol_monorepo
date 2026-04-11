@@ -16,7 +16,12 @@ import { ApiError } from '@/lib/api/rest-client';
 // Mocking TanStack Router
 const mockNavigate = vi.fn();
 vi.mock('@tanstack/react-router', () => ({
-  Navigate: (props: any) => {
+  Navigate: (props: {
+    to: string;
+    replace?: boolean;
+    search?: Record<string, unknown>;
+    hash?: string;
+  }) => {
     const args = [props.to, props.replace];
     if (props.search !== undefined || props.hash !== undefined) {
       args.push(props.search, props.hash);
@@ -106,7 +111,14 @@ describe('AppLayout', () => {
     });
 
     vi.mocked(useParams).mockReturnValue({ companySlug: 'WRONG-SLUG' });
-    vi.mocked(useLocation).mockReturnValue({ pathname: '/WRONG-SLUG/schedules', search: {}, hash: '' } as any);
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/WRONG-SLUG/schedules',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'test',
+      href: '/WRONG-SLUG/schedules',
+    } as unknown as ReturnType<typeof useLocation>);
 
     render(<AppLayout />);
 
@@ -149,7 +161,14 @@ describe('AppLayout', () => {
     });
 
     vi.mocked(useParams).mockReturnValue({ companySlug: 'petcontrol-dev-old' });
-    vi.mocked(useLocation).mockReturnValue({ pathname: '/petcontrol-dev-old/dashboard', search: {}, hash: '' } as any);
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/petcontrol-dev-old/dashboard',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'test',
+      href: '/petcontrol-dev-old/dashboard',
+    } as unknown as ReturnType<typeof useLocation>);
 
     render(<AppLayout />);
 
