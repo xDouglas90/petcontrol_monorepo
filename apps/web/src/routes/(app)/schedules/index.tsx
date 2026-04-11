@@ -6,7 +6,7 @@ import {
   cn,
 } from '@petcontrol/ui/web';
 import type { ScheduleStatus } from '@petcontrol/shared-types';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { type ReactNode, useMemo, useState } from 'react';
 
@@ -92,16 +92,19 @@ export function SchedulesPage() {
 
   const schedules = useMemo(
     () =>
-      [...(schedulesQuery.data ?? [])].sort((a, b) =>
+      [...(schedulesQuery.data?.data ?? [])].sort((a, b) =>
         a.scheduled_at.localeCompare(b.scheduled_at),
       ),
     [schedulesQuery.data],
   );
 
-  const selectedClientId = form.watch('clientId');
+  const selectedClientId = useWatch({
+    control: form.control,
+    name: 'clientId',
+  });
   const availablePets = useMemo(
     () =>
-      (petsQuery.data ?? []).filter(
+      (petsQuery.data?.data ?? []).filter(
         (pet) => !selectedClientId || pet.owner_id === selectedClientId,
       ),
     [petsQuery.data, selectedClientId],
@@ -327,7 +330,7 @@ export function SchedulesPage() {
           >
             <select {...form.register('clientId')} className={fieldClassName}>
               <option value="">Selecione um cliente</option>
-              {(clientsQuery.data ?? []).map((client) => (
+              {(clientsQuery.data?.data ?? []).map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.full_name}
                 </option>
@@ -355,7 +358,7 @@ export function SchedulesPage() {
               multiple
               className={`${fieldClassName} min-h-32`}
             >
-              {(servicesQuery.data ?? []).map((service) => (
+              {(servicesQuery.data?.data ?? []).map((service) => (
                 <option key={service.id} value={service.id}>
                   {service.title}
                 </option>

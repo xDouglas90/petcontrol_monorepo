@@ -13,57 +13,66 @@ const idleMutation = {
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useClientsQuery: () => ({
-    data: [
-      {
-        id: 'client-1',
-        person_id: 'person-1',
-        company_id: 'company-1',
-        full_name: 'Maria Silva',
-        short_name: 'Maria',
-        gender_identity: 'woman_cisgender',
-        marital_status: 'single',
-        birth_date: '1992-06-15',
-        cpf: '12345678901',
-        email: 'maria@example.com',
-        cellphone: '+5511999990001',
-        has_whatsapp: true,
-        client_since: '2026-04-01',
-        notes: 'Cliente recorrente',
-        is_active: true,
-      },
-    ],
+    data: {
+      data: [
+        {
+          id: 'client-1',
+          person_id: 'person-1',
+          company_id: 'company-1',
+          full_name: 'Maria Silva',
+          short_name: 'Maria',
+          gender_identity: 'woman_cisgender',
+          marital_status: 'single',
+          birth_date: '1992-06-15',
+          cpf: '12345678901',
+          email: 'maria@example.com',
+          cellphone: '+5511999990001',
+          has_whatsapp: true,
+          client_since: '2026-04-01',
+          notes: 'Cliente recorrente',
+          is_active: true,
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+    },
     isLoading: false,
     isError: false,
   }),
   usePetsQuery: () => ({
-    data: [
-      {
-        id: 'pet-1',
-        owner_id: 'client-1',
-        owner_name: 'Maria Silva',
-        name: 'Thor',
-        size: 'medium',
-        kind: 'dog',
-        temperament: 'playful',
-        is_active: true,
-      },
-    ],
+    data: {
+      data: [
+        {
+          id: 'pet-1',
+          owner_id: 'client-1',
+          owner_name: 'Maria Silva',
+          name: 'Thor',
+          size: 'medium',
+          kind: 'dog',
+          temperament: 'playful',
+          is_active: true,
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+    },
     isLoading: false,
     isError: false,
   }),
   useServicesQuery: () => ({
-    data: [
-      {
-        id: 'service-1',
-        type_id: 'type-1',
-        type_name: 'Banho',
-        title: 'Banho completo',
-        description: 'Banho com secagem e perfume',
-        price: '89.90',
-        discount_rate: '0.00',
-        is_active: true,
-      },
-    ],
+    data: {
+      data: [
+        {
+          id: 'service-1',
+          type_id: 'type-1',
+          type_name: 'Banho',
+          title: 'Banho completo',
+          description: 'Banho com secagem e perfume',
+          price: '89.90',
+          discount_rate: '0.00',
+          is_active: true,
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+    },
     isLoading: false,
     isError: false,
   }),

@@ -96,10 +96,10 @@ export function ServicesPage() {
             <StateMessage message="Falha ao carregar serviços." tone="error" />
           ) : null}
           {!servicesQuery.isLoading &&
-          (servicesQuery.data ?? []).length === 0 ? (
+          (servicesQuery.data?.data ?? []).length === 0 ? (
             <StateMessage message="Nenhum serviço cadastrado." />
           ) : null}
-          {(servicesQuery.data ?? []).map((service) => (
+          {(servicesQuery.data?.data ?? []).map((service) => (
             <article
               key={service.id}
               className="rounded-3xl border border-white/10 bg-white/5 p-4"

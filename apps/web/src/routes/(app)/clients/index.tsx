@@ -105,10 +105,10 @@ export function ClientsPage() {
           {clientsQuery.isError ? (
             <StateMessage message="Falha ao carregar clientes." tone="error" />
           ) : null}
-          {!clientsQuery.isLoading && (clientsQuery.data ?? []).length === 0 ? (
+          {!clientsQuery.isLoading && (clientsQuery.data?.data ?? []).length === 0 ? (
             <StateMessage message="Nenhum cliente cadastrado." />
           ) : null}
-          {(clientsQuery.data ?? []).map((client) => (
+          {(clientsQuery.data?.data ?? []).map((client) => (
             <article
               key={client.id}
               className="rounded-3xl border border-white/10 bg-white/5 p-4"

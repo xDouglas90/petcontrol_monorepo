@@ -96,10 +96,10 @@ export function PetsPage() {
           {petsQuery.isError ? (
             <StateMessage message="Falha ao carregar pets." tone="error" />
           ) : null}
-          {!petsQuery.isLoading && (petsQuery.data ?? []).length === 0 ? (
+          {!petsQuery.isLoading && (petsQuery.data?.data ?? []).length === 0 ? (
             <StateMessage message="Nenhum pet cadastrado." />
           ) : null}
-          {(petsQuery.data ?? []).map((pet) => (
+          {(petsQuery.data?.data ?? []).map((pet) => (
             <article
               key={pet.id}
               className="rounded-3xl border border-white/10 bg-white/5 p-4"
@@ -148,7 +148,7 @@ export function PetsPage() {
               }
             >
               <option value="">Selecione um cliente</option>
-              {(clientsQuery.data ?? []).map((client) => (
+              {(clientsQuery.data?.data ?? []).map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.full_name}
                 </option>

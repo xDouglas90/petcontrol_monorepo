@@ -78,7 +78,10 @@ describe('DashboardPage', () => {
       data: company,
     });
     mockUseSchedulesQuery.mockReturnValue({
-      data: schedules,
+      data: {
+        data: schedules,
+        meta: { total: schedules.length, page: 1, limit: 10, total_pages: 1 }
+      },
       isLoading: false,
       isError: false,
     });
