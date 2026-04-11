@@ -54,8 +54,8 @@ Implementado nesta etapa:
 
 Ainda planejado para próximos ciclos:
 
-- Rotas Web operacionais para `reports` e próximos verticais de produto.
-- Endpoints adicionais documentados no Swagger conforme estabilização dos handlers.
+- Rotas Web e endpoints operacionais para `reports`, escolhido como próximo vertical recomendado.
+- Endpoints adicionais documentados no Swagger conforme novos handlers forem estabilizados.
 - Hardening de qualidade/CI e consolidação documental contínua.
 
 O seed local agora também prepara massa operacional mínima para desenvolvimento:
@@ -519,7 +519,7 @@ No estado atual da implementação, os handlers de mutação ainda registram exp
 
 ### 5.6 Swagger com Swaggo
 
-Swagger está integrado na API e usa anotações dos handlers de `auth` e `schedules`.
+Swagger está integrado na API e usa anotações dos handlers de `auth`, `clients`, `pets`, `services` e `schedules`.
 
 Rota pública local:
 
@@ -532,7 +532,7 @@ Gerar/atualizar docs:
 
 ```bash
 cd apps/api
-go run github.com/swaggo/swag/cmd/swag@latest init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
+go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g main.go -d cmd/server,internal/handler,internal/middleware,internal/service --output docs
 ```
 
 Arquivos gerados:
