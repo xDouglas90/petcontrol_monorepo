@@ -1,4 +1,4 @@
-import { Link, Navigate, Outlet } from '@tanstack/react-router';
+import { Link, Navigate, Outlet, useLocation } from '@tanstack/react-router';
 import {
   APP_ROUTES,
   COMPANY_ROUTE_PARAM,
@@ -35,6 +35,7 @@ export function AppLayout() {
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
   const params = useParams({ strict: false });
+  const location = useLocation();
   const companyQuery = useCurrentCompanyQuery();
   const unauthorizedCompanyContext =
     companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
@@ -101,9 +102,19 @@ export function AppLayout() {
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
 
-  if (normalizedUrlSlug !== normalizedCurrentSlug) {
+  if (urlSlug && normalizedUrlSlug !== normalizedCurrentSlug) {
+    const segments = location.pathname.split('/');
+    if (segments.length > 1) {
+      segments[1] = currentSlug;
+    }
+    const newPathname = segments.length > 1 ? segments.join('/') : buildCompanyRoute(currentSlug, 'dashboard');
+
+    if (location.pathname === newPathname) {
+      return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
+    }
+
     return (
-      <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />
+      <Navigate to={newPathname} search={{ ...location.search }} hash={location.hash} replace />
     );
   }
 

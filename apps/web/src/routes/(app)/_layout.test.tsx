@@ -16,8 +16,12 @@ import { ApiError } from '@/lib/api/rest-client';
 // Mocking TanStack Router
 const mockNavigate = vi.fn();
 vi.mock('@tanstack/react-router', () => ({
-  Navigate: ({ to, replace }: { to: string; replace: boolean }) => {
-    mockNavigate(to, replace);
+  Navigate: (props: any) => {
+    const args = [props.to, props.replace];
+    if (props.search !== undefined || props.hash !== undefined) {
+      args.push(props.search, props.hash);
+    }
+    mockNavigate(...args);
     return null;
   },
   Link: ({ children, to }: { children: ReactNode; to: string }) => (
@@ -25,9 +29,10 @@ vi.mock('@tanstack/react-router', () => ({
   ),
   Outlet: () => <div data-testid="outlet">Content</div>,
   useParams: vi.fn(() => ({})),
+  useLocation: vi.fn(() => ({ pathname: '', search: {}, hash: '' })),
 }));
 
-import { useParams } from '@tanstack/react-router';
+import { useParams, useLocation } from '@tanstack/react-router';
 
 // Mocking queries
 const mockUseCurrentCompanyQuery = vi.fn();
@@ -101,10 +106,11 @@ describe('AppLayout', () => {
     });
 
     vi.mocked(useParams).mockReturnValue({ companySlug: 'WRONG-SLUG' });
+    vi.mocked(useLocation).mockReturnValue({ pathname: '/WRONG-SLUG/schedules', search: {}, hash: '' } as any);
 
     render(<AppLayout />);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/correct-slug/dashboard', true);
+    expect(mockNavigate).toHaveBeenCalledWith('/correct-slug/schedules', true, {}, '');
   });
 
   it('renderiza o layout e o outlet se o slug estiver correto', () => {
@@ -143,12 +149,15 @@ describe('AppLayout', () => {
     });
 
     vi.mocked(useParams).mockReturnValue({ companySlug: 'petcontrol-dev-old' });
+    vi.mocked(useLocation).mockReturnValue({ pathname: '/petcontrol-dev-old/dashboard', search: {}, hash: '' } as any);
 
     render(<AppLayout />);
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      '/petcontrol-dev/dashboard',
+      '/PETCONTROL-DEV/dashboard',
       true,
+      {},
+      ''
     );
   });
 

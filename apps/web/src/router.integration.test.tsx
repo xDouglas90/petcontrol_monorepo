@@ -100,33 +100,45 @@ describe('Router integration', () => {
     });
 
     mockUseSchedulesQuery.mockReturnValue({
-      data: schedules,
+      data: {
+        data: schedules,
+        meta: { total: schedules.length, page: 1, limit: 10, total_pages: 1 }
+      },
       isLoading: false,
       isError: false,
     });
     mockUseClientsQuery.mockReturnValue({
-      data: [
-        {
-          id: '11111111-1111-1111-1111-111111111111',
-          full_name: 'Maria Silva',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            full_name: 'Maria Silva',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      },
       isLoading: false,
       isError: false,
     });
     mockUsePetsQuery.mockReturnValue({
-      data: [
-        {
-          id: '22222222-2222-2222-2222-222222222222',
-          owner_id: '11111111-1111-1111-1111-111111111111',
-          name: 'Thor',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: '22222222-2222-2222-2222-222222222222',
+            owner_id: '11111111-1111-1111-1111-111111111111',
+            name: 'Thor',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      },
       isLoading: false,
       isError: false,
     });
     mockUseServicesQuery.mockReturnValue({
-      data: [{ id: 'service-1', title: 'Banho completo' }],
+      data: {
+        data: [{ id: 'service-1', title: 'Banho completo' }],
+        meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      },
       isLoading: false,
       isError: false,
     });
@@ -168,6 +180,7 @@ describe('Router integration', () => {
   });
 
   it('mantém o slug atual nos links internos e navega corretamente em /:companySlug/schedules', async () => {
+    // @ts-expect-error - Navigate com URL raw interage melhor com os testes de redirect
     await router.navigate({ to: '/petcontrol-dev/schedules' });
 
     render(
@@ -201,5 +214,24 @@ describe('Router integration', () => {
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
     expect(servicesLink.getAttribute('href')).toBe('/petcontrol-dev/services');
+  });
+
+  it('redireciona para o slug canônico quando o slug na URL é inválido ou diferente', async () => {
+    await router.navigate({ to: '/wrong-slug/schedules' });
+
+    render(
+      <QueryClientProvider client={queryClientForWeb()}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/petcontrol-dev/schedules');
+    }, { timeout: 5000 });
+
+    // Verifica se o layout administrativo foi carregado (e consequentemente o redirect funcionou)
+    expect(await screen.findByText(/Painel administrativo/i, {}, { timeout: 5000 })).toBeTruthy();
+    expect(screen.getByText(/Tenant atual/i)).toBeTruthy();
+    expect(screen.getByText(/@petcontrol-dev/i)).toBeTruthy();
   });
 });
