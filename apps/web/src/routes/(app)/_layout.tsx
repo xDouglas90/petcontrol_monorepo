@@ -102,19 +102,22 @@ export function AppLayout() {
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
 
-  if (urlSlug && normalizedUrlSlug !== normalizedCurrentSlug) {
+  if (urlSlug && normalizedCurrentSlug && normalizedUrlSlug !== normalizedCurrentSlug) {
     const segments = location.pathname.split('/');
     if (segments.length > 1) {
-      segments[1] = currentSlug;
+      segments[1] = normalizedCurrentSlug;
     }
-    const newPathname = segments.length > 1 ? segments.join('/') : buildCompanyRoute(currentSlug, 'dashboard');
+    const targetPath = segments.length > 1 ? segments.join('/') : buildCompanyRoute(normalizedCurrentSlug, 'dashboard');
 
-    if (location.pathname === newPathname) {
-      return <Navigate to={buildCompanyRoute(currentSlug, 'dashboard')} replace />;
+    if (location.pathname.toLowerCase() === targetPath.toLowerCase()) {
+      // Já estamos no caminho correto (considerando case-insensitivity), 
+      // mas por algum motivo o urlSlug ainda é diferente (race condition no params?).
+      // Evita disparar um Navigate que pode causar loop.
+      return null; 
     }
 
     return (
-      <Navigate to={newPathname} search={{ ...location.search }} hash={location.hash} replace />
+      <Navigate to={targetPath} search={{ ...location.search }} hash={location.hash} replace />
     );
   }
 

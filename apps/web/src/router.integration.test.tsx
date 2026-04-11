@@ -217,6 +217,7 @@ describe('Router integration', () => {
   });
 
   it('redireciona para o slug canônico quando o slug na URL é inválido ou diferente', async () => {
+    // @ts-expect-error - Simula navegação manual para um slug incorreto
     await router.navigate({ to: '/wrong-slug/schedules' });
 
     render(
