@@ -9,9 +9,25 @@ describe('domain query keys', () => {
       'company',
       'current',
     ]);
-    expect(domainQueryKeys.clients()).toEqual(['domain', 'clients']);
-    expect(domainQueryKeys.pets()).toEqual(['domain', 'pets']);
-    expect(domainQueryKeys.services()).toEqual(['domain', 'services']);
-    expect(domainQueryKeys.schedules()).toEqual(['domain', 'schedules']);
+    expect(domainQueryKeys.clients()).toEqual(['domain', 'clients', {}]);
+    expect(domainQueryKeys.pets()).toEqual(['domain', 'pets', {}]);
+    expect(domainQueryKeys.services()).toEqual(['domain', 'services', {}]);
+    expect(domainQueryKeys.schedules()).toEqual(['domain', 'schedules', {}]);
+  });
+
+  it('inclui params na queryKey quando fornecidos', () => {
+    const params = { page: 2, limit: 10, search: 'Thor' };
+    expect(domainQueryKeys.clients(params)).toEqual([
+      'domain',
+      'clients',
+      params,
+    ]);
+  });
+
+  it('mantém chaves de prefixo para invalidação em lote', () => {
+    expect(domainQueryKeys.allClients()).toEqual(['domain', 'clients']);
+    expect(domainQueryKeys.allPets()).toEqual(['domain', 'pets']);
+    expect(domainQueryKeys.allServices()).toEqual(['domain', 'services']);
+    expect(domainQueryKeys.allSchedules()).toEqual(['domain', 'schedules']);
   });
 });

@@ -4,6 +4,7 @@ import type {
   CreatePetInput,
   CreateScheduleInput,
   CreateServiceInput,
+  ListQueryParams,
   UpdateClientInput,
   UpdatePetInput,
   UpdateScheduleInput,
@@ -33,10 +34,14 @@ import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
 export const domainQueryKeys = {
   currentCompany: () => ['domain', 'company', 'current'] as const,
-  clients: () => ['domain', 'clients'] as const,
-  pets: () => ['domain', 'pets'] as const,
-  services: () => ['domain', 'services'] as const,
-  schedules: () => ['domain', 'schedules'] as const,
+  clients: (params?: ListQueryParams) => ['domain', 'clients', params ?? {}] as const,
+  pets: (params?: ListQueryParams) => ['domain', 'pets', params ?? {}] as const,
+  services: (params?: ListQueryParams) => ['domain', 'services', params ?? {}] as const,
+  schedules: (params?: ListQueryParams) => ['domain', 'schedules', params ?? {}] as const,
+  allClients: () => ['domain', 'clients'] as const,
+  allPets: () => ['domain', 'pets'] as const,
+  allServices: () => ['domain', 'services'] as const,
+  allSchedules: () => ['domain', 'schedules'] as const,
 };
 
 export function useCurrentCompanyQuery() {
@@ -54,62 +59,62 @@ export function useCurrentCompanyQuery() {
   });
 }
 
-export function useSchedulesQuery() {
+export function useSchedulesQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
   return useQuery({
-    queryKey: domainQueryKeys.schedules(),
+    queryKey: domainQueryKeys.schedules(params),
     enabled: Boolean(session?.accessToken),
     queryFn: async () => {
       if (!session?.accessToken) {
         throw new Error('Sessão não disponível');
       }
-      return listSchedules(session.accessToken);
+      return listSchedules(session.accessToken, params);
     },
   });
 }
 
-export function useClientsQuery() {
+export function useClientsQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
   return useQuery({
-    queryKey: domainQueryKeys.clients(),
+    queryKey: domainQueryKeys.clients(params),
     enabled: Boolean(session?.accessToken),
     queryFn: async () => {
       if (!session?.accessToken) {
         throw new Error('Sessão não disponível');
       }
-      return listClients(session.accessToken);
+      return listClients(session.accessToken, params);
     },
   });
 }
 
-export function usePetsQuery() {
+export function usePetsQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
   return useQuery({
-    queryKey: domainQueryKeys.pets(),
+    queryKey: domainQueryKeys.pets(params),
     enabled: Boolean(session?.accessToken),
     queryFn: async () => {
       if (!session?.accessToken) {
         throw new Error('Sessão não disponível');
       }
-      return listPets(session.accessToken);
+      return listPets(session.accessToken, params);
     },
   });
 }
 
-export function useServicesQuery() {
+export function useServicesQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
   return useQuery({
-    queryKey: domainQueryKeys.services(),
+    queryKey: domainQueryKeys.services(params),
     enabled: Boolean(session?.accessToken),
     queryFn: async () => {
       if (!session?.accessToken) {
         throw new Error('Sessão não disponível');
       }
-      return listServices(session.accessToken);
+      return listServices(session.accessToken, params);
     },
   });
 }
@@ -127,7 +132,7 @@ export function useCreateScheduleMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -146,7 +151,7 @@ export function useCreateClientMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.clients(),
+        queryKey: domainQueryKeys.allClients(),
       });
     },
   });
@@ -171,9 +176,9 @@ export function useUpdateClientMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.clients(),
+        queryKey: domainQueryKeys.allClients(),
       });
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.pets() });
+      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
     },
   });
 }
@@ -191,11 +196,11 @@ export function useDeleteClientMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.clients(),
+        queryKey: domainQueryKeys.allClients(),
       });
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.pets() });
+      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -213,7 +218,7 @@ export function useCreatePetMutation() {
       return createPet(session.accessToken, input);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.pets() });
+      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
     },
   });
 }
@@ -236,9 +241,9 @@ export function useUpdatePetMutation() {
       return updatePet(session.accessToken, petId, input);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.pets() });
+      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -256,9 +261,9 @@ export function useDeletePetMutation() {
       await deletePet(session.accessToken, petId);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.pets() });
+      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -277,7 +282,7 @@ export function useCreateServiceMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.services(),
+        queryKey: domainQueryKeys.allServices(),
       });
     },
   });
@@ -302,10 +307,10 @@ export function useUpdateServiceMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.services(),
+        queryKey: domainQueryKeys.allServices(),
       });
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -324,10 +329,10 @@ export function useDeleteServiceMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.services(),
+        queryKey: domainQueryKeys.allServices(),
       });
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -352,7 +357,7 @@ export function useUpdateScheduleMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
@@ -371,7 +376,7 @@ export function useDeleteScheduleMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: domainQueryKeys.schedules(),
+        queryKey: domainQueryKeys.allSchedules(),
       });
     },
   });
