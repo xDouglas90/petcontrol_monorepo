@@ -1,6 +1,6 @@
 -- name: ListServicesByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     s.id,
     s.type_id,
     st.name AS type_name,
@@ -20,14 +20,13 @@ WHERE
     AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
-    AND (
-        sqlc.arg('Search')::text = ''
+    AND (sqlc.arg('Search')::text = ''
         OR s.title ILIKE '%' || sqlc.arg('Search')::text || '%'
-        OR s.description ILIKE '%' || sqlc.arg('Search')::text || '%'
-    )
+        OR s.description ILIKE '%' || sqlc.arg('Search')::text || '%')
 ORDER BY
     s.title ASC
-LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
+LIMIT sqlc.arg('Limit')
+OFFSET sqlc.arg('Offset');
 
 -- name: GetServiceByIDAndCompanyID :one
 SELECT
@@ -69,53 +68,24 @@ WHERE
 LIMIT 1;
 
 -- name: CreateServiceType :one
-INSERT INTO service_types (
-    name,
-    description
-)
-VALUES (
-    sqlc.arg('Name'),
-    sqlc.narg('Description')
-)
-RETURNING *;
+INSERT INTO service_types(name, description)
+    VALUES (sqlc.arg('Name'), sqlc.narg('Description'))
+RETURNING
+    *;
 
--- name: CreateService :one
-INSERT INTO services (
-    type_id,
-    title,
-    description,
-    notes,
-    price,
-    discount_rate,
-    image_url,
-    is_active
-)
-VALUES (
-    sqlc.arg('TypeID'),
-    sqlc.arg('Title'),
-    sqlc.arg('Description'),
-    sqlc.narg('Notes'),
-    sqlc.arg('Price'),
-    sqlc.arg('DiscountRate'),
-    sqlc.narg('ImageURL'),
-    sqlc.arg('IsActive')
-)
-RETURNING *;
+-- name: InsertService :one
+INSERT INTO services(type_id, title, description, notes, price, discount_rate, image_url, is_active)
+    VALUES (sqlc.arg('TypeID'), sqlc.arg('Title'), sqlc.arg('Description'), sqlc.narg('Notes'), sqlc.arg('Price'), sqlc.arg('DiscountRate'), sqlc.narg('ImageURL'), sqlc.arg('IsActive'))
+RETURNING
+    *;
 
 -- name: CreateCompanyService :one
-INSERT INTO company_services (
-    company_id,
-    service_id,
-    is_active
-)
-VALUES (
-    sqlc.arg('CompanyID'),
-    sqlc.arg('ServiceID'),
-    TRUE
-)
-RETURNING *;
+INSERT INTO company_services(company_id, service_id, is_active)
+    VALUES (sqlc.arg('CompanyID'), sqlc.arg('ServiceID'), TRUE)
+RETURNING
+    *;
 
--- name: UpdateServiceByIDAndCompanyID :execrows
+-- name: UpdateServiceByIDAndCompanyID :one
 UPDATE
     services s
 SET
@@ -135,9 +105,11 @@ WHERE
     AND s.id = sqlc.arg('ID')
     AND cs.company_id = sqlc.arg('CompanyID')
     AND cs.is_active = TRUE
-    AND s.deleted_at IS NULL;
+    AND s.deleted_at IS NULL
+RETURNING
+    s.*;
 
--- name: DeactivateCompanyService :execrows
+-- name: DeactivateCompanyService :one
 UPDATE
     company_services
 SET
@@ -146,7 +118,9 @@ SET
 WHERE
     company_id = sqlc.arg('CompanyID')
     AND service_id = sqlc.arg('ServiceID')
-    AND is_active = TRUE;
+    AND is_active = TRUE
+RETURNING
+    *;
 
 -- name: ValidateServiceByIDAndCompanyID :one
 SELECT
@@ -160,5 +134,5 @@ SELECT
             cs.company_id = sqlc.arg('CompanyID')
             AND cs.service_id = sqlc.arg('ServiceID')
             AND cs.is_active = TRUE
-            AND s.deleted_at IS NULL
-    ) AS is_valid;
+            AND s.deleted_at IS NULL) AS is_valid;
+
