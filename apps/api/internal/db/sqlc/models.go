@@ -801,6 +801,7 @@ func (ns NullScheduleStatus) Value() (driver.Value, error) {
 type UserKind string
 
 const (
+	UserKindOwner              UserKind = "owner"
 	UserKindEmployee           UserKind = "employee"
 	UserKindClient             UserKind = "client"
 	UserKindSupplier           UserKind = "supplier"
@@ -1181,6 +1182,7 @@ type CompanyUser struct {
 	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
 	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
 	Kind      UserKind           `db:"kind" json:"kind"`
+	IsOwner   bool               `db:"is_owner" json:"is_owner"`
 	IsActive  bool               `db:"is_active" json:"is_active"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`

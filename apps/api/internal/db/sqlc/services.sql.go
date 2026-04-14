@@ -37,6 +37,53 @@ func (q *Queries) CreateCompanyService(ctx context.Context, arg CreateCompanySer
 	return i, err
 }
 
+const createService = `-- name: CreateService :one
+INSERT INTO services(type_id, title, description, notes, price, discount_rate, image_url, is_active)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING
+    id, type_id, title, description, notes, price, discount_rate, image_url, is_active, created_at, updated_at, deleted_at
+`
+
+type CreateServiceParams struct {
+	TypeID       pgtype.UUID    `db:"TypeID" json:"TypeID"`
+	Title        string         `db:"Title" json:"Title"`
+	Description  string         `db:"Description" json:"Description"`
+	Notes        pgtype.Text    `db:"Notes" json:"Notes"`
+	Price        pgtype.Numeric `db:"Price" json:"Price"`
+	DiscountRate pgtype.Numeric `db:"DiscountRate" json:"DiscountRate"`
+	ImageURL     pgtype.Text    `db:"ImageURL" json:"ImageURL"`
+	IsActive     bool           `db:"IsActive" json:"IsActive"`
+}
+
+func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (Service, error) {
+	row := q.db.QueryRow(ctx, createService,
+		arg.TypeID,
+		arg.Title,
+		arg.Description,
+		arg.Notes,
+		arg.Price,
+		arg.DiscountRate,
+		arg.ImageURL,
+		arg.IsActive,
+	)
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.Title,
+		&i.Description,
+		&i.Notes,
+		&i.Price,
+		&i.DiscountRate,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const createServiceType = `-- name: CreateServiceType :one
 INSERT INTO service_types(name, description)
     VALUES ($1, $2)
@@ -183,53 +230,6 @@ func (q *Queries) GetServiceByIDAndCompanyID(ctx context.Context, arg GetService
 		&i.DiscountRate,
 		&i.ImageUrl,
 		&i.IsActive,
-	)
-	return i, err
-}
-
-const insertService = `-- name: InsertService :one
-INSERT INTO services(type_id, title, description, notes, price, discount_rate, image_url, is_active)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING
-    id, type_id, title, description, notes, price, discount_rate, image_url, is_active, created_at, updated_at, deleted_at
-`
-
-type InsertServiceParams struct {
-	TypeID       pgtype.UUID    `db:"TypeID" json:"TypeID"`
-	Title        string         `db:"Title" json:"Title"`
-	Description  string         `db:"Description" json:"Description"`
-	Notes        pgtype.Text    `db:"Notes" json:"Notes"`
-	Price        pgtype.Numeric `db:"Price" json:"Price"`
-	DiscountRate pgtype.Numeric `db:"DiscountRate" json:"DiscountRate"`
-	ImageURL     pgtype.Text    `db:"ImageURL" json:"ImageURL"`
-	IsActive     bool           `db:"IsActive" json:"IsActive"`
-}
-
-func (q *Queries) InsertService(ctx context.Context, arg InsertServiceParams) (Service, error) {
-	row := q.db.QueryRow(ctx, insertService,
-		arg.TypeID,
-		arg.Title,
-		arg.Description,
-		arg.Notes,
-		arg.Price,
-		arg.DiscountRate,
-		arg.ImageURL,
-		arg.IsActive,
-	)
-	var i Service
-	err := row.Scan(
-		&i.ID,
-		&i.TypeID,
-		&i.Title,
-		&i.Description,
-		&i.Notes,
-		&i.Price,
-		&i.DiscountRate,
-		&i.ImageUrl,
-		&i.IsActive,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
 	)
 	return i, err
 }

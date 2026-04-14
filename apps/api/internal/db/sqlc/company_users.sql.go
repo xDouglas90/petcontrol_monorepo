@@ -12,16 +12,17 @@ import (
 )
 
 const createCompanyUser = `-- name: CreateCompanyUser :one
-INSERT INTO company_users(company_id, user_id, kind, is_active)
-    VALUES ($1, $2, $3, $4)
+INSERT INTO company_users(company_id, user_id, kind, is_owner, is_active)
+    VALUES ($1, $2, $3, $4, $5)
 RETURNING
-    id, company_id, user_id, kind, is_active, created_at, updated_at, deleted_at
+    id, company_id, user_id, kind, is_owner, is_active, created_at, updated_at, deleted_at
 `
 
 type CreateCompanyUserParams struct {
 	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
 	UserID    pgtype.UUID `db:"UserID" json:"UserID"`
 	Kind      UserKind    `db:"Kind" json:"Kind"`
+	IsOwner   bool        `db:"IsOwner" json:"IsOwner"`
 	IsActive  pgtype.Bool `db:"IsActive" json:"IsActive"`
 }
 
@@ -30,6 +31,7 @@ func (q *Queries) CreateCompanyUser(ctx context.Context, arg CreateCompanyUserPa
 		arg.CompanyID,
 		arg.UserID,
 		arg.Kind,
+		arg.IsOwner,
 		arg.IsActive,
 	)
 	var i CompanyUser
@@ -38,6 +40,7 @@ func (q *Queries) CreateCompanyUser(ctx context.Context, arg CreateCompanyUserPa
 		&i.CompanyID,
 		&i.UserID,
 		&i.Kind,
+		&i.IsOwner,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -73,6 +76,7 @@ SELECT
     cu.company_id,
     cu.user_id,
     cu.kind,
+    cu.is_owner,
     cu.is_active,
     cu.created_at,
     cu.updated_at,
@@ -96,6 +100,7 @@ func (q *Queries) GetActiveCompanyUserByUserID(ctx context.Context, userid pgtyp
 		&i.CompanyID,
 		&i.UserID,
 		&i.Kind,
+		&i.IsOwner,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -110,6 +115,7 @@ SELECT
     cu.company_id,
     cu.user_id,
     cu.kind,
+    cu.is_owner,
     cu.is_active,
     cu.created_at,
     cu.updated_at,
@@ -135,6 +141,7 @@ func (q *Queries) GetCompanyUser(ctx context.Context, arg GetCompanyUserParams) 
 		&i.CompanyID,
 		&i.UserID,
 		&i.Kind,
+		&i.IsOwner,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -149,6 +156,7 @@ SELECT
     cu.company_id,
     cu.user_id,
     cu.kind,
+    cu.is_owner,
     cu.is_active,
     cu.created_at,
     cu.updated_at,
@@ -168,6 +176,7 @@ func (q *Queries) GetCompanyUserByID(ctx context.Context, id pgtype.UUID) (Compa
 		&i.CompanyID,
 		&i.UserID,
 		&i.Kind,
+		&i.IsOwner,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -182,6 +191,7 @@ SELECT
     cu.company_id,
     cu.user_id,
     cu.kind,
+    cu.is_owner,
     cu.is_active,
     cu.created_at,
     cu.updated_at,
@@ -209,6 +219,7 @@ func (q *Queries) ListCompanyUsersByCompanyID(ctx context.Context, companyid pgt
 			&i.CompanyID,
 			&i.UserID,
 			&i.Kind,
+			&i.IsOwner,
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -230,6 +241,7 @@ SELECT
     cu.company_id,
     cu.user_id,
     cu.kind,
+    cu.is_owner,
     cu.is_active,
     cu.created_at,
     cu.updated_at,
@@ -272,6 +284,7 @@ func (q *Queries) ListCompanyUsersByKind(ctx context.Context, arg ListCompanyUse
 			&i.CompanyID,
 			&i.UserID,
 			&i.Kind,
+			&i.IsOwner,
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
