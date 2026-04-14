@@ -72,10 +72,10 @@ func TestQueries_Products_Unit(t *testing.T) {
 	t.Run("DeleteProduct - Success", func(t *testing.T) {
 		id := pgtype.UUID{Bytes: [16]byte{1}, Valid: true}
 
-		mock.ExpectQuery("UPDATE products SET deleted_at").
-			WithArgs(id).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "name", "batch_number", "description", "image_url", "expiration_date", "quantity", "created_at", "updated_at", "deleted_at"}).
-				AddRow(id, "Deleted", nil, nil, nil, nil, int32(0), nil, nil, pgtype.Timestamp{Valid: true}))
+			mock.ExpectQuery("UPDATE products SET deleted_at").
+				WithArgs(id).
+				WillReturnRows(pgxmock.NewRows([]string{"id", "name", "batch_number", "description", "image_url", "expiration_date", "quantity", "created_at", "updated_at", "deleted_at"}).
+					AddRow(id, "Deleted", nil, nil, nil, nil, int32(0), nil, nil, pgtype.Timestamptz{Valid: true}))
 
 		res, err := queries.DeleteProduct(ctx, id)
 		require.NoError(t, err)

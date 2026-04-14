@@ -11,8 +11,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mustStartMiniRedis(t *testing.T) *miniredis.Miniredis {
+	t.Helper()
+
+	srv, err := miniredis.Run()
+	if err != nil {
+		// Some sandboxed environments disallow binding to local TCP ports.
+		t.Skipf("skipping queue integration test; cannot start miniredis: %v", err)
+	}
+	t.Cleanup(srv.Close)
+	return srv
+}
+
 func TestAsynqPublisher_EnqueueDummyNotification(t *testing.T) {
-	redisServer := miniredis.RunT(t)
+	redisServer := mustStartMiniRedis(t)
 
 	processed := make(chan DummyNotificationPayload, 1)
 	mux := asynq.NewServeMux()
@@ -57,7 +69,7 @@ func TestAsynqPublisher_EnqueueDummyNotification(t *testing.T) {
 }
 
 func TestAsynqPublisher_EnqueueScheduleConfirmation(t *testing.T) {
-	redisServer := miniredis.RunT(t)
+	redisServer := mustStartMiniRedis(t)
 
 	processed := make(chan ScheduleConfirmationPayload, 1)
 	mux := asynq.NewServeMux()

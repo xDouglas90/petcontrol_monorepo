@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,15 +28,29 @@ func SetupPostgresWithMigrations(t *testing.T) PostgresSetup {
 
 	ctx := context.Background()
 
-	pgContainer, err := tcpostgres.Run(
-		ctx,
-		"postgres:18-alpine",
-		tcpostgres.WithDatabase("petcontrol_test"),
-		tcpostgres.WithUsername("test"),
-		tcpostgres.WithPassword("test"),
-	)
+	var pgContainer *tcpostgres.PostgresContainer
+	var err error
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				// testcontainers can panic when it cannot access Docker (socket perms, daemon down, etc).
+				t.Skipf("skipping integration test; Docker not available: %v", recovered)
+			}
+		}()
+
+		pgContainer, err = tcpostgres.Run(
+			ctx,
+			"postgres:18-alpine",
+			tcpostgres.WithDatabase("petcontrol_test"),
+			tcpostgres.WithUsername("test"),
+			tcpostgres.WithPassword("test"),
+		)
+	}()
 	if err != nil {
-		t.Fatalf("failed to start postgres testcontainer; ensure Docker is running: %v", err)
+		if isDockerUnavailableErr(err) {
+			t.Skipf("skipping integration test; Docker not available: %v", err)
+		}
+		t.Fatalf("failed to start postgres testcontainer: %v", err)
 	}
 	t.Cleanup(func() {
 		_ = pgContainer.Terminate(ctx)
@@ -81,6 +96,23 @@ func SetupPostgresWithMigrations(t *testing.T) PostgresSetup {
 		ConnString: connString,
 		Pool:       pool,
 	}
+}
+
+func isDockerUnavailableErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "docker") {
+		return false
+	}
+
+	// Common signals when Docker isn't accessible in local/dev environments.
+	return strings.Contains(msg, "permission denied") ||
+		strings.Contains(msg, "cannot connect") ||
+		strings.Contains(msg, "connect: operation not permitted") ||
+		strings.Contains(msg, "no such file or directory") ||
+		strings.Contains(msg, "is the docker daemon running")
 }
 
 func resolveMigrationsPath(t *testing.T) string {

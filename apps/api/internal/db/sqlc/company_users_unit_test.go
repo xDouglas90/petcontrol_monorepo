@@ -20,29 +20,30 @@ func TestQueries_CompanyUsers_Unit(t *testing.T) {
 	ctx := context.Background()
 	errExpected := errors.New("db error")
 
-	t.Run("CreateCompanyUser", func(t *testing.T) {
-		arg := sqlc.CreateCompanyUserParams{
-			CompanyID: uuidValue(),
-			UserID:    uuidValue(),
-			Kind:      sqlc.UserKindEmployee,
-			IsActive:  pgtype.Bool{Bool: true, Valid: true},
-		}
+		t.Run("CreateCompanyUser", func(t *testing.T) {
+			arg := sqlc.CreateCompanyUserParams{
+				CompanyID: uuidValue(),
+				UserID:    uuidValue(),
+				Kind:      sqlc.UserKindEmployee,
+				IsOwner:   false,
+				IsActive:  pgtype.Bool{Bool: true, Valid: true},
+			}
 
 		rows := pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow(uuidValue(), arg.CompanyID, arg.UserID, arg.Kind, arg.IsOwner, arg.IsActive.Bool, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{})
 
-		mock.ExpectQuery(`(?s)name: CreateCompanyUser`).
-			WithArgs(arg.CompanyID, arg.UserID, arg.Kind, arg.IsActive).
-			WillReturnRows(rows)
+			mock.ExpectQuery(`(?s)name: CreateCompanyUser`).
+				WithArgs(arg.CompanyID, arg.UserID, arg.Kind, arg.IsOwner, arg.IsActive).
+				WillReturnRows(rows)
 
 		res, err := queries.CreateCompanyUser(ctx, arg)
 		require.NoError(t, err)
 		require.Equal(t, arg.Kind, res.Kind)
 
-		// Failure
-		mock.ExpectQuery(`(?s)name: CreateCompanyUser`).
-			WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
-			WillReturnError(errExpected)
+			// Failure
+			mock.ExpectQuery(`(?s)name: CreateCompanyUser`).
+				WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+				WillReturnError(errExpected)
 
 		_, err = queries.CreateCompanyUser(ctx, arg)
 		require.ErrorIs(t, err, errExpected)

@@ -57,10 +57,10 @@ func TestQueries_SubServices_Unit(t *testing.T) {
 	t.Run("DeleteSubService - Success", func(t *testing.T) {
 		id := pgtype.UUID{Bytes: [16]byte{1}, Valid: true}
 
-		mock.ExpectQuery("UPDATE sub_services SET deleted_at").
-			WithArgs(id).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "service_id", "type_id", "title", "description", "notes", "price", "discount_rate", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
-				AddRow(id, pgtype.UUID{}, pgtype.UUID{}, "Deleted", "", nil, nil, nil, nil, false, nil, nil, pgtype.Timestamp{Valid: true}))
+			mock.ExpectQuery("UPDATE sub_services SET deleted_at").
+				WithArgs(id).
+				WillReturnRows(pgxmock.NewRows([]string{"id", "service_id", "type_id", "title", "description", "notes", "price", "discount_rate", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
+					AddRow(id, pgtype.UUID{}, pgtype.UUID{}, "Deleted", "", nil, nil, nil, nil, false, nil, nil, pgtype.Timestamptz{Valid: true}))
 
 		res, err := queries.DeleteSubService(ctx, id)
 		require.NoError(t, err)
