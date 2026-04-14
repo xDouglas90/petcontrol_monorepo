@@ -84,11 +84,17 @@ func (h *CompanyUserHandler) Create(c *gin.Context) {
 		return
 	}
 
+	kind := sqlc.UserKindEmployee
+	if req.IsOwner {
+		kind = sqlc.UserKindOwner
+	}
+
 	created, err := h.service.CreateCompanyUser(c.Request.Context(), sqlc.CreateCompanyUserParams{
 		CompanyID: companyID,
 		UserID:    userID,
+		Kind:      kind,
 		IsOwner:   req.IsOwner,
-		IsActive:  true,
+		IsActive:  pgtype.Bool{Bool: true, Valid: true},
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "create_company_user_failed", "failed to create company user")

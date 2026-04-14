@@ -129,7 +129,7 @@ func (s *ServiceService) UpdateService(ctx context.Context, input UpdateServiceI
 		typeID = resolvedTypeID
 	}
 
-	rows, err := s.queries.UpdateServiceByIDAndCompanyID(ctx, sqlc.UpdateServiceByIDAndCompanyIDParams{
+	_, err := s.queries.UpdateServiceByIDAndCompanyID(ctx, sqlc.UpdateServiceByIDAndCompanyIDParams{
 		TypeID:       typeID,
 		Title:        optionalText(input.Title),
 		Description:  optionalText(input.Description),
@@ -142,25 +142,25 @@ func (s *ServiceService) UpdateService(ctx context.Context, input UpdateServiceI
 		CompanyID:    input.CompanyID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return sqlc.GetServiceByIDAndCompanyIDRow{}, apperror.ErrNotFound
+		}
 		return sqlc.GetServiceByIDAndCompanyIDRow{}, mapServiceDBError(err)
-	}
-	if rows == 0 {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, apperror.ErrNotFound
 	}
 
 	return s.GetServiceByID(ctx, input.CompanyID, input.ServiceID)
 }
 
 func (s *ServiceService) DeactivateService(ctx context.Context, companyID pgtype.UUID, serviceID pgtype.UUID) error {
-	rows, err := s.queries.DeactivateCompanyService(ctx, sqlc.DeactivateCompanyServiceParams{
+	_, err := s.queries.DeactivateCompanyService(ctx, sqlc.DeactivateCompanyServiceParams{
 		CompanyID: companyID,
 		ServiceID: serviceID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return apperror.ErrNotFound
+		}
 		return err
-	}
-	if rows == 0 {
-		return apperror.ErrNotFound
 	}
 	return nil
 }

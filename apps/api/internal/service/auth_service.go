@@ -116,7 +116,7 @@ func (s *AuthService) Login(ctx context.Context, email string, password string, 
 		UserID:    pgUUIDToString(user.ID),
 		CompanyID: pgUUIDToString(membership.CompanyID),
 		Role:      string(user.Role),
-		Kind:      string(user.Kind),
+		Kind:      string(membership.Kind),
 	}
 	accessToken, err := appjwt.GenerateToken(s.jwtSecret, s.jwtTTL, claims)
 	if err != nil {
