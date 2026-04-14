@@ -1,6 +1,6 @@
 -- name: InsertUser :one
-INSERT INTO users(email, email_verified, email_verified_at, "role", kind, is_active)
-  VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO users(email, email_verified, email_verified_at, "role", is_active)
+  VALUES ($1, $2, $3, $4, $5)
 RETURNING
   *;
 
@@ -11,7 +11,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -29,7 +28,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -48,7 +46,6 @@ SET
   email_verified = coalesce(sqlc.narg('EmailVerified'), email_verified),
   email_verified_at = coalesce(sqlc.narg('EmailVerifiedAt'), email_verified_at),
   "role" = coalesce(sqlc.narg('Role'), "role"),
-  kind = coalesce(sqlc.narg('Kind'), kind),
   is_active = coalesce(sqlc.narg('IsActive'), is_active),
   updated_at = now()
 WHERE
@@ -70,7 +67,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -83,8 +79,6 @@ WHERE
     OR sqlc.narg('Email') IS NULL)
   AND (u."role" = sqlc.narg('Role')
     OR sqlc.narg('Role') IS NULL)
-  AND (u.kind = sqlc.narg('Kind')
-    OR sqlc.narg('Kind') IS NULL)
   AND (u.is_active = sqlc.narg('IsActive')
     OR sqlc.narg('IsActive') IS NULL)
   AND (u.created_at >= sqlc.narg('CreatedAfter')
@@ -105,7 +99,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,

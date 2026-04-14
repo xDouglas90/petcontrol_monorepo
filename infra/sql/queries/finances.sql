@@ -6,15 +6,15 @@ INSERT INTO finances(bank_name, bank_code, bank_branch, bank_account, bank_accou
 UPDATE
     finances
 SET
-    bank_name = COALESCE(sqlc.arg('BankName'), bank_name),
-    bank_code = COALESCE(sqlc.arg('BankCode'), bank_code),
-    bank_branch = COALESCE(sqlc.arg('BankBranch'), bank_branch),
-    bank_account = COALESCE(sqlc.arg('BankAccount'), bank_account),
-    bank_account_digit = COALESCE(sqlc.arg('BankAccountDigit'), bank_account_digit),
-    bank_account_type = COALESCE(sqlc.arg('BankAccountType'), bank_account_type),
+    bank_name = COALESCE(sqlc.narg('BankName'), bank_name),
+    bank_code = COALESCE(sqlc.narg('BankCode'), bank_code),
+    bank_branch = COALESCE(sqlc.narg('BankBranch'), bank_branch),
+    bank_account = COALESCE(sqlc.narg('BankAccount'), bank_account),
+    bank_account_digit = COALESCE(sqlc.narg('BankAccountDigit'), bank_account_digit),
+    bank_account_type = COALESCE(sqlc.narg('BankAccountType'), bank_account_type),
     has_pix = COALESCE(sqlc.narg('HasPix'), has_pix),
-    pix_key = COALESCE(sqlc.arg('PixKey'), pix_key),
-    pix_key_type = COALESCE(sqlc.arg('PixKeyType'), pix_key_type),
+    pix_key = COALESCE(sqlc.narg('PixKey'), pix_key),
+    pix_key_type = COALESCE(sqlc.narg('PixKeyType'), pix_key_type),
     updated_at = now()
 WHERE
     id = sqlc.arg('ID');

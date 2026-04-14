@@ -1,23 +1,8 @@
 -- name: CreateSchedule :one
-INSERT INTO schedules (
-    company_id,
-    client_id,
-    pet_id,
-    scheduled_at,
-    estimated_end,
-    notes,
-    created_by
-)
-VALUES (
-    sqlc.arg('CompanyID'),
-    sqlc.arg('ClientID'),
-    sqlc.arg('PetID'),
-    sqlc.arg('ScheduledAt'),
-    sqlc.narg('EstimatedEnd'),
-    sqlc.narg('Notes'),
-    sqlc.narg('CreatedBy')
-)
-RETURNING *;
+INSERT INTO schedules(company_id, client_id, pet_id, scheduled_at, estimated_end, notes, created_by)
+    VALUES (sqlc.arg('CompanyID'), sqlc.arg('ClientID'), sqlc.arg('PetID'), sqlc.arg('ScheduledAt'), sqlc.narg('EstimatedEnd'), sqlc.narg('Notes'), sqlc.narg('CreatedBy'))
+RETURNING
+    *;
 
 -- name: GetScheduleByIDAndCompanyID :one
 SELECT
@@ -51,8 +36,7 @@ FROM
             ssh.schedule_id = s.id
         ORDER BY
             ssh.changed_at DESC
-        LIMIT 1
-    ) ssh_current ON TRUE
+        LIMIT 1) ssh_current ON TRUE
     LEFT JOIN LATERAL (
         SELECT
             array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
@@ -62,8 +46,7 @@ FROM
             INNER JOIN services svc ON svc.id = ss.service_id
         WHERE
             ss.schedule_id = s.id
-            AND svc.deleted_at IS NULL
-    ) service_context ON TRUE
+            AND svc.deleted_at IS NULL) service_context ON TRUE
 WHERE
     s.id = sqlc.arg('ID')
     AND s.company_id = sqlc.arg('CompanyID')
@@ -72,7 +55,7 @@ LIMIT 1;
 
 -- name: ListSchedulesByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     s.id,
     s.company_id,
     s.client_id,
@@ -103,8 +86,7 @@ FROM
             ssh.schedule_id = s.id
         ORDER BY
             ssh.changed_at DESC
-        LIMIT 1
-    ) ssh_current ON TRUE
+        LIMIT 1) ssh_current ON TRUE
     LEFT JOIN LATERAL (
         SELECT
             array_agg(ss.service_id::text ORDER BY svc.title) AS service_ids,
@@ -114,20 +96,18 @@ FROM
             INNER JOIN services svc ON svc.id = ss.service_id
         WHERE
             ss.schedule_id = s.id
-            AND svc.deleted_at IS NULL
-    ) service_context ON TRUE
+            AND svc.deleted_at IS NULL) service_context ON TRUE
 WHERE
     s.company_id = sqlc.arg('CompanyID')
     AND s.deleted_at IS NULL
-    AND (
-        sqlc.arg('Search')::text = ''
+    AND (sqlc.arg('Search')::text = ''
         OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
         OR p.name ILIKE '%' || sqlc.arg('Search')::text || '%'
-        OR s.notes ILIKE '%' || sqlc.arg('Search')::text || '%'
-    )
+        OR s.notes ILIKE '%' || sqlc.arg('Search')::text || '%')
 ORDER BY
     s.scheduled_at ASC
-LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
+LIMIT sqlc.arg('Limit')
+OFFSET sqlc.arg('Offset');
 
 -- name: UpdateSchedule :execrows
 UPDATE
@@ -155,54 +135,6 @@ WHERE
     AND company_id = sqlc.arg('CompanyID')
     AND deleted_at IS NULL;
 
--- name: InsertScheduleStatusHistory :one
-INSERT INTO schedule_status_history (
-    schedule_id,
-    status,
-    changed_by,
-    notes
-)
-VALUES (
-    sqlc.arg('ScheduleID'),
-    sqlc.arg('Status'),
-    sqlc.narg('ChangedBy'),
-    sqlc.narg('Notes')
-)
-RETURNING *;
-
--- name: InsertScheduleService :one
-INSERT INTO schedule_services (
-    schedule_id,
-    service_id
-)
-VALUES (
-    sqlc.arg('ScheduleID'),
-    sqlc.arg('ServiceID')
-)
-RETURNING *;
-
--- name: DeleteScheduleServicesByScheduleID :execrows
-DELETE FROM schedule_services
-WHERE
-    schedule_id = sqlc.arg('ScheduleID');
-
--- name: ListScheduleStatusHistoryByScheduleID :many
-SELECT
-    ssh.id,
-    ssh.schedule_id,
-    ssh.status,
-    ssh.changed_at,
-    ssh.changed_by,
-    ssh.notes
-FROM
-    schedule_status_history ssh
-    INNER JOIN schedules s ON s.id = ssh.schedule_id
-WHERE
-    ssh.schedule_id = sqlc.arg('ScheduleID')
-    AND s.company_id = sqlc.arg('CompanyID')
-ORDER BY
-    ssh.changed_at DESC;
-
 -- name: ValidateScheduleOwnership :one
 SELECT
     EXISTS (
@@ -219,5 +151,5 @@ SELECT
             AND cc.is_active = TRUE
             AND c.deleted_at IS NULL
             AND p.deleted_at IS NULL
-            AND p.is_active = TRUE
-    ) AS is_valid;
+            AND p.is_active = TRUE) AS is_valid;
+

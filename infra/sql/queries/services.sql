@@ -73,7 +73,7 @@ INSERT INTO service_types(name, description)
 RETURNING
     *;
 
--- name: InsertService :one
+-- name: CreateService :one
 INSERT INTO services(type_id, title, description, notes, price, discount_rate, image_url, is_active)
     VALUES (sqlc.arg('TypeID'), sqlc.arg('Title'), sqlc.arg('Description'), sqlc.narg('Notes'), sqlc.arg('Price'), sqlc.arg('DiscountRate'), sqlc.narg('ImageURL'), sqlc.arg('IsActive'))
 RETURNING

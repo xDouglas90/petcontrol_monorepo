@@ -6,10 +6,10 @@ INSERT INTO employments(company_employee_id, "role", admission_date, resignation
 UPDATE
     employments
 SET
-    "role" = COALESCE(sqlc.arg('Role'), "role"),
-    admission_date = COALESCE(sqlc.arg('AdmissionDate'), admission_date),
-    resignation_date = COALESCE(sqlc.arg('ResignationDate'), resignation_date),
-    salary = COALESCE(sqlc.arg('Salary'), salary),
+    "role" = COALESCE(sqlc.narg('Role'), "role"),
+    admission_date = COALESCE(sqlc.narg('AdmissionDate'), admission_date),
+    resignation_date = COALESCE(sqlc.narg('ResignationDate'), resignation_date),
+    salary = COALESCE(sqlc.narg('Salary'), salary),
     updated_at = now()
 WHERE
     id = sqlc.arg('ID');

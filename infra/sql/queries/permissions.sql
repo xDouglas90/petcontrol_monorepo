@@ -25,8 +25,6 @@ SELECT
     p.updated_at
 FROM
     permissions p
-WHERE
-    p.deleted_at IS NULL
 ORDER BY
     p.code ASC;
 

@@ -16,7 +16,7 @@ WHERE
 UPDATE
     user_profiles
 SET
-    person_id = COALESCE(sqlc.arg('PersonID'), person_id),
+    person_id = COALESCE(sqlc.narg('PersonID'), person_id),
     updated_at = now()
 WHERE
     user_id = sqlc.arg('UserID');

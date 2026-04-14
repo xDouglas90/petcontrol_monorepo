@@ -1,6 +1,6 @@
 -- name: ListClientsByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     c.id,
     c.person_id,
     cc.company_id,
@@ -26,21 +26,21 @@ FROM
     INNER JOIN clients c ON c.id = cc.client_id
     INNER JOIN people p ON p.id = c.person_id
     INNER JOIN people_identifications pi ON pi.person_id = p.id
-    INNER JOIN people_contacts pc ON pc.person_id = p.id AND pc.is_primary = TRUE
+    INNER JOIN people_contacts pc ON pc.person_id = p.id
+        AND pc.is_primary = TRUE
 WHERE
     cc.company_id = sqlc.arg('CompanyID')
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
     AND p.is_active = TRUE
-    AND (
-        sqlc.arg('Search')::text = ''
+    AND (sqlc.arg('Search')::text = ''
         OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
         OR pi.cpf ILIKE '%' || sqlc.arg('Search')::text || '%'
-        OR pc.email ILIKE '%' || sqlc.arg('Search')::text || '%'
-    )
+        OR pc.email ILIKE '%' || sqlc.arg('Search')::text || '%')
 ORDER BY
     pi.full_name ASC
-LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
+LIMIT sqlc.arg('Limit')
+OFFSET sqlc.arg('Offset');
 
 -- name: GetClientByIDAndCompanyID :one
 SELECT
@@ -69,7 +69,8 @@ FROM
     INNER JOIN clients c ON c.id = cc.client_id
     INNER JOIN people p ON p.id = c.person_id
     INNER JOIN people_identifications pi ON pi.person_id = p.id
-    INNER JOIN people_contacts pc ON pc.person_id = p.id AND pc.is_primary = TRUE
+    INNER JOIN people_contacts pc ON pc.person_id = p.id
+        AND pc.is_primary = TRUE
 WHERE
     cc.company_id = sqlc.arg('CompanyID')
     AND c.id = sqlc.arg('ID')
@@ -79,83 +80,34 @@ WHERE
 LIMIT 1;
 
 -- name: InsertClientPerson :one
-INSERT INTO people (
-    kind,
-    is_active,
-    has_system_user
-)
-VALUES (
-    'client',
-    TRUE,
-    FALSE
-)
-RETURNING *;
+INSERT INTO people(kind, is_active, has_system_user)
+    VALUES ('client', TRUE, FALSE)
+RETURNING
+    *;
 
 -- name: InsertClientIdentification :one
-INSERT INTO people_identifications (
-    person_id,
-    full_name,
-    short_name,
-    gender_identity,
-    marital_status,
-    birth_date,
-    cpf
-)
-VALUES (
-    sqlc.arg('PersonID'),
-    sqlc.arg('FullName'),
-    sqlc.arg('ShortName'),
-    sqlc.arg('GenderIdentity'),
-    sqlc.arg('MaritalStatus'),
-    sqlc.arg('BirthDate'),
-    sqlc.arg('CPF')
-)
-RETURNING *;
+INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
+    VALUES (sqlc.arg('PersonID'), sqlc.arg('FullName'), sqlc.arg('ShortName'), sqlc.arg('GenderIdentity'), sqlc.arg('MaritalStatus'), sqlc.arg('BirthDate'), sqlc.arg('CPF'))
+RETURNING
+    *;
 
 -- name: InsertClientPrimaryContact :one
-INSERT INTO people_contacts (
-    person_id,
-    email,
-    phone,
-    cellphone,
-    has_whatsapp,
-    is_primary
-)
-VALUES (
-    sqlc.arg('PersonID'),
-    sqlc.arg('Email'),
-    sqlc.narg('Phone'),
-    sqlc.arg('Cellphone'),
-    sqlc.arg('HasWhatsapp'),
-    TRUE
-)
-RETURNING *;
+INSERT INTO people_contacts(person_id, email, phone, cellphone, has_whatsapp, is_primary)
+    VALUES (sqlc.arg('PersonID'), sqlc.arg('Email'), sqlc.narg('Phone'), sqlc.arg('Cellphone'), sqlc.arg('HasWhatsapp'), TRUE)
+RETURNING
+    *;
 
 -- name: InsertClientRecord :one
-INSERT INTO clients (
-    person_id,
-    client_since,
-    notes
-)
-VALUES (
-    sqlc.arg('PersonID'),
-    sqlc.narg('ClientSince'),
-    sqlc.narg('Notes')
-)
-RETURNING *;
+INSERT INTO clients(person_id, client_since, notes)
+    VALUES (sqlc.arg('PersonID'), sqlc.narg('ClientSince'), sqlc.narg('Notes'))
+RETURNING
+    *;
 
 -- name: CreateCompanyClient :one
-INSERT INTO company_clients (
-    company_id,
-    client_id,
-    is_active
-)
-VALUES (
-    sqlc.arg('CompanyID'),
-    sqlc.arg('ClientID'),
-    TRUE
-)
-RETURNING *;
+INSERT INTO company_clients(company_id, client_id, is_active)
+    VALUES (sqlc.arg('CompanyID'), sqlc.arg('ClientID'), TRUE)
+RETURNING
+    *;
 
 -- name: UpdateClientIdentification :execrows
 UPDATE
@@ -224,3 +176,4 @@ WHERE
     company_id = sqlc.arg('CompanyID')
     AND client_id = sqlc.arg('ClientID')
     AND is_active = TRUE;
+

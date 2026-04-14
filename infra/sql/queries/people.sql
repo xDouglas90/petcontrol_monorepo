@@ -1,12 +1,13 @@
--- name: InsertPerson :execrows
+-- name: InsertPerson :one
 INSERT INTO people(kind, is_active, has_system_user)
-    VALUES (sqlc.arg('Kind'), sqlc.narg('IsActive'), sqlc.narg('HasSystemUser'));
+    VALUES (sqlc.arg('Kind'), sqlc.narg('IsActive'), sqlc.narg('HasSystemUser'))
+RETURNING *;
 
 -- name: UpdatePerson :execrows
 UPDATE
     people
 SET
-    kind = COALESCE(sqlc.arg('Kind'), kind),
+    kind = COALESCE(sqlc.narg('Kind'), kind),
     is_active = COALESCE(sqlc.narg('IsActive'), is_active),
     has_system_user = COALESCE(sqlc.narg('HasSystemUser'), has_system_user),
     updated_at = now()
@@ -56,12 +57,12 @@ SELECT
 FROM
     people p
     LEFT JOIN people_identifications pi ON p.id = pi.person_id
-WHERE (sqlc.arg('Kind') IS NULL
-    OR p.kind = sqlc.arg('Kind'))
-AND (sqlc.narg('IsActive') IS NULL
-    OR p.is_active = sqlc.narg('IsActive'))
-AND (sqlc.narg('HasSystemUser') IS NULL
-    OR p.has_system_user = sqlc.narg('HasSystemUser'))
+WHERE (sqlc.narg('Kind')::person_kind IS NULL
+    OR p.kind = sqlc.narg('Kind')::person_kind)
+AND (sqlc.narg('IsActive')::BOOLEAN IS NULL
+    OR p.is_active = sqlc.narg('IsActive')::BOOLEAN)
+AND (sqlc.narg('HasSystemUser')::BOOLEAN IS NULL
+    OR p.has_system_user = sqlc.narg('HasSystemUser')::BOOLEAN)
 ORDER BY
     p.created_at DESC
 LIMIT sqlc.arg('Limit')

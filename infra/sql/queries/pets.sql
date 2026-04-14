@@ -1,6 +1,6 @@
 -- name: ListPetsByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     p.id,
     p.owner_id,
     cc.company_id,
@@ -27,14 +27,13 @@ WHERE
     AND c.deleted_at IS NULL
     AND p.deleted_at IS NULL
     AND p.is_active = TRUE
-    AND (
-        sqlc.arg('Search')::text = ''
+    AND (sqlc.arg('Search')::text = ''
         OR p.name ILIKE '%' || sqlc.arg('Search')::text || '%'
-        OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%'
-    )
+        OR pi.full_name ILIKE '%' || sqlc.arg('Search')::text || '%')
 ORDER BY
     p.name ASC
-LIMIT sqlc.arg('Limit') OFFSET sqlc.arg('Offset');
+LIMIT sqlc.arg('Limit')
+OFFSET sqlc.arg('Offset');
 
 -- name: GetPetByIDAndCompanyID :one
 SELECT
@@ -68,29 +67,10 @@ WHERE
 LIMIT 1;
 
 -- name: CreatePet :one
-INSERT INTO pets (
-    name,
-    size,
-    kind,
-    temperament,
-    image_url,
-    birth_date,
-    owner_id,
-    is_active,
-    notes
-)
-VALUES (
-    sqlc.arg('Name'),
-    sqlc.arg('Size'),
-    sqlc.arg('Kind'),
-    sqlc.arg('Temperament'),
-    sqlc.narg('ImageUrl'),
-    sqlc.narg('BirthDate'),
-    sqlc.arg('OwnerID'),
-    TRUE,
-    sqlc.narg('Notes')
-)
-RETURNING *;
+INSERT INTO pets(name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes)
+    VALUES (sqlc.arg('Name'), sqlc.arg('Size'), sqlc.arg('Kind'), sqlc.arg('Temperament'), sqlc.narg('ImageUrl'), sqlc.narg('BirthDate'), sqlc.arg('OwnerID'), TRUE, sqlc.narg('Notes'))
+RETURNING
+    *;
 
 -- name: UpdatePet :execrows
 UPDATE
@@ -134,5 +114,5 @@ SELECT
             cc.company_id = sqlc.arg('CompanyID')
             AND cc.client_id = sqlc.arg('OwnerID')
             AND cc.is_active = TRUE
-            AND c.deleted_at IS NULL
-    ) AS is_valid;
+            AND c.deleted_at IS NULL) AS is_valid;
+

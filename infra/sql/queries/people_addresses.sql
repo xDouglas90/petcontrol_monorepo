@@ -6,8 +6,8 @@ INSERT INTO people_addresses(person_id, address_id, is_main, label)
 UPDATE
     people_addresses
 SET
-    is_main = COALESCE(sqlc.arg('IsMain'), is_main),
-    label = COALESCE(sqlc.arg('Label'), label),
+    is_main = COALESCE(sqlc.narg('IsMain'), is_main),
+    label = COALESCE(sqlc.narg('Label'), label),
     updated_at = now()
 WHERE
     id = sqlc.arg('ID');

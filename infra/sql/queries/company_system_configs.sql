@@ -6,21 +6,21 @@ INSERT INTO company_system_configs(company_id, schedule_init_time, schedule_paus
 UPDATE
     company_system_configs
 SET
-    schedule_init_time = COALESCE(sqlc.arg('ScheduleInitTime'), schedule_init_time),
-    schedule_pause_init_time = COALESCE(sqlc.arg('SchedulePauseInitTime'), schedule_pause_init_time),
-    schedule_pause_end_time = COALESCE(sqlc.arg('SchedulePauseEndTime'), schedule_pause_end_time),
-    schedule_end_time = COALESCE(sqlc.arg('ScheduleEndTime'), schedule_end_time),
-    min_schedules_per_day = COALESCE(sqlc.arg('MinSchedulesPerDay'), min_schedules_per_day),
-    max_schedules_per_day = COALESCE(sqlc.arg('MaxSchedulesPerDay'), max_schedules_per_day),
-    schedule_days = COALESCE(sqlc.arg('ScheduleDays'), schedule_days),
-    dynamic_cages = COALESCE(sqlc.arg('DynamicCages'), dynamic_cages),
-    total_small_cages = COALESCE(sqlc.arg('TotalSmallCages'), total_small_cages),
-    total_medium_cages = COALESCE(sqlc.arg('TotalMediumCages'), total_medium_cages),
-    total_large_cages = COALESCE(sqlc.arg('TotalLargeCages'), total_large_cages),
-    total_giant_cages = COALESCE(sqlc.arg('TotalGiantCages'), total_giant_cages),
-    whatsapp_notifications = COALESCE(sqlc.arg('WhatsappNotifications'), whatsapp_notifications),
-    whatsapp_conversation = COALESCE(sqlc.arg('WhatsappConversation'), whatsapp_conversation),
-    whatsapp_business_phone = COALESCE(sqlc.arg('WhatsappBusinessPhone'), whatsapp_business_phone)
+    schedule_init_time = COALESCE(sqlc.narg('ScheduleInitTime'), schedule_init_time),
+    schedule_pause_init_time = COALESCE(sqlc.narg('SchedulePauseInitTime'), schedule_pause_init_time),
+    schedule_pause_end_time = COALESCE(sqlc.narg('SchedulePauseEndTime'), schedule_pause_end_time),
+    schedule_end_time = COALESCE(sqlc.narg('ScheduleEndTime'), schedule_end_time),
+    min_schedules_per_day = COALESCE(sqlc.narg('MinSchedulesPerDay'), min_schedules_per_day),
+    max_schedules_per_day = COALESCE(sqlc.narg('MaxSchedulesPerDay'), max_schedules_per_day),
+    schedule_days = COALESCE(sqlc.narg('ScheduleDays'), schedule_days),
+    dynamic_cages = COALESCE(sqlc.narg('DynamicCages'), dynamic_cages),
+    total_small_cages = COALESCE(sqlc.narg('TotalSmallCages'), total_small_cages),
+    total_medium_cages = COALESCE(sqlc.narg('TotalMediumCages'), total_medium_cages),
+    total_large_cages = COALESCE(sqlc.narg('TotalLargeCages'), total_large_cages),
+    total_giant_cages = COALESCE(sqlc.narg('TotalGiantCages'), total_giant_cages),
+    whatsapp_notifications = COALESCE(sqlc.narg('WhatsappNotifications'), whatsapp_notifications),
+    whatsapp_conversation = COALESCE(sqlc.narg('WhatsappConversation'), whatsapp_conversation),
+    whatsapp_business_phone = COALESCE(sqlc.narg('WhatsappBusinessPhone'), whatsapp_business_phone)
 WHERE
     company_id = sqlc.arg('CompanyID');
 
