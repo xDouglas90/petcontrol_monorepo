@@ -54,10 +54,10 @@ func TestQueries_ServiceTypes_Unit(t *testing.T) {
 	t.Run("DeleteServiceType - Success", func(t *testing.T) {
 		id := pgtype.UUID{Bytes: [16]byte{1}, Valid: true}
 
-			mock.ExpectQuery("UPDATE service_types SET deleted_at").
-				WithArgs(id).
-				WillReturnRows(pgxmock.NewRows([]string{"id", "name", "description", "created_at", "updated_at", "deleted_at"}).
-					AddRow(id, "Deleted", pgtype.Text{}, nil, nil, pgtype.Timestamptz{Valid: true}))
+		mock.ExpectQuery("UPDATE service_types SET deleted_at").
+			WithArgs(id).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "name", "description", "created_at", "updated_at", "deleted_at"}).
+				AddRow(id, "Deleted", pgtype.Text{}, nil, nil, pgtype.Timestamptz{Valid: true}))
 
 		res, err := queries.DeleteServiceType(ctx, id)
 		require.NoError(t, err)

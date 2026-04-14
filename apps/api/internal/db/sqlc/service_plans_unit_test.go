@@ -57,10 +57,10 @@ func TestQueries_ServicePlans_Unit(t *testing.T) {
 	t.Run("DeleteServicePlan - Success", func(t *testing.T) {
 		id := pgtype.UUID{Bytes: [16]byte{1}, Valid: true}
 
-			mock.ExpectQuery("UPDATE service_plans SET deleted_at").
-				WithArgs(id).
-				WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "title", "description", "notes", "price", "discount_rate", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
-					AddRow(id, pgtype.UUID{}, "Deleted", "", nil, nil, nil, nil, false, nil, nil, pgtype.Timestamptz{Valid: true}))
+		mock.ExpectQuery("UPDATE service_plans SET deleted_at").
+			WithArgs(id).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "plan_type_id", "title", "description", "notes", "price", "discount_rate", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
+				AddRow(id, pgtype.UUID{}, "Deleted", "", nil, nil, nil, nil, false, nil, nil, pgtype.Timestamptz{Valid: true}))
 
 		res, err := queries.DeleteServicePlan(ctx, id)
 		require.NoError(t, err)

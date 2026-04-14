@@ -1,0 +1,14 @@
+
+# Lint Go files (se alvo existir)
+if [ -f "apps/api/Makefile" ] && grep -q '^lint-go:' apps/api/Makefile; then
+  (cd apps/api && make lint-go) || { echo "Go lint failed"; exit 1; }
+else
+  echo "Alvo lint-go não encontrado, pulando lint Go."
+fi
+
+# Lint Web files
+if [ -f "apps/web/package.json" ]; then
+  (cd apps/web && pnpm lint) || { echo "Web lint failed"; exit 1; }
+else
+  echo "Web não encontrado, pulando lint Web."
+fi

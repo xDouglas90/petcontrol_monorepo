@@ -61,10 +61,10 @@ func TestQueries_CompanyProducts_Unit(t *testing.T) {
 			CompanyID: pgtype.UUID{Bytes: [16]byte{1}, Valid: true},
 		}
 
-			mock.ExpectQuery("UPDATE company_products SET deleted_at").
-				WithArgs(arg.ID, arg.CompanyID).
-				WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "product_id", "kind", "has_stock", "for_sale", "cost_per_unit", "profit_margin", "sale_price", "created_at", "updated_at", "deleted_at"}).
-					AddRow(arg.ID, arg.CompanyID, pgtype.UUID{}, ProductKindService, true, true, pgtype.Numeric{Valid: true}, pgtype.Numeric{Valid: true}, pgtype.Numeric{Valid: true}, nil, nil, pgtype.Timestamptz{Valid: true}))
+		mock.ExpectQuery("UPDATE company_products SET deleted_at").
+			WithArgs(arg.ID, arg.CompanyID).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "product_id", "kind", "has_stock", "for_sale", "cost_per_unit", "profit_margin", "sale_price", "created_at", "updated_at", "deleted_at"}).
+				AddRow(arg.ID, arg.CompanyID, pgtype.UUID{}, ProductKindService, true, true, pgtype.Numeric{Valid: true}, pgtype.Numeric{Valid: true}, pgtype.Numeric{Valid: true}, nil, nil, pgtype.Timestamptz{Valid: true}))
 
 		res, err := queries.DeleteCompanyProduct(ctx, arg)
 		require.NoError(t, err)
