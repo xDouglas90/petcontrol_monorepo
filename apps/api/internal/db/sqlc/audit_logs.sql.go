@@ -13,28 +13,8 @@ import (
 )
 
 const insertAuditLog = `-- name: InsertAuditLog :exec
-INSERT INTO audit_logs (
-    action,
-    entity_table,
-    entity_id,
-    company_id,
-    old_data,
-    new_data,
-    changed_by,
-    ip_address,
-    user_agent
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9
-)
+INSERT INTO audit_logs(action, entity_table, entity_id, company_id, old_data, new_data, changed_by, ip_address, user_agent)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type InsertAuditLogParams struct {

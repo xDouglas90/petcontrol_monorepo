@@ -12,17 +12,10 @@ import (
 )
 
 const createCompanyService = `-- name: CreateCompanyService :one
-INSERT INTO company_services (
-    company_id,
-    service_id,
-    is_active
-)
-VALUES (
-    $1,
-    $2,
-    TRUE
-)
-RETURNING id, company_id, service_id, is_active, created_at, updated_at
+INSERT INTO company_services(company_id, service_id, is_active)
+    VALUES ($1, $2, TRUE)
+RETURNING
+    id, company_id, service_id, is_active, created_at, updated_at
 `
 
 type CreateCompanyServiceParams struct {
@@ -44,80 +37,11 @@ func (q *Queries) CreateCompanyService(ctx context.Context, arg CreateCompanySer
 	return i, err
 }
 
-const createService = `-- name: CreateService :one
-INSERT INTO services (
-    type_id,
-    title,
-    description,
-    notes,
-    price,
-    discount_rate,
-    image_url,
-    is_active
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8
-)
-RETURNING id, type_id, title, description, notes, price, discount_rate, image_url, is_active, created_at, updated_at, deleted_at
-`
-
-type CreateServiceParams struct {
-	TypeID       pgtype.UUID    `db:"TypeID" json:"TypeID"`
-	Title        string         `db:"Title" json:"Title"`
-	Description  string         `db:"Description" json:"Description"`
-	Notes        pgtype.Text    `db:"Notes" json:"Notes"`
-	Price        pgtype.Numeric `db:"Price" json:"Price"`
-	DiscountRate pgtype.Numeric `db:"DiscountRate" json:"DiscountRate"`
-	ImageURL     pgtype.Text    `db:"ImageURL" json:"ImageURL"`
-	IsActive     bool           `db:"IsActive" json:"IsActive"`
-}
-
-func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (Service, error) {
-	row := q.db.QueryRow(ctx, createService,
-		arg.TypeID,
-		arg.Title,
-		arg.Description,
-		arg.Notes,
-		arg.Price,
-		arg.DiscountRate,
-		arg.ImageURL,
-		arg.IsActive,
-	)
-	var i Service
-	err := row.Scan(
-		&i.ID,
-		&i.TypeID,
-		&i.Title,
-		&i.Description,
-		&i.Notes,
-		&i.Price,
-		&i.DiscountRate,
-		&i.ImageUrl,
-		&i.IsActive,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
 const createServiceType = `-- name: CreateServiceType :one
-INSERT INTO service_types (
-    name,
-    description
-)
-VALUES (
-    $1,
-    $2
-)
-RETURNING id, name, description, created_at, updated_at, deleted_at
+INSERT INTO service_types(name, description)
+    VALUES ($1, $2)
+RETURNING
+    id, name, description, created_at, updated_at, deleted_at
 `
 
 type CreateServiceTypeParams struct {
@@ -139,7 +63,7 @@ func (q *Queries) CreateServiceType(ctx context.Context, arg CreateServiceTypePa
 	return i, err
 }
 
-const deactivateCompanyService = `-- name: DeactivateCompanyService :execrows
+const deactivateCompanyService = `-- name: DeactivateCompanyService :one
 UPDATE
     company_services
 SET
@@ -149,6 +73,8 @@ WHERE
     company_id = $1
     AND service_id = $2
     AND is_active = TRUE
+RETURNING
+    id, company_id, service_id, is_active, created_at, updated_at
 `
 
 type DeactivateCompanyServiceParams struct {
@@ -156,12 +82,18 @@ type DeactivateCompanyServiceParams struct {
 	ServiceID pgtype.UUID `db:"ServiceID" json:"ServiceID"`
 }
 
-func (q *Queries) DeactivateCompanyService(ctx context.Context, arg DeactivateCompanyServiceParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deactivateCompanyService, arg.CompanyID, arg.ServiceID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+func (q *Queries) DeactivateCompanyService(ctx context.Context, arg DeactivateCompanyServiceParams) (CompanyService, error) {
+	row := q.db.QueryRow(ctx, deactivateCompanyService, arg.CompanyID, arg.ServiceID)
+	var i CompanyService
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.ServiceID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const findServiceTypeByName = `-- name: FindServiceTypeByName :one
@@ -255,9 +187,56 @@ func (q *Queries) GetServiceByIDAndCompanyID(ctx context.Context, arg GetService
 	return i, err
 }
 
+const insertService = `-- name: InsertService :one
+INSERT INTO services(type_id, title, description, notes, price, discount_rate, image_url, is_active)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING
+    id, type_id, title, description, notes, price, discount_rate, image_url, is_active, created_at, updated_at, deleted_at
+`
+
+type InsertServiceParams struct {
+	TypeID       pgtype.UUID    `db:"TypeID" json:"TypeID"`
+	Title        string         `db:"Title" json:"Title"`
+	Description  string         `db:"Description" json:"Description"`
+	Notes        pgtype.Text    `db:"Notes" json:"Notes"`
+	Price        pgtype.Numeric `db:"Price" json:"Price"`
+	DiscountRate pgtype.Numeric `db:"DiscountRate" json:"DiscountRate"`
+	ImageURL     pgtype.Text    `db:"ImageURL" json:"ImageURL"`
+	IsActive     bool           `db:"IsActive" json:"IsActive"`
+}
+
+func (q *Queries) InsertService(ctx context.Context, arg InsertServiceParams) (Service, error) {
+	row := q.db.QueryRow(ctx, insertService,
+		arg.TypeID,
+		arg.Title,
+		arg.Description,
+		arg.Notes,
+		arg.Price,
+		arg.DiscountRate,
+		arg.ImageURL,
+		arg.IsActive,
+	)
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.Title,
+		&i.Description,
+		&i.Notes,
+		&i.Price,
+		&i.DiscountRate,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const listServicesByCompanyID = `-- name: ListServicesByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     s.id,
     s.type_id,
     st.name AS type_name,
@@ -277,14 +256,13 @@ WHERE
     AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
-    AND (
-        $2::text = ''
+    AND ($2::text = ''
         OR s.title ILIKE '%' || $2::text || '%'
-        OR s.description ILIKE '%' || $2::text || '%'
-    )
+        OR s.description ILIKE '%' || $2::text || '%')
 ORDER BY
     s.title ASC
-LIMIT $4 OFFSET $3
+LIMIT $4
+OFFSET $3
 `
 
 type ListServicesByCompanyIDParams struct {
@@ -345,7 +323,7 @@ func (q *Queries) ListServicesByCompanyID(ctx context.Context, arg ListServicesB
 	return items, nil
 }
 
-const updateServiceByIDAndCompanyID = `-- name: UpdateServiceByIDAndCompanyID :execrows
+const updateServiceByIDAndCompanyID = `-- name: UpdateServiceByIDAndCompanyID :one
 UPDATE
     services s
 SET
@@ -366,6 +344,8 @@ WHERE
     AND cs.company_id = $10
     AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
+RETURNING
+    s.id, s.type_id, s.title, s.description, s.notes, s.price, s.discount_rate, s.image_url, s.is_active, s.created_at, s.updated_at, s.deleted_at
 `
 
 type UpdateServiceByIDAndCompanyIDParams struct {
@@ -381,8 +361,8 @@ type UpdateServiceByIDAndCompanyIDParams struct {
 	CompanyID    pgtype.UUID    `db:"CompanyID" json:"CompanyID"`
 }
 
-func (q *Queries) UpdateServiceByIDAndCompanyID(ctx context.Context, arg UpdateServiceByIDAndCompanyIDParams) (int64, error) {
-	result, err := q.db.Exec(ctx, updateServiceByIDAndCompanyID,
+func (q *Queries) UpdateServiceByIDAndCompanyID(ctx context.Context, arg UpdateServiceByIDAndCompanyIDParams) (Service, error) {
+	row := q.db.QueryRow(ctx, updateServiceByIDAndCompanyID,
 		arg.TypeID,
 		arg.Title,
 		arg.Description,
@@ -394,10 +374,22 @@ func (q *Queries) UpdateServiceByIDAndCompanyID(ctx context.Context, arg UpdateS
 		arg.ID,
 		arg.CompanyID,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.Title,
+		&i.Description,
+		&i.Notes,
+		&i.Price,
+		&i.DiscountRate,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const validateServiceByIDAndCompanyID = `-- name: ValidateServiceByIDAndCompanyID :one
@@ -412,8 +404,7 @@ SELECT
             cs.company_id = $1
             AND cs.service_id = $2
             AND cs.is_active = TRUE
-            AND s.deleted_at IS NULL
-    ) AS is_valid
+            AND s.deleted_at IS NULL) AS is_valid
 `
 
 type ValidateServiceByIDAndCompanyIDParams struct {

@@ -12,24 +12,24 @@ import (
 )
 
 const createCompanyUser = `-- name: CreateCompanyUser :one
-INSERT INTO company_users(company_id, user_id, is_owner, is_active)
+INSERT INTO company_users(company_id, user_id, kind, is_active)
     VALUES ($1, $2, $3, $4)
 RETURNING
-    id, company_id, user_id, is_owner, is_active, joined_at, left_at
+    id, company_id, user_id, kind, is_active, created_at, updated_at, deleted_at
 `
 
 type CreateCompanyUserParams struct {
-	CompanyID pgtype.UUID `db:"company_id" json:"company_id"`
-	UserID    pgtype.UUID `db:"user_id" json:"user_id"`
-	IsOwner   bool        `db:"is_owner" json:"is_owner"`
-	IsActive  bool        `db:"is_active" json:"is_active"`
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	UserID    pgtype.UUID `db:"UserID" json:"UserID"`
+	Kind      UserKind    `db:"Kind" json:"Kind"`
+	IsActive  pgtype.Bool `db:"IsActive" json:"IsActive"`
 }
 
 func (q *Queries) CreateCompanyUser(ctx context.Context, arg CreateCompanyUserParams) (CompanyUser, error) {
 	row := q.db.QueryRow(ctx, createCompanyUser,
 		arg.CompanyID,
 		arg.UserID,
-		arg.IsOwner,
+		arg.Kind,
 		arg.IsActive,
 	)
 	var i CompanyUser
@@ -37,10 +37,11 @@ func (q *Queries) CreateCompanyUser(ctx context.Context, arg CreateCompanyUserPa
 		&i.ID,
 		&i.CompanyID,
 		&i.UserID,
-		&i.IsOwner,
+		&i.Kind,
 		&i.IsActive,
-		&i.JoinedAt,
-		&i.LeftAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -50,7 +51,7 @@ UPDATE
     company_users
 SET
     is_active = FALSE,
-    left_at = now()
+    deleted_at = now()
 WHERE
     company_id = $1
     AND user_id = $2
@@ -71,18 +72,19 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
-    cu.is_owner,
+    cu.kind,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
     cu.user_id = $1
     AND cu.is_active = TRUE
 ORDER BY
-    cu.is_owner DESC,
-    cu.joined_at ASC
+    cu.kind DESC,
+    cu.created_at ASC
 LIMIT 1
 `
 
@@ -93,10 +95,11 @@ func (q *Queries) GetActiveCompanyUserByUserID(ctx context.Context, userid pgtyp
 		&i.ID,
 		&i.CompanyID,
 		&i.UserID,
-		&i.IsOwner,
+		&i.Kind,
 		&i.IsActive,
-		&i.JoinedAt,
-		&i.LeftAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -106,10 +109,11 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
-    cu.is_owner,
+    cu.kind,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
@@ -130,10 +134,11 @@ func (q *Queries) GetCompanyUser(ctx context.Context, arg GetCompanyUserParams) 
 		&i.ID,
 		&i.CompanyID,
 		&i.UserID,
-		&i.IsOwner,
+		&i.Kind,
 		&i.IsActive,
-		&i.JoinedAt,
-		&i.LeftAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -143,10 +148,11 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
-    cu.is_owner,
+    cu.kind,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
@@ -161,10 +167,11 @@ func (q *Queries) GetCompanyUserByID(ctx context.Context, id pgtype.UUID) (Compa
 		&i.ID,
 		&i.CompanyID,
 		&i.UserID,
-		&i.IsOwner,
+		&i.Kind,
 		&i.IsActive,
-		&i.JoinedAt,
-		&i.LeftAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -174,17 +181,18 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
-    cu.is_owner,
+    cu.kind,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
     cu.company_id = $1
     AND cu.is_active = TRUE
 ORDER BY
-    cu.joined_at DESC
+    cu.created_at DESC
 `
 
 func (q *Queries) ListCompanyUsersByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]CompanyUser, error) {
@@ -200,10 +208,74 @@ func (q *Queries) ListCompanyUsersByCompanyID(ctx context.Context, companyid pgt
 			&i.ID,
 			&i.CompanyID,
 			&i.UserID,
-			&i.IsOwner,
+			&i.Kind,
 			&i.IsActive,
-			&i.JoinedAt,
-			&i.LeftAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCompanyUsersByKind = `-- name: ListCompanyUsersByKind :many
+SELECT
+    cu.id,
+    cu.company_id,
+    cu.user_id,
+    cu.kind,
+    cu.is_active,
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
+FROM
+    company_users cu
+WHERE
+    cu.company_id = $1
+    AND cu.kind = $2
+    AND cu.is_active = TRUE
+ORDER BY
+    cu.created_at DESC
+LIMIT $4
+OFFSET $3
+`
+
+type ListCompanyUsersByKindParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	Kind      UserKind    `db:"Kind" json:"Kind"`
+	Offset    int32       `db:"Offset" json:"Offset"`
+	Limit     int32       `db:"Limit" json:"Limit"`
+}
+
+func (q *Queries) ListCompanyUsersByKind(ctx context.Context, arg ListCompanyUsersByKindParams) ([]CompanyUser, error) {
+	rows, err := q.db.Query(ctx, listCompanyUsersByKind,
+		arg.CompanyID,
+		arg.Kind,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CompanyUser
+	for rows.Next() {
+		var i CompanyUser
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.UserID,
+			&i.Kind,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

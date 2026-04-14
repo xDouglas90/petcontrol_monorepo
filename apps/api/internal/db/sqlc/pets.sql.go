@@ -12,29 +12,10 @@ import (
 )
 
 const createPet = `-- name: CreatePet :one
-INSERT INTO pets (
-    name,
-    size,
-    kind,
-    temperament,
-    image_url,
-    birth_date,
-    owner_id,
-    is_active,
-    notes
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    TRUE,
-    $8
-)
-RETURNING id, name, size, kind, temperament, image_url, birth_date, owner_id, guardian_id, is_active, notes, created_at, updated_at, deleted_at
+INSERT INTO pets(name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8)
+RETURNING
+    id, name, size, kind, temperament, image_url, birth_date, owner_id, guardian_id, is_active, notes, created_at, updated_at, deleted_at
 `
 
 type CreatePetParams struct {
@@ -180,7 +161,7 @@ func (q *Queries) GetPetByIDAndCompanyID(ctx context.Context, arg GetPetByIDAndC
 
 const listPetsByCompanyID = `-- name: ListPetsByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     p.id,
     p.owner_id,
     cc.company_id,
@@ -207,14 +188,13 @@ WHERE
     AND c.deleted_at IS NULL
     AND p.deleted_at IS NULL
     AND p.is_active = TRUE
-    AND (
-        $2::text = ''
+    AND ($2::text = ''
         OR p.name ILIKE '%' || $2::text || '%'
-        OR pi.full_name ILIKE '%' || $2::text || '%'
-    )
+        OR pi.full_name ILIKE '%' || $2::text || '%')
 ORDER BY
     p.name ASC
-LIMIT $4 OFFSET $3
+LIMIT $4
+OFFSET $3
 `
 
 type ListPetsByCompanyIDParams struct {
@@ -346,8 +326,7 @@ SELECT
             cc.company_id = $1
             AND cc.client_id = $2
             AND cc.is_active = TRUE
-            AND c.deleted_at IS NULL
-    ) AS is_valid
+            AND c.deleted_at IS NULL) AS is_valid
 `
 
 type ValidatePetOwnerByCompanyParams struct {

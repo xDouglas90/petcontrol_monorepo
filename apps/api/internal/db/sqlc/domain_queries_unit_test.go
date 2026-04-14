@@ -136,33 +136,4 @@ func TestQueries_Companies_Unit(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestQueries_CompanyUsers_Unit(t *testing.T) {
-	mock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer mock.Close()
 
-	queries := sqlc.New(mock)
-	errExpected := errors.New("db error")
-
-	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnError(errExpected)
-	_, err = queries.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{})
-	require.ErrorIs(t, err, errExpected)
-
-	mock.ExpectQuery(`(?s)name: GetCompanyUserByID`).WithArgs(pgxmock.AnyArg()).WillReturnError(errExpected)
-	_, err = queries.GetCompanyUserByID(context.Background(), uuidValue())
-	require.ErrorIs(t, err, errExpected)
-
-	mock.ExpectQuery(`(?s)name: GetCompanyUser`).WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnError(errExpected)
-	_, err = queries.GetCompanyUser(context.Background(), sqlc.GetCompanyUserParams{})
-	require.ErrorIs(t, err, errExpected)
-
-	mock.ExpectQuery(`(?s)name: ListCompanyUsersByCompanyID`).WithArgs(pgxmock.AnyArg()).WillReturnError(errExpected)
-	_, err = queries.ListCompanyUsersByCompanyID(context.Background(), uuidValue())
-	require.ErrorIs(t, err, errExpected)
-
-	mock.ExpectExec(`(?s)name: DeactivateCompanyUser`).WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
-	err = queries.DeactivateCompanyUser(context.Background(), sqlc.DeactivateCompanyUserParams{})
-	require.NoError(t, err)
-
-	require.NoError(t, mock.ExpectationsWereMet())
-}

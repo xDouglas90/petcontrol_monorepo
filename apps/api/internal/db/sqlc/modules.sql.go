@@ -120,8 +120,6 @@ FROM
 WHERE
     cm.company_id = $1
     AND cm.is_active = TRUE
-    AND (cm.expires_at IS NULL
-        OR cm.expires_at > now())
     AND m.is_active = TRUE
     AND m.deleted_at IS NULL
 ORDER BY

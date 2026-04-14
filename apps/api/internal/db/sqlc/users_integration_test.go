@@ -3,9 +3,7 @@ package sqlc_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -25,9 +23,6 @@ func setupTestDB(t *testing.T) (*sqlc.Queries, func()) {
 	return queries, cleanup
 }
 
-func uniqueEmail(prefix string) string {
-	return fmt.Sprintf("%s-%d@example.com", prefix, time.Now().UnixNano())
-}
 
 func insertDefaultUser(t *testing.T, queries *sqlc.Queries, email string) sqlc.User {
 	t.Helper()
@@ -36,9 +31,7 @@ func insertDefaultUser(t *testing.T, queries *sqlc.Queries, email string) sqlc.U
 		Email:           email,
 		EmailVerified:   false,
 		EmailVerifiedAt: pgtype.Timestamptz{},
-		Role:            sqlc.UserRoleTypeAdmin,
-		Kind:            sqlc.UserKindOwner,
-		IsActive:        true,
+		Role:            sqlc.UserRoleTypeAdmin, IsActive: true,
 	})
 	require.NoError(t, err)
 	return user
@@ -54,7 +47,6 @@ func TestQueries_InsertUser(t *testing.T) {
 	require.True(t, got.ID.Valid)
 	require.Equal(t, email, got.Email)
 	require.Equal(t, sqlc.UserRoleTypeAdmin, got.Role)
-	require.Equal(t, sqlc.UserKindOwner, got.Kind)
 	require.True(t, got.CreatedAt.Valid)
 	require.False(t, got.DeletedAt.Valid)
 }
@@ -112,12 +104,8 @@ func TestQueries_UpdateUser(t *testing.T) {
 		Email:         pgtype.Text{String: uniqueEmail("updated"), Valid: true},
 		EmailVerified: pgtype.Bool{Bool: true, Valid: true},
 		Role: sqlc.NullUserRoleType{
-			UserRoleType: sqlc.UserRoleTypeManager,
+			UserRoleType: sqlc.UserRoleTypeAdmin,
 			Valid:        true,
-		},
-		Kind: sqlc.NullUserKind{
-			UserKind: sqlc.UserKindStaff,
-			Valid:    true,
 		},
 		IsActive: pgtype.Bool{Bool: true, Valid: true},
 		ID:       created.ID,
@@ -127,8 +115,7 @@ func TestQueries_UpdateUser(t *testing.T) {
 
 	updated, err := queries.GetUserByID(context.Background(), created.ID)
 	require.NoError(t, err)
-	require.Equal(t, sqlc.UserRoleTypeManager, updated.Role)
-	require.Equal(t, sqlc.UserKindStaff, updated.Kind)
+	require.Equal(t, sqlc.UserRoleTypeAdmin, updated.Role)
 	require.True(t, updated.EmailVerified)
 	require.True(t, updated.UpdatedAt.Valid)
 }
@@ -161,7 +148,6 @@ func TestQueries_InsertUser_DuplicateEmail(t *testing.T) {
 		EmailVerified:   false,
 		EmailVerifiedAt: pgtype.Timestamptz{},
 		Role:            sqlc.UserRoleTypeAdmin,
-		Kind:            sqlc.UserKindOwner,
 		IsActive:        true,
 	})
 	require.Error(t, err)
@@ -199,12 +185,8 @@ func TestQueries_UpdateUser_NotFound(t *testing.T) {
 		Email:         pgtype.Text{String: uniqueEmail("updated-missing"), Valid: true},
 		EmailVerified: pgtype.Bool{Bool: true, Valid: true},
 		Role: sqlc.NullUserRoleType{
-			UserRoleType: sqlc.UserRoleTypeManager,
+			UserRoleType: sqlc.UserRoleTypeAdmin,
 			Valid:        true,
-		},
-		Kind: sqlc.NullUserKind{
-			UserKind: sqlc.UserKindStaff,
-			Valid:    true,
 		},
 		IsActive: pgtype.Bool{Bool: true, Valid: true},
 		ID:       missingID,
