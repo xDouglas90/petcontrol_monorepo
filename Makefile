@@ -41,6 +41,7 @@ WORKER_COVERAGE_PACKAGES := ./internal/config ./internal/queue ./internal/whatsa
 	coverage \
 	coverage-api \
 	coverage-worker
+	db-reset
 
 dev-api:
 	cd $(API_DIR) && \
@@ -170,3 +171,8 @@ migrate-create:
 
 seed:
 	DATABASE_URL="$(DATABASE_URL)" $(SCRIPTS_DIR)/seed.sh
+
+db-reset:
+	@$(MAKE) migrate-down DATABASE_URL="$(DATABASE_URL)"
+	@$(MAKE) migrate-up DATABASE_URL="$(DATABASE_URL)"
+	@$(MAKE) seed DATABASE_URL="$(DATABASE_URL)"
