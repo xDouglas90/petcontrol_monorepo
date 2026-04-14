@@ -1,7 +1,6 @@
 package sqlc_test
 
 import (
-
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -9,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 )
-
-
 
 func TestQueries_CompanyServices_Integration(t *testing.T) {
 	queries, ctx, pool := setupQueriesWithPool(t)

@@ -1,7 +1,6 @@
 package sqlc_test
 
 import (
-
 	"net/netip"
 	"testing"
 	"time"
@@ -23,7 +22,7 @@ func TestQueries_UserSessions_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	var loginHistID pgtype.UUID
-	err = pool.QueryRow(ctx, 
+	err = pool.QueryRow(ctx,
 		"INSERT INTO login_history(user_id, ip_address, user_agent, result) VALUES ($1, $2, $3, $4) RETURNING id",
 		user.ID, "127.0.0.1", "TestAgent", sqlc.LoginResultSuccess,
 	).Scan(&loginHistID)
@@ -32,7 +31,7 @@ func TestQueries_UserSessions_Integration(t *testing.T) {
 	t.Run("InsertAndGetSessionByToken", func(t *testing.T) {
 		token := "session-token-123"
 		expiresAt := time.Now().Add(24 * time.Hour).Round(time.Microsecond)
-		
+
 		_, err := queries.InsertUserSession(ctx, sqlc.InsertUserSessionParams{
 			UserID:         user.ID,
 			LoginHistoryID: loginHistID,
@@ -57,7 +56,7 @@ func TestQueries_UserSessions_Integration(t *testing.T) {
 		tokenLoggedOut := "logged-out-token"
 
 		now := time.Now()
-		
+
 		// Active
 		_, _ = queries.InsertUserSession(ctx, sqlc.InsertUserSessionParams{
 			UserID: user.ID, LoginHistoryID: loginHistID, SessionToken: tokenActive,
@@ -86,7 +85,7 @@ func TestQueries_UserSessions_Integration(t *testing.T) {
 
 		activeSessions, err := queries.GetActiveUserSessionsByUserID(ctx, user.ID)
 		require.NoError(t, err)
-		
+
 		// Should find tokenActive and the one from the previous subtest if it's still alive
 		foundActive := false
 		for _, s := range activeSessions {

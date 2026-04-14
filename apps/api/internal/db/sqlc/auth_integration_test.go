@@ -1,7 +1,6 @@
 package sqlc_test
 
 import (
-
 	"net/netip"
 	"testing"
 	"time"
@@ -83,8 +82,8 @@ func TestQueries_Auth_Integration(t *testing.T) {
 		err := queries.InsertLoginHistory(ctx, arg)
 		require.NoError(t, err)
 
-		// We don't have a GetLoginHistoryByUserID in auth.sql.go yet, 
-		// but we can verify it doesn't fail. 
+		// We don't have a GetLoginHistoryByUserID in auth.sql.go yet,
+		// but we can verify it doesn't fail.
 		// In a real scenario, we'd check the DB directly if needed.
 	})
 }

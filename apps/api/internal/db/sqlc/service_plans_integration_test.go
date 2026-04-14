@@ -9,7 +9,6 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 )
 
-
 func TestQueries_ServicePlans_Integration(t *testing.T) {
 	queries, ctx, _ := setupQueriesWithPool(t)
 

@@ -72,7 +72,7 @@ func TestQueries_EmailVerificationTokens_Unit(t *testing.T) {
 		userID := uuidValue()
 		mock.ExpectQuery(`(?s)name: ListActiveEmailVerificationTokensByUserID`).
 			WithArgs(userID, int32(0), int32(10)).
-				WillReturnRows(pgxmock.NewRows([]string{"id", "user_id", "token_hash", "email", "expires_at", "used_at", "revoked_at", "request_ip", "request_user_agent", "consumed_ip", "consumed_user_agent"}).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "user_id", "token_hash", "email", "expires_at", "used_at", "revoked_at", "request_ip", "request_user_agent", "consumed_ip", "consumed_user_agent"}).
 				AddRow(uuidValue(), userID, "hash", "test@example.com", pgtype.Timestamptz{Time: time.Now().Add(time.Hour), Valid: true}, pgtype.Timestamptz{}, pgtype.Timestamptz{}, nil, pgtype.Text{}, nil, pgtype.Text{}))
 
 		res, err := queries.ListActiveEmailVerificationTokensByUserID(ctx, sqlc.ListActiveEmailVerificationTokensByUserIDParams{

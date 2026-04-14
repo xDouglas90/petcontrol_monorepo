@@ -23,7 +23,7 @@ func TestQueries_EmailVerificationTokens_Integration(t *testing.T) {
 	t.Run("Lifecycle", func(t *testing.T) {
 		hash := "email-secret-hash"
 		ip := netip.MustParseAddr("10.0.0.1")
-		
+
 		_, err := queries.InsertEmailVerificationToken(ctx, sqlc.InsertEmailVerificationTokenParams{
 			UserID:           user.ID,
 			TokenHash:        hash,

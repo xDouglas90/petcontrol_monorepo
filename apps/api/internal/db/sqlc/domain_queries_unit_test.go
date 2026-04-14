@@ -135,5 +135,3 @@ func TestQueries_Companies_Unit(t *testing.T) {
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
-
-

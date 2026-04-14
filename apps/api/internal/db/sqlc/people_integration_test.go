@@ -99,7 +99,7 @@ func TestQueries_People_Integration(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, list)
-		
+
 		// Find our person in the list
 		found := false
 		for _, p := range list {

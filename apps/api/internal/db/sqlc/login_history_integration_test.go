@@ -1,7 +1,6 @@
 package sqlc_test
 
 import (
-
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -20,11 +19,11 @@ func TestQueries_LoginHistory_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Helper to insert directly and return ID if needed, 
+	// Helper to insert directly and return ID if needed,
 	// but login_history has uuid default so we scan it.
 	insertAndGetID := func(result sqlc.LoginResult) pgtype.UUID {
 		var id pgtype.UUID
-		err := pool.QueryRow(ctx, 
+		err := pool.QueryRow(ctx,
 			"INSERT INTO login_history(user_id, ip_address, user_agent, result) VALUES ($1, $2, $3, $4) RETURNING id",
 			user.ID, "127.0.0.1", "TestAgent", result,
 		).Scan(&id)
@@ -34,7 +33,7 @@ func TestQueries_LoginHistory_Integration(t *testing.T) {
 
 	t.Run("GetLoginHistoryByID", func(t *testing.T) {
 		id := insertAndGetID(sqlc.LoginResultSuccess)
-		
+
 		res, err := queries.GetLoginHistoryByID(ctx, id)
 		require.NoError(t, err)
 		require.Equal(t, id, res.ID)

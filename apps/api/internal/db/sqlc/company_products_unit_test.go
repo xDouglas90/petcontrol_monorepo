@@ -19,11 +19,11 @@ func TestQueries_CompanyProducts_Unit(t *testing.T) {
 
 	t.Run("InsertCompanyProduct - Success", func(t *testing.T) {
 		arg := InsertCompanyProductParams{
-			CompanyID:    pgtype.UUID{Bytes: [16]byte{1}, Valid: true},
-			ProductID:    pgtype.UUID{Bytes: [16]byte{2}, Valid: true},
-			Kind:         ProductKindService,
-			CostPerUnit:  pgtype.Numeric{Valid: true},
-			SalePrice:    pgtype.Numeric{Valid: true},
+			CompanyID:   pgtype.UUID{Bytes: [16]byte{1}, Valid: true},
+			ProductID:   pgtype.UUID{Bytes: [16]byte{2}, Valid: true},
+			Kind:        ProductKindService,
+			CostPerUnit: pgtype.Numeric{Valid: true},
+			SalePrice:   pgtype.Numeric{Valid: true},
 		}
 
 		mock.ExpectQuery("INSERT INTO company_products").

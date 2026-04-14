@@ -105,11 +105,11 @@ func TestQueries_UserSessions_Unit(t *testing.T) {
 		rows, err := queries.UpdateUserSession(ctx, arg)
 		require.NoError(t, err)
 		require.EqualValues(t, 1, rows)
-		
+
 		mock.ExpectExec(`(?s)name: UpdateUserSession`).
 			WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 			WillReturnError(errExpected)
-			
+
 		_, err = queries.UpdateUserSession(ctx, arg)
 		require.ErrorIs(t, err, errExpected)
 	})

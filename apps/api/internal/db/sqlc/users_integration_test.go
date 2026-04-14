@@ -23,7 +23,6 @@ func setupTestDB(t *testing.T) (*sqlc.Queries, func()) {
 	return queries, cleanup
 }
 
-
 func insertDefaultUser(t *testing.T, queries *sqlc.Queries, email string) sqlc.User {
 	t.Helper()
 

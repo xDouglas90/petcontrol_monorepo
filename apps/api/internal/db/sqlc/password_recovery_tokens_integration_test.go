@@ -22,7 +22,7 @@ func TestQueries_PasswordRecoveryTokens_Integration(t *testing.T) {
 	t.Run("Lifecycle", func(t *testing.T) {
 		hash := "secret-hash-123"
 		expiresAt := time.Now().Add(1 * time.Hour).Round(time.Microsecond)
-		
+
 		_, err := queries.InsertPasswordRecoveryToken(ctx, sqlc.InsertPasswordRecoveryTokenParams{
 			UserID:         user.ID,
 			TokenHash:      hash,
