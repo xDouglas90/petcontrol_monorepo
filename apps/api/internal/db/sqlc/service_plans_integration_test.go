@@ -32,7 +32,7 @@ func TestQueries_ServicePlans_Integration(t *testing.T) {
 
 	t.Run("UpdateServicePlan - Success", func(t *testing.T) {
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 
 		arg := sqlc.UpdateServicePlanParams{
 			ID:    sp.ID,
@@ -47,7 +47,7 @@ func TestQueries_ServicePlans_Integration(t *testing.T) {
 
 	t.Run("DeleteServicePlan - Success", func(t *testing.T) {
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 
 		res, err := queries.DeleteServicePlan(ctx, sp.ID)
 		require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestQueries_ServicePlans_Integration(t *testing.T) {
 
 	t.Run("GetServicePlanByID - Success", func(t *testing.T) {
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 
 		res, err := queries.GetServicePlanByID(ctx, sp.ID)
 		require.NoError(t, err)

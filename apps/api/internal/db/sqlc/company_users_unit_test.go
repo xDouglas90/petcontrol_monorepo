@@ -28,8 +28,8 @@ func TestQueries_CompanyUsers_Unit(t *testing.T) {
 			IsActive:  pgtype.Bool{Bool: true, Valid: true},
 		}
 
-		rows := pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_active", "created_at", "updated_at", "deleted_at"}).
-			AddRow(uuidValue(), arg.CompanyID, arg.UserID, arg.Kind, arg.IsActive.Bool, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{})
+		rows := pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(uuidValue(), arg.CompanyID, arg.UserID, arg.Kind, arg.IsOwner, arg.IsActive.Bool, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{})
 
 		mock.ExpectQuery(`(?s)name: CreateCompanyUser`).
 			WithArgs(arg.CompanyID, arg.UserID, arg.Kind, arg.IsActive).
@@ -74,8 +74,8 @@ func TestQueries_CompanyUsers_Unit(t *testing.T) {
 		userID := uuidValue()
 		mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).
 			WithArgs(userID).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_active", "created_at", "updated_at", "deleted_at"}).
-				AddRow(uuidValue(), uuidValue(), userID, sqlc.UserKindEmployee, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+			WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+				AddRow(uuidValue(), uuidValue(), userID, sqlc.UserKindEmployee, true, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
 		res, err := queries.GetActiveCompanyUserByUserID(ctx, userID)
 		require.NoError(t, err)
@@ -100,8 +100,8 @@ func TestQueries_CompanyUsers_Unit(t *testing.T) {
 
 		mock.ExpectQuery(`(?s)name: ListCompanyUsersByKind`).
 			WithArgs(arg.CompanyID, arg.Kind, arg.Offset, arg.Limit).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_active", "created_at", "updated_at", "deleted_at"}).
-				AddRow(uuidValue(), arg.CompanyID, uuidValue(), arg.Kind, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+			WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+				AddRow(uuidValue(), arg.CompanyID, uuidValue(), arg.Kind, true, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
 		res, err := queries.ListCompanyUsersByKind(ctx, arg)
 		require.NoError(t, err)

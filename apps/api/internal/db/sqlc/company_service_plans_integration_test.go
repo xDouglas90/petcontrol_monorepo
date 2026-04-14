@@ -18,7 +18,7 @@ func TestQueries_CompanyServicePlans_Integration(t *testing.T) {
 	t.Run("InsertCompanyServicePlan - Success", func(t *testing.T) {
 		company := mustCreateCompany(t, queries, pool)
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 
 		arg := sqlc.InsertCompanyServicePlanParams{
 			CompanyID:     company.ID,
@@ -35,7 +35,7 @@ func TestQueries_CompanyServicePlans_Integration(t *testing.T) {
 	t.Run("UpdateCompanyServicePlan - Success", func(t *testing.T) {
 		company := mustCreateCompany(t, queries, pool)
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 		mustCreateCompanyServicePlan(t, queries, company.ID, sp.ID)
 
 		arg := sqlc.UpdateCompanyServicePlanParams{
@@ -52,7 +52,7 @@ func TestQueries_CompanyServicePlans_Integration(t *testing.T) {
 	t.Run("DeleteCompanyServicePlan - Success", func(t *testing.T) {
 		company := mustCreateCompany(t, queries, pool)
 		pt := mustCreatePlanType(t, queries)
-		sp := mustCreateServicePlan(t, queries, pt.ID)
+		sp := mustInsertServicePlan(t, queries, pt.ID)
 		mustCreateCompanyServicePlan(t, queries, company.ID, sp.ID)
 
 		res, err := queries.DeleteCompanyServicePlan(ctx, sqlc.DeleteCompanyServicePlanParams{
@@ -74,8 +74,8 @@ func TestQueries_CompanyServicePlans_Integration(t *testing.T) {
 	t.Run("ListActiveCompanyServicePlans - Success", func(t *testing.T) {
 		company := mustCreateCompany(t, queries, pool)
 		pt := mustCreatePlanType(t, queries)
-		sp1 := mustCreateServicePlan(t, queries, pt.ID)
-		sp2 := mustCreateServicePlan(t, queries, pt.ID)
+		sp1 := mustInsertServicePlan(t, queries, pt.ID)
+		sp2 := mustInsertServicePlan(t, queries, pt.ID)
 
 		mustCreateCompanyServicePlan(t, queries, company.ID, sp1.ID)
 		mustCreateCompanyServicePlan(t, queries, company.ID, sp2.ID)

@@ -13,9 +13,9 @@ import (
 func TestQueries_Services_Integration(t *testing.T) {
 	queries, ctx, pool := setupQueriesWithPool(t)
 
-	t.Run("InsertService - Success", func(t *testing.T) {
+	t.Run("CreateService - Success", func(t *testing.T) {
 		st := mustCreateServiceType(t, queries)
-		arg := sqlc.InsertServiceParams{
+		arg := sqlc.CreateServiceParams{
 			TypeID:       st.ID,
 			Title:        "Grooming",
 			Description:  "Full grooming service",
@@ -24,7 +24,7 @@ func TestQueries_Services_Integration(t *testing.T) {
 			IsActive:     true,
 		}
 
-		res, err := queries.InsertService(ctx, arg)
+		res, err := queries.CreateService(ctx, arg)
 		require.NoError(t, err)
 		require.Equal(t, arg.Title, res.Title)
 		require.True(t, res.ID.Valid)

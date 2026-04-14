@@ -27,7 +27,6 @@ func TestCompanyUserEndpoints_AuditLogsOnCreateAndDeactivate(t *testing.T) {
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-company-user-audit")
-	mustInsertCompanyUserMembership(t, ctx, pool, tenant.companyID, tenant.userID, true, true)
 	targetUser := mustInsertUser(t, ctx, pool, "tenant-company-user-target")
 
 	router := setupCompanyUserRouterForTenant(queries, tenant)
@@ -92,14 +91,15 @@ func mustInsertCompanyUserMembership(
 	pool *pgxpool.Pool,
 	companyID pgtype.UUID,
 	userID pgtype.UUID,
+	kind string,
 	isOwner bool,
 	isActive bool,
 ) {
 	t.Helper()
 
 	_, err := pool.Exec(ctx, `
-		INSERT INTO company_users (company_id, user_id, is_owner, is_active)
-		VALUES ($1, $2, $3, $4)
-	`, companyID, userID, isOwner, isActive)
+		INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
+		VALUES ($1, $2, $3, $4, $5)
+	`, companyID, userID, kind, isOwner, isActive)
 	require.NoError(t, err)
 }

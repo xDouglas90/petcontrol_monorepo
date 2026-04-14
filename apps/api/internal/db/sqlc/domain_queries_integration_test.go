@@ -280,7 +280,7 @@ func TestQueries_Modules_Integration_ActiveByCompany(t *testing.T) {
 
 func mustCreateServiceType(t *testing.T, queries *sqlc.Queries) sqlc.ServiceType {
 	t.Helper()
-	st, err := queries.InsertServiceType(context.Background(), sqlc.InsertServiceTypeParams{
+	st, err := queries.CreateServiceType(context.Background(), sqlc.CreateServiceTypeParams{
 		Name:        fmt.Sprintf("Type-%d", time.Now().UnixNano()),
 		Description: pgtype.Text{String: "service type test", Valid: true},
 	})
@@ -290,7 +290,7 @@ func mustCreateServiceType(t *testing.T, queries *sqlc.Queries) sqlc.ServiceType
 
 func mustCreateService(t *testing.T, queries *sqlc.Queries, typeID pgtype.UUID) sqlc.Service {
 	t.Helper()
-	s, err := queries.InsertService(context.Background(), sqlc.InsertServiceParams{
+	s, err := queries.CreateService(context.Background(), sqlc.CreateServiceParams{
 		TypeID:       typeID,
 		Title:        fmt.Sprintf("Service-%d", time.Now().UnixNano()),
 		Description:  "service test",
@@ -327,7 +327,7 @@ func mustCreatePlanType(t *testing.T, queries *sqlc.Queries) sqlc.PlanType {
 	return pt
 }
 
-func mustCreateServicePlan(t *testing.T, queries *sqlc.Queries, planTypeID pgtype.UUID) sqlc.ServicePlan {
+func mustInsertServicePlan(t *testing.T, queries *sqlc.Queries, planTypeID pgtype.UUID) sqlc.ServicePlan {
 	t.Helper()
 	sp, err := queries.InsertServicePlan(context.Background(), sqlc.InsertServicePlanParams{
 		PlanTypeID:   planTypeID,

@@ -17,8 +17,8 @@ func TestQueries_Services_Unit(t *testing.T) {
 	queries := New(mock)
 	ctx := context.Background()
 
-	t.Run("InsertService - Success", func(t *testing.T) {
-		arg := InsertServiceParams{
+	t.Run("CreateService - Success", func(t *testing.T) {
+		arg := CreateServiceParams{
 			TypeID:      pgtype.UUID{Bytes: [16]byte{1}, Valid: true},
 			Title:       "Test Service",
 			Description: "Test Description",
@@ -31,7 +31,7 @@ func TestQueries_Services_Unit(t *testing.T) {
 			WillReturnRows(pgxmock.NewRows([]string{"id", "type_id", "title", "description", "notes", "price", "discount_rate", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
 				AddRow(pgtype.UUID{Bytes: [16]byte{2}, Valid: true}, arg.TypeID, arg.Title, arg.Description, nil, nil, nil, nil, true, nil, nil, nil))
 
-		res, err := queries.InsertService(ctx, arg)
+		res, err := queries.CreateService(ctx, arg)
 		require.NoError(t, err)
 		require.Equal(t, arg.Title, res.Title)
 		require.NoError(t, mock.ExpectationsWereMet())

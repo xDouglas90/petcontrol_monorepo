@@ -91,8 +91,8 @@ func TestCompanyUserService_CreateAndDeactivate(t *testing.T) {
 	userID := newDomainUUID(t)
 	createdID := newDomainUUID(t)
 
-	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, true, true).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(createdID.String(), companyID.String(), userID.String(), true, true, time.Now(), nil))
-	created, err := serviceUnderTest.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{CompanyID: companyID, UserID: userID, IsOwner: true, IsActive: true})
+	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, sqlc.UserKindOwner, true, pgtype.Bool{Bool: true, Valid: true}).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, time.Now(), nil, nil))
+	created, err := serviceUnderTest.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{CompanyID: companyID, UserID: userID, Kind: sqlc.UserKindOwner, IsOwner: true, IsActive: pgtype.Bool{Bool: true, Valid: true}})
 	require.NoError(t, err)
 	require.Equal(t, createdID, created.ID)
 
