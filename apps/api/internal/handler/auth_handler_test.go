@@ -43,7 +43,7 @@ func handlerUserRows(id pgtype.UUID, email string, verified bool, isActive bool)
 		verifiedAt = time.Now().Add(-time.Minute)
 	}
 
-	return pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "kind", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(id.String(), email, verified, verifiedAt, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner, isActive, time.Now().Add(-time.Hour), nil, nil)
+	return pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(id, email, verified, verifiedAt, sqlc.UserRoleTypeAdmin, isActive, time.Now().Add(-time.Hour), nil, nil)
 }
 
 func handlerUserAuthRows(userID pgtype.UUID, passwordHash string) *pgxmock.Rows {
@@ -92,7 +92,7 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(handlerUserRows(userID, "owner@example.com", true, true))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(handlerUserAuthRows(userID, hash))
 	mock.ExpectExec(`(?s)name: ResetUserAuthLoginAttempts`).WithArgs(userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
-	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(uuid.NewString(), companyID.String(), userID.String(), true, true, time.Now(), nil))
+	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(newHandlerUUID(t), companyID, userID, sqlc.UserKindOwner, true, true, time.Now(), nil, nil))
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "HandlerTest/1.0", sqlc.LoginResultSuccess, pgtype.Text{}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 	h := NewAuthHandler(serviceUnderTest)

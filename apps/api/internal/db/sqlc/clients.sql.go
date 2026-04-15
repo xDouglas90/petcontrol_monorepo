@@ -12,17 +12,10 @@ import (
 )
 
 const createCompanyClient = `-- name: CreateCompanyClient :one
-INSERT INTO company_clients (
-    company_id,
-    client_id,
-    is_active
-)
-VALUES (
-    $1,
-    $2,
-    TRUE
-)
-RETURNING id, company_id, client_id, is_active, joined_at, left_at
+INSERT INTO company_clients(company_id, client_id, is_active)
+    VALUES ($1, $2, TRUE)
+RETURNING
+    id, company_id, client_id, is_active, joined_at, left_at
 `
 
 type CreateCompanyClientParams struct {
@@ -96,7 +89,8 @@ FROM
     INNER JOIN clients c ON c.id = cc.client_id
     INNER JOIN people p ON p.id = c.person_id
     INNER JOIN people_identifications pi ON pi.person_id = p.id
-    INNER JOIN people_contacts pc ON pc.person_id = p.id AND pc.is_primary = TRUE
+    INNER JOIN people_contacts pc ON pc.person_id = p.id
+        AND pc.is_primary = TRUE
 WHERE
     cc.company_id = $1
     AND c.id = $2
@@ -163,25 +157,10 @@ func (q *Queries) GetClientByIDAndCompanyID(ctx context.Context, arg GetClientBy
 }
 
 const insertClientIdentification = `-- name: InsertClientIdentification :one
-INSERT INTO people_identifications (
-    person_id,
-    full_name,
-    short_name,
-    gender_identity,
-    marital_status,
-    birth_date,
-    cpf
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7
-)
-RETURNING id, person_id, full_name, short_name, gender_identity, marital_status, image_url, birth_date, cpf, created_at, updated_at
+INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING
+    id, person_id, full_name, short_name, gender_identity, marital_status, image_url, birth_date, cpf, created_at, updated_at
 `
 
 type InsertClientIdentificationParams struct {
@@ -222,17 +201,10 @@ func (q *Queries) InsertClientIdentification(ctx context.Context, arg InsertClie
 }
 
 const insertClientPerson = `-- name: InsertClientPerson :one
-INSERT INTO people (
-    kind,
-    is_active,
-    has_system_user
-)
-VALUES (
-    'client',
-    TRUE,
-    FALSE
-)
-RETURNING id, kind, is_active, has_system_user, created_at, updated_at
+INSERT INTO people(kind, is_active, has_system_user)
+    VALUES ('client', TRUE, FALSE)
+RETURNING
+    id, kind, is_active, has_system_user, created_at, updated_at
 `
 
 func (q *Queries) InsertClientPerson(ctx context.Context) (Person, error) {
@@ -250,23 +222,10 @@ func (q *Queries) InsertClientPerson(ctx context.Context) (Person, error) {
 }
 
 const insertClientPrimaryContact = `-- name: InsertClientPrimaryContact :one
-INSERT INTO people_contacts (
-    person_id,
-    email,
-    phone,
-    cellphone,
-    has_whatsapp,
-    is_primary
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    TRUE
-)
-RETURNING id, person_id, email, phone, cellphone, has_whatsapp, instagram_user, emergency_contact, emergency_phone, is_primary, created_at, updated_at
+INSERT INTO people_contacts(person_id, email, phone, cellphone, has_whatsapp, is_primary)
+    VALUES ($1, $2, $3, $4, $5, TRUE)
+RETURNING
+    id, person_id, email, phone, cellphone, has_whatsapp, instagram_user, emergency_contact, emergency_phone, is_primary, created_at, updated_at
 `
 
 type InsertClientPrimaryContactParams struct {
@@ -304,17 +263,10 @@ func (q *Queries) InsertClientPrimaryContact(ctx context.Context, arg InsertClie
 }
 
 const insertClientRecord = `-- name: InsertClientRecord :one
-INSERT INTO clients (
-    person_id,
-    client_since,
-    notes
-)
-VALUES (
-    $1,
-    $2,
-    $3
-)
-RETURNING id, person_id, client_since, recommended_by, notes, created_at, updated_at, deleted_at
+INSERT INTO clients(person_id, client_since, notes)
+    VALUES ($1, $2, $3)
+RETURNING
+    id, person_id, client_since, recommended_by, notes, created_at, updated_at, deleted_at
 `
 
 type InsertClientRecordParams struct {
@@ -341,7 +293,7 @@ func (q *Queries) InsertClientRecord(ctx context.Context, arg InsertClientRecord
 
 const listClientsByCompanyID = `-- name: ListClientsByCompanyID :many
 SELECT
-    COUNT(*) OVER() AS total_count,
+    COUNT(*) OVER () AS total_count,
     c.id,
     c.person_id,
     cc.company_id,
@@ -367,21 +319,21 @@ FROM
     INNER JOIN clients c ON c.id = cc.client_id
     INNER JOIN people p ON p.id = c.person_id
     INNER JOIN people_identifications pi ON pi.person_id = p.id
-    INNER JOIN people_contacts pc ON pc.person_id = p.id AND pc.is_primary = TRUE
+    INNER JOIN people_contacts pc ON pc.person_id = p.id
+        AND pc.is_primary = TRUE
 WHERE
     cc.company_id = $1
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
     AND p.is_active = TRUE
-    AND (
-        $2::text = ''
+    AND ($2::text = ''
         OR pi.full_name ILIKE '%' || $2::text || '%'
         OR pi.cpf ILIKE '%' || $2::text || '%'
-        OR pc.email ILIKE '%' || $2::text || '%'
-    )
+        OR pc.email ILIKE '%' || $2::text || '%')
 ORDER BY
     pi.full_name ASC
-LIMIT $4 OFFSET $3
+LIMIT $4
+OFFSET $3
 `
 
 type ListClientsByCompanyIDParams struct {

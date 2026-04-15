@@ -36,7 +36,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -57,7 +56,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.EmailVerified,
 		&i.EmailVerifiedAt,
 		&i.Role,
-		&i.Kind,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -73,7 +71,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -94,7 +91,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 		&i.EmailVerified,
 		&i.EmailVerifiedAt,
 		&i.Role,
-		&i.Kind,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -104,10 +100,10 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 }
 
 const insertUser = `-- name: InsertUser :one
-INSERT INTO users(email, email_verified, email_verified_at, "role", kind, is_active)
-  VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO users(email, email_verified, email_verified_at, "role", is_active)
+  VALUES ($1, $2, $3, $4, $5)
 RETURNING
-  id, email, email_verified, email_verified_at, role, kind, is_active, created_at, updated_at, deleted_at
+  id, email, email_verified, email_verified_at, role, is_active, created_at, updated_at, deleted_at
 `
 
 type InsertUserParams struct {
@@ -115,7 +111,6 @@ type InsertUserParams struct {
 	EmailVerified   bool               `db:"email_verified" json:"email_verified"`
 	EmailVerifiedAt pgtype.Timestamptz `db:"email_verified_at" json:"email_verified_at"`
 	Role            UserRoleType       `db:"role" json:"role"`
-	Kind            UserKind           `db:"kind" json:"kind"`
 	IsActive        bool               `db:"is_active" json:"is_active"`
 }
 
@@ -125,7 +120,6 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 		arg.EmailVerified,
 		arg.EmailVerifiedAt,
 		arg.Role,
-		arg.Kind,
 		arg.IsActive,
 	)
 	var i User
@@ -135,7 +129,6 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 		&i.EmailVerified,
 		&i.EmailVerifiedAt,
 		&i.Role,
-		&i.Kind,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -151,7 +144,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -164,26 +156,23 @@ WHERE
     OR $1 IS NULL)
   AND (u."role" = $2
     OR $2 IS NULL)
-  AND (u.kind = $3
+  AND (u.is_active = $3
     OR $3 IS NULL)
-  AND (u.is_active = $4
+  AND (u.created_at >= $4
     OR $4 IS NULL)
-  AND (u.created_at >= $5
+  AND (u.email_verified = $5
     OR $5 IS NULL)
-  AND (u.email_verified = $6
+  AND (u.email_verified_at >= $6
     OR $6 IS NULL)
-  AND (u.email_verified_at >= $7
-    OR $7 IS NULL)
 ORDER BY
   u.created_at DESC
-LIMIT $9
-OFFSET $8
+LIMIT $8
+OFFSET $7
 `
 
 type ListUsersParams struct {
 	Email              pgtype.Text        `db:"Email" json:"Email"`
 	Role               NullUserRoleType   `db:"Role" json:"Role"`
-	Kind               NullUserKind       `db:"Kind" json:"Kind"`
 	IsActive           pgtype.Bool        `db:"IsActive" json:"IsActive"`
 	CreatedAfter       pgtype.Timestamptz `db:"CreatedAfter" json:"CreatedAfter"`
 	EmailVerified      pgtype.Bool        `db:"EmailVerified" json:"EmailVerified"`
@@ -196,7 +185,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	rows, err := q.db.Query(ctx, listUsers,
 		arg.Email,
 		arg.Role,
-		arg.Kind,
 		arg.IsActive,
 		arg.CreatedAfter,
 		arg.EmailVerified,
@@ -217,7 +205,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.EmailVerified,
 			&i.EmailVerifiedAt,
 			&i.Role,
-			&i.Kind,
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -240,7 +227,6 @@ SELECT
   u.email_verified,
   u.email_verified_at,
   u."role",
-  u.kind,
   u.is_active,
   u.created_at,
   u.updated_at,
@@ -275,7 +261,6 @@ func (q *Queries) ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) 
 			&i.EmailVerified,
 			&i.EmailVerifiedAt,
 			&i.Role,
-			&i.Kind,
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -299,11 +284,10 @@ SET
   email_verified = coalesce($2, email_verified),
   email_verified_at = coalesce($3, email_verified_at),
   "role" = coalesce($4, "role"),
-  kind = coalesce($5, kind),
-  is_active = coalesce($6, is_active),
+  is_active = coalesce($5, is_active),
   updated_at = now()
 WHERE
-  id = $7
+  id = $6
 `
 
 type UpdateUserParams struct {
@@ -311,7 +295,6 @@ type UpdateUserParams struct {
 	EmailVerified   pgtype.Bool        `db:"EmailVerified" json:"EmailVerified"`
 	EmailVerifiedAt pgtype.Timestamptz `db:"EmailVerifiedAt" json:"EmailVerifiedAt"`
 	Role            NullUserRoleType   `db:"Role" json:"Role"`
-	Kind            NullUserKind       `db:"Kind" json:"Kind"`
 	IsActive        pgtype.Bool        `db:"IsActive" json:"IsActive"`
 	ID              pgtype.UUID        `db:"ID" json:"ID"`
 }
@@ -322,7 +305,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, 
 		arg.EmailVerified,
 		arg.EmailVerifiedAt,
 		arg.Role,
-		arg.Kind,
 		arg.IsActive,
 		arg.ID,
 	)

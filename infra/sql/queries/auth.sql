@@ -59,8 +59,6 @@ SELECT
         WHERE
             cm.company_id = sqlc.arg('CompanyID')
             AND cm.is_active = TRUE
-            AND (cm.expires_at IS NULL
-                OR cm.expires_at > now())
             AND m.code = sqlc.arg('Code')
             AND m.is_active = TRUE
             AND m.deleted_at IS NULL) AS has_access;

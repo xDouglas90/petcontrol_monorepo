@@ -112,8 +112,8 @@ WHERE NOT EXISTS (
 );
 
 -- Root user (dev bootstrap)
-INSERT INTO users (email, email_verified, email_verified_at, role, kind, is_active)
-SELECT 'root@petcontrol.local', TRUE, NOW(), 'root', 'internal', TRUE
+INSERT INTO users (email, email_verified, email_verified_at, role, is_active)
+SELECT 'root@petcontrol.local', TRUE, NOW(), 'root', TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'root@petcontrol.local');
 
 -- Root auth profile (password: password123, requires password change)
@@ -127,8 +127,8 @@ ON CONFLICT (user_id) DO UPDATE SET
   updated_at = NOW();
 
 -- Admin user compatible with web default credentials
-INSERT INTO users (email, email_verified, email_verified_at, role, kind, is_active)
-SELECT 'admin@petcontrol.local', TRUE, NOW(), 'admin', 'owner', TRUE
+INSERT INTO users (email, email_verified, email_verified_at, role, is_active)
+SELECT 'admin@petcontrol.local', TRUE, NOW(), 'admin', TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@petcontrol.local');
 
 -- Admin auth profile (password: password123)
@@ -147,10 +147,11 @@ WITH dev_company AS (
 ), seeded_users AS (
   SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local')
 )
-INSERT INTO company_users (company_id, user_id, is_owner, is_active)
+INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
 SELECT
   dc.id,
   su.id,
+  CASE WHEN su.email = 'admin@petcontrol.local' THEN 'owner'::user_kind ELSE 'employee'::user_kind END,
   CASE WHEN su.email = 'admin@petcontrol.local' THEN TRUE ELSE FALSE END,
   TRUE
 FROM dev_company dc
@@ -191,25 +192,14 @@ WHERE NOT EXISTS (
 -- Active company modules for the seeded tenant
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
-), active_subscription AS (
-  SELECT id FROM company_subscriptions
-  WHERE company_id = (SELECT id FROM dev_company)
-    AND is_active = TRUE
-    AND canceled_at IS NULL
-    AND expires_at > NOW()
-  ORDER BY started_at DESC
-  LIMIT 1
 ), starter_modules AS (
   SELECT id FROM modules WHERE code IN ('SCH', 'CRM')
 )
-INSERT INTO company_modules (company_id, module_id, subscription_id, granted_manually, is_active)
-SELECT dc.id, sm.id, s.id, FALSE, TRUE
+INSERT INTO company_modules (company_id, module_id, is_active)
+SELECT dc.id, sm.id, TRUE
 FROM dev_company dc
-JOIN active_subscription s ON TRUE
 CROSS JOIN starter_modules sm
 ON CONFLICT (company_id, module_id) DO UPDATE SET
-  subscription_id = EXCLUDED.subscription_id,
-  granted_manually = EXCLUDED.granted_manually,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
 

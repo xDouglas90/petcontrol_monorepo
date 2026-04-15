@@ -1,6 +1,6 @@
 -- name: CreateCompanyUser :one
-INSERT INTO company_users(company_id, user_id, is_owner, is_active)
-    VALUES ($1, $2, $3, $4)
+INSERT INTO company_users(company_id, user_id, kind, is_owner, is_active)
+    VALUES (sqlc.arg('CompanyID'), sqlc.arg('UserID'), sqlc.arg('Kind'), sqlc.arg('IsOwner'), sqlc.narg('IsActive'))
 RETURNING
     *;
 
@@ -9,10 +9,12 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
+    cu.kind,
     cu.is_owner,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
@@ -24,10 +26,12 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
+    cu.kind,
     cu.is_owner,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
@@ -40,18 +44,20 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
+    cu.kind,
     cu.is_owner,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
     cu.user_id = sqlc.arg('UserID')
     AND cu.is_active = TRUE
 ORDER BY
-    cu.is_owner DESC,
-    cu.joined_at ASC
+    cu.kind DESC,
+    cu.created_at ASC
 LIMIT 1;
 
 -- name: ListCompanyUsersByCompanyID :many
@@ -59,24 +65,48 @@ SELECT
     cu.id,
     cu.company_id,
     cu.user_id,
+    cu.kind,
     cu.is_owner,
     cu.is_active,
-    cu.joined_at,
-    cu.left_at
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
 FROM
     company_users cu
 WHERE
     cu.company_id = sqlc.arg('CompanyID')
     AND cu.is_active = TRUE
 ORDER BY
-    cu.joined_at DESC;
+    cu.created_at DESC;
+
+-- name: ListCompanyUsersByKind :many
+SELECT
+    cu.id,
+    cu.company_id,
+    cu.user_id,
+    cu.kind,
+    cu.is_owner,
+    cu.is_active,
+    cu.created_at,
+    cu.updated_at,
+    cu.deleted_at
+FROM
+    company_users cu
+WHERE
+    cu.company_id = sqlc.arg('CompanyID')
+    AND cu.kind = sqlc.arg('Kind')
+    AND cu.is_active = TRUE
+ORDER BY
+    cu.created_at DESC
+LIMIT sqlc.arg('Limit')
+OFFSET sqlc.arg('Offset');
 
 -- name: DeactivateCompanyUser :exec
 UPDATE
     company_users
 SET
     is_active = FALSE,
-    left_at = now()
+    deleted_at = now()
 WHERE
     company_id = sqlc.arg('CompanyID')
     AND user_id = sqlc.arg('UserID');

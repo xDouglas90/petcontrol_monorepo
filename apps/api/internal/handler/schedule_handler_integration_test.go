@@ -358,6 +358,7 @@ func mustCreateTenantFixture(t *testing.T, ctx context.Context, pool *pgxpool.Po
 	responsible := mustInsertPerson(t, ctx, pool, "responsible")
 	companyID := mustInsertCompany(t, ctx, pool, slug, responsible)
 	userID := mustInsertUser(t, ctx, pool, slug)
+	mustLinkCompanyUser(t, ctx, pool, companyID, userID, "owner", true)
 	clientPerson := mustInsertPerson(t, ctx, pool, "client")
 	mustInsertClientIdentification(t, ctx, pool, clientPerson, slug)
 	clientID := mustInsertClient(t, ctx, pool, clientPerson)
@@ -398,12 +399,21 @@ func mustInsertUser(t *testing.T, ctx context.Context, pool *pgxpool.Pool, slug 
 	var id pgtype.UUID
 	email := slug + "@example.com"
 	err := pool.QueryRow(ctx, `
-		INSERT INTO users (email, email_verified, role, kind, is_active)
-		VALUES ($1, TRUE, 'admin', 'owner', TRUE)
+		INSERT INTO users (email, email_verified, role, is_active)
+		VALUES ($1, TRUE, 'admin', TRUE)
 		RETURNING id
 	`, email).Scan(&id)
 	require.NoError(t, err)
 	return id
+}
+
+func mustLinkCompanyUser(t *testing.T, ctx context.Context, pool *pgxpool.Pool, companyID, userID pgtype.UUID, kind string, isOwner bool) {
+	t.Helper()
+	_, err := pool.Exec(ctx, `
+		INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
+		VALUES ($1, $2, $3, $4, TRUE)
+	`, companyID, userID, kind, isOwner)
+	require.NoError(t, err)
 }
 
 func mustInsertClient(t *testing.T, ctx context.Context, pool *pgxpool.Pool, personID pgtype.UUID) pgtype.UUID {

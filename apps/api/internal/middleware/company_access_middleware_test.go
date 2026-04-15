@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	pgxmock "github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
@@ -24,10 +24,11 @@ func TestRequireCompanyOwner_AllowsOwnerMembership(t *testing.T) {
 
 	companyID := newPGUUID(t)
 	userID := uuid.New()
+	parsedUserID := mustParseUUID(t, userID.String()).(pgtype.UUID)
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, mustParseUUID(t, userID.String())).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).
-			AddRow(uuid.NewString(), companyID.String(), userID.String(), true, true, time.Now(), nil))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(newPGUUID(t), companyID, parsedUserID, sqlc.UserKindOwner, true, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
 	router := gin.New()
 	router.Use(setClaimsAndCompany(t, userID.String(), companyID.String(), "admin"), RequireCompanyOwner(sqlc.New(mock)))
@@ -52,10 +53,11 @@ func TestRequireCompanyOwner_DeniesNonOwnerMembership(t *testing.T) {
 
 	companyID := newPGUUID(t)
 	userID := uuid.New()
+	parsedUserID := mustParseUUID(t, userID.String()).(pgtype.UUID)
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, mustParseUUID(t, userID.String())).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).
-			AddRow(uuid.NewString(), companyID.String(), userID.String(), false, true, time.Now(), nil))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(newPGUUID(t), companyID, parsedUserID, sqlc.UserKindEmployee, false, true, pgtype.Timestamptz{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
 	router := gin.New()
 	router.Use(setClaimsAndCompany(t, userID.String(), companyID.String(), "admin"), RequireCompanyOwner(sqlc.New(mock)))

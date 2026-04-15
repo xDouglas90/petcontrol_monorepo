@@ -18,7 +18,9 @@ import (
 )
 
 func newPGUUID(t *testing.T) pgtype.UUID {
-	t.Helper()
+	if t != nil {
+		t.Helper()
+	}
 
 	value := uuid.New()
 	var out pgtype.UUID
@@ -27,13 +29,13 @@ func newPGUUID(t *testing.T) pgtype.UUID {
 	return out
 }
 
-func newUserRows(id pgtype.UUID, email string, verified bool, isActive bool, role sqlc.UserRoleType, kind sqlc.UserKind) *pgxmock.Rows {
+func newUserRows(id pgtype.UUID, email string, verified bool, isActive bool, role sqlc.UserRoleType) *pgxmock.Rows {
 	var verifiedAt any = nil
 	if verified {
 		verifiedAt = time.Now().Add(-time.Minute)
 	}
 
-	return pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "kind", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(id.String(), email, verified, verifiedAt, role, kind, isActive, time.Now().Add(-time.Hour), nil, nil)
+	return pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(id, email, verified, verifiedAt, role, isActive, time.Now().Add(-time.Hour), nil, nil)
 }
 
 func newUserAuthRows(userID pgtype.UUID, passwordHash string, attempts int16, lockedUntilValid bool) *pgxmock.Rows {
@@ -45,8 +47,8 @@ func newUserAuthRows(userID pgtype.UUID, passwordHash string, attempts int16, lo
 	return pgxmock.NewRows([]string{"user_id", "password_hash", "password_changed_at", "must_change_password", "login_attempts", "locked_until", "last_login_at", "created_at", "updated_at"}).AddRow(userID.String(), passwordHash, nil, false, attempts, lockedUntil, nil, time.Now().Add(-time.Hour), nil)
 }
 
-func newCompanyUserRows(companyID, userID pgtype.UUID) *pgxmock.Rows {
-	return pgxmock.NewRows([]string{"id", "company_id", "user_id", "is_owner", "is_active", "joined_at", "left_at"}).AddRow(uuid.NewString(), companyID.String(), userID.String(), true, true, time.Now().Add(-time.Minute), nil)
+func newCompanyUserRows(companyID, userID pgtype.UUID, kind sqlc.UserKind) *pgxmock.Rows {
+	return pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(newPGUUID(nil), companyID, userID, kind, true, true, time.Now().Add(-time.Minute), nil, nil)
 }
 
 func newAuthService(t *testing.T) (*AuthService, pgxmock.PgxPoolIface) {
@@ -75,10 +77,10 @@ func TestAuthService_Login_Success(t *testing.T) {
 	password := "super-secret"
 	hash := validPasswordHash(t, password)
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(newUserAuthRows(userID, hash, 0, false))
 	mock.ExpectExec(`(?s)name: ResetUserAuthLoginAttempts`).WithArgs(userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
-	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnRows(newCompanyUserRows(companyID, userID))
+	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnRows(newCompanyUserRows(companyID, userID, sqlc.UserKindOwner))
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultSuccess, pgtype.Text{}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 	result, err := serviceUnderTest.Login(context.Background(), " owner@example.com ", password, "127.0.0.1", "TestAgent/1.0")
@@ -104,7 +106,7 @@ func TestAuthService_Login_InvalidCredentials_LocksAccount(t *testing.T) {
 	userID := newPGUUID(t)
 	hash := validPasswordHash(t, "super-secret")
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(newUserAuthRows(userID, hash, 4, false))
 	mock.ExpectExec(`(?s)name: IncrementUserAuthLoginAttempts`).WithArgs(userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	mock.ExpectExec(`(?s)name: SetUserAuthLockedUntil`).WithArgs(pgxmock.AnyArg(), userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
@@ -133,7 +135,7 @@ func TestAuthService_Login_MissingAuthProfile(t *testing.T) {
 
 	userID := newPGUUID(t)
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnError(pgx.ErrNoRows)
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultInvalidCredentials, pgtype.Text{String: "auth profile not found", Valid: true}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
@@ -148,7 +150,7 @@ func TestAuthService_Login_AccountInactive(t *testing.T) {
 
 	userID := newPGUUID(t)
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("inactive@example.com").WillReturnRows(newUserRows(userID, "inactive@example.com", true, false, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("inactive@example.com").WillReturnRows(newUserRows(userID, "inactive@example.com", true, false, sqlc.UserRoleTypeAdmin))
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultAccountInactive, pgtype.Text{String: "user inactive", Valid: true}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 	_, err := serviceUnderTest.Login(context.Background(), "inactive@example.com", "secret", "127.0.0.1", "TestAgent/1.0")
@@ -162,7 +164,7 @@ func TestAuthService_Login_EmailUnverified(t *testing.T) {
 
 	userID := newPGUUID(t)
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("unverified@example.com").WillReturnRows(newUserRows(userID, "unverified@example.com", false, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("unverified@example.com").WillReturnRows(newUserRows(userID, "unverified@example.com", false, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultEmailUnverified, pgtype.Text{String: "email not verified", Valid: true}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 	_, err := serviceUnderTest.Login(context.Background(), "unverified@example.com", "secret", "127.0.0.1", "TestAgent/1.0")
@@ -177,7 +179,7 @@ func TestAuthService_Login_MissingCompanyMembership(t *testing.T) {
 	userID := newPGUUID(t)
 	hash := validPasswordHash(t, "super-secret")
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("owner@example.com").WillReturnRows(newUserRows(userID, "owner@example.com", true, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(newUserAuthRows(userID, hash, 0, false))
 	mock.ExpectExec(`(?s)name: ResetUserAuthLoginAttempts`).WithArgs(userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	mock.ExpectQuery(`(?s)name: GetActiveCompanyUserByUserID`).WithArgs(userID).WillReturnError(pgx.ErrNoRows)
@@ -216,7 +218,7 @@ func TestAuthService_Login_AccountLocked(t *testing.T) {
 	userID := newPGUUID(t)
 	hash := validPasswordHash(t, "super-secret")
 
-	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("locked@example.com").WillReturnRows(newUserRows(userID, "locked@example.com", true, true, sqlc.UserRoleTypeAdmin, sqlc.UserKindOwner))
+	mock.ExpectQuery(`(?s)name: GetUserByEmail`).WithArgs("locked@example.com").WillReturnRows(newUserRows(userID, "locked@example.com", true, true, sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserAuthByUserID`).WithArgs(userID).WillReturnRows(newUserAuthRows(userID, hash, 0, true))
 	mock.ExpectExec(`(?s)name: InsertLoginHistory`).WithArgs(userID, pgxmock.AnyArg(), "TestAgent/1.0", sqlc.LoginResultAccountLocked, pgtype.Text{String: "account locked", Valid: true}).WillReturnResult(pgxmock.NewResult("INSERT", 1))
 

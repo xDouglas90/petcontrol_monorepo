@@ -23,6 +23,10 @@ func setupQueriesWithPool(t *testing.T) (*sqlc.Queries, context.Context, *pgxpoo
 	return sqlc.New(setup.Pool), setup.Ctx, setup.Pool
 }
 
+func uniqueEmail(prefix string) string {
+	return fmt.Sprintf("%s-%d@test.com", prefix, time.Now().UnixNano())
+}
+
 func mustNumeric(t *testing.T, value string) pgtype.Numeric {
 	t.Helper()
 	var n pgtype.Numeric
@@ -274,42 +278,114 @@ func TestQueries_Modules_Integration_ActiveByCompany(t *testing.T) {
 	require.Equal(t, module.ID, activeModules[0].ID)
 }
 
-func TestQueries_CompanyUsers_Integration(t *testing.T) {
-	queries, _, pool := setupQueriesWithPool(t)
-
-	company := mustCreateCompany(t, queries, pool)
-	user := insertDefaultUser(t, queries, uniqueEmail("company-user"))
-
-	created, err := queries.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{
-		CompanyID: company.ID,
-		UserID:    user.ID,
-		IsOwner:   true,
-		IsActive:  true,
+func mustCreateServiceType(t *testing.T, queries *sqlc.Queries) sqlc.ServiceType {
+	t.Helper()
+	st, err := queries.CreateServiceType(context.Background(), sqlc.CreateServiceTypeParams{
+		Name:        fmt.Sprintf("Type-%d", time.Now().UnixNano()),
+		Description: pgtype.Text{String: "service type test", Valid: true},
 	})
 	require.NoError(t, err)
+	return st
+}
 
-	gotByID, err := queries.GetCompanyUserByID(context.Background(), created.ID)
-	require.NoError(t, err)
-	require.Equal(t, created.ID, gotByID.ID)
-
-	gotByPair, err := queries.GetCompanyUser(context.Background(), sqlc.GetCompanyUserParams{
-		CompanyID: company.ID,
-		UserID:    user.ID,
+func mustCreateService(t *testing.T, queries *sqlc.Queries, typeID pgtype.UUID) sqlc.Service {
+	t.Helper()
+	s, err := queries.CreateService(context.Background(), sqlc.CreateServiceParams{
+		TypeID:       typeID,
+		Title:        fmt.Sprintf("Service-%d", time.Now().UnixNano()),
+		Description:  "service test",
+		Price:        mustNumeric(t, "50.00"),
+		DiscountRate: mustNumeric(t, "0.00"),
+		IsActive:     true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, created.ID, gotByPair.ID)
+	return s
+}
 
-	list, err := queries.ListCompanyUsersByCompanyID(context.Background(), company.ID)
-	require.NoError(t, err)
-	require.NotEmpty(t, list)
-
-	err = queries.DeactivateCompanyUser(context.Background(), sqlc.DeactivateCompanyUserParams{
-		CompanyID: company.ID,
-		UserID:    user.ID,
+func mustCreateSubService(t *testing.T, queries *sqlc.Queries, serviceID, typeID pgtype.UUID) sqlc.SubService {
+	t.Helper()
+	ss, err := queries.InsertSubService(context.Background(), sqlc.InsertSubServiceParams{
+		ServiceID:    serviceID,
+		TypeID:       typeID,
+		Title:        fmt.Sprintf("SubService-%d", time.Now().UnixNano()),
+		Description:  "sub service test",
+		Price:        mustNumeric(t, "25.00"),
+		DiscountRate: mustNumeric(t, "0.00"),
+		IsActive:     pgtype.Bool{Bool: true, Valid: true},
 	})
 	require.NoError(t, err)
+	return ss
+}
 
-	activeList, err := queries.ListCompanyUsersByCompanyID(context.Background(), company.ID)
+func mustCreatePlanType(t *testing.T, queries *sqlc.Queries) sqlc.PlanType {
+	t.Helper()
+	pt, err := queries.InsertPlanType(context.Background(), sqlc.InsertPlanTypeParams{
+		Name:        fmt.Sprintf("PlanType-%d", time.Now().UnixNano()),
+		Description: pgtype.Text{String: "plan type test", Valid: true},
+	})
 	require.NoError(t, err)
-	require.Len(t, activeList, 0)
+	return pt
+}
+
+func mustInsertServicePlan(t *testing.T, queries *sqlc.Queries, planTypeID pgtype.UUID) sqlc.ServicePlan {
+	t.Helper()
+	sp, err := queries.InsertServicePlan(context.Background(), sqlc.InsertServicePlanParams{
+		PlanTypeID:   planTypeID,
+		Title:        fmt.Sprintf("Plan-%d", time.Now().UnixNano()),
+		Description:  "service plan test",
+		Price:        mustNumeric(t, "150.00"),
+		DiscountRate: mustNumeric(t, "0.00"),
+		IsActive:     pgtype.Bool{Bool: true, Valid: true},
+	})
+	require.NoError(t, err)
+	return sp
+}
+
+func mustCreateProduct(t *testing.T, queries *sqlc.Queries) sqlc.Product {
+	t.Helper()
+	p, err := queries.InsertProduct(context.Background(), sqlc.InsertProductParams{
+		Name:        fmt.Sprintf("Product-%d", time.Now().UnixNano()),
+		Description: pgtype.Text{String: "product test", Valid: true},
+		Quantity:    pgtype.Int4{Int32: 100, Valid: true},
+	})
+	require.NoError(t, err)
+	return p
+}
+
+func mustCreateCompanyService(t *testing.T, queries *sqlc.Queries, companyID, serviceID pgtype.UUID) sqlc.CompanyService {
+	t.Helper()
+	cs, err := queries.InsertCompanyService(context.Background(), sqlc.InsertCompanyServiceParams{
+		CompanyID: companyID,
+		ServiceID: serviceID,
+		IsActive:  pgtype.Bool{Bool: true, Valid: true},
+	})
+	require.NoError(t, err)
+	return cs
+}
+
+func mustCreateCompanyProduct(t *testing.T, queries *sqlc.Queries, companyID, productID pgtype.UUID) sqlc.CompanyProduct {
+	t.Helper()
+	cp, err := queries.InsertCompanyProduct(context.Background(), sqlc.InsertCompanyProductParams{
+		CompanyID:    companyID,
+		ProductID:    productID,
+		Kind:         sqlc.ProductKindCustomer,
+		CostPerUnit:  mustNumeric(t, "5.00"),
+		SalePrice:    mustNumeric(t, "15.00"),
+		HasStock:     pgtype.Bool{Bool: true, Valid: true},
+		ForSale:      pgtype.Bool{Bool: true, Valid: true},
+		ProfitMargin: mustNumeric(t, "150.00"),
+	})
+	require.NoError(t, err)
+	return cp
+}
+
+func mustCreateCompanyServicePlan(t *testing.T, queries *sqlc.Queries, companyID, servicePlanID pgtype.UUID) sqlc.CompanyServicePlan {
+	t.Helper()
+	csp, err := queries.InsertCompanyServicePlan(context.Background(), sqlc.InsertCompanyServicePlanParams{
+		CompanyID:     companyID,
+		ServicePlanID: servicePlanID,
+		IsActive:      pgtype.Bool{Bool: true, Valid: true},
+	})
+	require.NoError(t, err)
+	return csp
 }

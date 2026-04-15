@@ -51,7 +51,6 @@ func createIntegrationUser(t *testing.T, queries *sqlc.Queries, email string) sq
 		EmailVerified:   true,
 		EmailVerifiedAt: pgtype.Timestamptz{Time: time.Now().Add(-time.Hour), Valid: true},
 		Role:            sqlc.UserRoleTypeAdmin,
-		Kind:            sqlc.UserKindOwner,
 		IsActive:        true,
 	})
 	require.NoError(t, err)
@@ -98,8 +97,9 @@ func TestAuthService_Login_Integration(t *testing.T) {
 	_, err := queries.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{
 		CompanyID: company.ID,
 		UserID:    user.ID,
+		Kind:      sqlc.UserKindOwner,
 		IsOwner:   true,
-		IsActive:  true,
+		IsActive:  pgtype.Bool{Bool: true, Valid: true},
 	})
 	require.NoError(t, err)
 	module := createIntegrationModule(t, queries, fmt.Sprintf("M%06d", time.Now().UnixNano()%1000000))

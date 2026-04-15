@@ -801,10 +801,11 @@ func (ns NullScheduleStatus) Value() (driver.Value, error) {
 type UserKind string
 
 const (
-	UserKindInternal UserKind = "internal"
-	UserKindOwner    UserKind = "owner"
-	UserKindStaff    UserKind = "staff"
-	UserKindFree     UserKind = "free"
+	UserKindOwner              UserKind = "owner"
+	UserKindEmployee           UserKind = "employee"
+	UserKindClient             UserKind = "client"
+	UserKindSupplier           UserKind = "supplier"
+	UserKindOutsourcedEmployee UserKind = "outsourced_employee"
 )
 
 func (e *UserKind) Scan(src interface{}) error {
@@ -845,12 +846,9 @@ func (ns NullUserKind) Value() (driver.Value, error) {
 type UserRoleType string
 
 const (
-	UserRoleTypeRoot     UserRoleType = "root"
-	UserRoleTypeAdmin    UserRoleType = "admin"
-	UserRoleTypeManager  UserRoleType = "manager"
-	UserRoleTypeEmployee UserRoleType = "employee"
-	UserRoleTypeAux      UserRoleType = "aux"
-	UserRoleTypeGeneral  UserRoleType = "general"
+	UserRoleTypeRoot  UserRoleType = "root"
+	UserRoleTypeAdmin UserRoleType = "admin"
+	UserRoleTypeFree  UserRoleType = "free"
 )
 
 func (e *UserRoleType) Scan(src interface{}) error {
@@ -1063,7 +1061,6 @@ type CompanyEmployee struct {
 	ID        pgtype.UUID        `db:"id" json:"id"`
 	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
 	PersonID  pgtype.UUID        `db:"person_id" json:"person_id"`
-	Kind      EmployeeKind       `db:"kind" json:"kind"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	DeletedAt pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
@@ -1087,16 +1084,12 @@ type CompanyFinance struct {
 }
 
 type CompanyModule struct {
-	ID              pgtype.UUID        `db:"id" json:"id"`
-	CompanyID       pgtype.UUID        `db:"company_id" json:"company_id"`
-	ModuleID        pgtype.UUID        `db:"module_id" json:"module_id"`
-	SubscriptionID  pgtype.UUID        `db:"subscription_id" json:"subscription_id"`
-	GrantedManually bool               `db:"granted_manually" json:"granted_manually"`
-	StartsAt        pgtype.Timestamptz `db:"starts_at" json:"starts_at"`
-	ExpiresAt       pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
-	IsActive        bool               `db:"is_active" json:"is_active"`
-	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID        pgtype.UUID        `db:"id" json:"id"`
+	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
+	ModuleID  pgtype.UUID        `db:"module_id" json:"module_id"`
+	IsActive  bool               `db:"is_active" json:"is_active"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type CompanyPeopleAddress struct {
@@ -1113,7 +1106,6 @@ type CompanyPerson struct {
 	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
 	PersonID  pgtype.UUID        `db:"person_id" json:"person_id"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type CompanyProduct struct {
@@ -1189,10 +1181,12 @@ type CompanyUser struct {
 	ID        pgtype.UUID        `db:"id" json:"id"`
 	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
 	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
+	Kind      UserKind           `db:"kind" json:"kind"`
 	IsOwner   bool               `db:"is_owner" json:"is_owner"`
 	IsActive  bool               `db:"is_active" json:"is_active"`
-	JoinedAt  pgtype.Timestamptz `db:"joined_at" json:"joined_at"`
-	LeftAt    pgtype.Timestamptz `db:"left_at" json:"left_at"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
 type EmailVerificationToken struct {
@@ -1288,6 +1282,7 @@ type Language struct {
 	NativeName string             `db:"native_name" json:"native_name"`
 	IsActive   bool               `db:"is_active" json:"is_active"`
 	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type LoginHistory struct {
@@ -1379,6 +1374,7 @@ type PeopleFinance struct {
 	FinanceID pgtype.UUID        `db:"finance_id" json:"finance_id"`
 	IsPrimary bool               `db:"is_primary" json:"is_primary"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type PeopleIdentification struct {
@@ -1666,7 +1662,6 @@ type User struct {
 	EmailVerified   bool               `db:"email_verified" json:"email_verified"`
 	EmailVerifiedAt pgtype.Timestamptz `db:"email_verified_at" json:"email_verified_at"`
 	Role            UserRoleType       `db:"role" json:"role"`
-	Kind            UserKind           `db:"kind" json:"kind"`
 	IsActive        bool               `db:"is_active" json:"is_active"`
 	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
@@ -1722,6 +1717,7 @@ type UsersPermission struct {
 	GrantedBy    pgtype.UUID        `db:"granted_by" json:"granted_by"`
 	IsActive     bool               `db:"is_active" json:"is_active"`
 	GrantedAt    pgtype.Timestamptz `db:"granted_at" json:"granted_at"`
+	RevokedBy    pgtype.UUID        `db:"revoked_by" json:"revoked_by"`
 	RevokedAt    pgtype.Timestamptz `db:"revoked_at" json:"revoked_at"`
 }
 
