@@ -53,8 +53,8 @@ const listPermissionsByPlanID = `-- name: ListPermissionsByPlanID :many
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     p.created_at,
     p.updated_at
 FROM
@@ -87,8 +87,8 @@ func (q *Queries) ListPermissionsByPlanID(ctx context.Context, arg ListPermissio
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
-			&i.Name,
 			&i.Description,
+			&i.DefaultRoles,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

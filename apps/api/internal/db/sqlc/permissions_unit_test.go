@@ -22,8 +22,8 @@ func TestQueries_Permissions_Unit(t *testing.T) {
 
 	t.Run("GetPermissionByCode", func(t *testing.T) {
 		code := "user:read"
-		rows := pgxmock.NewRows([]string{"id", "code", "name", "description", "created_at", "updated_at"}).
-			AddRow(uuidValue(), code, "Read Users", pgtype.Text{String: "Allows reading user info", Valid: true}, pgtype.Timestamptz{Valid: true}, pgtype.Timestamptz{Valid: true})
+		rows := pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "created_at", "updated_at"}).
+			AddRow(uuidValue(), code, pgtype.Text{String: "Allows reading user info", Valid: true}, []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin}, pgtype.Timestamptz{Valid: true}, pgtype.Timestamptz{Valid: true})
 
 		mock.ExpectQuery(`(?s)name: GetPermissionByCode`).
 			WithArgs(code).
@@ -44,13 +44,13 @@ func TestQueries_Permissions_Unit(t *testing.T) {
 
 	t.Run("InsertPermission", func(t *testing.T) {
 		arg := sqlc.InsertPermissionParams{
-			Code:        "pet:write",
-			Name:        "Write Pets",
-			Description: pgtype.Text{String: "Allows creating pets", Valid: true},
+			Code:         "pet:write",
+			DefaultRoles: []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin},
+			Description:  pgtype.Text{String: "Allows creating pets", Valid: true},
 		}
 
 		mock.ExpectExec(`(?s)name: InsertPermission`).
-			WithArgs(arg.Code, arg.Name, arg.Description).
+			WithArgs(arg.Code, arg.Description, arg.DefaultRoles).
 			WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 		rows, err := queries.InsertPermission(ctx, arg)
@@ -68,31 +68,33 @@ func TestQueries_Permissions_Unit(t *testing.T) {
 
 	t.Run("ListPermissions", func(t *testing.T) {
 		mock.ExpectQuery(`(?s)name: ListPermissions`).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "code", "name", "description", "created_at", "updated_at"}).
-				AddRow(uuidValue(), "p1", "n1", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+			WithArgs(int32(0), int32(10)).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "created_at", "updated_at"}).
+				AddRow(uuidValue(), "p1", pgtype.Text{}, []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
-		res, err := queries.ListPermissions(ctx)
+		res, err := queries.ListPermissions(ctx, sqlc.ListPermissionsParams{Offset: 0, Limit: 10})
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 
 		// Failure
 		mock.ExpectQuery(`(?s)name: ListPermissions`).
+			WithArgs(int32(0), int32(10)).
 			WillReturnError(errExpected)
 
-		_, err = queries.ListPermissions(ctx)
+		_, err = queries.ListPermissions(ctx, sqlc.ListPermissionsParams{Offset: 0, Limit: 10})
 		require.ErrorIs(t, err, errExpected)
 	})
 
 	t.Run("UpdatePermission", func(t *testing.T) {
 		arg := sqlc.UpdatePermissionParams{
-			ID:          uuidValue(),
-			Code:        pgtype.Text{String: "new-code", Valid: true},
-			Name:        pgtype.Text{String: "New Name", Valid: true},
-			Description: pgtype.Text{String: "New Desc", Valid: true},
+			ID:           uuidValue(),
+			Code:         pgtype.Text{String: "new-code", Valid: true},
+			DefaultRoles: []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin},
+			Description:  pgtype.Text{String: "New Desc", Valid: true},
 		}
 
 		mock.ExpectExec(`(?s)name: UpdatePermission`).
-			WithArgs(arg.Code, arg.Name, arg.Description, arg.ID).
+			WithArgs(arg.Code, arg.Description, arg.DefaultRoles, arg.ID).
 			WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 
 		rows, err := queries.UpdatePermission(ctx, arg)

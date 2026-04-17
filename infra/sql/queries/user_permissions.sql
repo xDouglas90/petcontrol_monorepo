@@ -1,9 +1,9 @@
 -- name: InsertUserPermission :execrows
-INSERT INTO users_permissions(user_id, permission_id, granted_by)
+INSERT INTO user_permissions(user_id, permission_id, granted_by)
     VALUES (sqlc.arg('UserID'), sqlc.arg('PermissionID'), sqlc.arg('GrantedBy'));
 
 -- name: BulkInsertUserPermissions :execrows
-INSERT INTO users_permissions(user_id, permission_id, granted_by)
+INSERT INTO user_permissions(user_id, permission_id, granted_by)
 SELECT
     sqlc.arg('UserID'),
     unnest(sqlc.arg('PermissionIDs')::uuid[]),
@@ -11,7 +11,7 @@ SELECT
 
 -- name: DeleteUserPermission :execrows
 UPDATE
-    users_permissions
+    user_permissions
 SET
     revoked_at = now(),
     revoked_by = sqlc.arg('RevokedBy')
@@ -24,14 +24,14 @@ WHERE
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     up.granted_by,
     up.granted_at,
     up.revoked_by,
     up.revoked_at
 FROM
-    users_permissions up
+    user_permissions up
     JOIN permissions p ON up.permission_id = p.id
 WHERE
     up.user_id = sqlc.arg('UserID')
@@ -46,14 +46,14 @@ OFFSET sqlc.arg('Offset');
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     up.granted_by,
     up.granted_at,
     up.revoked_by,
     up.revoked_at
 FROM
-    users_permissions up
+    user_permissions up
     JOIN permissions p ON up.permission_id = p.id
 WHERE
     up.user_id = sqlc.arg('UserID')
@@ -73,7 +73,7 @@ SELECT
     up.revoked_by,
     up.revoked_at
 FROM
-    users_permissions up
+    user_permissions up
     JOIN users u ON up.user_id = u.id
 WHERE
     up.permission_id = sqlc.arg('PermissionID')
