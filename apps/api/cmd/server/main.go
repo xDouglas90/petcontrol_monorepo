@@ -14,6 +14,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/storage/gcs"
 )
 
 // @title PetControl API
@@ -39,6 +40,18 @@ func main() {
 	defer pool.Close()
 
 	queries := sqlc.New(pool)
+	gcsClient, err := gcs.NewClient(context.Background(), cfg.Uploads)
+	if err != nil {
+		log.Fatalf("gcs client initialization failed: %v", err)
+	}
+	if gcsClient != nil {
+		defer func() {
+			if err := gcsClient.Close(); err != nil {
+				log.Printf("close gcs client: %v", err)
+			}
+		}()
+	}
+
 	companyService := service.NewCompanyService(queries)
 	planService := service.NewPlanService(queries)
 	moduleService := service.NewModuleService(queries)
@@ -48,21 +61,24 @@ func main() {
 	serviceService := service.NewServiceService(pool, queries)
 	scheduleService := service.NewScheduleService(pool, queries)
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
+	uploadStorage := gcs.NewService(cfg.Uploads, gcsClient, gcsClient)
+	uploadService := service.NewUploadService(uploadStorage)
 	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
 	defer func() {
 		if err := workerPublisher.Close(); err != nil {
 			log.Printf("close worker publisher: %v", err)
 		}
 	}()
-	companyHandler := handler.NewCompanyHandler(companyService)
+	companyHandler := handler.NewCompanyHandler(companyService, uploadService)
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
-	clientHandler := handler.NewClientHandler(clientService)
-	petHandler := handler.NewPetHandler(petService)
+	clientHandler := handler.NewClientHandler(clientService, uploadService)
+	petHandler := handler.NewPetHandler(petService, uploadService)
 	serviceHandler := handler.NewServiceHandler(serviceService)
 	scheduleHandler := handler.NewScheduleHandler(scheduleService, workerPublisher)
 	authHandler := handler.NewAuthHandler(authService)
+	uploadHandler := handler.NewUploadHandler(uploadService)
 	workerHandler := handler.NewWorkerHandler(workerPublisher)
 	healthHandler := handler.NewHealthHandler(pool)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -85,6 +101,7 @@ func main() {
 	protected := v1.Group("/")
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant(), middleware.Audit(queries, logger))
 	protected.GET("/companies/current", companyHandler.Current)
+	protected.PATCH("/companies/current", companyHandler.Update)
 	protected.GET("/plans/current", planHandler.Current)
 	protected.GET("/modules/active", moduleHandler.Active)
 	protected.GET("/company-users", companyUserHandler.List)
@@ -92,6 +109,8 @@ func main() {
 	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), moduleHandler.Access)
+	protected.POST("/uploads/intents", uploadHandler.CreateIntent)
+	protected.POST("/uploads/complete", uploadHandler.Complete)
 
 	clients := protected.Group("/clients")
 	clients.Use(middleware.RequireModule(queries, "CRM"))
