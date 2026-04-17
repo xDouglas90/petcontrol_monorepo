@@ -514,17 +514,6 @@ func parseOptionalTime(raw *string) (*time.Time, error) {
 	return &parsed, nil
 }
 
-func parseOptionalUUID(raw *string) (*pgtype.UUID, error) {
-	if raw == nil {
-		return nil, nil
-	}
-	value, err := parseUUID(strings.TrimSpace(*raw))
-	if err != nil {
-		return nil, err
-	}
-	return &value, nil
-}
-
 func parseOptionalRFC3339(raw *string) (*time.Time, error) {
 	if raw == nil {
 		return nil, nil
@@ -534,14 +523,6 @@ func parseOptionalRFC3339(raw *string) (*time.Time, error) {
 		return nil, err
 	}
 	return &value, nil
-}
-
-func parseOptionalTrimmed(raw *string) *string {
-	if raw == nil {
-		return nil
-	}
-	value := strings.TrimSpace(*raw)
-	return &value
 }
 
 func parseOptionalScheduleStatus(raw *string) *sqlc.ScheduleStatus {
@@ -588,14 +569,6 @@ func mapScheduleItem(item sqlc.GetScheduleByIDAndCompanyIDRow) scheduleResponse 
 		Notes:         nullableText(item.Notes),
 		CurrentStatus: string(item.CurrentStatus),
 	}
-}
-
-func nullableTime(value pgtype.Timestamptz) *time.Time {
-	if !value.Valid {
-		return nil
-	}
-	timestamp := value.Time
-	return &timestamp
 }
 
 func stringSliceFromAny(raw interface{}) []string {
