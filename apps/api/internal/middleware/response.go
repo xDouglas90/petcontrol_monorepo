@@ -55,6 +55,8 @@ func defaultErrorCode(status int) string {
 		return "unprocessable_entity"
 	case http.StatusTooManyRequests:
 		return "too_many_requests"
+	case http.StatusServiceUnavailable:
+		return "service_unavailable"
 	default:
 		if status >= 500 {
 			return "internal_error"

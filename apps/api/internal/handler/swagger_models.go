@@ -90,6 +90,7 @@ type PetCreateRequestDoc struct {
 	Kind        string `json:"kind" example:"dog"`
 	Temperament string `json:"temperament" example:"playful"`
 	ImageURL    string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	UploadKey   string `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
 	BirthDate   string `json:"birth_date,omitempty" example:"2021-08-20"`
 	Notes       string `json:"notes,omitempty" example:"Gosta de brincar"`
 }
@@ -102,6 +103,7 @@ type PetUpdateRequestDoc struct {
 	Kind        *string `json:"kind,omitempty" example:"dog"`
 	Temperament *string `json:"temperament,omitempty" example:"loving"`
 	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	UploadKey   *string `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
 	BirthDate   *string `json:"birth_date,omitempty" example:"2021-08-20"`
 	Notes       *string `json:"notes,omitempty" example:"Atualizado após consulta"`
 }
