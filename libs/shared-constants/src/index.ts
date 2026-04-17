@@ -8,6 +8,7 @@ export const API_PATHS = {
   clients: '/clients',
   pets: '/pets',
   services: '/services',
+  uploadsIntent: '/uploads/intent',
 } as const;
 
 export const MODULE_CODES = {
