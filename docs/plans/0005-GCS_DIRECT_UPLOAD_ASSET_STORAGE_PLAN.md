@@ -405,7 +405,7 @@ Para um campo como `avatar_url`:
 3. frontend executa upload direto no GCS
 4. frontend chama `POST /uploads/complete`
 5. frontend recebe `object_key` e `public_url`
-6. formulário do recurso envia `upload_object_key` ou `public_url` para o endpoint de dominio
+6. formulário do recurso envia `upload_object_key` ou `public_url` para o endpoint de domínio
 
 ### 3. UX minima
 

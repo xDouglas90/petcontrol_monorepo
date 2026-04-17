@@ -200,7 +200,7 @@ func (h *ClientHandler) Create(c *gin.Context) {
 		Notes:          textValue(strings.TrimSpace(req.Notes)),
 		ImageURL:       textValue(strings.TrimSpace(req.ImageURL)),
 	})
-	
+
 	if req.UploadKey != "" {
 		resolved, err := h.resolveUploadObjectKey(c.Request.Context(), req.UploadKey, req.ImageURL)
 		if err != nil {

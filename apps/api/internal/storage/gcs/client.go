@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"encoding/json"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/config"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
+	"os"
 )
 
 var ErrObjectNotFound = errors.New("object not found")
@@ -25,16 +28,41 @@ func NewClient(ctx context.Context, cfg config.UploadsConfig) (*Client, error) {
 		return nil, nil
 	}
 
-	storageClient, err := storage.NewClient(ctx)
+	var opts []option.ClientOption
+	if cfg.GCSCredentialsFile != "" {
+		opts = append(opts, option.WithCredentialsFile(cfg.GCSCredentialsFile))
+	}
+
+	storageClient, err := storage.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{
+	client := &Client{
 		storageClient:        storageClient,
 		signerServiceAccount: strings.TrimSpace(cfg.GCSSignerServiceAccount),
 		signerPrivateKey:     []byte(cfg.GCSSignerPrivateKey),
-	}, nil
+	}
+
+	if (client.signerServiceAccount == "" || len(client.signerPrivateKey) == 0) && cfg.GCSCredentialsFile != "" {
+		data, err := os.ReadFile(cfg.GCSCredentialsFile)
+		if err == nil {
+			var creds struct {
+				ClientEmail string `json:"client_email"`
+				PrivateKey  string `json:"private_key"`
+			}
+			if err := json.Unmarshal(data, &creds); err == nil {
+				if client.signerServiceAccount == "" {
+					client.signerServiceAccount = creds.ClientEmail
+				}
+				if len(client.signerPrivateKey) == 0 {
+					client.signerPrivateKey = []byte(creds.PrivateKey)
+				}
+			}
+		}
+	}
+
+	return client, nil
 }
 
 func (c *Client) Close() error {
@@ -50,7 +78,6 @@ func (c *Client) SignedUploadURL(_ context.Context, bucketName string, objectKey
 		Method:         http.MethodPut,
 		GoogleAccessID: c.signerServiceAccount,
 		PrivateKey:     c.signerPrivateKey,
-		Headers:        []string{"Content-Type:" + contentType},
 		Expires:        expiresAt,
 		ContentType:    contentType,
 	}

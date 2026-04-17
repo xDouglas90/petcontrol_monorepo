@@ -109,7 +109,7 @@ func main() {
 	protected.DELETE("/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 	protected.POST("/worker/notifications/dummy", workerHandler.EnqueueDummyNotification)
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), moduleHandler.Access)
-	protected.POST("/uploads/intents", uploadHandler.CreateIntent)
+	protected.POST("/uploads/intent", uploadHandler.CreateIntent)
 	protected.POST("/uploads/complete", uploadHandler.Complete)
 
 	clients := protected.Group("/clients")

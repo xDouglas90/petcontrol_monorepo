@@ -145,5 +145,3 @@ func (h *CompanyHandler) resolveOptionalUploadObjectKey(ctx context.Context, obj
 	}
 	return &resolved, nil
 }
-
-
