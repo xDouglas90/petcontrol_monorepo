@@ -12,6 +12,14 @@ O objetivo aqui e registrar regras compartilhadas entre apps e libs que ajudam a
 
 - [company-slug-routing.md](./company-slug-routing.md)
   Convenção de rotas autenticadas com `company_slug`, separando claramente contexto de URL/UX de autorização baseada em JWT e `company_id`.
+- [modules.md](./modules.md)
+  Códigos, descrições e pacotes mínimos de cada módulo do sistema.
+- [permissions.md](./permissions.md)
+  Lista mestre de permissões e atribuição padrão por papel.
+- [plans.md](./plans.md)
+  Definição dos planos de assinatura (Starter, Basic, Essential, Premium).
+- [users-types.md](./users-types.md)
+  Diferenciação entre papéis sistêmicos (Role) e tipos de vínculo de negócio (Kind).
 
 ## Relação com outras pastas de `docs/`
 
