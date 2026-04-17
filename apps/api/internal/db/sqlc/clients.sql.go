@@ -157,8 +157,8 @@ func (q *Queries) GetClientByIDAndCompanyID(ctx context.Context, arg GetClientBy
 }
 
 const insertClientIdentification = `-- name: InsertClientIdentification :one
-INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, image_url, birth_date, cpf)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING
     id, person_id, full_name, short_name, gender_identity, marital_status, image_url, birth_date, cpf, created_at, updated_at
 `
@@ -169,6 +169,7 @@ type InsertClientIdentificationParams struct {
 	ShortName      string         `db:"ShortName" json:"ShortName"`
 	GenderIdentity GenderIdentity `db:"GenderIdentity" json:"GenderIdentity"`
 	MaritalStatus  MaritalStatus  `db:"MaritalStatus" json:"MaritalStatus"`
+	ImageURL       pgtype.Text    `db:"ImageURL" json:"ImageURL"`
 	BirthDate      pgtype.Date    `db:"BirthDate" json:"BirthDate"`
 	CPF            string         `db:"CPF" json:"CPF"`
 }
@@ -180,6 +181,7 @@ func (q *Queries) InsertClientIdentification(ctx context.Context, arg InsertClie
 		arg.ShortName,
 		arg.GenderIdentity,
 		arg.MaritalStatus,
+		arg.ImageURL,
 		arg.BirthDate,
 		arg.CPF,
 	)
@@ -422,15 +424,16 @@ SET
     short_name = COALESCE($2, pi.short_name),
     gender_identity = COALESCE($3, pi.gender_identity),
     marital_status = COALESCE($4, pi.marital_status),
-    birth_date = COALESCE($5, pi.birth_date),
-    cpf = COALESCE($6, pi.cpf),
+    image_url = COALESCE($5, pi.image_url),
+    birth_date = COALESCE($6, pi.birth_date),
+    cpf = COALESCE($7, pi.cpf),
     updated_at = now()
 FROM
     clients c
     INNER JOIN company_clients cc ON cc.client_id = c.id
 WHERE
-    c.id = $7
-    AND cc.company_id = $8
+    c.id = $8
+    AND cc.company_id = $9
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
     AND pi.person_id = c.person_id
@@ -441,6 +444,7 @@ type UpdateClientIdentificationParams struct {
 	ShortName      pgtype.Text        `db:"ShortName" json:"ShortName"`
 	GenderIdentity NullGenderIdentity `db:"GenderIdentity" json:"GenderIdentity"`
 	MaritalStatus  NullMaritalStatus  `db:"MaritalStatus" json:"MaritalStatus"`
+	ImageURL       pgtype.Text        `db:"ImageURL" json:"ImageURL"`
 	BirthDate      pgtype.Date        `db:"BirthDate" json:"BirthDate"`
 	CPF            pgtype.Text        `db:"CPF" json:"CPF"`
 	ID             pgtype.UUID        `db:"ID" json:"ID"`
@@ -453,6 +457,7 @@ func (q *Queries) UpdateClientIdentification(ctx context.Context, arg UpdateClie
 		arg.ShortName,
 		arg.GenderIdentity,
 		arg.MaritalStatus,
+		arg.ImageURL,
 		arg.BirthDate,
 		arg.CPF,
 		arg.ID,

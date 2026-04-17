@@ -86,8 +86,8 @@ RETURNING
     *;
 
 -- name: InsertClientIdentification :one
-INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
-    VALUES (sqlc.arg('PersonID'), sqlc.arg('FullName'), sqlc.arg('ShortName'), sqlc.arg('GenderIdentity'), sqlc.arg('MaritalStatus'), sqlc.arg('BirthDate'), sqlc.arg('CPF'))
+INSERT INTO people_identifications(person_id, full_name, short_name, gender_identity, marital_status, image_url, birth_date, cpf)
+    VALUES (sqlc.arg('PersonID'), sqlc.arg('FullName'), sqlc.arg('ShortName'), sqlc.arg('GenderIdentity'), sqlc.arg('MaritalStatus'), sqlc.narg('ImageURL'), sqlc.arg('BirthDate'), sqlc.arg('CPF'))
 RETURNING
     *;
 
@@ -117,6 +117,7 @@ SET
     short_name = COALESCE(sqlc.narg('ShortName'), pi.short_name),
     gender_identity = COALESCE(sqlc.narg('GenderIdentity'), pi.gender_identity),
     marital_status = COALESCE(sqlc.narg('MaritalStatus'), pi.marital_status),
+    image_url = COALESCE(sqlc.narg('ImageURL'), pi.image_url),
     birth_date = COALESCE(sqlc.narg('BirthDate'), pi.birth_date),
     cpf = COALESCE(sqlc.narg('CPF'), pi.cpf),
     updated_at = now()
