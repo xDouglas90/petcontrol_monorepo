@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -15,7 +16,12 @@ import (
 )
 
 type ClientHandler struct {
-	service *service.ClientService
+	service        *service.ClientService
+	uploadResolver clientUploadResolver
+}
+
+type clientUploadResolver interface {
+	ResolveObjectKey(ctx context.Context, resource string, field string, objectKey string) (string, error)
 }
 
 type createClientRequest struct {
@@ -31,6 +37,8 @@ type createClientRequest struct {
 	HasWhatsapp    bool   `json:"has_whatsapp"`
 	ClientSince    string `json:"client_since"`
 	Notes          string `json:"notes"`
+	ImageURL       string `json:"image_url"`
+	UploadKey      string `json:"upload_object_key"`
 }
 
 type updateClientRequest struct {
@@ -46,10 +54,16 @@ type updateClientRequest struct {
 	HasWhatsapp    *bool   `json:"has_whatsapp"`
 	ClientSince    *string `json:"client_since"`
 	Notes          *string `json:"notes"`
+	ImageURL       *string `json:"image_url"`
+	UploadKey      *string `json:"upload_object_key"`
 }
 
-func NewClientHandler(service *service.ClientService) *ClientHandler {
-	return &ClientHandler{service: service}
+func NewClientHandler(service *service.ClientService, uploadResolver ...clientUploadResolver) *ClientHandler {
+	handler := &ClientHandler{service: service}
+	if len(uploadResolver) > 0 {
+		handler.uploadResolver = uploadResolver[0]
+	}
+	return handler
 }
 
 // List godoc
@@ -184,7 +198,25 @@ func (h *ClientHandler) Create(c *gin.Context) {
 		HasWhatsapp:    req.HasWhatsapp,
 		ClientSince:    clientSince,
 		Notes:          textValue(strings.TrimSpace(req.Notes)),
+		ImageURL:       textValue(strings.TrimSpace(req.ImageURL)),
 	})
+	
+	if req.UploadKey != "" {
+		resolved, err := h.resolveUploadObjectKey(c.Request.Context(), req.UploadKey, req.ImageURL)
+		if err != nil {
+			middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
+			return
+		}
+		item, err = h.service.UpdateClient(c.Request.Context(), service.UpdateClientInput{
+			CompanyID: companyID,
+			ClientID:  item.ID,
+			ImageURL:  &resolved,
+		})
+		if err != nil {
+			middleware.JSONError(c, apperror.HTTPStatus(err), "update_client_avatar_failed", "failed to update client avatar")
+			return
+		}
+	}
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "create_client_failed", "failed to create client")
 		return
@@ -287,6 +319,15 @@ func (h *ClientHandler) Update(c *gin.Context) {
 		HasWhatsapp:    req.HasWhatsapp,
 		ClientSince:    clientSince,
 		Notes:          parseOptionalTrimmed(req.Notes),
+		ImageURL: func() *string {
+			if req.UploadKey != nil {
+				resolved, err := h.resolveUploadObjectKey(c.Request.Context(), *req.UploadKey, "")
+				if err == nil {
+					return &resolved
+				}
+			}
+			return parseOptionalTrimmed(req.ImageURL)
+		}(),
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "update_client_failed", "failed to update client")
@@ -474,9 +515,13 @@ func hasClientUpdatePayload(req updateClientRequest) bool {
 		req.Notes != nil
 }
 
-func textValue(value string) pgtype.Text {
-	if value == "" {
-		return pgtype.Text{}
+func (h *ClientHandler) resolveUploadObjectKey(ctx context.Context, objectKey string, fallback string) (string, error) {
+	trimmedKey := strings.TrimSpace(objectKey)
+	if trimmedKey == "" {
+		return fallback, nil
 	}
-	return pgtype.Text{String: value, Valid: true}
+	if h.uploadResolver == nil {
+		return "", apperror.ErrServiceUnavailable
+	}
+	return h.uploadResolver.ResolveObjectKey(ctx, "people_identifications", "image_url", trimmedKey)
 }
