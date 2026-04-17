@@ -8,20 +8,23 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =============================================================================
 -- SEÇÃO 1: ENUMS
 -- =============================================================================
--- Tipos de usuário no sistema (papel técnico/sistêmico)
+-- Tipos de usuário no sistema(papel técnico/sistêmico)
 CREATE TYPE user_role_type AS ENUM(
-  'root', -- Acesso total ao sistema (Anthropic/dev)
-  'admin', -- Gerencia empresas, planos, módulos e usuários (cliente)
-  'free' -- Conta gratuita / trial
+  'root', -- Acesso total ao sistema
+  'internal', -- Acesso total ao sistema(Desenvolvedores, criados por um root)
+  'admin', -- Gerencia tenants, usuários, configurações, permissões(Criado por um root)
+  'system', -- Usuário do sistema(Criado por um admin)
+  'common', -- Usuário comum(Criados por clientes dos tenants)
+  'free' -- Conta gratuita / trial(Criado por um root)
 );
 
--- Tipos de usuário no contexto de negócio (quem é na empresa)
+-- Tipos de usuário no contexto de negócio(quem é na empresa)
 CREATE TYPE user_kind AS ENUM(
   'owner', -- Proprietário/Sócio da empresa
   'employee', -- Funcionário da empresa cliente
   'client', -- Cliente final atendido pela empresa
   'supplier', -- Fornecedor da empresa cliente
-  'outsourced_employee' -- Funcionário terceirizado (ex: limpeza, segurança)
+  'outsourced_employee' -- Funcionário terceirizado(ex: free lancers, prestadores de serviço)
 );
 
 -- Pacotes de módulos disponíveis nos planos
@@ -30,7 +33,8 @@ CREATE TYPE module_package AS ENUM(
   'starter',
   'basic',
   'essential',
-  'premium'
+  'premium',
+  'trial'
 );
 
 -- Ações possíveis registradas em logs de auditoria
@@ -209,10 +213,18 @@ CREATE TYPE logout_reason AS ENUM(
   'suspicious_activity'
 );
 
+CREATE TYPE notification_level AS ENUM(
+  'info',
+  'success',
+  'warning',
+  'error',
+  'alert'
+);
+
 -- =============================================================================
 -- SEÇÃO 2: AUTENTICAÇÃO E SESSÕES
 -- =============================================================================
--- Usuários do sistema (somente dados de acesso)
+-- Usuários do sistema(somente dados de acesso)
 CREATE TABLE users(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   email varchar(150) UNIQUE NOT NULL,
@@ -246,7 +258,7 @@ CREATE TABLE user_auth(
   updated_at timestamptz
 );
 
--- Histórico de cada tentativa de login (imutável — sem ON DELETE CASCADE)
+-- Histórico de cada tentativa de login(imutável — sem ON DELETE CASCADE)
 CREATE TABLE login_history(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid REFERENCES users(id) ON DELETE SET NULL, -- preserva histórico
@@ -263,7 +275,7 @@ CREATE INDEX idx_login_history_attempted ON login_history(attempted_at DESC);
 
 CREATE INDEX idx_login_history_result ON login_history(result);
 
--- Sessões ativas e históricas (separado do histórico de login)
+-- Sessões ativas e históricas(separado do histórico de login)
 CREATE TABLE user_sessions(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -340,7 +352,7 @@ CREATE TABLE user_settings(
   user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   notifications_enabled boolean NOT NULL DEFAULT TRUE,
   theme varchar(20) NOT NULL DEFAULT 'light',
-  language VARCHAR
+  language varchar
 (10) NOT NULL DEFAULT 'pt-BR',
   timezone varchar(50) NOT NULL DEFAULT 'America/Sao_Paulo',
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -350,20 +362,21 @@ CREATE TABLE user_settings(
 -- =============================================================================
 -- SEÇÃO 3: PERMISSÕES E CONTROLE DE ACESSO
 -- =============================================================================
--- Permissões granulares do sistema (ex: schedule.create, client.delete)
+-- Permissões granulares do sistema(ex: schedule.create, client.delete)
 CREATE TABLE permissions(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  code varchar(50) UNIQUE NOT NULL, -- ex: 'schedule.create'
-  name varchar(100) NOT NULL,
+  code varchar(100) UNIQUE NOT NULL, -- ex: 'schedule.create'
   description varchar(255),
+  default_roles user_role_type[] NOT NULL,
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamptz
+  updated_at timestamptz,
+  CONSTRAINT default_roles_not_empty CHECK (array_length(default_roles, 1) > 0)
 );
 
 CREATE INDEX idx_permissions_code ON permissions(code);
 
--- Permissões atribuídas a cada usuário (escopadas por empresa em companies_users)
-CREATE TABLE users_permissions(
+-- Permissões atribuídas a cada usuário(escopadas por empresa em companies_users)
+CREATE TABLE user_permissions(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   permission_id uuid NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
@@ -375,10 +388,10 @@ CREATE TABLE users_permissions(
   UNIQUE (user_id, permission_id)
 );
 
-CREATE INDEX idx_users_permissions_user_id ON users_permissions(user_id);
+CREATE INDEX idx_users_permissions_user_id ON user_permissions(user_id);
 
 -- =============================================================================
--- SEÇÃO 4: MÓDULOS E PLANOS (CONTROLE DE FEATURES)
+-- SEÇÃO 4: MÓDULOS E PLANOS(CONTROLE DE FEATURES)
 -- =============================================================================
 -- Módulos/funcionalidades da plataforma
 CREATE TABLE modules(
@@ -395,7 +408,17 @@ CREATE TABLE modules(
 
 CREATE INDEX idx_modules_code ON modules(code);
 
--- Tipos de planos (ex: Mensal, Anual, Trial)
+CREATE TABLE module_permissions(
+  module_id uuid NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+  permission_id uuid NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+  PRIMARY KEY (module_id, permission_id)
+);
+
+CREATE INDEX idx_module_permissions_module_id ON module_permissions(module_id);
+
+CREATE INDEX idx_module_permissions_permission_id ON module_permissions(permission_id);
+
+-- Tipos de planos(ex: Mensal, Anual, Trial)
 CREATE TABLE plan_types(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name varchar(50) NOT NULL,
@@ -442,7 +465,7 @@ CREATE TABLE plan_permissions(
 );
 
 -- =============================================================================
--- SEÇÃO 5: EMPRESAS (MULTI-TENANT CORE)
+-- SEÇÃO 5: EMPRESAS(MULTI-TENANT CORE)
 -- =============================================================================
 -- Idiomas suportados
 CREATE TABLE languages(
@@ -501,7 +524,7 @@ CREATE INDEX idx_company_subscriptions_active ON company_subscriptions(company_i
 WHERE
   is_active = TRUE AND canceled_at IS NULL;
 
--- Módulos ativos por empresa (derivado do plano, mas pode ter exceções manuais)
+-- Módulos ativos por empresa(derivado do plano, mas pode ter exceções manuais)
 CREATE TABLE company_modules(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -556,9 +579,9 @@ CREATE TABLE company_system_configs(
 );
 
 -- =============================================================================
--- SEÇÃO 6: PESSOAS (DADOS PESSOAIS)
+-- SEÇÃO 6: PESSOAS(DADOS PESSOAIS)
 -- =============================================================================
--- Entidade base de pessoa (polimórfica: clientes, funcionários, etc.)
+-- Entidade base de pessoa(polimórfica: clientes, funcionários, etc.)
 CREATE TABLE people(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   kind person_kind NOT NULL,
@@ -653,7 +676,7 @@ CREATE TABLE addresses(
   updated_at timestamptz
 );
 
--- Endereços de pessoas (pessoa pode ter múltiplos)
+-- Endereços de pessoas(pessoa pode ter múltiplos)
 CREATE TABLE people_addresses(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   person_id uuid NOT NULL REFERENCES people(id) ON DELETE CASCADE,
@@ -670,7 +693,7 @@ CREATE INDEX idx_people_addresses_person ON people_addresses(person_id);
 CREATE TABLE finances(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   bank_name varchar(100) NOT NULL,
-  bank_code varchar(10), -- código do banco (ex: '001' = BB)
+  bank_code varchar(10), -- código do banco(ex: '001' = BB)
   bank_branch varchar(10) NOT NULL,
   bank_account varchar(15) NOT NULL,
   bank_account_digit varchar(2) NOT NULL,
@@ -693,7 +716,7 @@ CREATE TABLE people_finances(
   UNIQUE (person_id, finance_id)
 );
 
--- Vínculo entre users e people (usuário do sistema ↔ pessoa real)
+-- Vínculo entre users e people(usuário do sistema ↔ pessoa real)
 CREATE TABLE user_profiles(
   user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   person_id uuid UNIQUE NOT NULL REFERENCES people(id) ON DELETE CASCADE,
@@ -703,7 +726,7 @@ CREATE TABLE user_profiles(
 -- =============================================================================
 -- SEÇÃO 7: EMPRESAS ↔ PESSOAS
 -- =============================================================================
--- Pessoas vinculadas a empresas (funcionários, responsáveis, etc.)
+-- Pessoas vinculadas a empresas(funcionários, responsáveis, etc.)
 CREATE TABLE company_people(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -741,7 +764,7 @@ CREATE TABLE employments(
 
 CREATE INDEX idx_employments_employee ON employments(company_employee_id);
 
--- Benefícios dos funcionários (com histórico via valid_from/valid_until)
+-- Benefícios dos funcionários(com histórico via valid_from/valid_until)
 CREATE TABLE employee_benefits(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_employee_id uuid NOT NULL REFERENCES company_employees(id) ON DELETE CASCADE,
@@ -762,7 +785,7 @@ CREATE INDEX idx_employee_benefits_employee ON employee_benefits(company_employe
 CREATE TABLE company_employee_costs(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_employee_id uuid NOT NULL REFERENCES company_employees(id) ON DELETE CASCADE,
-  costs NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+  costs numeric(12, 2) NOT NULL DEFAULT 0.00,
   reference_month date NOT NULL, -- primeiro dia do mês de referência
   comments varchar(255),
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -902,7 +925,7 @@ CREATE TABLE services(
   deleted_at timestamptz
 );
 
--- Sub-serviços (variações de um serviço, ex: banho pequeno, banho grande)
+-- Sub-serviços(variações de um serviço, ex: banho pequeno, banho grande)
 CREATE TABLE sub_services(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   service_id uuid NOT NULL REFERENCES services(id) ON DELETE CASCADE,
@@ -934,7 +957,7 @@ CREATE TABLE company_services(
 
 CREATE INDEX idx_company_services_company ON company_services(company_id);
 
--- Produtos (estoque/venda)
+-- Produtos(estoque/venda)
 CREATE TABLE products(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name varchar(100) NOT NULL,
@@ -967,7 +990,7 @@ CREATE TABLE company_products(
 
 CREATE INDEX idx_company_products_company ON company_products(company_id);
 
--- Custos operacionais da empresa (contas, notas fiscais, etc.)
+-- Custos operacionais da empresa(contas, notas fiscais, etc.)
 CREATE TABLE company_business_costs(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -1023,7 +1046,7 @@ CREATE TABLE service_plan_sub_services(
   UNIQUE (service_plan_id, sub_service_id)
 );
 
--- Serviços bônus em planos (benefícios extras)
+-- Serviços bônus em planos(benefícios extras)
 CREATE TABLE service_plan_bonuses(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   service_plan_id uuid NOT NULL REFERENCES service_plans(id) ON DELETE CASCADE,
@@ -1063,7 +1086,7 @@ CREATE TABLE client_service_plans(
 -- SEÇÃO 11: AGENDAMENTOS
 -- =============================================================================
 -- Agendamentos
--- Unificando date + hour em scheduled_at (TIMESTAMPTZ)
+-- Unificando date + hour em scheduled_at(TIMESTAMPTZ)
 CREATE TABLE schedules(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -1152,7 +1175,7 @@ CREATE TABLE schedule_payments(
   CONSTRAINT chk_payment_values CHECK (discount_value >= 0 AND net_value >= 0 AND amount_paid >= 0)
 );
 
--- Ordens de serviço (impressão/comprovante)
+-- Ordens de serviço(impressão/comprovante)
 CREATE TABLE service_orders(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   schedule_id uuid UNIQUE NOT NULL REFERENCES schedules(id),
@@ -1178,7 +1201,14 @@ CREATE TABLE notifications(
   title varchar(100) NOT NULL,
   summary varchar(200) NOT NULL,
   content text NOT NULL,
+  image_url varchar(500),
+  "level" notification_level NOT NULL,
   send_to_whatsapp boolean NOT NULL DEFAULT FALSE,
+  send_to_telegram boolean NOT NULL DEFAULT FALSE,
+  send_to_email boolean NOT NULL DEFAULT FALSE,
+  send_to_sms boolean NOT NULL DEFAULT FALSE,
+  send_to_push boolean NOT NULL DEFAULT FALSE,
+  send_to_in_app_notification boolean NOT NULL DEFAULT TRUE,
   created_by uuid REFERENCES users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamptz,
@@ -1199,24 +1229,8 @@ CREATE TABLE notification_receivers(
 
 CREATE INDEX idx_notification_receivers_user ON notification_receivers(user_id);
 
--- Avisos internos da empresa
-CREATE TABLE warnings(
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  title varchar(100) NOT NULL,
-  content text NOT NULL,
-  image_url varchar(500),
-  sender_id uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  is_active boolean NOT NULL DEFAULT TRUE,
-  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamptz,
-  deleted_at timestamptz
-);
-
-CREATE INDEX idx_warnings_company ON warnings(company_id);
-
 -- =============================================================================
--- SEÇÃO 13: AUDITORIA (IMUTÁVEL)
+-- SEÇÃO 13: AUDITORIA(IMUTÁVEL)
 -- =============================================================================
 -- Tabelas de auditoria NUNCA devem ter ON DELETE CASCADE em referências a users.
 -- Registros de auditoria são imutáveis — não se deletam, não se atualizam.
@@ -1245,7 +1259,7 @@ CREATE INDEX idx_audit_logs_changed_at ON audit_logs(changed_at DESC);
 
 CREATE INDEX idx_audit_logs_action ON audit_logs(action);
 
--- Log específico de autenticação (separado por volume e sensibilidade)
+-- Log específico de autenticação(separado por volume e sensibilidade)
 CREATE TABLE auth_logs(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid REFERENCES users(id) ON DELETE SET NULL, -- SET NULL, nunca CASCADE

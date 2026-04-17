@@ -276,6 +276,24 @@ func (q *Queries) ListUsersBasic(ctx context.Context, arg ListUsersBasicParams) 
 	return items, nil
 }
 
+const restoreUser = `-- name: RestoreUser :execrows
+UPDATE
+  users
+SET
+  deleted_at = NULL,
+  is_active = TRUE
+WHERE
+  id = $1
+`
+
+func (q *Queries) RestoreUser(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, restoreUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updateUser = `-- name: UpdateUser :execrows
 UPDATE
   users

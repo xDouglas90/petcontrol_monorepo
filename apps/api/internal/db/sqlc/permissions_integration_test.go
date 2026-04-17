@@ -14,9 +14,9 @@ func TestQueries_Permissions_Integration(t *testing.T) {
 	t.Run("Lifecycle", func(t *testing.T) {
 		code := "test:perm"
 		arg := sqlc.InsertPermissionParams{
-			Code:        code,
-			Name:        "Test Permission",
-			Description: pgtype.Text{String: "Testing integration", Valid: true},
+			Code:         code,
+			DefaultRoles: []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin},
+			Description:  pgtype.Text{String: "Testing integration", Valid: true},
 		}
 
 		// Insert
@@ -29,19 +29,19 @@ func TestQueries_Permissions_Integration(t *testing.T) {
 		require.Equal(t, code, perm.Code)
 
 		// Update
-		newName := "Updated Perm Name"
+		newDescription := "Updated description"
 		_, err = queries.UpdatePermission(ctx, sqlc.UpdatePermissionParams{
-			ID:   perm.ID,
-			Name: pgtype.Text{String: newName, Valid: true},
+			ID:          perm.ID,
+			Description: pgtype.Text{String: newDescription, Valid: true},
 		})
 		require.NoError(t, err)
 
 		updated, err := queries.GetPermissionByCode(ctx, code)
 		require.NoError(t, err)
-		require.Equal(t, newName, updated.Name)
+		require.Equal(t, newDescription, updated.Description.String)
 
 		// List
-		list, err := queries.ListPermissions(ctx)
+		list, err := queries.ListPermissions(ctx, sqlc.ListPermissionsParams{Offset: 0, Limit: 10})
 		require.NoError(t, err)
 		found := false
 		for _, p := range list {
@@ -56,7 +56,7 @@ func TestQueries_Permissions_Integration(t *testing.T) {
 		_, err = queries.DeletePermission(ctx, perm.ID)
 		require.NoError(t, err)
 
-		listAfter, _ := queries.ListPermissions(ctx)
+		listAfter, _ := queries.ListPermissions(ctx, sqlc.ListPermissionsParams{Offset: 0, Limit: 10})
 		foundAfter := false
 		for _, p := range listAfter {
 			if p.Code == code {

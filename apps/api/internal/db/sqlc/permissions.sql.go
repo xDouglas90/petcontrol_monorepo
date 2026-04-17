@@ -13,7 +13,7 @@ import (
 
 const deletePermission = `-- name: DeletePermission :execrows
 DELETE FROM permissions
-WHERE id = $1
+WHERE id = $1::uuid
 `
 
 func (q *Queries) DeletePermission(ctx context.Context, id pgtype.UUID) (int64, error) {
@@ -28,14 +28,14 @@ const getPermissionByCode = `-- name: GetPermissionByCode :one
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     p.created_at,
     p.updated_at
 FROM
     permissions p
 WHERE
-    p.code = $1
+    p.code = $1::varchar
 `
 
 func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (Permission, error) {
@@ -44,8 +44,8 @@ func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (Permiss
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
-		&i.Name,
 		&i.Description,
+		&i.DefaultRoles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -53,18 +53,18 @@ func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (Permiss
 }
 
 const insertPermission = `-- name: InsertPermission :execrows
-INSERT INTO permissions(code, "name", description)
+INSERT INTO permissions(code, description, default_roles)
     VALUES ($1, $2, $3)
 `
 
 type InsertPermissionParams struct {
-	Code        string      `db:"Code" json:"Code"`
-	Name        string      `db:"Name" json:"Name"`
-	Description pgtype.Text `db:"Description" json:"Description"`
+	Code         string         `db:"Code" json:"Code"`
+	Description  pgtype.Text    `db:"Description" json:"Description"`
+	DefaultRoles []UserRoleType `db:"DefaultRoles" json:"DefaultRoles"`
 }
 
 func (q *Queries) InsertPermission(ctx context.Context, arg InsertPermissionParams) (int64, error) {
-	result, err := q.db.Exec(ctx, insertPermission, arg.Code, arg.Name, arg.Description)
+	result, err := q.db.Exec(ctx, insertPermission, arg.Code, arg.Description, arg.DefaultRoles)
 	if err != nil {
 		return 0, err
 	}
@@ -75,18 +75,24 @@ const listPermissions = `-- name: ListPermissions :many
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     p.created_at,
     p.updated_at
 FROM
     permissions p
 ORDER BY
     p.code ASC
+LIMIT $2::int OFFSET $1::int
 `
 
-func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
-	rows, err := q.db.Query(ctx, listPermissions)
+type ListPermissionsParams struct {
+	Offset int32 `db:"Offset" json:"Offset"`
+	Limit  int32 `db:"Limit" json:"Limit"`
+}
+
+func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissions, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +103,109 @@ func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
-			&i.Name,
 			&i.Description,
+			&i.DefaultRoles,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPermissionsByModule = `-- name: ListPermissionsByModule :many
+SELECT
+    p.id,
+    p.code,
+    p.description,
+    p.default_roles,
+    p.created_at,
+    p.updated_at
+FROM
+    permissions p
+    JOIN module_permissions mp ON p.id = mp.permission_id
+WHERE
+    mp.module_id = $1::uuid
+ORDER BY
+    p.code ASC
+LIMIT $3::int OFFSET $2::int
+`
+
+type ListPermissionsByModuleParams struct {
+	ModuleID pgtype.UUID `db:"ModuleID" json:"ModuleID"`
+	Offset   int32       `db:"Offset" json:"Offset"`
+	Limit    int32       `db:"Limit" json:"Limit"`
+}
+
+func (q *Queries) ListPermissionsByModule(ctx context.Context, arg ListPermissionsByModuleParams) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissionsByModule, arg.ModuleID, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DefaultRoles,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPermissionsByRole = `-- name: ListPermissionsByRole :many
+SELECT
+    p.id,
+    p.code,
+    p.description,
+    p.default_roles,
+    p.created_at,
+    p.updated_at
+FROM
+    permissions p
+WHERE
+    $1::user_role_type = ANY (p.default_roles)
+ORDER BY
+    p.code ASC
+LIMIT $3::int OFFSET $2::int
+`
+
+type ListPermissionsByRoleParams struct {
+	Role   UserRoleType `db:"Role" json:"Role"`
+	Offset int32        `db:"Offset" json:"Offset"`
+	Limit  int32        `db:"Limit" json:"Limit"`
+}
+
+func (q *Queries) ListPermissionsByRole(ctx context.Context, arg ListPermissionsByRoleParams) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissionsByRole, arg.Role, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DefaultRoles,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -116,26 +223,26 @@ const updatePermission = `-- name: UpdatePermission :execrows
 UPDATE
     permissions
 SET
-    code = coalesce($1, code),
-    "name" = coalesce($2, "name"),
-    description = coalesce($3, description),
+    code = coalesce($1::varchar, code),
+    description = coalesce($2::varchar, description),
+    default_roles = coalesce($3::user_role_type[], default_roles),
     updated_at = now()
 WHERE
-    id = $4
+    id = $4::uuid
 `
 
 type UpdatePermissionParams struct {
-	Code        pgtype.Text `db:"Code" json:"Code"`
-	Name        pgtype.Text `db:"Name" json:"Name"`
-	Description pgtype.Text `db:"Description" json:"Description"`
-	ID          pgtype.UUID `db:"ID" json:"ID"`
+	Code         pgtype.Text    `db:"Code" json:"Code"`
+	Description  pgtype.Text    `db:"Description" json:"Description"`
+	DefaultRoles []UserRoleType `db:"DefaultRoles" json:"DefaultRoles"`
+	ID           pgtype.UUID    `db:"ID" json:"ID"`
 }
 
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updatePermission,
 		arg.Code,
-		arg.Name,
 		arg.Description,
+		arg.DefaultRoles,
 		arg.ID,
 	)
 	if err != nil {

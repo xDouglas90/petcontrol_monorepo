@@ -397,6 +397,7 @@ const (
 	ModulePackageBasic     ModulePackage = "basic"
 	ModulePackageEssential ModulePackage = "essential"
 	ModulePackagePremium   ModulePackage = "premium"
+	ModulePackageTrial     ModulePackage = "trial"
 )
 
 func (e *ModulePackage) Scan(src interface{}) error {
@@ -432,6 +433,51 @@ func (ns NullModulePackage) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.ModulePackage), nil
+}
+
+type NotificationLevel string
+
+const (
+	NotificationLevelInfo    NotificationLevel = "info"
+	NotificationLevelSuccess NotificationLevel = "success"
+	NotificationLevelWarning NotificationLevel = "warning"
+	NotificationLevelError   NotificationLevel = "error"
+	NotificationLevelAlert   NotificationLevel = "alert"
+)
+
+func (e *NotificationLevel) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationLevel(s)
+	case string:
+		*e = NotificationLevel(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationLevel: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationLevel struct {
+	NotificationLevel NotificationLevel `json:"notification_level"`
+	Valid             bool              `json:"valid"` // Valid is true if NotificationLevel is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationLevel) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationLevel, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationLevel.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationLevel) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationLevel), nil
 }
 
 type PaymentMethod string
@@ -846,9 +892,12 @@ func (ns NullUserKind) Value() (driver.Value, error) {
 type UserRoleType string
 
 const (
-	UserRoleTypeRoot  UserRoleType = "root"
-	UserRoleTypeAdmin UserRoleType = "admin"
-	UserRoleTypeFree  UserRoleType = "free"
+	UserRoleTypeRoot     UserRoleType = "root"
+	UserRoleTypeInternal UserRoleType = "internal"
+	UserRoleTypeAdmin    UserRoleType = "admin"
+	UserRoleTypeSystem   UserRoleType = "system"
+	UserRoleTypeCommon   UserRoleType = "common"
+	UserRoleTypeFree     UserRoleType = "free"
 )
 
 func (e *UserRoleType) Scan(src interface{}) error {
@@ -1307,17 +1356,29 @@ type Module struct {
 	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
+type ModulePermission struct {
+	ModuleID     pgtype.UUID `db:"module_id" json:"module_id"`
+	PermissionID pgtype.UUID `db:"permission_id" json:"permission_id"`
+}
+
 type Notification struct {
-	ID             pgtype.UUID        `db:"id" json:"id"`
-	CompanyID      pgtype.UUID        `db:"company_id" json:"company_id"`
-	Title          string             `db:"title" json:"title"`
-	Summary        string             `db:"summary" json:"summary"`
-	Content        string             `db:"content" json:"content"`
-	SendToWhatsapp bool               `db:"send_to_whatsapp" json:"send_to_whatsapp"`
-	CreatedBy      pgtype.UUID        `db:"created_by" json:"created_by"`
-	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	ID                      pgtype.UUID        `db:"id" json:"id"`
+	CompanyID               pgtype.UUID        `db:"company_id" json:"company_id"`
+	Title                   string             `db:"title" json:"title"`
+	Summary                 string             `db:"summary" json:"summary"`
+	Content                 string             `db:"content" json:"content"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	Level                   NotificationLevel  `db:"level" json:"level"`
+	SendToWhatsapp          bool               `db:"send_to_whatsapp" json:"send_to_whatsapp"`
+	SendToTelegram          bool               `db:"send_to_telegram" json:"send_to_telegram"`
+	SendToEmail             bool               `db:"send_to_email" json:"send_to_email"`
+	SendToSms               bool               `db:"send_to_sms" json:"send_to_sms"`
+	SendToPush              bool               `db:"send_to_push" json:"send_to_push"`
+	SendToInAppNotification bool               `db:"send_to_in_app_notification" json:"send_to_in_app_notification"`
+	CreatedBy               pgtype.UUID        `db:"created_by" json:"created_by"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
 type NotificationReceiver struct {
@@ -1392,12 +1453,12 @@ type PeopleIdentification struct {
 }
 
 type Permission struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	Code        string             `db:"code" json:"code"`
-	Name        string             `db:"name" json:"name"`
-	Description pgtype.Text        `db:"description" json:"description"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	Code         string             `db:"code" json:"code"`
+	Description  pgtype.Text        `db:"description" json:"description"`
+	DefaultRoles []UserRoleType     `db:"default_roles" json:"default_roles"`
+	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type Person struct {
@@ -1680,6 +1741,17 @@ type UserAuth struct {
 	UpdatedAt          pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type UserPermission struct {
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	UserID       pgtype.UUID        `db:"user_id" json:"user_id"`
+	PermissionID pgtype.UUID        `db:"permission_id" json:"permission_id"`
+	GrantedBy    pgtype.UUID        `db:"granted_by" json:"granted_by"`
+	IsActive     bool               `db:"is_active" json:"is_active"`
+	GrantedAt    pgtype.Timestamptz `db:"granted_at" json:"granted_at"`
+	RevokedBy    pgtype.UUID        `db:"revoked_by" json:"revoked_by"`
+	RevokedAt    pgtype.Timestamptz `db:"revoked_at" json:"revoked_at"`
+}
+
 type UserProfile struct {
 	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
 	PersonID  pgtype.UUID        `db:"person_id" json:"person_id"`
@@ -1708,28 +1780,4 @@ type UserSetting struct {
 	Timezone             string             `db:"timezone" json:"timezone"`
 	CreatedAt            pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt            pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-type UsersPermission struct {
-	ID           pgtype.UUID        `db:"id" json:"id"`
-	UserID       pgtype.UUID        `db:"user_id" json:"user_id"`
-	PermissionID pgtype.UUID        `db:"permission_id" json:"permission_id"`
-	GrantedBy    pgtype.UUID        `db:"granted_by" json:"granted_by"`
-	IsActive     bool               `db:"is_active" json:"is_active"`
-	GrantedAt    pgtype.Timestamptz `db:"granted_at" json:"granted_at"`
-	RevokedBy    pgtype.UUID        `db:"revoked_by" json:"revoked_by"`
-	RevokedAt    pgtype.Timestamptz `db:"revoked_at" json:"revoked_at"`
-}
-
-type Warning struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
-	Title     string             `db:"title" json:"title"`
-	Content   string             `db:"content" json:"content"`
-	ImageUrl  pgtype.Text        `db:"image_url" json:"image_url"`
-	SenderID  pgtype.UUID        `db:"sender_id" json:"sender_id"`
-	IsActive  bool               `db:"is_active" json:"is_active"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }

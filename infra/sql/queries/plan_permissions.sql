@@ -12,8 +12,8 @@ SELECT
 SELECT
     p.id,
     p.code,
-    p."name",
     p.description,
+    p.default_roles,
     p.created_at,
     p.updated_at
 FROM

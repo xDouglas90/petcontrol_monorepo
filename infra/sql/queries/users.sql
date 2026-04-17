@@ -60,6 +60,15 @@ SET
 WHERE
   id = sqlc.arg('ID');
 
+-- name: RestoreUser :execrows
+UPDATE
+  users
+SET
+  deleted_at = NULL,
+  is_active = TRUE
+WHERE
+  id = sqlc.arg('ID');
+
 -- name: ListUsers :many
 SELECT
   u.id,

@@ -71,21 +71,21 @@ O seed local agora também prepara massa operacional mínima para desenvolviment
 
 ### Backend (`/apps/api`)
 
-| Categoria      | Tecnologia                      | Justificativa                                                              |
-| -------------- | ------------------------------- | -------------------------------------------------------------------------- |
-| Linguagem      | Go 1.26.1                       | Performance nativa, binário único, excelente concorrência via goroutines   |
-| Framework HTTP | Gin                             | Roteamento rápido, middleware composável, ecossistema maduro               |
-| Banco de dados | PostgreSQL 18                   | Robusto, JSONB para auditoria, arrays nativos, UUID                        |
-| Query layer    | SQLC                            | Geração de código type-safe a partir de SQL puro — zero ORM magic          |
-| Migrations     | `golang-migrate`                | Migrations versionadas em SQL puro, aplicadas via CLI ou programaticamente |
-| Driver PG      | `pgx/v5`                        | Driver nativo PostgreSQL, máxima performance, suporte a pgxpool            |
-| Docs REST      | Swaggo (`swag` + `gin-swagger`) | Geração automática de OpenAPI a partir de anotações no código              |
-| Filas          | Asynq + Redis                   | Jobs assíncronos: notificações, expiração de planos, relatórios            |
+| Categoria      | Tecnologia                      | Justificativa                                                                   |
+| -------------- | ------------------------------- | ------------------------------------------------------------------------------- |
+| Linguagem      | Go 1.26.1                       | Performance nativa, binário único, excelente concorrência via goroutines        |
+| Framework HTTP | Gin                             | Roteamento rápido, middleware composável, ecossistema maduro                    |
+| Banco de dados | PostgreSQL 18                   | Robusto, JSONB para auditoria, arrays nativos, UUID                             |
+| Query layer    | SQLC                            | Geração de código type-safe a partir de SQL puro — zero ORM magic               |
+| Migrations     | `golang-migrate`                | Migrations versionadas em SQL puro, aplicadas via CLI ou programaticamente      |
+| Driver PG      | `pgx/v5`                        | Driver nativo PostgreSQL, máxima performance, suporte a pgxpool                 |
+| Docs REST      | Swaggo (`swag` + `gin-swagger`) | Geração automática de OpenAPI a partir de anotações no código                   |
+| Filas          | Asynq + Redis                   | Jobs assíncronos: notificações, expiração de planos, relatórios                 |
 | Auth           | JWT (`golang-jwt`) + bcrypt     | Access token stateless, hash de senha com bcrypt; refresh token ainda planejado |
-| Validação      | `go-playground/validator`       | Tags de validação struct-based, integradas ao binding do Gin               |
-| Storage        | Google Cloud Storage SDK        | Upload de arquivos (fotos de pets, documentos)                             |
-| Config         | `godotenv` + `os.Getenv`        | Leitura de `.env` em desenvolvimento; variáveis de ambiente em produção    |
-| Testes         | `testify` + `testcontainers-go` | Unitários com mocks, integração com banco real em container                |
+| Validação      | `go-playground/validator`       | Tags de validação struct-based, integradas ao binding do Gin                    |
+| Storage        | Google Cloud Storage SDK        | Upload de arquivos (fotos de pets, documentos)                                  |
+| Config         | `godotenv` + `os.Getenv`        | Leitura de `.env` em desenvolvimento; variáveis de ambiente em produção         |
+| Testes         | `testify` + `testcontainers-go` | Unitários com mocks, integração com banco real em container                     |
 
 ### Frontend (`/apps/web`)
 
@@ -1193,4 +1193,4 @@ func TestCreateSchedule(t *testing.T) {
 
 ---
 
-*Documento criado em: 2026-04-07 | Versão: 2.0.0*
+Documento criado em: 2026-04-07 | Versão: 2.0.0

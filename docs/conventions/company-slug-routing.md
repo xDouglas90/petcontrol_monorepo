@@ -1,4 +1,4 @@
-# Convencao de Rotas com `company_slug`
+# Convenção de Rotas com `company_slug`
 
 ## Contexto
 
@@ -26,7 +26,7 @@ O backend continua confiando apenas em:
 - `/:companySlug/pets`
 - `/:companySlug/services`
 
-## Rotas previstas para proximos ciclos
+## Rotas previstas para próximos ciclos
 
 - `/:companySlug/reports`
 
