@@ -846,9 +846,12 @@ func (ns NullUserKind) Value() (driver.Value, error) {
 type UserRoleType string
 
 const (
-	UserRoleTypeRoot  UserRoleType = "root"
-	UserRoleTypeAdmin UserRoleType = "admin"
-	UserRoleTypeFree  UserRoleType = "free"
+	UserRoleTypeRoot     UserRoleType = "root"
+	UserRoleTypeInternal UserRoleType = "internal"
+	UserRoleTypeAdmin    UserRoleType = "admin"
+	UserRoleTypeSystem   UserRoleType = "system"
+	UserRoleTypeCommon   UserRoleType = "common"
+	UserRoleTypeFree     UserRoleType = "free"
 )
 
 func (e *UserRoleType) Scan(src interface{}) error {
