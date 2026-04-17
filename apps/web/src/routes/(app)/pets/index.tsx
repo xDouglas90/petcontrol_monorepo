@@ -12,6 +12,9 @@ import { ApiError } from '@/lib/api/rest-client';
 import { useListParams } from '@/hooks/use-list-params';
 import { SearchBar } from '@/ui/search-bar';
 import { PaginationBar } from '@/ui/pagination-bar';
+import { ImageUpload } from '@/ui/image-upload';
+import { createUploadIntent, uploadToGCS } from '@/lib/api/rest-client';
+import { useAuthStore, selectSession } from '@/lib/auth/auth.store';
 
 type PetFormState = CreatePetInput;
 
@@ -22,6 +25,7 @@ const initialPetForm: PetFormState = {
   kind: 'dog',
   temperament: 'playful',
   image_url: '',
+  upload_object_key: '',
   birth_date: '',
   notes: '',
 };
@@ -35,10 +39,14 @@ export function PetsPage() {
   const deleteMutation = useDeletePetMutation();
   const [editingPetId, setEditingPetId] = useState<string | null>(null);
   const [form, setForm] = useState<PetFormState>(initialPetForm);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const session = useAuthStore(selectSession);
 
   const mutationError =
     createMutation.error || updateMutation.error || deleteMutation.error;
   const isPending =
+    isUploading ||
     createMutation.isPending ||
     updateMutation.isPending ||
     deleteMutation.isPending;
@@ -46,10 +54,13 @@ export function PetsPage() {
   function resetForm() {
     setEditingPetId(null);
     setForm(initialPetForm);
+    setSelectedFile(null);
+    setIsUploading(false);
   }
 
   function startEdit(pet: PetDTO) {
     setEditingPetId(pet.id);
+    setSelectedFile(null); // Limpa arquivo pendente ao iniciar edição
     setForm({
       owner_id: pet.owner_id,
       name: pet.name,
@@ -57,6 +68,7 @@ export function PetsPage() {
       kind: pet.kind,
       temperament: pet.temperament,
       image_url: pet.image_url ?? '',
+      upload_object_key: '',
       birth_date: pet.birth_date ?? '',
       notes: pet.notes ?? '',
     });
@@ -64,9 +76,37 @@ export function PetsPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    let uploadObjectKey = form.upload_object_key;
+
+    // Se houver um arquivo selecionado, faz o upload agora
+    if (selectedFile && session?.accessToken) {
+      try {
+        setIsUploading(true);
+        const intent = await createUploadIntent(session.accessToken, {
+          resource: 'pets',
+          field: 'image_url',
+          file_name: selectedFile.name,
+          content_type: selectedFile.type,
+          size_bytes: selectedFile.size,
+        });
+
+        await uploadToGCS(intent.upload_url, selectedFile);
+        uploadObjectKey = intent.object_key;
+      } catch (err) {
+        console.error('Failed to upload image:', err);
+        alert('Falha ao enviar imagem. Tente novamente.');
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     const payload = {
       ...form,
       image_url: form.image_url || undefined,
+      upload_object_key: uploadObjectKey || undefined,
       birth_date: form.birth_date || undefined,
       notes: form.notes || undefined,
     };
@@ -118,16 +158,25 @@ export function PetsPage() {
               className="rounded-3xl border border-white/10 bg-white/5 p-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-display text-xl text-white">
-                    {pet.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-300">
-                    {pet.kind} · {pet.size} · {pet.temperament}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Tutor: {pet.owner_name ?? pet.owner_id}
-                  </p>
+                <div className="flex gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                    {pet.image_url ? (
+                      <img src={pet.image_url} alt={pet.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xl">🐾</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl text-white">
+                      {pet.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {pet.kind} · {pet.size} · {pet.temperament}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Tutor: {pet.owner_name ?? pet.owner_id}
+                    </p>
+                  </div>
                 </div>
                 <Actions
                   onEdit={() => startEdit(pet)}
@@ -175,6 +224,14 @@ export function PetsPage() {
               ))}
             </select>
           </Field>
+          
+          <ImageUpload
+            label="Foto do pet"
+            module="pets"
+            value={form.image_url}
+            onFileSelect={setSelectedFile}
+          />
+
           <Field label="Nome" htmlFor="pet-name">
             <input
               id="pet-name"
