@@ -32,6 +32,7 @@ type UpdateClientInput struct {
 	HasWhatsapp    *bool
 	ClientSince    *pgtype.Date
 	Notes          *string
+	ImageURL       *string
 }
 
 type CreateClientInput struct {
@@ -48,6 +49,7 @@ type CreateClientInput struct {
 	HasWhatsapp    bool
 	ClientSince    pgtype.Date
 	Notes          pgtype.Text
+	ImageURL       pgtype.Text
 }
 
 type clientTxStarter interface {
@@ -105,6 +107,7 @@ func (s *ClientService) CreateClient(ctx context.Context, params CreateClientInp
 		MaritalStatus:  params.MaritalStatus,
 		BirthDate:      params.BirthDate,
 		CPF:            params.CPF,
+		ImageURL:       params.ImageURL,
 	})
 	if err != nil {
 		return sqlc.GetClientByIDAndCompanyIDRow{}, mapClientDBError(err)
@@ -158,6 +161,7 @@ func (s *ClientService) UpdateClient(ctx context.Context, input UpdateClientInpu
 		MaritalStatus:  optionalMaritalStatus(input.MaritalStatus),
 		BirthDate:      optionalDate(input.BirthDate),
 		CPF:            optionalText(input.CPF),
+		ImageURL:       optionalText(input.ImageURL),
 		ID:             input.ClientID,
 		CompanyID:      input.CompanyID,
 	})

@@ -20,6 +20,18 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/test/integration"
 )
 
+type stubPetUploadResolver struct {
+	publicURL string
+	err       error
+}
+
+func (s *stubPetUploadResolver) ResolveObjectKey(_ context.Context, resource string, field string, objectKey string) (string, error) {
+	if s.err != nil {
+		return "", s.err
+	}
+	return s.publicURL, nil
+}
+
 func TestPetEndpoints_ListIsTenantScoped(t *testing.T) {
 	ctx := context.Background()
 	pool := setupPetIntegrationPool(t)
@@ -197,6 +209,76 @@ func TestPetEndpoints_RequireModuleForAccess(t *testing.T) {
 	require.Contains(t, res.Body.String(), "module not available for company")
 }
 
+func TestPetEndpoints_CreateAndUpdateUsingUploadObjectKey(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "pet-upload-key")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
+	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenant.companyID, "Ana Lima", "12345678928")
+
+	uploadURL := "https://cdn.example.com/pets/thor.png"
+	router := setupPetRouterForTenantWithUploadResolver(queries, tenant, &stubPetUploadResolver{publicURL: uploadURL})
+
+	createBody, err := json.Marshal(map[string]any{
+		"owner_id":          clientID.String(),
+		"name":              "Thor",
+		"size":              "medium",
+		"kind":              "dog",
+		"temperament":       "playful",
+		"upload_object_key": "uploads/pets/image_url/2026/04/thor.png",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/pets", bytes.NewReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusCreated, res.Code)
+	require.Contains(t, res.Body.String(), uploadURL)
+
+	items, err := queries.ListPetsByCompanyID(ctx, sqlc.ListPetsByCompanyIDParams{
+		CompanyID: tenant.companyID,
+		Limit:     10,
+	})
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+
+	var petID pgtype.UUID
+	for _, item := range items {
+		if item.Name == "Thor" {
+			petID = item.ID
+			require.Equal(t, uploadURL, item.ImageUrl.String)
+		}
+	}
+	require.True(t, petID.Valid)
+
+	updatedURL := "https://cdn.example.com/pets/thor-updated.png"
+	router = setupPetRouterForTenantWithUploadResolver(queries, tenant, &stubPetUploadResolver{publicURL: updatedURL})
+	updateBody, err := json.Marshal(map[string]any{
+		"upload_object_key": "uploads/pets/image_url/2026/04/thor-updated.png",
+	})
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPut, "/api/v1/pets/"+petID.String(), bytes.NewReader(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), updatedURL)
+
+	item, err := queries.GetPetByIDAndCompanyID(ctx, sqlc.GetPetByIDAndCompanyIDParams{
+		CompanyID: tenant.companyID,
+		ID:        petID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, updatedURL, item.ImageUrl.String)
+}
+
 func setupPetIntegrationPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	setup := integration.SetupPostgresWithMigrations(t)
@@ -204,10 +286,14 @@ func setupPetIntegrationPool(t *testing.T) *pgxpool.Pool {
 }
 
 func setupPetRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixture) *gin.Engine {
+	return setupPetRouterForTenantWithUploadResolver(queries, tenant, nil)
+}
+
+func setupPetRouterForTenantWithUploadResolver(queries sqlc.Querier, tenant integrationTenantFixture, uploadResolver handlerUploadResolver) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 
 	petService := service.NewPetService(queries)
-	petHandler := handler.NewPetHandler(petService)
+	petHandler := handler.NewPetHandler(petService, uploadResolver)
 
 	router := gin.New()
 	router.Use(middleware.RequestContext())
@@ -226,6 +312,10 @@ func setupPetRouterForTenant(queries sqlc.Querier, tenant integrationTenantFixtu
 	pets.DELETE("/:id", petHandler.Delete)
 
 	return router
+}
+
+type handlerUploadResolver interface {
+	ResolveObjectKey(ctx context.Context, resource string, field string, objectKey string) (string, error)
 }
 
 func mustCreatePetRecord(t *testing.T, ctx context.Context, queries *sqlc.Queries, ownerID pgtype.UUID, name string) pgtype.UUID {

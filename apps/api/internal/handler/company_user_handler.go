@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
@@ -171,16 +170,4 @@ func (h *CompanyUserHandler) Deactivate(c *gin.Context) {
 	})
 
 	c.Status(204)
-}
-
-func parseUUID(raw string) (pgtype.UUID, error) {
-	parsed, err := uuid.Parse(raw)
-	if err != nil {
-		return pgtype.UUID{}, err
-	}
-
-	var out pgtype.UUID
-	copy(out.Bytes[:], parsed[:])
-	out.Valid = true
-	return out, nil
 }

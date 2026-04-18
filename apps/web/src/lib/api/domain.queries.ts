@@ -32,12 +32,18 @@ import {
 } from '@/lib/api/rest-client';
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
+const EMPTY_PARAMS: ListQueryParams = {};
+
 export const domainQueryKeys = {
   currentCompany: () => ['domain', 'company', 'current'] as const,
-  clients: (params?: ListQueryParams) => ['domain', 'clients', params ?? {}] as const,
-  pets: (params?: ListQueryParams) => ['domain', 'pets', params ?? {}] as const,
-  services: (params?: ListQueryParams) => ['domain', 'services', params ?? {}] as const,
-  schedules: (params?: ListQueryParams) => ['domain', 'schedules', params ?? {}] as const,
+  clients: (params?: ListQueryParams) =>
+    ['domain', 'clients', params ?? EMPTY_PARAMS] as const,
+  pets: (params?: ListQueryParams) =>
+    ['domain', 'pets', params ?? EMPTY_PARAMS] as const,
+  services: (params?: ListQueryParams) =>
+    ['domain', 'services', params ?? EMPTY_PARAMS] as const,
+  schedules: (params?: ListQueryParams) =>
+    ['domain', 'schedules', params ?? EMPTY_PARAMS] as const,
   allClients: () => ['domain', 'clients'] as const,
   allPets: () => ['domain', 'pets'] as const,
   allServices: () => ['domain', 'services'] as const,
@@ -178,7 +184,9 @@ export function useUpdateClientMutation() {
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allClients(),
       });
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPets(),
+      });
     },
   });
 }
@@ -198,7 +206,9 @@ export function useDeleteClientMutation() {
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allClients(),
       });
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPets(),
+      });
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allSchedules(),
       });
@@ -218,7 +228,9 @@ export function useCreatePetMutation() {
       return createPet(session.accessToken, input);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPets(),
+      });
     },
   });
 }
@@ -241,7 +253,9 @@ export function useUpdatePetMutation() {
       return updatePet(session.accessToken, petId, input);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPets(),
+      });
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allSchedules(),
       });
@@ -261,7 +275,9 @@ export function useDeletePetMutation() {
       await deletePet(session.accessToken, petId);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: domainQueryKeys.allPets() });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPets(),
+      });
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allSchedules(),
       });

@@ -14,12 +14,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 	"github.com/xdouglas90/petcontrol_monorepo/test/integration"
 )
+
+type stubClientUploadResolver struct {
+	publicURL string
+	err       error
+}
+
+func (s *stubClientUploadResolver) ResolveObjectKey(_ context.Context, resource string, field string, objectKey string) (string, error) {
+	if s.err != nil {
+		return "", s.err
+	}
+	return s.publicURL, nil
+}
 
 func TestClientEndpoints_ListIsTenantScoped(t *testing.T) {
 	ctx := context.Background()
@@ -193,6 +206,98 @@ func TestClientEndpoints_RequireModuleForAccess(t *testing.T) {
 	require.Contains(t, res.Body.String(), "module not available for company")
 }
 
+func TestClientEndpoints_CreateAndUpdateUsingUploadObjectKey(t *testing.T) {
+	ctx := context.Background()
+	pool := setupClientIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "client-upload-key")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
+
+	uploadURL := "https://cdn.example.com/clients/avatar.png"
+	router := setupClientRouterForTenantWithUploadResolver(pool, queries, tenant, &stubClientUploadResolver{publicURL: uploadURL})
+
+	createBody, err := json.Marshal(map[string]any{
+		"full_name":         "Maria Souza",
+		"short_name":        "Maria",
+		"gender_identity":   "woman_cisgender",
+		"marital_status":    "single",
+		"birth_date":        "1992-06-15",
+		"cpf":               "123.456.789-11",
+		"email":             "maria.upload@petcontrol.local",
+		"cellphone":         "+5511999990099",
+		"has_whatsapp":      true,
+		"upload_object_key": "uploads/people_identifications/image_url/2026/04/avatar.png",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/clients", bytes.NewReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusCreated, res.Code)
+
+	items, err := queries.ListClientsByCompanyID(ctx, sqlc.ListClientsByCompanyIDParams{
+		CompanyID: tenant.companyID,
+		Limit:     10,
+	})
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+
+	var persistedImageURL string
+	err = pool.QueryRow(ctx, `SELECT image_url FROM people_identifications WHERE person_id = $1`, items[0].PersonID).Scan(&persistedImageURL)
+	require.NoError(t, err)
+	require.Equal(t, uploadURL, persistedImageURL)
+
+	updatedURL := "https://cdn.example.com/clients/avatar-updated.png"
+	router = setupClientRouterForTenantWithUploadResolver(pool, queries, tenant, &stubClientUploadResolver{publicURL: updatedURL})
+
+	updateBody, err := json.Marshal(map[string]any{
+		"upload_object_key": "uploads/people_identifications/image_url/2026/04/avatar-updated.png",
+		"has_whatsapp":      true,
+	})
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPut, "/api/v1/clients/"+items[0].ID.String(), bytes.NewReader(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+
+	err = pool.QueryRow(ctx, `SELECT image_url FROM people_identifications WHERE person_id = $1`, items[0].PersonID).Scan(&persistedImageURL)
+	require.NoError(t, err)
+	require.Equal(t, updatedURL, persistedImageURL)
+}
+
+func TestClientEndpoints_UpdateRejectsInvalidUploadObjectKey(t *testing.T) {
+	ctx := context.Background()
+	pool := setupClientIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "client-upload-invalid")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
+	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenant.companyID, "Ana Lima", "12345678912")
+
+	router := setupClientRouterForTenantWithUploadResolver(pool, queries, tenant, &stubClientUploadResolver{err: apperror.ErrUnprocessableEntity})
+	body, err := json.Marshal(map[string]any{
+		"upload_object_key": "uploads/people_identifications/image_url/2026/04/invalid.png",
+		"has_whatsapp":      true,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/clients/"+clientID.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.Contains(t, res.Body.String(), "invalid_upload_object_key")
+}
+
 func setupClientIntegrationPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	setup := integration.SetupPostgresWithMigrations(t)
@@ -200,10 +305,19 @@ func setupClientIntegrationPool(t *testing.T) *pgxpool.Pool {
 }
 
 func setupClientRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queries, tenant integrationTenantFixture) *gin.Engine {
+	return setupClientRouterForTenantWithUploadResolver(pool, queries, tenant)
+}
+
+func setupClientRouterForTenantWithUploadResolver(pool *pgxpool.Pool, queries *sqlc.Queries, tenant integrationTenantFixture, uploadResolver ...interface {
+	ResolveObjectKey(ctx context.Context, resource string, field string, objectKey string) (string, error)
+}) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 
 	clientService := service.NewClientService(pool, queries)
 	clientHandler := handler.NewClientHandler(clientService)
+	if len(uploadResolver) > 0 {
+		clientHandler = handler.NewClientHandler(clientService, uploadResolver[0])
+	}
 
 	router := gin.New()
 	router.Use(middleware.RequestContext())

@@ -1,31 +1,31 @@
 export const USER_ROLES = [
-  "root",
-  "admin",
-  "manager",
-  "employee",
-  "aux",
-  "general",
+  'root',
+  'admin',
+  'manager',
+  'employee',
+  'aux',
+  'general',
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const USER_KINDS = ["internal", "owner", "staff", "free"] as const;
+export const USER_KINDS = ['internal', 'owner', 'staff', 'free'] as const;
 
 export type UserKind = (typeof USER_KINDS)[number];
 
-export const TOKEN_TYPES = ["Bearer"] as const;
+export const TOKEN_TYPES = ['Bearer'] as const;
 
 export type TokenType = (typeof TOKEN_TYPES)[number];
 
 export type UUID = string;
- 
+
 export interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
   total_pages: number;
 }
- 
+
 export interface PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
@@ -82,39 +82,39 @@ export interface ApiErrorPayloadDTO {
 }
 
 export const MODULE_PACKAGES = [
-  "internal",
-  "starter",
-  "basic",
-  "essential",
-  "premium",
+  'internal',
+  'starter',
+  'basic',
+  'essential',
+  'premium',
 ] as const;
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
 
-export const MODULE_CODES = ["SCH", "CRM", "FIN"] as const;
+export const MODULE_CODES = ['SCH', 'CRM', 'FIN'] as const;
 
 export type ModuleCode = (typeof MODULE_CODES)[number];
 
 export const GENDER_IDENTITIES = [
-  "man_cisgender",
-  "woman_cisgender",
-  "transgender",
-  "non_binary",
-  "gender_fluid",
-  "gender_queer",
-  "agender",
-  "gender_non_conforming",
-  "not_to_expose",
+  'man_cisgender',
+  'woman_cisgender',
+  'transgender',
+  'non_binary',
+  'gender_fluid',
+  'gender_queer',
+  'agender',
+  'gender_non_conforming',
+  'not_to_expose',
 ] as const;
 
 export type GenderIdentity = (typeof GENDER_IDENTITIES)[number];
 
 export const MARITAL_STATUSES = [
-  "single",
-  "married",
-  "divorced",
-  "widowed",
-  "separated",
+  'single',
+  'married',
+  'divorced',
+  'widowed',
+  'separated',
 ] as const;
 
 export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
@@ -127,6 +127,8 @@ export interface CompanyDTO {
   cnpj: string;
   active_package: ModulePackage;
   is_active: boolean;
+  image_url?: string | null;
+  upload_object_key?: string;
 }
 
 export interface CurrentCompanyApiResponseDTO {
@@ -165,6 +167,8 @@ export interface CreateClientInput {
   has_whatsapp: boolean;
   client_since?: string;
   notes?: string;
+  image_url?: string;
+  upload_object_key?: string;
 }
 
 export interface UpdateClientInput {
@@ -180,6 +184,8 @@ export interface UpdateClientInput {
   has_whatsapp?: boolean;
   client_since?: string;
   notes?: string;
+  image_url?: string;
+  upload_object_key?: string;
 }
 
 export interface ClientListApiResponseDTO extends PaginatedResponse<ClientDTO> {}
@@ -188,29 +194,29 @@ export interface ClientApiResponseDTO {
   data: ClientDTO;
 }
 
-export const PET_SIZES = ["small", "medium", "large", "giant"] as const;
+export const PET_SIZES = ['small', 'medium', 'large', 'giant'] as const;
 
 export type PetSize = (typeof PET_SIZES)[number];
 
 export const PET_KINDS = [
-  "dog",
-  "cat",
-  "bird",
-  "fish",
-  "reptile",
-  "rodent",
-  "rabbit",
-  "other",
+  'dog',
+  'cat',
+  'bird',
+  'fish',
+  'reptile',
+  'rodent',
+  'rabbit',
+  'other',
 ] as const;
 
 export type PetKind = (typeof PET_KINDS)[number];
 
 export const PET_TEMPERAMENTS = [
-  "calm",
-  "nervous",
-  "aggressive",
-  "playful",
-  "loving",
+  'calm',
+  'nervous',
+  'aggressive',
+  'playful',
+  'loving',
 ] as const;
 
 export type PetTemperament = (typeof PET_TEMPERAMENTS)[number];
@@ -237,6 +243,7 @@ export interface CreatePetInput {
   kind: PetKind;
   temperament: PetTemperament;
   image_url?: string;
+  upload_object_key?: string;
   birth_date?: string;
   notes?: string;
 }
@@ -248,6 +255,7 @@ export interface UpdatePetInput {
   kind?: PetKind;
   temperament?: PetTemperament;
   image_url?: string;
+  upload_object_key?: string;
   birth_date?: string;
   notes?: string;
 }
@@ -306,12 +314,12 @@ export interface ServiceApiResponseDTO {
 }
 
 export const SCHEDULE_STATUSES = [
-  "waiting",
-  "confirmed",
-  "canceled",
-  "in_progress",
-  "finished",
-  "delivered",
+  'waiting',
+  'confirmed',
+  'canceled',
+  'in_progress',
+  'finished',
+  'delivered',
 ] as const;
 
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
@@ -357,4 +365,40 @@ export interface UpdateScheduleInput {
   notes?: string;
   status?: ScheduleStatus;
   status_notes?: string;
+}
+
+export interface CreateUploadIntentInput {
+  resource: string;
+  field: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+}
+
+export interface UploadIntentDTO {
+  upload_url: string;
+  method: string;
+  headers?: Record<string, string>;
+  object_key: string;
+  public_url: string;
+  expires_at?: string;
+}
+
+export interface UploadIntentApiResponseDTO {
+  data: UploadIntentDTO;
+}
+
+export interface CompleteUploadInput {
+  resource: string;
+  field: string;
+  object_key: string;
+}
+
+export interface CompleteUploadDTO {
+  object_key: string;
+  public_url: string;
+}
+
+export interface CompleteUploadApiResponseDTO {
+  data: CompleteUploadDTO;
 }

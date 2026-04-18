@@ -15,6 +15,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/db"
 )
 
 type PostgresSetup struct {
@@ -79,7 +80,16 @@ func SetupPostgresWithMigrations(t *testing.T) PostgresSetup {
 		t.Fatalf("failed to apply migrations: %v", err)
 	}
 
-	pool, err := pgxpool.New(ctx, connString)
+	poolConfig, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		t.Fatalf("failed to parse pool config: %v", err)
+	}
+
+	if err := db.ConfigurePool(ctx, poolConfig); err != nil {
+		t.Fatalf("failed to configure pool: %v", err)
+	}
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		t.Fatalf("failed to create pool: %v", err)
 	}

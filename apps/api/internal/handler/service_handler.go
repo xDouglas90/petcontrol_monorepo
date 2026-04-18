@@ -398,13 +398,6 @@ func numericToString(value pgtype.Numeric) string {
 	return rendered
 }
 
-func nullableText(value pgtype.Text) *string {
-	if !value.Valid {
-		return nil
-	}
-	return &value.String
-}
-
 func hasServiceUpdatePayload(req updateServiceRequest) bool {
 	return req.TypeName != nil ||
 		req.Title != nil ||

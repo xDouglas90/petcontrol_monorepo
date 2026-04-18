@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -13,7 +14,8 @@ import (
 )
 
 type PetHandler struct {
-	service *service.PetService
+	service        *service.PetService
+	uploadResolver petUploadResolver
 }
 
 type createPetRequest struct {
@@ -23,6 +25,7 @@ type createPetRequest struct {
 	Kind        string `json:"kind"`
 	Temperament string `json:"temperament"`
 	ImageURL    string `json:"image_url"`
+	UploadKey   string `json:"upload_object_key"`
 	BirthDate   string `json:"birth_date"`
 	Notes       string `json:"notes"`
 }
@@ -34,12 +37,21 @@ type updatePetRequest struct {
 	Kind        *string `json:"kind"`
 	Temperament *string `json:"temperament"`
 	ImageURL    *string `json:"image_url"`
+	UploadKey   *string `json:"upload_object_key"`
 	BirthDate   *string `json:"birth_date"`
 	Notes       *string `json:"notes"`
 }
 
-func NewPetHandler(service *service.PetService) *PetHandler {
-	return &PetHandler{service: service}
+type petUploadResolver interface {
+	ResolveObjectKey(ctx context.Context, resource string, field string, objectKey string) (string, error)
+}
+
+func NewPetHandler(service *service.PetService, uploadResolver ...petUploadResolver) *PetHandler {
+	handler := &PetHandler{service: service}
+	if len(uploadResolver) > 0 {
+		handler.uploadResolver = uploadResolver[0]
+	}
+	return handler
 }
 
 // List godoc
@@ -166,6 +178,12 @@ func (h *PetHandler) Create(c *gin.Context) {
 		return
 	}
 
+	imageURL, err := h.resolveUploadObjectKey(c.Request.Context(), req.UploadKey, strings.TrimSpace(req.ImageURL))
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
+		return
+	}
+
 	item, err := h.service.CreatePet(c.Request.Context(), service.CreatePetInput{
 		CompanyID:   companyID,
 		OwnerID:     ownerID,
@@ -173,7 +191,7 @@ func (h *PetHandler) Create(c *gin.Context) {
 		Size:        size,
 		Kind:        kind,
 		Temperament: temperament,
-		ImageURL:    textValue(strings.TrimSpace(req.ImageURL)),
+		ImageURL:    textValue(imageURL),
 		BirthDate:   birthDate,
 		Notes:       textValue(strings.TrimSpace(req.Notes)),
 	})
@@ -270,6 +288,12 @@ func (h *PetHandler) Update(c *gin.Context) {
 		return
 	}
 
+	imageURL, err := h.resolveOptionalUploadObjectKey(c.Request.Context(), req.UploadKey, req.ImageURL)
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
+		return
+	}
+
 	item, err := h.service.UpdatePet(c.Request.Context(), service.UpdatePetInput{
 		CompanyID:   companyID,
 		PetID:       petID,
@@ -278,7 +302,7 @@ func (h *PetHandler) Update(c *gin.Context) {
 		Size:        size,
 		Kind:        kind,
 		Temperament: temperament,
-		ImageURL:    parseOptionalTrimmed(req.ImageURL),
+		ImageURL:    imageURL,
 		BirthDate:   birthDate,
 		Notes:       parseOptionalTrimmed(req.Notes),
 	})
@@ -421,6 +445,30 @@ func hasPetUpdatePayload(req updatePetRequest) bool {
 		req.Kind != nil ||
 		req.Temperament != nil ||
 		req.ImageURL != nil ||
+		req.UploadKey != nil ||
 		req.BirthDate != nil ||
 		req.Notes != nil
+}
+
+func (h *PetHandler) resolveUploadObjectKey(ctx context.Context, objectKey string, fallback string) (string, error) {
+	trimmedKey := strings.TrimSpace(objectKey)
+	if trimmedKey == "" {
+		return fallback, nil
+	}
+	if h.uploadResolver == nil {
+		return "", apperror.ErrServiceUnavailable
+	}
+	return h.uploadResolver.ResolveObjectKey(ctx, "pets", "image_url", trimmedKey)
+}
+
+func (h *PetHandler) resolveOptionalUploadObjectKey(ctx context.Context, objectKey *string, fallback *string) (*string, error) {
+	if objectKey == nil {
+		return parseOptionalTrimmed(fallback), nil
+	}
+
+	resolved, err := h.resolveUploadObjectKey(ctx, *objectKey, "")
+	if err != nil {
+		return nil, err
+	}
+	return &resolved, nil
 }

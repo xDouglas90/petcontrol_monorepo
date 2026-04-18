@@ -9,6 +9,7 @@ var (
 	ErrBadRequest          = errors.New("bad request")
 	ErrNotFound            = errors.New("resource not found")
 	ErrInternal            = errors.New("internal error")
+	ErrServiceUnavailable  = errors.New("service unavailable")
 	ErrUnauthorized        = errors.New("unauthorized")
 	ErrForbidden           = errors.New("forbidden")
 	ErrConflict            = errors.New("conflict")
@@ -33,6 +34,8 @@ func HTTPStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, ErrUnprocessableEntity):
 		return http.StatusUnprocessableEntity
+	case errors.Is(err, ErrServiceUnavailable):
+		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
 	}

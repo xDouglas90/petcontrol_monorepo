@@ -25,6 +25,7 @@ func TestHTTPStatus(t *testing.T) {
 		{name: "not found", err: ErrNotFound, want: http.StatusNotFound},
 		{name: "conflict", err: ErrConflict, want: http.StatusConflict},
 		{name: "unprocessable entity", err: ErrUnprocessableEntity, want: http.StatusUnprocessableEntity},
+		{name: "service unavailable", err: ErrServiceUnavailable, want: http.StatusServiceUnavailable},
 		{name: "fallback", err: ErrInternal, want: http.StatusInternalServerError},
 	}
 

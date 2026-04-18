@@ -5,6 +5,9 @@ import type {
   ClientApiResponseDTO,
   ClientListApiResponseDTO,
   CompanyDTO,
+  CompleteUploadApiResponseDTO,
+  CompleteUploadDTO,
+  CompleteUploadInput,
   CreateClientInput,
   CreatePetInput,
   CreateScheduleInput,
@@ -27,6 +30,9 @@ import type {
   UpdatePetInput,
   UpdateScheduleInput,
   UpdateServiceInput,
+  CreateUploadIntentInput,
+  UploadIntentDTO,
+  UploadIntentApiResponseDTO,
 } from '@petcontrol/shared-types';
 import {
   isNonEmptyTrimmed,
@@ -162,6 +168,57 @@ export async function login(
   return mapLoginSession((payload as LoginApiResponseDTO).data);
 }
 
+export async function createUploadIntent(
+  accessToken: string,
+  input: CreateUploadIntentInput,
+): Promise<UploadIntentDTO> {
+  const payload = await request<UploadIntentApiResponseDTO>(
+    API_PATHS.uploadsIntent,
+    {
+      method: 'POST',
+      accessToken,
+      body: input,
+    },
+  );
+  return payload.data;
+}
+
+export async function uploadToGCS(
+  intent: Pick<UploadIntentDTO, 'upload_url' | 'method' | 'headers'>,
+  file: File,
+): Promise<void> {
+  const headers = new Headers(intent.headers ?? {});
+  if (!headers.has('Content-Type') && file.type) {
+    headers.set('Content-Type', file.type);
+  }
+
+  const response = await fetch(intent.upload_url, {
+    method: intent.method,
+    headers,
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error('Falha ao enviar arquivo para o GCS');
+  }
+}
+
+export async function completeUpload(
+  accessToken: string,
+  input: CompleteUploadInput,
+): Promise<CompleteUploadDTO> {
+  const payload = await request<CompleteUploadApiResponseDTO>(
+    API_PATHS.uploadsComplete,
+    {
+      method: 'POST',
+      accessToken,
+      body: input,
+    },
+  );
+  return payload.data;
+}
+
+
 export async function getCurrentCompany(
   accessToken: string,
 ): Promise<CompanyDTO> {
@@ -195,7 +252,7 @@ export async function listSchedules(
     };
   }
 
-  const payload = await request<{ data: ScheduleListApiResponseDTO }>(
+  const payload = await request<ScheduleListApiResponseDTO>(
     API_PATHS.schedules,
     {
       method: 'GET',
@@ -203,7 +260,7 @@ export async function listSchedules(
       queryParams: params,
     },
   );
-  return payload.data;
+  return payload;
 }
 
 export async function listClients(
@@ -218,12 +275,12 @@ export async function listClients(
     };
   }
 
-  const payload = await request<{ data: ClientListApiResponseDTO }>(API_PATHS.clients, {
+  const payload = await request<ClientListApiResponseDTO>(API_PATHS.clients, {
     method: 'GET',
     accessToken,
     queryParams: params,
   });
-  return payload.data;
+  return payload;
 }
 
 export async function listPets(
@@ -238,12 +295,12 @@ export async function listPets(
     };
   }
 
-  const payload = await request<{ data: PetListApiResponseDTO }>(API_PATHS.pets, {
+  const payload = await request<PetListApiResponseDTO>(API_PATHS.pets, {
     method: 'GET',
     accessToken,
     queryParams: params,
   });
-  return payload.data;
+  return payload;
 }
 
 export async function listServices(
@@ -258,12 +315,12 @@ export async function listServices(
     };
   }
 
-  const payload = await request<{ data: ServiceListApiResponseDTO }>(API_PATHS.services, {
+  const payload = await request<ServiceListApiResponseDTO>(API_PATHS.services, {
     method: 'GET',
     accessToken,
     queryParams: params,
   });
-  return payload.data;
+  return payload;
 }
 
 export async function createClient(
