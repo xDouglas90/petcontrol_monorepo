@@ -13,6 +13,21 @@ Stack alvo:
 
 ---
 
+## Checklist técnico de correção
+
+- [x] Validar `upload_object_key` de `clients` sem fallback silencioso em create/update.
+- [x] Eliminar o segundo update no create de `clients`, persistindo a URL resolvida já na criação.
+- [x] Cobrir `clients` com testes de `upload_object_key` válido e inválido.
+- [x] Expandir o contrato compartilhado do upload intent para incluir `method`, `headers` e `expires_at`.
+- [x] Adicionar contrato compartilhado para `POST /uploads/complete`.
+- [x] Fazer o web usar `method` e `headers` retornados pela API no upload para GCS.
+- [x] Integrar `POST /uploads/complete` ao fluxo real da tela de pets.
+- [x] Garantir teste do client web cobrindo intent -> upload -> complete.
+- [x] Alinhar documentação operacional do GCS com as variáveis realmente suportadas pelo backend.
+- [x] Sincronizar a documentação para o endpoint atual `POST /api/v1/uploads/intent`.
+
+---
+
 ## Veredito da ideia
 
 A ideia esta boa e o fluxo base esta correto:
@@ -39,7 +54,7 @@ Resumo:
 
 ### Fluxo ideal
 
-1. frontend chama `POST /api/v1/uploads/intents`
+1. frontend chama `POST /api/v1/uploads/intent`
 2. backend valida tipo de arquivo, tamanho, destino e permissão
 3. backend gera:
    - `upload_url`
@@ -53,7 +68,7 @@ Resumo:
 
 ### Fluxo ainda melhor para robustez
 
-1. frontend chama `POST /api/v1/uploads/intents`
+1. frontend chama `POST /api/v1/uploads/intent`
 2. frontend envia arquivo ao GCS
 3. frontend chama `POST /api/v1/uploads/complete`
 4. backend verifica se o objeto existe e se bate com o esperado
@@ -157,7 +172,7 @@ Vantagens:
 
 #### 1. Criar upload intent
 
-`POST /api/v1/uploads/intents`
+`POST /api/v1/uploads/intent`
 
 Request sugerido:
 
@@ -229,7 +244,7 @@ Essa segunda opção é mais segura.
 
 ### Melhor equilíbrio entre simplicidade e segurança
 
-1. `POST /uploads/intents`
+1. `POST /uploads/intent`
 2. upload direto para GCS
 3. `POST /uploads/complete`
 4. create/update do recurso com `object_key`
@@ -401,7 +416,7 @@ apps/web/src/features/uploads/
 Para um campo como `avatar_url`:
 
 1. usuário seleciona arquivo
-2. frontend chama `POST /uploads/intents`
+2. frontend chama `POST /uploads/intent`
 3. frontend executa upload direto no GCS
 4. frontend chama `POST /uploads/complete`
 5. frontend recebe `object_key` e `public_url`
@@ -508,7 +523,7 @@ Não colocar:
    - `public_url` publica
    - ou `object_key` interno com tradução no backend
 2. implementar infra de GCS na API
-3. criar endpoint `uploads/intents`
+3. criar endpoint `uploads/intent`
 4. criar endpoint `uploads/complete`
 5. criar tipos compartilhados em `libs/shared-types`
 6. criar feature `uploads` no frontend

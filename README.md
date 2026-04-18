@@ -951,9 +951,23 @@ WHATSAPP_API_URL=
 WHATSAPP_API_TOKEN=
 
 # Google Cloud Storage
-GCS_BUCKET=
-GOOGLE_APPLICATION_CREDENTIALS=
+GCS_BUCKET_NAME=
+GCS_UPLOADS_BASE_PATH=uploads
+GCS_PUBLIC_BASE_URL=
+GCS_SIGNED_URL_TTL_SECONDS=900
+GCS_CREDENTIALS_FILE=
+GCS_SIGNER_SERVICE_ACCOUNT_EMAIL=
+GCS_SIGNER_PRIVATE_KEY=
 ```
+
+Notas de configuração de upload:
+
+- `GCS_BUCKET_NAME` ou `GCS_BUCKET`: nome do bucket alvo.
+- `GCS_CREDENTIALS_FILE`: caminho para o JSON de credenciais usado pelo SDK e, quando necessário, como fallback para signer.
+- `GCS_SIGNER_SERVICE_ACCOUNT_EMAIL` e `GCS_SIGNER_PRIVATE_KEY`: opcionais para assinar URLs explicitamente por env.
+- `GCS_PUBLIC_BASE_URL`: opcional para servir URL canônica por CDN/domínio próprio.
+- `GCS_UPLOADS_BASE_PATH`: prefixo lógico dos objetos no bucket.
+- `GCS_SIGNED_URL_TTL_SECONDS`: TTL das signed URLs de upload.
 
 ### 8.4 CI/CD — GitHub Actions
 
