@@ -167,6 +167,8 @@ export interface CreateClientInput {
   has_whatsapp: boolean;
   client_since?: string;
   notes?: string;
+  image_url?: string;
+  upload_object_key?: string;
 }
 
 export interface UpdateClientInput {
@@ -182,6 +184,8 @@ export interface UpdateClientInput {
   has_whatsapp?: boolean;
   client_since?: string;
   notes?: string;
+  image_url?: string;
+  upload_object_key?: string;
 }
 
 export interface ClientListApiResponseDTO extends PaginatedResponse<ClientDTO> {}
@@ -373,10 +377,28 @@ export interface CreateUploadIntentInput {
 
 export interface UploadIntentDTO {
   upload_url: string;
+  method: string;
+  headers?: Record<string, string>;
   object_key: string;
   public_url: string;
+  expires_at?: string;
 }
 
 export interface UploadIntentApiResponseDTO {
   data: UploadIntentDTO;
+}
+
+export interface CompleteUploadInput {
+  resource: string;
+  field: string;
+  object_key: string;
+}
+
+export interface CompleteUploadDTO {
+  object_key: string;
+  public_url: string;
+}
+
+export interface CompleteUploadApiResponseDTO {
+  data: CompleteUploadDTO;
 }

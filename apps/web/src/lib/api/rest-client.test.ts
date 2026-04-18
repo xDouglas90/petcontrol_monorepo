@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  completeUpload,
   createSchedule,
+  createUploadIntent,
   deleteSchedule,
   getCurrentCompany,
   listClients,
@@ -9,6 +11,7 @@ import {
   listSchedules,
   listServices,
   login,
+  uploadToGCS,
   updateSchedule,
 } from './rest-client';
 
@@ -103,30 +106,100 @@ describe('rest-client login', () => {
     expect(company.slug).toBe('petcontrol-dev');
   });
 
-  it('executa ciclo de list/create/update/delete de schedules', async () => {
+  it('usa o contrato completo do upload intent e propaga headers no upload para o GCS', async () => {
     fetchMock
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
             data: {
-              data: [
-                {
-                  id: 's-1',
-                  company_id: 'c-1',
-                  client_id: 'cli-1',
-                  pet_id: 'pet-1',
-                  client_name: 'Maria',
-                  pet_name: 'Thor',
-                  service_ids: ['svc-1'],
-                  service_titles: ['Banho'],
-                  scheduled_at: '2026-04-08T10:00:00.000Z',
-                  estimated_end: null,
-                  notes: 'banho',
-                  current_status: 'waiting',
-                },
-              ],
-              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
+              upload_url: 'https://storage.googleapis.com/upload-signed',
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'image/png',
+                'x-goog-meta-origin': 'petcontrol-web',
+              },
+              object_key: 'uploads/pets/image_url/2026/04/thor.png',
+              public_url:
+                'https://cdn.example.com/uploads/pets/image_url/2026/04/thor.png',
+              expires_at: '2026-04-17T19:00:00Z',
             },
+          }),
+          { status: 201 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              object_key: 'uploads/pets/image_url/2026/04/thor.png',
+              public_url:
+                'https://cdn.example.com/uploads/pets/image_url/2026/04/thor.png',
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const intent = await createUploadIntent('token-123', {
+      resource: 'pets',
+      field: 'image_url',
+      file_name: 'thor.png',
+      content_type: 'image/png',
+      size_bytes: 1024,
+    });
+
+    const file = new File(['binary'], 'thor.png', { type: 'image/png' });
+    await uploadToGCS(intent, file);
+
+    const completed = await completeUpload('token-123', {
+      resource: 'pets',
+      field: 'image_url',
+      object_key: intent.object_key,
+    });
+
+    expect(intent.method).toBe('PUT');
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://storage.googleapis.com/upload-signed',
+      expect.objectContaining({
+        method: 'PUT',
+        body: file,
+        headers: expect.any(Headers),
+      }),
+    );
+
+    const uploadCall = fetchMock.mock.calls[1];
+    const uploadHeaders = uploadCall?.[1] && 'headers' in uploadCall[1]
+      ? (uploadCall[1].headers as Headers)
+      : null;
+    expect(uploadHeaders?.get('Content-Type')).toBe('image/png');
+    expect(uploadHeaders?.get('x-goog-meta-origin')).toBe('petcontrol-web');
+    expect(completed.object_key).toBe(intent.object_key);
+  });
+
+  it('executa ciclo de list/create/update/delete de schedules', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: 's-1',
+                company_id: 'c-1',
+                client_id: 'cli-1',
+                pet_id: 'pet-1',
+                client_name: 'Maria',
+                pet_name: 'Thor',
+                service_ids: ['svc-1'],
+                service_titles: ['Banho'],
+                scheduled_at: '2026-04-08T10:00:00.000Z',
+                estimated_end: null,
+                notes: 'banho',
+                current_status: 'waiting',
+              },
+            ],
+            meta: { total: 1, limit: 10, page: 1, total_pages: 1 },
           }),
           { status: 200 },
         ),
@@ -203,26 +276,24 @@ describe('rest-client login', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: {
-              data: [
-                {
-                  id: 'cli-1',
-                  person_id: 'p-1',
-                  company_id: 'c-1',
-                  full_name: 'Maria',
-                  short_name: 'Maria',
-                  gender_identity: 'woman_cisgender',
-                  marital_status: 'single',
-                  birth_date: '1992-06-15',
-                  cpf: '12345678901',
-                  email: 'maria@example.com',
-                  cellphone: '+5511999999999',
-                  has_whatsapp: true,
-                  is_active: true,
-                },
-              ],
-              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
-            },
+            data: [
+              {
+                id: 'cli-1',
+                person_id: 'p-1',
+                company_id: 'c-1',
+                full_name: 'Maria',
+                short_name: 'Maria',
+                gender_identity: 'woman_cisgender',
+                marital_status: 'single',
+                birth_date: '1992-06-15',
+                cpf: '12345678901',
+                email: 'maria@example.com',
+                cellphone: '+5511999999999',
+                has_whatsapp: true,
+                is_active: true,
+              },
+            ],
+            meta: { total: 1, limit: 10, page: 1, total_pages: 1 },
           }),
           { status: 200 },
         ),
@@ -230,21 +301,19 @@ describe('rest-client login', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: {
-              data: [
-                {
-                  id: 'pet-1',
-                  owner_id: 'cli-1',
-                  owner_name: 'Maria',
-                  name: 'Thor',
-                  size: 'medium',
-                  kind: 'dog',
-                  temperament: 'playful',
-                  is_active: true,
-                },
-              ],
-              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
-            },
+            data: [
+              {
+                id: 'pet-1',
+                owner_id: 'cli-1',
+                owner_name: 'Maria',
+                name: 'Thor',
+                size: 'medium',
+                kind: 'dog',
+                temperament: 'playful',
+                is_active: true,
+              },
+            ],
+            meta: { total: 1, limit: 10, page: 1, total_pages: 1 },
           }),
           { status: 200 },
         ),
@@ -252,21 +321,19 @@ describe('rest-client login', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: {
-              data: [
-                {
-                  id: 'svc-1',
-                  type_id: 'type-1',
-                  type_name: 'Banho',
-                  title: 'Banho completo',
-                  description: 'Banho com secagem',
-                  price: '89.90',
-                  discount_rate: '0.00',
-                  is_active: true,
-                },
-              ],
-              meta: { total: 1, limit: 10, page: 1, total_pages: 1 }
-            },
+            data: [
+              {
+                id: 'svc-1',
+                type_id: 'type-1',
+                type_name: 'Banho',
+                title: 'Banho completo',
+                description: 'Banho com secagem',
+                price: '89.90',
+                discount_rate: '0.00',
+                is_active: true,
+              },
+            ],
+            meta: { total: 1, limit: 10, page: 1, total_pages: 1 },
           }),
           { status: 200 },
         ),

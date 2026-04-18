@@ -5,6 +5,9 @@ import type {
   ClientApiResponseDTO,
   ClientListApiResponseDTO,
   CompanyDTO,
+  CompleteUploadApiResponseDTO,
+  CompleteUploadDTO,
+  CompleteUploadInput,
   CreateClientInput,
   CreatePetInput,
   CreateScheduleInput,
@@ -181,20 +184,38 @@ export async function createUploadIntent(
 }
 
 export async function uploadToGCS(
-  uploadUrl: string,
+  intent: Pick<UploadIntentDTO, 'upload_url' | 'method' | 'headers'>,
   file: File,
 ): Promise<void> {
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type,
-    },
+  const headers = new Headers(intent.headers ?? {});
+  if (!headers.has('Content-Type') && file.type) {
+    headers.set('Content-Type', file.type);
+  }
+
+  const response = await fetch(intent.upload_url, {
+    method: intent.method,
+    headers,
     body: file,
   });
 
   if (!response.ok) {
     throw new Error('Falha ao enviar arquivo para o GCS');
   }
+}
+
+export async function completeUpload(
+  accessToken: string,
+  input: CompleteUploadInput,
+): Promise<CompleteUploadDTO> {
+  const payload = await request<CompleteUploadApiResponseDTO>(
+    API_PATHS.uploadsComplete,
+    {
+      method: 'POST',
+      accessToken,
+      body: input,
+    },
+  );
+  return payload.data;
 }
 
 

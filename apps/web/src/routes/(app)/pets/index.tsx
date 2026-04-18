@@ -13,7 +13,11 @@ import { useListParams } from '@/hooks/use-list-params';
 import { SearchBar } from '@/ui/search-bar';
 import { PaginationBar } from '@/ui/pagination-bar';
 import { ImageUpload } from '@/ui/image-upload';
-import { createUploadIntent, uploadToGCS } from '@/lib/api/rest-client';
+import {
+  completeUpload,
+  createUploadIntent,
+  uploadToGCS,
+} from '@/lib/api/rest-client';
 import { useAuthStore, selectSession } from '@/lib/auth/auth.store';
 
 type PetFormState = CreatePetInput;
@@ -91,8 +95,13 @@ export function PetsPage() {
           size_bytes: selectedFile.size,
         });
 
-        await uploadToGCS(intent.upload_url, selectedFile);
-        uploadObjectKey = intent.object_key;
+        await uploadToGCS(intent, selectedFile);
+        const completed = await completeUpload(session.accessToken, {
+          resource: 'pets',
+          field: 'image_url',
+          object_key: intent.object_key,
+        });
+        uploadObjectKey = completed.object_key;
       } catch (err) {
         console.error('Failed to upload image:', err);
         alert('Falha ao enviar imagem. Tente novamente.');
