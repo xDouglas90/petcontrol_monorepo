@@ -39,6 +39,7 @@ func TestClientService_CreateClient(t *testing.T) {
 			"Maria",
 			sqlc.GenderIdentityWomanCisgender,
 			sqlc.MaritalStatusSingle,
+			pgxmock.AnyArg(),
 			birthDate,
 			"12345678901",
 		).
@@ -163,7 +164,7 @@ func TestClientService_UpdateClient(t *testing.T) {
 		))
 
 	mock.ExpectExec(`(?s)name: UpdateClientIdentification`).
-		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), clientID, companyID).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), clientID, companyID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	mock.ExpectExec(`(?s)name: UpdateClientPrimaryContact`).
 		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), clientID, companyID).
