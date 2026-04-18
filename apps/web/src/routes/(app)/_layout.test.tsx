@@ -22,7 +22,10 @@ vi.mock('@tanstack/react-router', () => ({
     search?: Record<string, unknown>;
     hash?: string;
   }) => {
-    const args = [props.to, props.replace];
+    const args: Array<string | boolean | Record<string, unknown> | undefined> = [
+      props.to,
+      props.replace,
+    ];
     if (props.search !== undefined || props.hash !== undefined) {
       args.push(props.search, props.hash);
     }
@@ -140,7 +143,7 @@ describe('AppLayout', () => {
     render(<AppLayout />);
 
     expect(screen.getByTestId('outlet')).toBeTruthy();
-    expect(screen.getByText('PetControl')).toBeTruthy();
+    expect(screen.getByText('GroomingFlow')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Pets' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Services' })).toBeTruthy();

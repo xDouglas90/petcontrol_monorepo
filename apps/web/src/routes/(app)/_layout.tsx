@@ -132,7 +132,7 @@ export function AppLayout() {
         >
           <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
             <div className={cn('space-y-1', !sidebarOpen && 'opacity-0')}>
-              <p className="font-display text-2xl text-white">PetControl</p>
+              <p className="font-display text-2xl text-white">GroomingFlow</p>
               <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
                 tenant aware dashboard
               </p>

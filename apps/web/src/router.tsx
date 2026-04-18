@@ -192,7 +192,7 @@ function SplashScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-hero-radial px-6 text-center text-white">
       <div className="max-w-sm rounded-[2rem] border border-white/10 bg-slate-950/80 px-8 py-10 shadow-glow backdrop-blur-xl">
-        <p className="font-display text-3xl">PetControl</p>
+        <p className="font-display text-3xl">GroomingFlow</p>
         <p className="mt-3 text-sm text-slate-300">
           Inicializando o frontend e carregando a sessão persistida.
         </p>

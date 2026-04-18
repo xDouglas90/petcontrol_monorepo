@@ -72,7 +72,7 @@ export function LoginPage() {
               </div>
               <div className="max-w-2xl space-y-4">
                 <p className="font-display text-sm uppercase tracking-[0.35em] text-secondary/80">
-                  PetControl
+                  GroomingFlow
                 </p>
                 <h1 className="font-display text-5xl leading-tight text-white sm:text-6xl">
                   Uma base operacional para pet shops que precisam de controle
