@@ -184,6 +184,12 @@ func (h *ClientHandler) Create(c *gin.Context) {
 		return
 	}
 
+	imageURL, err := h.resolveUploadObjectKey(c.Request.Context(), req.UploadKey, strings.TrimSpace(req.ImageURL))
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
+		return
+	}
+
 	item, err := h.service.CreateClient(c.Request.Context(), service.CreateClientInput{
 		CompanyID:      companyID,
 		FullName:       strings.TrimSpace(req.FullName),
@@ -198,25 +204,8 @@ func (h *ClientHandler) Create(c *gin.Context) {
 		HasWhatsapp:    req.HasWhatsapp,
 		ClientSince:    clientSince,
 		Notes:          textValue(strings.TrimSpace(req.Notes)),
-		ImageURL:       textValue(strings.TrimSpace(req.ImageURL)),
+		ImageURL:       textValue(imageURL),
 	})
-
-	if req.UploadKey != "" {
-		resolved, err := h.resolveUploadObjectKey(c.Request.Context(), req.UploadKey, req.ImageURL)
-		if err != nil {
-			middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
-			return
-		}
-		item, err = h.service.UpdateClient(c.Request.Context(), service.UpdateClientInput{
-			CompanyID: companyID,
-			ClientID:  item.ID,
-			ImageURL:  &resolved,
-		})
-		if err != nil {
-			middleware.JSONError(c, apperror.HTTPStatus(err), "update_client_avatar_failed", "failed to update client avatar")
-			return
-		}
-	}
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "create_client_failed", "failed to create client")
 		return
@@ -304,6 +293,12 @@ func (h *ClientHandler) Update(c *gin.Context) {
 		return
 	}
 
+	imageURL, err := h.resolveOptionalUploadObjectKey(c.Request.Context(), req.UploadKey, req.ImageURL)
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "invalid_upload_object_key", "invalid upload_object_key")
+		return
+	}
+
 	item, err := h.service.UpdateClient(c.Request.Context(), service.UpdateClientInput{
 		CompanyID:      companyID,
 		ClientID:       clientID,
@@ -319,15 +314,7 @@ func (h *ClientHandler) Update(c *gin.Context) {
 		HasWhatsapp:    req.HasWhatsapp,
 		ClientSince:    clientSince,
 		Notes:          parseOptionalTrimmed(req.Notes),
-		ImageURL: func() *string {
-			if req.UploadKey != nil {
-				resolved, err := h.resolveUploadObjectKey(c.Request.Context(), *req.UploadKey, "")
-				if err == nil {
-					return &resolved
-				}
-			}
-			return parseOptionalTrimmed(req.ImageURL)
-		}(),
+		ImageURL:       imageURL,
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "update_client_failed", "failed to update client")
@@ -396,6 +383,29 @@ func (h *ClientHandler) Delete(c *gin.Context) {
 	})
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *ClientHandler) resolveUploadObjectKey(ctx context.Context, objectKey string, fallback string) (string, error) {
+	trimmedKey := strings.TrimSpace(objectKey)
+	if trimmedKey == "" {
+		return fallback, nil
+	}
+	if h.uploadResolver == nil {
+		return "", apperror.ErrServiceUnavailable
+	}
+	return h.uploadResolver.ResolveObjectKey(ctx, "people_identifications", "image_url", trimmedKey)
+}
+
+func (h *ClientHandler) resolveOptionalUploadObjectKey(ctx context.Context, objectKey *string, fallback *string) (*string, error) {
+	if objectKey == nil {
+		return parseOptionalTrimmed(fallback), nil
+	}
+
+	resolved, err := h.resolveUploadObjectKey(ctx, *objectKey, "")
+	if err != nil {
+		return nil, err
+	}
+	return &resolved, nil
 }
 
 func parseRequiredDate(raw string) (pgtype.Date, error) {
@@ -512,16 +522,7 @@ func hasClientUpdatePayload(req updateClientRequest) bool {
 		req.Cellphone != nil ||
 		req.HasWhatsapp != nil ||
 		req.ClientSince != nil ||
-		req.Notes != nil
-}
-
-func (h *ClientHandler) resolveUploadObjectKey(ctx context.Context, objectKey string, fallback string) (string, error) {
-	trimmedKey := strings.TrimSpace(objectKey)
-	if trimmedKey == "" {
-		return fallback, nil
-	}
-	if h.uploadResolver == nil {
-		return "", apperror.ErrServiceUnavailable
-	}
-	return h.uploadResolver.ResolveObjectKey(ctx, "people_identifications", "image_url", trimmedKey)
+		req.Notes != nil ||
+		req.ImageURL != nil ||
+		req.UploadKey != nil
 }

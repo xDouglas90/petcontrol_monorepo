@@ -46,10 +46,19 @@ func RequestLogger(logger *slog.Logger) gin.HandlerFunc {
 		c.Next()
 
 		latency := time.Since(start)
+		matchedPath := c.FullPath()
+		requestPath := c.Request.URL.Path
+		path := matchedPath
+		if path == "" {
+			path = requestPath
+		}
+
 		fields := []any{
 			"correlation_id", GetCorrelationID(c),
 			"method", c.Request.Method,
-			"path", c.FullPath(),
+			"path", path,
+			"matched_path", matchedPath,
+			"request_path", requestPath,
 			"status", c.Writer.Status(),
 			"latency_ms", latency.Milliseconds(),
 			"client_ip", c.ClientIP(),
