@@ -51,6 +51,17 @@ vi.mock('@/lib/api/domain.queries', () => ({
 describe('AppLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(min-width: 1024px)',
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    vi.stubGlobal('matchMedia', matchMediaMock);
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -82,6 +93,7 @@ describe('AppLayout', () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it('redireciona para /login se não houver sessão', () => {
@@ -151,6 +163,25 @@ describe('AppLayout', () => {
       screen.getByText('Tenant atual: Correct Company (correct-slug)'),
     ).toBeTruthy();
     expect(screen.getByText('@correct-slug')).toBeTruthy();
+  });
+
+  it('reabre a sidebar automaticamente em telas grandes', () => {
+    useUIStore.setState({ sidebarOpen: false });
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+      },
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+
+    render(<AppLayout />);
+
+    expect(useUIStore.getState().sidebarOpen).toBe(true);
+    expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
   });
 
   it('normaliza o slug para lowercase na navegação canônica', () => {

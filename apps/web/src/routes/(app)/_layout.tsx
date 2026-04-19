@@ -32,6 +32,7 @@ export function AppLayout() {
   const clearSession = useAuthStore((state) => state.clearSession);
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
   const params = useParams({ strict: false });
@@ -43,6 +44,32 @@ export function AppLayout() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const desktopQuery = window.matchMedia('(min-width: 1024px)');
+
+    const syncSidebarForViewport = (matches: boolean) => {
+      if (matches) {
+        setSidebarOpen(true);
+      }
+    };
+
+    syncSidebarForViewport(desktopQuery.matches);
+
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      syncSidebarForViewport(event.matches);
+    };
+
+    desktopQuery.addEventListener('change', handleViewportChange);
+
+    return () => {
+      desktopQuery.removeEventListener('change', handleViewportChange);
+    };
+  }, [setSidebarOpen]);
 
   useEffect(() => {
     if (unauthorizedCompanyContext) {
