@@ -354,16 +354,163 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 
 ### 0.2 Checks
 
-- [ ] Existe fonte canônica para o plano atual do tenant.
+- [x] Existe fonte canônica para o plano atual do tenant.
 - [ ] O frontend consegue resolver `companies.logo_url` e `people_identifications.short_name`.
-- [ ] As formulas de KPI estão fechadas com base na modelagem real.
-- [ ] O escopo do chat esta classificado como `funcional agora` ou `UI + contrato futuro`.
+- [x] As formulas de KPI estão fechadas com base na modelagem real.
+- [x] O escopo do chat esta classificado como `UI + contrato futuro`.
+
+### 0.3 Conclusões da descoberta
+
+#### Fonte canônica de plano atual e branding do tenant
+
+- A fonte canônica atual do tenant no Web e `GET /api/v1/companies/current`.
+- Esse endpoint ja retorna `active_package` e `logo_url` a partir de `companies`.
+- O backend resolve isso via `CompanyService.GetCurrentCompany` + query `GetCompanyByID`.
+- Durante a Fase 0, os contratos compartilhados foram alinhados para refletir corretamente:
+  - `logo_url` em `CompanyDTO`
+  - `module_package` com suporte a `trial`
+
+Conclusão:
+
+- o shell novo pode usar `companies/current` como fonte inicial de plano e logo;
+- o CTA de upgrade pode ser derivado inteiramente do `active_package` atual;
+- tenants `premium` e `internal` exigem tratamento de UX especifico.
+
+#### Tipos de usuário confirmados no domínio atual
+
+No schema, os papeis sistêmicos reais sao:
+
+- `root`
+- `internal`
+- `admin`
+- `system`
+- `common`
+- `free`
+
+No contexto de vinculo empresa/usuário (`company_users.kind`), os tipos reais sao:
+
+- `owner`
+- `employee`
+- `client`
+- `supplier`
+- `outsourced_employee`
+
+Durante a Fase 0, os contratos compartilhados do frontend foram corrigidos para refletir esses enums reais.
+
+Conclusão:
+
+- a home por tipo de usuário deve se basear em `users.role`;
+- o `kind` atual continua util para contexto de negocio, mas nao substitui a decisão por papel sistêmico.
+
+#### Estado do `admin` no frontend
+
+- O login atual entrega ao Web:
+  - `access_token`
+  - `user_id`
+  - `company_id`
+  - `role`
+  - `kind`
+- O `AuthStore` persiste esse contexto de sessão com confiabilidade.
+
+Conclusão:
+
+- o tipo `admin` ja chega de forma confiável ao frontend;
+- a seleção da home inicial por role pode ser iniciada sem mudança no fluxo de login.
+
+#### Estado atual de `short_name` do usuário autenticado
+
+- O schema possui `people_identifications.short_name`.
+- Existem queries e tabelas que manipulam `people_identifications`.
+- Porem, o frontend autenticado atual nao recebe `short_name` do usuário logado em:
+  - login;
+  - `companies/current`;
+  - store de auth.
+
+Conclusão:
+
+- `companies.logo_url` ja esta resolvível no Web;
+- `people_identifications.short_name` ainda nao esta resolvível para o usuário autenticado;
+- a Fase 1 ou 2 exigira um novo contrato, preferencialmente um endpoint tipo `GET /users/me` ou `GET /auth/me`, ou a extensão controlada do login.
+
+#### Estado atual de `company_system_configs`
+
+- O schema contem:
+  - `schedule_init_time`
+  - `schedule_end_time`
+  - `min_schedules_per_day`
+  - `schedule_days`
+- Ja existe query SQLC `GetCompanySystemConfig`.
+- Ainda nao existe exposição clara desse contrato para o Web autenticado atual.
+
+Conclusão:
+
+- a modelagem minima para os KPIs existe;
+- a PR precisara expor `company_system_configs` ao frontend, seja por endpoint dedicado, seja por um endpoint agregador do dashboard `admin`.
+
+#### Formulas de KPI fechadas com a modelagem atual
+
+Decisão técnica da Fase 0:
+
+- `Agendamentos/dia`:
+  - contar `schedules` do tenant no dia atual
+  - comparar com a contagem do dia anterior
+- `Agendamentos/mes`:
+  - contar `schedules` do tenant no mes atual
+  - comparar com o mes anterior
+- `Eficiência`:
+  - interpretar `schedule_days` como dias da semana permitidos de atendimento
+  - calcular quantos dias do mes atual pertencem a esse conjunto
+  - multiplicar pelo `min_schedules_per_day`
+  - usar isso como meta mensal minima
+  - percentual = `agendamentos_do_mes / meta_mensal_minima * 100`
+
+Conclusão:
+
+- a- a formula de eficiência esta fechada no nível de domínio;
+- o que falta nao e definição matemática, e sim exposição de dados e agregações para consumo do Web.
+
+#### Status atual dos agendamentos e lista operacional
+
+- O status atual de um `schedule` ja pode ser derivado pelo ultimo evento de `schedule_status_history`.
+- As queries de `schedules` ja usam essa estrategia para preencher `current_status`.
+- Ja existe `GetLatestScheduleStatus` e histórico completo por schedule.
+
+Conclusão:
+
+- a lista de "Agendamentos em andamento" e viável com o domínio atual;
+- a duração por status pode ser calculada sem alterar o schema;
+- sera necessário apenas definir query/DTO especifico para o dashboard.
+
+#### Gráfico de performance
+
+- O domínio ja oferece janela operacional da empresa via `company_system_configs`.
+- Ainda nao existe query pronta agregando ocupação ou distribuição por semana comparando mes atual vs mes anterior.
+
+Conclusão:
+
+- a PR deve criar agregação dedicada para o dashboard `admin`;
+- a recomendação técnica e concentrar esse calculo no backend, nao no frontend, para evitar múltiplas consultas e regras de calendário espalhadas.
+
+#### Chat e presença
+
+- Nao foram encontrados no schema atual:
+  - tabelas de conversas;
+  - mensagens de chat;
+  - presença online/offline/ocupado;
+  - canal persistido entre `admin` e `system`.
+- O único campo relacionado e `company_system_configs.whatsapp_conversation`, que nao resolve chat interno entre usuários do produto.
+
+Conclusão:
+
+- o chat desta PR deve ser tratado como `UI + contrato futuro`;
+- nao ha base suficiente hoje para prometer chat funcional completo sem abrir um novo vertical de domínio;
+- se o bloco visual for implementado nesta PR, ele deve deixar isso explicito no escopo.
 
 ## Fase 1 - Novo Shell de Layout Autenticado
 
 ### 1.1 Ações
 
-- Refatorar o layout autenticado atual para refletir a nova estrutura visual.
+- Refatorar o layout autenticado atual para refletir a nova estrutura visual conforme [example-001](../../example-001.png).
 - Reorganizar a sidebar:
   - branding do tenant no topo;
   - navegação principal;
@@ -374,7 +521,7 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 
 ### 1.2 Checks
 
-- [ ] A area autenticada usa o novo shell visual.
+- [ ] A area autenticada usa o novo shell [visual](../../example-001.png).
 - [ ] A logo do tenant e exibida com fallback coerente.
 - [ ] O CTA de upgrade respeita a hierarquia de planos.
 - [ ] O footer lateral contem `Configurações` e `Sair`.
@@ -420,7 +567,7 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 
 ### 4.1 Ações
 
-- Implementar bloco visual do gráfico.
+- Implementar bloco [visual](../../example-001.png) do gráfico.
 - Construir o seletor semanal.
 - Trazer dados do mês atual e do mês anterior.
 - Ajustar eixo temporal conforme janela operacional do tenant.
@@ -492,7 +639,7 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 - O gráfico pode ficar visualmente bonito mas semanticamente fraco se a agregação não for bem definida.
 - O plano corrente do tenant precisa ter fonte única e confiável.
 - A home por tipo de usuário pode exigir reestruturação do roteamento autenticado.
-- A referencia visual usa um design muito limpo; a adaptação deve evitar "slop" e preservar o contexto real do produto.
+- A referencia [visual](../../example-001.png) usa um design muito limpo; a adaptação deve evitar "slop" e preservar o contexto real do produto.
 
 ## Decisões Recomendadas para Manter a PR Saudável
 

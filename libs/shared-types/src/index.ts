@@ -1,15 +1,21 @@
 export const USER_ROLES = [
   'root',
+  'internal',
   'admin',
-  'manager',
-  'employee',
-  'aux',
-  'general',
+  'system',
+  'common',
+  'free',
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const USER_KINDS = ['internal', 'owner', 'staff', 'free'] as const;
+export const USER_KINDS = [
+  'owner',
+  'employee',
+  'client',
+  'supplier',
+  'outsourced_employee',
+] as const;
 
 export type UserKind = (typeof USER_KINDS)[number];
 
@@ -87,6 +93,7 @@ export const MODULE_PACKAGES = [
   'basic',
   'essential',
   'premium',
+  'trial',
 ] as const;
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
@@ -127,7 +134,7 @@ export interface CompanyDTO {
   cnpj: string;
   active_package: ModulePackage;
   is_active: boolean;
-  image_url?: string | null;
+  logo_url?: string | null;
   upload_object_key?: string;
 }
 

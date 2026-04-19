@@ -4,11 +4,15 @@ import {
   GENDER_IDENTITIES,
   MARITAL_STATUSES,
   MODULE_CODES,
+  MODULE_PACKAGES,
   PET_KINDS,
   PET_SIZES,
   PET_TEMPERAMENTS,
   SCHEDULE_STATUSES,
+  USER_KINDS,
+  USER_ROLES,
   type ClientDTO,
+  type CompanyDTO,
   type CreateScheduleInput,
   type PetDTO,
   type ServiceDTO,
@@ -18,6 +22,35 @@ import {
 describe("shared-types domain contracts", () => {
   it("exports module codes for the current seeded domain set", () => {
     expect(MODULE_CODES).toEqual(["SCH", "CRM", "FIN"]);
+  });
+
+  it("exports user roles and company user kinds aligned with the database schema", () => {
+    expect(USER_ROLES).toEqual([
+      "root",
+      "internal",
+      "admin",
+      "system",
+      "common",
+      "free",
+    ]);
+    expect(USER_KINDS).toEqual([
+      "owner",
+      "employee",
+      "client",
+      "supplier",
+      "outsourced_employee",
+    ]);
+  });
+
+  it("exports module packages including the commercial trial tier", () => {
+    expect(MODULE_PACKAGES).toEqual([
+      "internal",
+      "starter",
+      "basic",
+      "essential",
+      "premium",
+      "trial",
+    ]);
   });
 
   it("exports pet enums aligned with the database schema", () => {
@@ -61,6 +94,22 @@ describe("shared-types DTO compatibility", () => {
 
     expect(client.full_name).toBe("Maria Silva");
     expect(client.is_active).toBe(true);
+  });
+
+  it("accepts a company payload with logo_url and active_package", () => {
+    const company: CompanyDTO = {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      slug: "petcontrol-dev",
+      name: "PetControl Desenvolvimento LTDA",
+      fantasy_name: "PetControl Dev",
+      cnpj: "12345678000195",
+      logo_url: "https://cdn.example.com/companies/logo.png",
+      active_package: "trial",
+      is_active: true,
+    };
+
+    expect(company.logo_url).toContain("logo.png");
+    expect(company.active_package).toBe("trial");
   });
 
   it("accepts a pet payload associated to a client", () => {
