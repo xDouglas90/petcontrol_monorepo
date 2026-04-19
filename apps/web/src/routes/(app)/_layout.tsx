@@ -21,6 +21,7 @@ import {
   SunMedium,
   Users,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
@@ -202,13 +203,22 @@ export function AppLayout() {
                     : '-translate-x-[110%] opacity-0 pointer-events-none',
                 ),
           )}
-          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : undefined}
+          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : false}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div
+            className={cn(
+              'flex items-center border-b border-white/10 pb-4',
+              isDesktopViewport && !sidebarOpen
+                ? 'justify-center'
+                : 'justify-between gap-4',
+            )}
+          >
             <div
               className={cn(
-                'space-y-1',
-                isDesktopViewport && !sidebarOpen && 'opacity-0',
+                'space-y-1 overflow-hidden transition-all duration-300',
+                isDesktopViewport && !sidebarOpen
+                  ? 'w-0 opacity-0'
+                  : 'w-auto opacity-100',
               )}
             >
               <p className="font-display text-2xl text-white">GroomingFlow</p>
@@ -236,6 +246,7 @@ export function AppLayout() {
               icon={Menu}
               label="Dashboard"
               expanded={isDesktopViewport ? sidebarOpen : true}
+              collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
@@ -243,6 +254,7 @@ export function AppLayout() {
               icon={CalendarRange}
               label="Schedules"
               expanded={isDesktopViewport ? sidebarOpen : true}
+              collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
@@ -250,6 +262,7 @@ export function AppLayout() {
               icon={Users}
               label="Clients"
               expanded={isDesktopViewport ? sidebarOpen : true}
+              collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
@@ -257,6 +270,7 @@ export function AppLayout() {
               icon={PawPrint}
               label="Pets"
               expanded={isDesktopViewport ? sidebarOpen : true}
+              collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
@@ -264,6 +278,7 @@ export function AppLayout() {
               icon={ClipboardList}
               label="Services"
               expanded={isDesktopViewport ? sidebarOpen : true}
+              collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
           </nav>
@@ -274,18 +289,21 @@ export function AppLayout() {
               onClick={() =>
                 setTheme(theme === 'midnight' ? 'ember' : 'midnight')
               }
-              className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/80 transition hover:bg-white/10"
+              className={cn(
+                'flex w-full items-center rounded-2xl border border-white/10 bg-white/5 py-3 text-left text-sm text-white/80 transition hover:bg-white/10',
+                isDesktopViewport && !sidebarOpen
+                  ? 'justify-center px-0'
+                  : 'gap-3 px-4',
+              )}
             >
               {theme === 'midnight' ? (
                 <MoonStar className="h-4 w-4 text-primary" />
               ) : (
                 <SunMedium className="h-4 w-4 text-primary" />
               )}
-              {isDesktopViewport
-                ? sidebarOpen
-                  ? `Tema ${theme}`
-                  : null
-                : `Tema ${theme}`}
+              <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
+                Tema {theme}
+              </SidebarLabel>
             </button>
 
             <button
@@ -293,14 +311,17 @@ export function AppLayout() {
               onClick={() => {
                 clearSession();
               }}
-              className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/80 transition hover:bg-white/10"
+              className={cn(
+                'flex w-full items-center rounded-2xl border border-white/10 bg-white/5 py-3 text-left text-sm text-white/80 transition hover:bg-white/10',
+                isDesktopViewport && !sidebarOpen
+                  ? 'justify-center px-0'
+                  : 'gap-3 px-4',
+              )}
             >
               <LogOut className="h-4 w-4 text-primary" />
-              {isDesktopViewport
-                ? sidebarOpen
-                  ? 'Encerrar sessão'
-                  : null
-                : 'Encerrar sessão'}
+              <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
+                Encerrar sessão
+              </SidebarLabel>
             </button>
           </div>
         </aside>
@@ -358,27 +379,54 @@ function SidebarLink({
   icon: Icon,
   label,
   expanded,
+  collapsedDesktop,
   onNavigate,
 }: {
   to: string;
   icon: typeof Menu;
   label: string;
   expanded: boolean;
+  collapsedDesktop?: boolean;
   onNavigate?: () => void;
 }) {
   return (
     <Link
       to={to}
       onClick={onNavigate}
-      className="flex items-center gap-3 rounded-2xl px-4 py-3 transition"
+      className={cn(
+        'flex items-center rounded-2xl py-3 transition',
+        collapsedDesktop ? 'justify-center px-0' : 'gap-3 px-4',
+      )}
       activeProps={{ className: 'bg-primary text-slate-950' }}
       inactiveProps={{
         className: 'bg-white/5 text-white/80 hover:bg-white/10',
       }}
     >
       <Icon className="h-4 w-4" />
-      {expanded ? label : null}
+      <SidebarLabel expanded={expanded}>{label}</SidebarLabel>
     </Link>
+  );
+}
+
+function SidebarLabel({
+  expanded,
+  children,
+}: {
+  expanded: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ease-out',
+        expanded
+          ? 'max-w-[12rem] opacity-100 translate-x-0 delay-100'
+          : 'max-w-0 opacity-0 -translate-x-1 delay-0',
+      )}
+      aria-hidden={!expanded ? 'true' : 'false'}
+    >
+      {children}
+    </span>
   );
 }
 
