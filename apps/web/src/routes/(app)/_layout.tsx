@@ -21,12 +21,22 @@ import {
   SunMedium,
   Users,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
 export function AppLayout() {
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return true;
+    }
+
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
   const hydrated = useAuthStore((state) => state.hydrated);
   const session = useAuthStore(selectSession);
   const clearSession = useAuthStore((state) => state.clearSession);
@@ -46,16 +56,18 @@ export function AppLayout() {
   }, [theme]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
       return;
     }
 
     const desktopQuery = window.matchMedia('(min-width: 1024px)');
 
     const syncSidebarForViewport = (matches: boolean) => {
-      if (matches) {
-        setSidebarOpen(true);
-      }
+      setIsDesktopViewport(matches);
+      setSidebarOpen(matches);
     };
 
     syncSidebarForViewport(desktopQuery.matches);
@@ -129,36 +141,76 @@ export function AppLayout() {
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
 
-  if (urlSlug && normalizedCurrentSlug && normalizedUrlSlug !== normalizedCurrentSlug) {
+  if (
+    urlSlug &&
+    normalizedCurrentSlug &&
+    normalizedUrlSlug !== normalizedCurrentSlug
+  ) {
     const segments = location.pathname.split('/');
     if (segments.length > 1) {
       segments[1] = normalizedCurrentSlug;
     }
-    const targetPath = segments.length > 1 ? segments.join('/') : buildCompanyRoute(normalizedCurrentSlug, 'dashboard');
+    const targetPath =
+      segments.length > 1
+        ? segments.join('/')
+        : buildCompanyRoute(normalizedCurrentSlug, 'dashboard');
 
     if (location.pathname.toLowerCase() === targetPath.toLowerCase()) {
-      // Já estamos no caminho correto (considerando case-insensitivity), 
+      // Já estamos no caminho correto (considerando case-insensitivity),
       // mas por algum motivo o urlSlug ainda é diferente (race condition no params?).
       // Evita disparar um Navigate que pode causar loop.
-      return null; 
+      return null;
     }
 
     return (
-      <Navigate to={targetPath} search={{ ...location.search }} hash={location.hash} replace />
+      <Navigate
+        to={targetPath}
+        search={{ ...location.search }}
+        hash={location.hash}
+        replace
+      />
     );
   }
 
+  const handleSidebarLinkClick = () => {
+    if (!isDesktopViewport) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-hero-radial text-foreground">
+      {!isDesktopViewport && sidebarOpen ? (
+        <button
+          type="button"
+          aria-label="Fechar menu lateral"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
+        />
+      ) : null}
+
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-4 p-4 lg:p-6">
         <aside
           className={cn(
-            'hidden flex-col rounded-[2rem] border border-white/10 bg-slate-950/80 p-4 shadow-glow backdrop-blur-xl transition-all duration-300 lg:flex',
-            sidebarOpen ? 'w-72' : 'w-[5.5rem]',
+            'flex-col rounded-[2rem] border border-white/10 bg-slate-950/80 p-4 shadow-glow backdrop-blur-xl transition-all duration-300',
+            isDesktopViewport
+              ? cn('hidden lg:flex', sidebarOpen ? 'w-72' : 'w-[5.5rem]')
+              : cn(
+                  'fixed inset-y-4 left-4 z-50 flex w-[min(20rem,calc(100vw-2rem))] transform',
+                  sidebarOpen
+                    ? 'translate-x-0 opacity-100'
+                    : '-translate-x-[110%] opacity-0 pointer-events-none',
+                ),
           )}
+          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : undefined}
         >
           <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-            <div className={cn('space-y-1', !sidebarOpen && 'opacity-0')}>
+            <div
+              className={cn(
+                'space-y-1',
+                isDesktopViewport && !sidebarOpen && 'opacity-0',
+              )}
+            >
               <p className="font-display text-2xl text-white">GroomingFlow</p>
               <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
                 tenant aware dashboard
@@ -183,31 +235,36 @@ export function AppLayout() {
               to={buildCompanyRoute(currentSlug, 'dashboard')}
               icon={Menu}
               label="Dashboard"
-              expanded={sidebarOpen}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'schedules')}
               icon={CalendarRange}
               label="Schedules"
-              expanded={sidebarOpen}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'clients')}
               icon={Users}
               label="Clients"
-              expanded={sidebarOpen}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'pets')}
               icon={PawPrint}
               label="Pets"
-              expanded={sidebarOpen}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              onNavigate={handleSidebarLinkClick}
             />
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'services')}
               icon={ClipboardList}
               label="Services"
-              expanded={sidebarOpen}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              onNavigate={handleSidebarLinkClick}
             />
           </nav>
 
@@ -224,7 +281,11 @@ export function AppLayout() {
               ) : (
                 <SunMedium className="h-4 w-4 text-primary" />
               )}
-              {sidebarOpen ? `Tema ${theme}` : null}
+              {isDesktopViewport
+                ? sidebarOpen
+                  ? `Tema ${theme}`
+                  : null
+                : `Tema ${theme}`}
             </button>
 
             <button
@@ -235,7 +296,11 @@ export function AppLayout() {
               className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/80 transition hover:bg-white/10"
             >
               <LogOut className="h-4 w-4 text-primary" />
-              {sidebarOpen ? 'Encerrar sessão' : null}
+              {isDesktopViewport
+                ? sidebarOpen
+                  ? 'Encerrar sessão'
+                  : null
+                : 'Encerrar sessão'}
             </button>
           </div>
         </aside>
@@ -293,15 +358,18 @@ function SidebarLink({
   icon: Icon,
   label,
   expanded,
+  onNavigate,
 }: {
   to: string;
   icon: typeof Menu;
   label: string;
   expanded: boolean;
+  onNavigate?: () => void;
 }) {
   return (
     <Link
       to={to}
+      onClick={onNavigate}
       className="flex items-center gap-3 rounded-2xl px-4 py-3 transition"
       activeProps={{ className: 'bg-primary text-slate-950' }}
       inactiveProps={{

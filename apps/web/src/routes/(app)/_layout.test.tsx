@@ -15,6 +15,7 @@ import { ApiError } from '@/lib/api/rest-client';
 
 // Mocking TanStack Router
 const mockNavigate = vi.fn();
+let isDesktopViewport = true;
 vi.mock('@tanstack/react-router', () => ({
   Navigate: (props: {
     to: string;
@@ -32,8 +33,18 @@ vi.mock('@tanstack/react-router', () => ({
     mockNavigate(...args);
     return null;
   },
-  Link: ({ children, to }: { children: ReactNode; to: string }) => (
-    <a href={to}>{children}</a>
+  Link: ({
+    children,
+    to,
+    onClick,
+  }: {
+    children: ReactNode;
+    to: string;
+    onClick?: () => void;
+  }) => (
+    <a href={to} onClick={onClick}>
+      {children}
+    </a>
   ),
   Outlet: () => <div data-testid="outlet">Content</div>,
   useParams: vi.fn(() => ({})),
@@ -52,7 +63,7 @@ describe('AppLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
-      matches: query === '(min-width: 1024px)',
+      matches: query === '(min-width: 1024px)' ? isDesktopViewport : false,
       media: query,
       onchange: null,
       addEventListener: vi.fn(),
@@ -62,6 +73,7 @@ describe('AppLayout', () => {
       dispatchEvent: vi.fn(),
     }));
     vi.stubGlobal('matchMedia', matchMediaMock);
+    isDesktopViewport = true;
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -182,6 +194,31 @@ describe('AppLayout', () => {
 
     expect(useUIStore.getState().sidebarOpen).toBe(true);
     expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
+  });
+
+  it('abre o drawer no mobile ao clicar no menu hamburguer', () => {
+    isDesktopViewport = false;
+    useUIStore.setState({ sidebarOpen: false });
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+      },
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+
+    render(<AppLayout />);
+
+    expect(screen.queryByRole('link', { name: 'Clients' })).toBeNull();
+
+    fireEvent.click(screen.getByTitle('Alternar sidebar'));
+
+    expect(useUIStore.getState().sidebarOpen).toBe(true);
+    expect(screen.getByRole('link', { name: 'Clients' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Fechar menu lateral' })).toBeTruthy();
   });
 
   it('normaliza o slug para lowercase na navegação canônica', () => {
