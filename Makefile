@@ -19,6 +19,7 @@ WORKER_COVERAGE_PACKAGES := ./internal/config ./internal/queue ./internal/whatsa
 	build \
 	dev \
 	dev-api \
+	dev-web \
 	dev-worker \
 	diagrams \
 	diagrams-check \
@@ -44,7 +45,7 @@ WORKER_COVERAGE_PACKAGES := ./internal/config ./internal/queue ./internal/whatsa
 	db-reset
 
 dev-api:
-	cd $(API_DIR) && \
+	@cd $(API_DIR) && \
 		set -a && \
 		if [ -f $(ROOT_DIR)/.env ]; then . $(ROOT_DIR)/.env; else . $(ROOT_DIR)/.env.example; fi && \
 		set +a && \
@@ -54,11 +55,19 @@ test-api:
 	cd $(API_DIR) && go test ./...
 
 dev-worker:
-	cd $(WORKER_DIR) && \
+	@cd $(WORKER_DIR) && \
 		set -a && \
 		if [ -f $(ROOT_DIR)/.env ]; then . $(ROOT_DIR)/.env; else . $(ROOT_DIR)/.env.example; fi && \
 		set +a && \
 		go run ./cmd/worker
+
+dev-web:
+	@if command -v pnpm >/dev/null 2>&1; then \
+		cd $(ROOT_DIR) && pnpm --filter web dev; \
+	else \
+		echo "pnpm not found, unable to start web"; \
+		exit 1; \
+	fi
 
 test-worker:
 	cd $(WORKER_DIR) && go test ./...
@@ -88,8 +97,99 @@ build:
 	fi
 
 dev:
-	@echo "Starting API, Worker and Web (use separate terminals for logs)"
-	@echo "Run 'make dev-api', 'make dev-worker' and 'pnpm --filter web dev' in separate terminals for local development."
+	@printf '%s\n' "Starting API, Worker and Web in the same terminal" "Press Ctrl+C to stop all services."
+	@pids=""; interrupted=""; \
+	set -a; \
+	if [ -f "$(ROOT_DIR)/.env" ]; then . "$(ROOT_DIR)/.env"; else . "$(ROOT_DIR)/.env.example"; fi; \
+	set +a; \
+	api_port="$${API_PORT:-8080}"; \
+	worker_addr="$${WORKER_HTTP_ADDR:-:8091}"; \
+	worker_port="$${worker_addr##*:}"; \
+	port_in_use() { \
+		port="$$1"; \
+		if command -v lsof >/dev/null 2>&1; then \
+			lsof -nP -iTCP:"$$port" -sTCP:LISTEN >/dev/null 2>&1; \
+			return $$?; \
+		fi; \
+		if command -v ss >/dev/null 2>&1; then \
+			ss -ltn | awk 'NR > 1 {print $$4}' | grep -Eq "(^|:)$$port$$"; \
+			return $$?; \
+		fi; \
+		return 1; \
+	}; \
+	if port_in_use "$$api_port"; then \
+		printf 'Cannot start API: port %s is already in use.\n' "$$api_port"; \
+		exit 1; \
+	fi; \
+	if [ -n "$$worker_port" ] && port_in_use "$$worker_port"; then \
+		printf 'Cannot start Worker webhook: port %s is already in use.\n' "$$worker_port"; \
+		exit 1; \
+	fi; \
+	start_service() { \
+		target="$$1"; \
+		if command -v setsid >/dev/null 2>&1; then \
+			setsid $(MAKE) --no-print-directory "$$target" & \
+		else \
+			$(MAKE) --no-print-directory "$$target" & \
+		fi; \
+		pid="$$!"; \
+		pids="$$pids $$pid"; \
+	}; \
+	stop_service() { \
+		pid="$$1"; \
+		if command -v setsid >/dev/null 2>&1; then \
+			kill -TERM -$$pid 2>/dev/null || kill $$pid 2>/dev/null || true; \
+		else \
+			kill $$pid 2>/dev/null || true; \
+		fi; \
+		wait $$pid 2>/dev/null || true; \
+	}; \
+	wait_for_stable_start() { \
+		pid="$$1"; \
+		label="$$2"; \
+		seconds="$$3"; \
+		count=0; \
+		while [ "$$count" -lt "$$seconds" ]; do \
+			if ! kill -0 $$pid 2>/dev/null; then \
+				wait $$pid; \
+				status="$$?"; \
+				printf '%s failed to start.\n' "$$label"; \
+				exit "$$status"; \
+			fi; \
+			sleep 1; \
+			count=$$((count + 1)); \
+		done; \
+	}; \
+	cleanup() { \
+		status=$$?; \
+		if [ -n "$$interrupted" ]; then \
+			status=0; \
+		fi; \
+		if [ -n "$$pids" ]; then \
+			for pid in $$pids; do \
+				stop_service $$pid; \
+			done; \
+		fi; \
+		trap - INT TERM EXIT; \
+		exit $$status; \
+	}; \
+	trap 'interrupted=1; cleanup' INT TERM; \
+	trap cleanup EXIT; \
+	start_service dev-api; \
+	wait_for_stable_start "$$pid" "API" 2; \
+	start_service dev-worker; \
+	wait_for_stable_start "$$pid" "Worker" 2; \
+	start_service dev-web; \
+	wait_for_stable_start "$$pid" "Web" 2; \
+	while :; do \
+		for pid in $$pids; do \
+			if ! kill -0 $$pid 2>/dev/null; then \
+				wait $$pid; \
+				exit $$?; \
+			fi; \
+		done; \
+		sleep 1; \
+	done
 
 lint: lint-go lint-ts
 

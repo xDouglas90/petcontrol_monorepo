@@ -54,6 +54,12 @@ Com essa massa, o Web já permite validar o núcleo operacional completo em `/:c
 
 ## Comandos de desenvolvimento
 
+Tudo em um unico terminal:
+
+```bash
+make dev
+```
+
 API:
 
 ```bash
@@ -74,9 +80,8 @@ pnpm --filter web dev
 
 Sequência recomendada para desenvolvimento local:
 
-1. `make dev-api`
-2. `make dev-worker`
-3. `pnpm --filter web dev`
+1. `make dev`
+2. Se preferir logs separados, use `make dev-api`, `make dev-worker` e `pnpm --filter web dev`
 
 ## Banco de dados
 
