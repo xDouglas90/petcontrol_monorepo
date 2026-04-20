@@ -239,7 +239,7 @@ export function DashboardPage() {
       value: String(todayCount),
       change: todayCount - previousDayCount,
       changeLabel: '-> ontem',
-      description: 'Atualizado a cada novo agendamento criado no tenant.',
+      description: 'Atualizado a cada novo agendamento criado no sistema.',
       icon: CalendarDays,
     },
     {
@@ -331,7 +331,7 @@ export function DashboardPage() {
             </div>
             <p className="mt-2 text-sm text-stone-500">
               Comparativo da semana selecionada com o mesmo recorte do mês
-              anterior, respeitando a janela operacional do tenant.
+              anterior, respeitando a janela operacional da empresa.
             </p>
           </div>
 
@@ -419,40 +419,41 @@ export function DashboardPage() {
       </div>
 
       <aside className="flex w-full shrink-0 flex-col gap-6 xl:w-[24rem]">
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
-          <div className="flex flex-col items-center text-center">
-            <div className="relative">
-              <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
-                <img
-                  src={
-                    currentUser.image_url ||
-                    `https://ui-avatars.com/api/?name=${greetingName}&background=0D1117&color=fff`
-                  }
-                  alt={greetingName}
-                  className="h-full w-full rounded-full object-cover"
+        <section className="flex flex-col rounded-[2.5rem] border border-stone-100 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="p-8 text-center">
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
+                  <img
+                    src={
+                      currentUser.image_url ||
+                      `https://ui-avatars.com/api/?name=${greetingName}&background=0D1117&color=fff`
+                    }
+                    alt={greetingName}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                </div>
+                <StatusPicker
+                  currentStatus={userStatus}
+                  onStatusChange={handleStatusChange}
                 />
               </div>
-              <StatusPicker
-                currentStatus={userStatus}
-                onStatusChange={handleStatusChange}
-              />
-            </div>
-            <h4 className="mt-2 font-display text-xl text-stone-950">
-              {greetingName}
-            </h4>
-            <p className="mb-3 text-sm text-stone-400">
-              Administrador {company.fantasy_name}
-            </p>
+              <h4 className="mt-2 font-display text-xl text-stone-950">
+                {greetingName}
+              </h4>
+              <p className="mb-3 text-sm text-stone-400">
+                Administrador {company.fantasy_name}
+              </p>
 
-            <div className="mt-6 grid w-full grid-cols-3 gap-3">
-              <MiniBadge icon={ShieldCheck} label="Admin" />
-              <MiniBadge icon={CalendarDays} label={formatCompactDate(now)} />
-              <MiniBadge icon={Activity} label={`${todayCount} hoje`} />
+              <div className="mt-6 grid w-full grid-cols-3 gap-3">
+                <MiniBadge icon={ShieldCheck} label="Admin" />
+                <MiniBadge icon={CalendarDays} label={formatCompactDate(now)} />
+                <MiniBadge icon={Activity} label={`${todayCount} hoje`} />
+              </div>
             </div>
           </div>
-        </section>
 
-        <section className="flex flex-1 flex-col rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
+          <div className="flex flex-1 flex-col border-t border-stone-100 p-6 pt-8">
           <div className="border-b border-stone-100 pb-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -648,7 +649,8 @@ export function DashboardPage() {
               </p>
             ) : null}
           </form>
-        </section>
+        </div>
+      </section>
       </aside>
     </div>
   );
@@ -1210,10 +1212,9 @@ function buildSystemContactOptions(
     return [
       {
         id: 'contract-pending',
-        label: 'Nenhum usuário system vinculado',
-        name: 'Usuários system',
-        subtitle:
-          'Vincule um contato system ao tenant para habilitar o seletor',
+        label: 'Nenhum usuário vinculado',
+        name: 'Usuários',
+        subtitle: 'Vincule um contato a empresa para habilitar o seletor',
         avatar: 'SY',
         imageUrl: null,
         statusClass: 'bg-stone-400',
@@ -1222,12 +1223,12 @@ function buildSystemContactOptions(
   }
 
   return systemUsers.map((item) => {
-    const name = item.short_name || item.full_name || 'Usuário system';
+    const name = item.short_name || item.full_name || 'Usuário do sistema';
     return {
       id: item.user_id,
       label: name,
       name,
-      subtitle: 'Contato system do tenant',
+      subtitle: 'Usuário do sistema',
       avatar: resolveInitials(name),
       imageUrl: item.image_url ?? null,
       statusClass: 'bg-emerald-500',
