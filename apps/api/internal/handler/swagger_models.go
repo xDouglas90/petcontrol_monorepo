@@ -400,5 +400,29 @@ type CompanyUserDoc struct {
 	LeftAt    *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
 }
 
+type AdminSystemChatMessageCreateRequestDoc struct {
+	Message string `json:"message" example:"Tudo certo por aí? Precisamos revisar os agendamentos de hoje."`
+}
+
+type AdminSystemChatMessageDoc struct {
+	ID             string  `json:"id" example:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"`
+	ConversationID string  `json:"conversation_id" example:"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"`
+	CompanyID      string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	SenderUserID   string  `json:"sender_user_id" example:"22222222-2222-2222-2222-222222222222"`
+	SenderName     string  `json:"sender_name" example:"System"`
+	SenderRole     string  `json:"sender_role" example:"system"`
+	SenderImageURL *string `json:"sender_image_url,omitempty" example:"https://cdn.example.com/users/system.png"`
+	Body           string  `json:"body" example:"Tudo certo por aí? Precisamos revisar os agendamentos de hoje."`
+	CreatedAt      string  `json:"created_at" example:"2026-04-20T09:30:00Z"`
+}
+
+type AdminSystemChatMessageListResponseDoc struct {
+	Data []AdminSystemChatMessageDoc `json:"data"`
+}
+
+type AdminSystemChatMessageItemResponseDoc struct {
+	Data AdminSystemChatMessageDoc `json:"data"`
+}
+
 // APIErrorResponseDoc documents unified API error envelope for Swagger.
 type APIErrorResponseDoc = middleware.ErrorResponse

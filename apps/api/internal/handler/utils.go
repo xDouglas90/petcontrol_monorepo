@@ -135,3 +135,25 @@ func nullableTimestamptz(value pgtype.Timestamptz) *string {
 	formatted := value.Time.Format(time.RFC3339)
 	return &formatted
 }
+
+func mapAdminSystemChatMessages(items []service.AdminSystemChatMessage) []map[string]any {
+	result := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		result = append(result, mapAdminSystemChatMessage(item))
+	}
+	return result
+}
+
+func mapAdminSystemChatMessage(item service.AdminSystemChatMessage) map[string]any {
+	return map[string]any{
+		"id":               uuidToString(item.ID),
+		"conversation_id":  uuidToString(item.ConversationID),
+		"company_id":       uuidToString(item.CompanyID),
+		"sender_user_id":   uuidToString(item.SenderUserID),
+		"sender_name":      item.SenderName,
+		"sender_role":      string(item.SenderRole),
+		"sender_image_url": item.SenderImageURL,
+		"body":             item.Body,
+		"created_at":       formatTimestamptz(item.CreatedAt),
+	}
+}
