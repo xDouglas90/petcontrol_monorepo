@@ -212,7 +212,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#ebe8e4] text-stone-900">
+    <div className="min-h-screen bg-white text-stone-900">
       {!isDesktopViewport && sidebarOpen ? (
         <button
           type="button"
@@ -222,12 +222,12 @@ export function AppLayout() {
         />
       ) : null}
 
-      <div className="mx-auto flex min-h-screen max-w-[1680px] gap-4 p-3 lg:p-6">
+      <div className="mx-auto flex min-h-screen max-w-[1920px]">
         <aside
           className={cn(
-            'flex-col rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition-all duration-300',
+            'flex-col bg-white border-r border-stone-100 transition-all duration-300',
             isDesktopViewport
-              ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[6rem]')
+              ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[5rem]')
               : cn(
                   'fixed inset-y-3 left-3 z-50 flex w-[min(21rem,calc(100vw-1.5rem))] transform',
                   sidebarOpen

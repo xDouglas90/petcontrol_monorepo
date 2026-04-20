@@ -261,165 +261,163 @@ export function DashboardPage() {
   ] as const;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
-      <div className="flex min-w-0 flex-col gap-6">
-        <header className="rounded-[2.5rem] border border-white/70 bg-white/85 px-6 py-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:px-8">
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
-                Dashboard admin
-              </p>
-              <div className="mt-3 flex items-center justify-between gap-4">
-                <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
-                  Olá, {greetingName}
-                </h1>
+    <div className="flex flex-col min-h-full">
+      <header className="border-b border-stone-100 px-6 py-8 lg:px-10">
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
+              Dashboard admin
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
+                Olá, {greetingName}
+              </h1>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
-                    <CalendarDays className="h-4 w-4" />
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-stone-400">
-                      Hoje
-                    </p>
-                    <span className="text-sm font-medium text-stone-700">
-                      {formatLongDate(now)}
-                    </span>
-                  </div>
+              <div className="flex items-center gap-3 text-stone-400">
+                <CalendarDays className="h-5 w-5" />
+                <div className="hidden sm:block">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em]">
+                    Hoje
+                  </p>
+                  <span className="text-sm font-medium text-stone-700">
+                    {formatLongDate(now)}
+                  </span>
                 </div>
               </div>
-              <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
-                Você está visualizando a operação de {company.fantasy_name}, com
-                foco em agenda diária, comparação mensal e eficiência da meta.
-              </p>
             </div>
-          </div>
-        </header>
-
-        <section className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {stats.map((stat) => (
-              <AdminStatCard key={stat.label} {...stat} />
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] lg:p-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-              Performance
-            </p>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-display text-2xl text-stone-950">
-                Ocupação por horário operacional
-              </h3>
-              <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
-                <select
-                  id="dashboard-week-range"
-                  aria-label="Selecionar semana de performance"
-                  value={normalizedSelectedWeekKey}
-                  onChange={(event) => setSelectedWeekKey(event.target.value)}
-                  className="bg-transparent outline-none"
-                >
-                  {weekOptions.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-stone-500">
-              Comparativo da semana selecionada com o mesmo recorte do mês
-              anterior, respeitando a janela operacional da empresa.
+            <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
+              Você está visualizando a operação de {company.fantasy_name}, com
+              foco em agenda diária, comparação mensal e eficiência da meta.
             </p>
           </div>
+        </div>
+      </header>
 
-          <div className="mt-8">
-            <WeeklyPerformanceChart
-              current={weeklySeries.current}
-              previous={weeklySeries.previous}
-              scheduleInitTime={systemConfig.schedule_init_time}
-              scheduleEndTime={systemConfig.schedule_end_time}
-            />
-          </div>
+      <div className="flex flex-col xl:flex-row divide-y xl:divide-y-0 xl:divide-x divide-stone-100">
+        <main className="flex flex-1 min-w-0 flex-col divide-y divide-stone-100">
+          <section className="p-6 lg:p-10">
+            <div className="grid gap-6 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <AdminStatCard key={stat.label} {...stat} />
+              ))}
+            </div>
+          </section>
 
-          <div className="mt-6 flex flex-wrap gap-6 text-sm text-stone-500">
-            <LegendDot color="bg-sky-400" label="Mês atual" />
-            <LegendDot color="bg-amber-400" label="Mês anterior" />
-          </div>
-        </section>
-
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] lg:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
+          <section className="p-6 lg:p-10">
+            <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-                Operação atual
+                Performance
               </p>
-              <h3 className="font-display text-2xl text-stone-950">
-                Agendamentos em andamento
-              </h3>
-              <span className="text-xs font-medium text-stone-400">
-                {currentShiftLabel}
-              </span>
-            </div>
-            <div className="rounded-[1.4rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
-              Meta mensal concluída: {completionPercentage}%
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-4">
-            {shiftSchedules.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center text-stone-400">
-                Nenhum atendimento registrado para o turno atual.
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-display text-2xl text-stone-950">
+                  Ocupação por horário operacional
+                </h3>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
+                  <select
+                    id="dashboard-week-range"
+                    aria-label="Selecionar semana de performance"
+                    value={normalizedSelectedWeekKey}
+                    onChange={(event) => setSelectedWeekKey(event.target.value)}
+                    className="bg-transparent outline-none"
+                  >
+                    {weekOptions.map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            ) : (
-              shiftSchedules.map((item) => (
-                <article
-                  key={item.id}
-                  className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-stone-100 bg-stone-50/60 p-4 transition hover:border-stone-200 hover:bg-stone-50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
-                      <PawPrint className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-stone-900 group-hover:text-sky-600 transition">
-                        {item.pet_name ?? 'Pet sem nome'}
-                      </p>
-                      <p className="text-sm text-stone-400">
-                        {item.client_name ?? 'Tutor não identificado'}
-                      </p>
-                    </div>
-                  </div>
+              <p className="mt-2 text-sm text-stone-500">
+                Comparativo da semana selecionada com o mesmo recorte do mês
+                anterior, respeitando a janela operacional da empresa.
+              </p>
+            </div>
 
-                  <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-2 w-2 rounded-full ${resolveScheduleStatusDotClass(item.current_status)}`}
-                      />
-                      <span className="text-sm font-medium text-stone-600">
-                        {formatScheduleStatus(item.current_status)}
-                      </span>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-1.5 text-sm text-stone-400">
-                      <Clock3 className="h-4 w-4" />
-                      {formatElapsedTime(
-                        item,
-                        now,
-                        scheduleHistoryMap.get(item.id) ?? [],
-                      )}
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
+            <div className="mt-8">
+              <WeeklyPerformanceChart
+                current={weeklySeries.current}
+                previous={weeklySeries.previous}
+                scheduleInitTime={systemConfig.schedule_init_time}
+                scheduleEndTime={systemConfig.schedule_end_time}
+              />
+            </div>
 
-      <aside className="flex w-full shrink-0 flex-col gap-6 xl:w-[24rem]">
-        <section className="flex flex-col rounded-[2.5rem] border border-stone-100 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="mt-6 flex flex-wrap gap-6 text-sm text-stone-500">
+              <LegendDot color="bg-sky-400" label="Mês atual" />
+              <LegendDot color="bg-amber-400" label="Mês anterior" />
+            </div>
+          </section>
+
+          <section className="p-6 lg:p-10">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+                  Operação atual
+                </p>
+                <h3 className="font-display text-2xl text-stone-950">
+                  Agendamentos em andamento
+                </h3>
+                <span className="text-xs font-medium text-stone-400">
+                  {currentShiftLabel}
+                </span>
+              </div>
+              <div className="rounded-[1.4rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
+                Meta mensal concluída: {completionPercentage}%
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              {shiftSchedules.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center text-stone-400">
+                  Nenhum atendimento registrado para o turno atual.
+                </div>
+              ) : (
+                shiftSchedules.map((item) => (
+                  <article
+                    key={item.id}
+                    className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-stone-100 bg-stone-50/60 p-4 transition hover:border-stone-200 hover:bg-stone-50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
+                        <PawPrint className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-stone-900 group-hover:text-sky-600 transition">
+                          {item.pet_name ?? 'Pet sem nome'}
+                        </p>
+                        <p className="text-sm text-stone-400">
+                          {item.client_name ?? 'Tutor não identificado'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-2 w-2 rounded-full ${resolveScheduleStatusDotClass(item.current_status)}`}
+                        />
+                        <span className="text-sm font-medium text-stone-600">
+                          {formatScheduleStatus(item.current_status)}
+                        </span>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-1.5 text-sm text-stone-400">
+                        <Clock3 className="h-4 w-4" />
+                        {formatElapsedTime(
+                          item,
+                          now,
+                          scheduleHistoryMap.get(item.id) ?? [],
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        </main>
+
+        <aside className="w-full xl:w-[24rem] flex flex-col divide-y divide-stone-100">
           <div className="p-8 text-center">
             <div className="flex flex-col items-center">
               <div className="relative">
@@ -453,7 +451,7 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col border-t border-stone-100 p-6 pt-8">
+          <div className="flex flex-1 flex-col p-6 pt-8">
           <div className="border-b border-stone-100 pb-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -650,10 +648,10 @@ export function DashboardPage() {
             ) : null}
           </form>
         </div>
-      </section>
       </aside>
     </div>
-  );
+  </div>
+);
 }
 
 function AdminStatCard({
@@ -676,7 +674,7 @@ function AdminStatCard({
   const ChangeIcon = positive ? TrendingUp : TrendingDown;
 
   return (
-    <article className="group relative rounded-[2rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+    <article className="group relative rounded-[2.5rem] border border-stone-100 bg-stone-50/50 p-6 transition hover:bg-white hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
       {/* Title at the top */}
       <p className="text-sm font-medium text-stone-400">{label}</p>
 
