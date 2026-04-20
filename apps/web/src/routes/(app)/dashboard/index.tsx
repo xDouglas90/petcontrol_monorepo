@@ -16,6 +16,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useInternalChatSocket } from '@/hooks/use-internal-chat-socket';
 
 import {
   useAdminSystemChatMessagesQuery,
@@ -88,6 +89,9 @@ export function DashboardPage() {
   const chatMessagesQuery = useAdminSystemChatMessagesQuery(effectiveSystemContactId);
   const sendChatMessageMutation =
     useCreateAdminSystemChatMessageMutation(effectiveSystemContactId);
+
+  const { presenceMap } = useInternalChatSocket(effectiveSystemContactId);
+
   useEffect(() => {
     const container = chatMessagesContainerRef.current;
     if (!container) {
@@ -164,6 +168,7 @@ export function DashboardPage() {
     );
   }
 
+
   const greetingName =
     currentUser.short_name || currentUser.full_name || company.fantasy_name;
   const todayCount = countSchedulesInDay(schedules, now);
@@ -209,6 +214,9 @@ export function DashboardPage() {
   const selectedSystemContact =
     chatContacts.find((contact) => contact.id === normalizedSelectedSystemContactId) ??
     chatContacts[0];
+
+  const contactPresence = effectiveSystemContactId ? presenceMap[effectiveSystemContactId] : undefined;
+  const isContactOnline = contactPresence?.status === 'online';
 
   const stats = [
     {
@@ -443,8 +451,8 @@ export function DashboardPage() {
             </div>
             <p className="mt-3 text-sm leading-6 text-stone-500">
               Esta conversa agora persiste mensagens de texto entre o
-              administrador do tenant e usuários do tipo system. Presença em
-              tempo real continua fora deste recorte.
+              administrador do tenant e usuários do tipo system, com suporte a
+              sincronização em tempo real e presença.
             </p>
           </div>
 
@@ -489,7 +497,9 @@ export function DashboardPage() {
                 </div>
               )}
               <div
-                className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${selectedSystemContact.statusClass}`}
+                className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                  isContactOnline ? 'bg-emerald-500' : 'bg-stone-300'
+                }`}
               />
             </div>
             <div className="min-w-0">

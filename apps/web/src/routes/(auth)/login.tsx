@@ -22,10 +22,9 @@ import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
 const loginSchema = z.object({
   email: z
-    .string()
-    .trim()
+    .email('Informe um e-mail válido')
     .min(1, 'Informe seu e-mail')
-    .email('Informe um e-mail válido'),
+    .trim(),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
 });
 

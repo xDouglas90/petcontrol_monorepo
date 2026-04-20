@@ -17,6 +17,7 @@ import { ApiError } from '@/lib/api/rest-client';
 const mockNavigate = vi.fn();
 let isDesktopViewport = true;
 vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => mockNavigate,
   Navigate: (props: {
     to: string;
     replace?: boolean;
@@ -130,7 +131,10 @@ describe('AppLayout', () => {
 
     render(<AppLayout />);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/login', true);
+    expect(mockNavigate).toHaveBeenCalledWith({
+      to: '/login',
+      replace: true,
+    });
   });
 
   it('exibe LoadingScreen enquanto a empresa está carregando', () => {
@@ -461,7 +465,10 @@ describe('AppLayout', () => {
 
     await waitFor(() => {
       expect(useAuthStore.getState().session).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith('/login', true);
+      expect(mockNavigate).toHaveBeenCalledWith({
+        to: '/login',
+        replace: true,
+      });
     });
   });
 
@@ -492,7 +499,10 @@ describe('AppLayout', () => {
 
     await waitFor(() => {
       expect(useAuthStore.getState().session).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith('/login', true);
+      expect(mockNavigate).toHaveBeenCalledWith({
+        to: '/login',
+        replace: true,
+      });
     });
   });
 });

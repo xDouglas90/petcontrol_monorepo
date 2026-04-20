@@ -1,4 +1,10 @@
-import { Link, Navigate, Outlet, useLocation } from '@tanstack/react-router';
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router';
 import {
   APP_ROUTES,
   COMPANY_ROUTE_PARAM,
@@ -37,6 +43,7 @@ const PLAN_UPGRADE_FLOW = {
 } as const;
 
 export function AppLayout() {
+  const navigate = useNavigate();
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (
       typeof window === 'undefined' ||
@@ -96,16 +103,27 @@ export function AppLayout() {
     }
   }, [clearSession, unauthorizedCompanyContext, unauthorizedUserContext]);
 
-  if (hydrated && !session) {
-    return <Navigate to={APP_ROUTES.login} replace />;
-  }
+  const shouldRedirectToLogin =
+    hydrated &&
+    (!session || unauthorizedCompanyContext || unauthorizedUserContext);
+
+  useEffect(() => {
+    if (!shouldRedirectToLogin || location.pathname === APP_ROUTES.login) {
+      return;
+    }
+
+    void navigate({
+      to: APP_ROUTES.login,
+      replace: true,
+    });
+  }, [location.pathname, navigate, shouldRedirectToLogin]);
 
   if (!hydrated) {
     return <LoadingScreen />;
   }
 
-  if (unauthorizedCompanyContext || unauthorizedUserContext) {
-    return <Navigate to={APP_ROUTES.login} replace />;
+  if (shouldRedirectToLogin) {
+    return <LoadingScreen />;
   }
 
   const currentSlug = companyQuery.data?.slug;
