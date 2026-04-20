@@ -144,7 +144,7 @@ export function DashboardPage() {
           Dashboard indisponível
         </p>
         <h2 className="mt-3 font-display text-3xl text-rose-900">
-          Não foi possível carregar os dados operacionais do tenant.
+          Não foi possível carregar os dados operacionais da empresa.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7">
           Verifique a disponibilidade da API, do perfil autenticado e da
@@ -167,7 +167,7 @@ export function DashboardPage() {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
           Nesta etapa, o dashboard completo está sendo priorizado para o papel
-          de administrador do tenant.
+          de administrador da empresa.
         </p>
       </section>
     );
@@ -230,7 +230,7 @@ export function DashboardPage() {
       label: 'Agendamentos/dia',
       value: String(todayCount),
       change: todayCount - previousDayCount,
-      changeLabel: 'vs ontem',
+      changeLabel: '-> ontem',
       description: 'Atualizado a cada novo agendamento criado no tenant.',
       icon: CalendarDays,
     },
@@ -238,16 +238,15 @@ export function DashboardPage() {
       label: 'Agendamentos/mês',
       value: String(currentMonthCount),
       change: currentMonthCount - previousMonthCount,
-      changeLabel: 'vs mês anterior',
+      changeLabel: '-> mês anterior',
       description: 'Volume operacional acumulado no mês corrente.',
       icon: CalendarRange,
     },
     {
-      label: 'Eficiência',
+      label: 'Eficiência (meta mensal)',
       value: `${Math.round(efficiencyPercentage)}%`,
       change: Math.round(efficiencyPercentage - 100),
-      changeLabel:
-        efficiencyPercentage >= 100 ? 'acima da meta' : 'abaixo da meta',
+      changeLabel: efficiencyPercentage >= 100 ? '%' : '%',
       description: `${currentMonthCount} de ${monthlyTarget} agendamentos mínimos previstos.`,
       icon: Activity,
     },
@@ -282,9 +281,8 @@ export function DashboardPage() {
                 </div>
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
-                Você está visualizando a operação do tenant{' '}
-                {company.fantasy_name}, com foco em agenda diária, comparação
-                mensal e eficiência da meta mínima configurada.
+                Você está visualizando a operação de {company.fantasy_name}, com
+                foco em agenda diária, comparação mensal e eficiência da meta.
               </p>
             </div>
           </div>
@@ -432,7 +430,7 @@ export function DashboardPage() {
               {greetingName}
             </h4>
             <p className="mt-1 text-sm text-stone-400">
-              Administrador do tenant
+              Administrador {company.fantasy_name}
             </p>
 
             <div className="mt-6 grid w-full grid-cols-3 gap-3">
