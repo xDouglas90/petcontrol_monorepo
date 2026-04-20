@@ -27,6 +27,11 @@ type createAdminSystemMessageRequest struct {
 	Message string `json:"message"`
 }
 
+type internalChatInboundEvent struct {
+	Type   string `json:"type"`
+	Status string `json:"status"`
+}
+
 const (
 	internalChatSocketSubprotocol = "petcontrol.internal-chat.v1"
 	internalChatMaxMessageBytes   = 4096
@@ -308,7 +313,8 @@ func (h *AdminSystemChatHandler) runSocketHeartbeat(ctx context.Context, socket 
 
 func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, connection realtime.InternalChatConnection) {
 	for {
-		_, _, err := connection.Socket.Read(ctx)
+		var event internalChatInboundEvent
+		err := wsjson.Read(ctx, connection.Socket, &event)
 		if err != nil {
 			if ctx.Err() != nil {
 				return
@@ -317,14 +323,30 @@ func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, conne
 			status := websocket.CloseStatus(err)
 			if status == websocket.StatusNormalClosure ||
 				status == websocket.StatusGoingAway ||
-				status == websocket.StatusNoStatusRcvd ||
-				status == websocket.StatusPolicyViolation {
+				status == websocket.StatusNoStatusRcvd {
 				return
 			}
 			if !errors.Is(err, context.Canceled) {
 				h.hub.RecordSocketError()
 			}
 			return
+		}
+
+		if event.Type == "chat.presence.update" && event.Status != "" {
+			presence, ok := h.hub.UpdateParticipantStatus(connection.CompanyID, connection.UserID, event.Status)
+			if ok {
+				h.hub.BroadcastConversationEvent(
+					context.Background(),
+					connection.CompanyID,
+					connection.UserID,
+					connection.CounterpartUserID,
+					"",
+					func(target realtime.InternalChatConnection) map[string]any {
+						return h.newPresenceUpdatedEvent(target, presence)
+					},
+				)
+			}
+			continue
 		}
 
 		h.hub.RecordInvalidPayload()
@@ -336,8 +358,6 @@ func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, conne
 			"code":                "invalid_socket_payload",
 			"message":             "unexpected client payload",
 		})
-		_ = connection.Socket.Close(websocket.StatusPolicyViolation, "unexpected data message")
-		return
 	}
 }
 

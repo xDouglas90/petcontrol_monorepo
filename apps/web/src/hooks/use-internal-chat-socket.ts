@@ -7,7 +7,7 @@ import { API_PATHS, INTERNAL_CHAT_SOCKET } from '@petcontrol/shared-constants';
 
 export interface PresenceInfo {
   user_id: string;
-  status: 'online' | 'offline';
+  status: 'online' | 'offline' | 'busy' | 'away' | string;
   last_changed_at: string;
 }
 
@@ -18,6 +18,17 @@ export function useInternalChatSocket(counterpartUserId?: string) {
   const intentionalCloseRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceInfo>>({});
+
+  const updatePresenceStatus = (status: string) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'chat.presence.update',
+          status,
+        }),
+      );
+    }
+  };
 
   useEffect(() => {
     if (!session?.accessToken || !counterpartUserId) {
@@ -140,5 +151,5 @@ export function useInternalChatSocket(counterpartUserId?: string) {
     };
   }, [session?.accessToken, counterpartUserId, queryClient]);
 
-  return { isConnected, presenceMap };
+  return { isConnected, presenceMap, updatePresenceStatus };
 }

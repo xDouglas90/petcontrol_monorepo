@@ -95,7 +95,15 @@ export function DashboardPage() {
     effectiveSystemContactId,
   );
 
-  const { presenceMap } = useInternalChatSocket(effectiveSystemContactId);
+  const { presenceMap, updatePresenceStatus } = useInternalChatSocket(
+    effectiveSystemContactId,
+  );
+  const [userStatus, setUserStatus] = useState('online');
+
+  const handleStatusChange = (status: string) => {
+    setUserStatus(status);
+    updatePresenceStatus(status);
+  };
 
   useEffect(() => {
     const container = chatMessagesContainerRef.current;
@@ -424,7 +432,10 @@ export function DashboardPage() {
                   className="h-full w-full rounded-full object-cover"
                 />
               </div>
-              <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
+              <StatusPicker
+                currentStatus={userStatus}
+                onStatusChange={handleStatusChange}
+              />
             </div>
             <h4 className="mt-2 font-display text-xl text-stone-950">
               {greetingName}
@@ -1233,4 +1244,65 @@ function formatChatTimestamp(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+}
+
+interface StatusPickerProps {
+  currentStatus: string;
+  onStatusChange: (status: string) => void;
+}
+
+function StatusPicker({ currentStatus, onStatusChange }: StatusPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const statusOptions = [
+    { id: 'online', label: 'Online', color: 'bg-emerald-500' },
+    { id: 'busy', label: 'Ocupado', color: 'bg-rose-500' },
+    { id: 'away', label: 'Ausente', color: 'bg-amber-500' },
+  ];
+
+  const currentOption =
+    statusOptions.find((o) => o.id === currentStatus) || statusOptions[0];
+
+  return (
+    <div className="absolute bottom-1 right-1">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`h-5 w-5 rounded-full border-2 border-white shadow-sm transition-all hover:scale-110 active:scale-95 ${currentOption.color}`}
+        title="Alterar status de presença"
+      />
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
+            role="presentation"
+          />
+          <div className="absolute bottom-full right-0 z-50 mb-2 w-32 origin-bottom-right rounded-2xl border border-stone-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="flex flex-col gap-1">
+              {statusOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    onStatusChange(opt.id);
+                    setIsOpen(false);
+                  }}
+                  className={`flex items-center gap-2 rounded-xl px-2 py-2 text-xs transition-colors ${
+                    currentStatus === opt.id
+                      ? 'bg-stone-50 font-medium text-stone-900'
+                      : 'text-stone-500 hover:bg-stone-50/50 hover:text-stone-700'
+                  }`}
+                >
+                  <div className={`h-2.5 w-2.5 rounded-full ${opt.color}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }

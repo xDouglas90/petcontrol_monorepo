@@ -44,6 +44,7 @@ type InternalChatHub struct {
 	connections              map[string]InternalChatConnection
 	participantCounts        map[string]int
 	participantLastChanged   map[string]time.Time
+	participantStatus        map[string]string
 	totalConnectionsOpened   int64
 	totalConnectionsClosed   int64
 	totalBroadcastEvents     int64
@@ -61,6 +62,7 @@ func NewInternalChatHub() *InternalChatHub {
 		connections:            make(map[string]InternalChatConnection),
 		participantCounts:      make(map[string]int),
 		participantLastChanged: make(map[string]time.Time),
+		participantStatus:      make(map[string]string),
 	}
 }
 
@@ -281,6 +283,19 @@ func (h *InternalChatHub) matchingConversationConnections(
 	return items
 }
 
+func (h *InternalChatHub) UpdateParticipantStatus(companyID, userID, status string) (InternalChatPresence, bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	key := h.participantKey(companyID, userID)
+	now := time.Now().UTC()
+
+	h.participantStatus[key] = status
+	h.participantLastChanged[key] = now
+
+	return h.presenceLocked(companyID, userID), true
+}
+
 func (h *InternalChatHub) presenceLocked(companyID string, userID string) InternalChatPresence {
 	key := h.participantKey(companyID, userID)
 	lastChangedAt, ok := h.participantLastChanged[key]
@@ -289,11 +304,16 @@ func (h *InternalChatHub) presenceLocked(companyID string, userID string) Intern
 		h.participantLastChanged[key] = lastChangedAt
 	}
 
+	status, ok := h.participantStatus[key]
+	if !ok {
+		status = "online"
+	}
+
 	count := h.participantCounts[key]
 	if count > 0 {
 		return InternalChatPresence{
 			UserID:        userID,
-			Status:        "online",
+			Status:        status,
 			Connections:   count,
 			LastChangedAt: lastChangedAt,
 		}
