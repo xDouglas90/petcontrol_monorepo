@@ -231,6 +231,79 @@ export interface CreateAdminSystemChatMessageInput {
   message: string;
 }
 
+export const INTERNAL_CHAT_PRESENCE_STATUSES = [
+  'online',
+  'offline',
+] as const;
+
+export type InternalChatPresenceStatus =
+  (typeof INTERNAL_CHAT_PRESENCE_STATUSES)[number];
+
+export const INTERNAL_CHAT_SOCKET_EVENT_TYPES = [
+  'chat.connected',
+  'chat.message.created',
+  'chat.presence.snapshot',
+  'chat.presence.updated',
+  'chat.error',
+] as const;
+
+export type InternalChatSocketEventType =
+  (typeof INTERNAL_CHAT_SOCKET_EVENT_TYPES)[number];
+
+export interface InternalChatSocketEnvelopeBase {
+  type: InternalChatSocketEventType;
+  company_id: UUID;
+  counterpart_user_id: UUID;
+  emitted_at: string;
+}
+
+export interface InternalChatPresenceDTO {
+  user_id: UUID;
+  status: InternalChatPresenceStatus;
+  connections: number;
+  last_changed_at: string;
+}
+
+export interface InternalChatSocketConnectedEvent
+  extends InternalChatSocketEnvelopeBase {
+  type: 'chat.connected';
+  connection_id: string;
+  viewer_user_id: UUID;
+  viewer_role: UserRole;
+}
+
+export interface InternalChatSocketMessageCreatedEvent
+  extends InternalChatSocketEnvelopeBase {
+  type: 'chat.message.created';
+  message: AdminSystemChatMessageDTO;
+}
+
+export interface InternalChatSocketPresenceSnapshotEvent
+  extends InternalChatSocketEnvelopeBase {
+  type: 'chat.presence.snapshot';
+  presences: InternalChatPresenceDTO[];
+}
+
+export interface InternalChatSocketPresenceUpdatedEvent
+  extends InternalChatSocketEnvelopeBase {
+  type: 'chat.presence.updated';
+  presence: InternalChatPresenceDTO;
+}
+
+export interface InternalChatSocketErrorEvent
+  extends InternalChatSocketEnvelopeBase {
+  type: 'chat.error';
+  code: string;
+  message: string;
+}
+
+export type InternalChatSocketEvent =
+  | InternalChatSocketConnectedEvent
+  | InternalChatSocketMessageCreatedEvent
+  | InternalChatSocketPresenceSnapshotEvent
+  | InternalChatSocketPresenceUpdatedEvent
+  | InternalChatSocketErrorEvent;
+
 export interface ClientDTO {
   id: UUID;
   person_id: UUID;

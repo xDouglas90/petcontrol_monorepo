@@ -159,6 +159,15 @@ Observação:
 
 ## Fase 0 - Descoberta e Contrato
 
+Status atual:
+
+- Contrato inicial de eventos WebSocket documentado em [internal-chat-realtime.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/conventions/internal-chat-realtime.md:1).
+- Autenticação de handshake fechada por `Authorization: Bearer <token>`.
+- Subprotocol definido como `petcontrol.internal-chat.v1`.
+- Presença desta PR fechada em `online/offline`.
+- Estado `busy` explicitamente adiado para etapa futura.
+- Estratégia de reconexão do Web definida com backoff incremental curto.
+
 ### 0.1 Ações
 
 - Definir contrato de eventos WebSocket.
@@ -168,8 +177,8 @@ Observação:
 
 ### 0.2 Checks
 
-- [ ] O contrato de eventos está documentado.
-- [ ] O recorte de presença desta PR está fechado.
+- [x] O contrato de eventos está documentado.
+- [x] O recorte de presença desta PR está fechado.
 
 ## Fase 1 - Infraestrutura de WebSocket na API
 
