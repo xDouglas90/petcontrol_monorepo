@@ -142,6 +142,56 @@ export interface CurrentCompanyApiResponseDTO {
   data: CompanyDTO;
 }
 
+export interface CurrentUserDTO {
+  user_id: UUID;
+  company_id: UUID;
+  person_id: UUID;
+  role: UserRole;
+  kind: UserKind;
+  full_name?: string | null;
+  short_name?: string | null;
+  image_url?: string | null;
+}
+
+export interface CurrentUserApiResponseDTO {
+  data: CurrentUserDTO;
+}
+
+export const WEEK_DAYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
+
+export type WeekDay = (typeof WEEK_DAYS)[number];
+
+export interface CompanySystemConfigDTO {
+  company_id: UUID;
+  schedule_init_time: string;
+  schedule_pause_init_time: string;
+  schedule_pause_end_time: string;
+  schedule_end_time: string;
+  min_schedules_per_day: number;
+  max_schedules_per_day: number;
+  schedule_days: WeekDay[];
+  dynamic_cages: boolean;
+  total_small_cages: number;
+  total_medium_cages: number;
+  total_large_cages: number;
+  total_giant_cages: number;
+  whatsapp_notifications: boolean;
+  whatsapp_conversation: boolean;
+  whatsapp_business_phone?: string | null;
+}
+
+export interface CurrentCompanySystemConfigApiResponseDTO {
+  data: CompanySystemConfigDTO;
+}
+
 export interface ClientDTO {
   id: UUID;
   person_id: UUID;
@@ -350,6 +400,19 @@ export interface ScheduleListApiResponseDTO extends PaginatedResponse<ScheduleDT
 
 export interface ScheduleApiResponseDTO {
   data: ScheduleDTO;
+}
+
+export interface ScheduleHistoryItemDTO {
+  id: UUID;
+  schedule_id: UUID;
+  status: ScheduleStatus;
+  changed_at: string;
+  changed_by: UUID;
+  notes?: string | null;
+}
+
+export interface ScheduleHistoryApiResponseDTO {
+  data: ScheduleHistoryItemDTO[];
 }
 
 export interface CreateScheduleInput {

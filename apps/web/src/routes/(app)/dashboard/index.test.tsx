@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { CompanyDTO, ScheduleDTO } from '@petcontrol/shared-types';
 
 import { DashboardPage } from './index';
@@ -7,11 +7,18 @@ import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
 const mockUseCurrentCompanyQuery = vi.fn();
+const mockUseCurrentCompanySystemConfigQuery = vi.fn();
+const mockUseCurrentUserQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
+const mockUseScheduleHistoriesQuery = vi.fn();
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanyQuery: () => mockUseCurrentCompanyQuery(),
+  useCurrentCompanySystemConfigQuery: () =>
+    mockUseCurrentCompanySystemConfigQuery(),
+  useCurrentUserQuery: () => mockUseCurrentUserQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
+  useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
 }));
 
 describe('DashboardPage', () => {
@@ -37,10 +44,17 @@ describe('DashboardPage', () => {
   afterEach(() => {
     cleanup();
     mockUseCurrentCompanyQuery.mockReset();
+    mockUseCurrentCompanySystemConfigQuery.mockReset();
+    mockUseCurrentUserQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
+    mockUseScheduleHistoriesQuery.mockReset();
+    vi.useRealTimers();
   });
 
   it('renderiza dados reais da empresa corrente e dos schedules', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-19T10:30:00-03:00'));
+
     const company: CompanyDTO = {
       id: 'company-1',
       slug: 'petcontrol-dev',
@@ -67,15 +81,54 @@ describe('DashboardPage', () => {
         company_id: 'company-1',
         client_id: 'client-2',
         pet_id: 'pet-2',
-        scheduled_at: new Date().toISOString(),
+        scheduled_at: new Date('2026-04-19T09:15:00-03:00').toISOString(),
         estimated_end: null,
         notes: 'Consulta',
-        current_status: 'confirmed',
+        current_status: 'finished',
       },
     ];
 
     mockUseCurrentCompanyQuery.mockReturnValue({
       data: company,
+    });
+    mockUseCurrentUserQuery.mockReturnValue({
+      data: {
+        user_id: 'user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'admin',
+        kind: 'owner',
+        full_name: 'Maria Silva',
+        short_name: 'Maria',
+        image_url: null,
+      },
+    });
+    mockUseCurrentCompanySystemConfigQuery.mockReturnValue({
+      data: {
+        company_id: 'company-1',
+        schedule_init_time: '08:00',
+        schedule_pause_init_time: '12:00',
+        schedule_pause_end_time: '13:00',
+        schedule_end_time: '18:00',
+        min_schedules_per_day: 4,
+        max_schedules_per_day: 18,
+        schedule_days: [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+        ],
+        dynamic_cages: false,
+        total_small_cages: 8,
+        total_medium_cages: 6,
+        total_large_cages: 4,
+        total_giant_cages: 2,
+        whatsapp_notifications: true,
+        whatsapp_conversation: true,
+        whatsapp_business_phone: '+5511999990001',
+      },
     });
     mockUseSchedulesQuery.mockReturnValue({
       data: {
@@ -85,13 +138,53 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
     });
+    mockUseScheduleHistoriesQuery.mockReturnValue([
+      {
+        data: [
+          {
+            id: 'history-1',
+            schedule_id: 'schedule-2',
+            status: 'finished',
+            changed_at: '2026-04-19T10:30:00-03:00',
+            changed_by: 'user-1',
+            notes: null,
+          },
+        ],
+      },
+    ]);
 
     render(<DashboardPage />);
 
-    expect(screen.getByText('PetControl Dev')).toBeTruthy();
-    expect(screen.getByText('Dashboard conectado ao backend com dados reais de tenant, empresa e agendamentos.')).toBeTruthy();
-    expect(screen.getAllByText('2')).toHaveLength(2);
-    expect(screen.getByText('starter')).toBeTruthy();
-    expect(screen.getByText('Banho e hidratação')).toBeTruthy();
+    expect(screen.getByText('Olá, Maria')).toBeTruthy();
+    expect(screen.getByText('Agendamentos/dia')).toBeTruthy();
+    expect(screen.getByText('Agendamentos/mês')).toBeTruthy();
+    expect(screen.getByText('Eficiência')).toBeTruthy();
+    expect(screen.getByText('Performance')).toBeTruthy();
+    expect(screen.getByText('Ocupação por horário operacional')).toBeTruthy();
+    expect(screen.getByText('Agendamentos em andamento')).toBeTruthy();
+    expect(screen.getByText('Turno da manhã')).toBeTruthy();
+    expect(screen.getByText('Finalizado')).toBeTruthy();
+    expect(screen.getByText('1h 15min')).toBeTruthy();
+    expect(screen.getByText('Chat do sistema')).toBeTruthy();
+    expect(screen.getByText('UI + contrato futuro')).toBeTruthy();
+    const weekSelect = screen.getByRole('combobox', {
+      name: 'Selecionar semana de performance',
+    }) as HTMLSelectElement;
+
+    expect(weekSelect.value).toBe('15-21');
+
+    fireEvent.change(
+      weekSelect,
+      {
+        target: { value: '1-7' },
+      },
+    );
+
+    expect(
+      screen.getByRole('option', {
+        name: '01-07 abr',
+      }),
+    ).toBeTruthy();
+    expect(weekSelect.value).toBe('1-7');
   });
 });

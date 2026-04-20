@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   CreateClientInput,
   CreatePetInput,
@@ -20,7 +20,10 @@ import {
   deletePet,
   deleteSchedule,
   deleteService,
+  getScheduleHistory,
   getCurrentCompany,
+  getCurrentCompanySystemConfig,
+  getCurrentUser,
   listClients,
   listPets,
   listSchedules,
@@ -36,6 +39,9 @@ const EMPTY_PARAMS: ListQueryParams = {};
 
 export const domainQueryKeys = {
   currentCompany: () => ['domain', 'company', 'current'] as const,
+  currentCompanySystemConfig: () =>
+    ['domain', 'company', 'system-config', 'current'] as const,
+  currentUser: () => ['domain', 'user', 'current'] as const,
   clients: (params?: ListQueryParams) =>
     ['domain', 'clients', params ?? EMPTY_PARAMS] as const,
   pets: (params?: ListQueryParams) =>
@@ -44,6 +50,8 @@ export const domainQueryKeys = {
     ['domain', 'services', params ?? EMPTY_PARAMS] as const,
   schedules: (params?: ListQueryParams) =>
     ['domain', 'schedules', params ?? EMPTY_PARAMS] as const,
+  scheduleHistory: (scheduleId: string) =>
+    ['domain', 'schedules', scheduleId, 'history'] as const,
   allClients: () => ['domain', 'clients'] as const,
   allPets: () => ['domain', 'pets'] as const,
   allServices: () => ['domain', 'services'] as const,
@@ -65,6 +73,36 @@ export function useCurrentCompanyQuery() {
   });
 }
 
+export function useCurrentCompanySystemConfigQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.currentCompanySystemConfig(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return getCurrentCompanySystemConfig(session.accessToken);
+    },
+  });
+}
+
+export function useCurrentUserQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.currentUser(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return getCurrentUser(session.accessToken);
+    },
+  });
+}
+
 export function useSchedulesQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
@@ -77,6 +115,23 @@ export function useSchedulesQuery(params?: ListQueryParams) {
       }
       return listSchedules(session.accessToken, params);
     },
+  });
+}
+
+export function useScheduleHistoriesQuery(scheduleIds: string[]) {
+  const session = useAuthStore(selectSession);
+
+  return useQueries({
+    queries: scheduleIds.map((scheduleId) => ({
+      queryKey: domainQueryKeys.scheduleHistory(scheduleId),
+      enabled: Boolean(session?.accessToken && scheduleId),
+      queryFn: async () => {
+        if (!session?.accessToken) {
+          throw new Error('Sessão não disponível');
+        }
+        return getScheduleHistory(session.accessToken, scheduleId);
+      },
+    })),
   });
 }
 

@@ -36,10 +36,10 @@ Importante:
 
 ## Contexto Atual
 
-- O Web ja possui area autenticada por `/:companySlug/...`.
-- O layout autenticado atual ja suporta sidebar, header, dashboard e módulos operacionais.
-- O sistema ja possui contexto multi-tenant com empresa corrente.
-- O schema ja contem colunas e tabelas relevantes para:
+- O Web já possui area autenticada por `/:companySlug/...`.
+- O layout autenticado atual já suporta sidebar, header, dashboard e módulos operacionais.
+- O sistema já possui contexto multi-tenant com empresa corrente.
+- O schema já contem colunas e tabelas relevantes para:
   - `companies.logo_url`;
   - `people_identifications.short_name`;
   - `people_identifications.image_url`;
@@ -335,7 +335,7 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 - como calcular a meta mensal a partir de `company_system_configs.schedule_days`;
 - como identificar status atual de cada agendamento;
 - como derivar comparativos diários e mensais com performance aceitável;
-- se ja existe backend suficiente para o chat ou se sera necessário novo vertical de domínio.
+- se já existe backend suficiente para o chat ou se sera necessário novo vertical de domínio.
 
 ## Fase 0 - Descoberta Técnica e Fechamento de Contrato
 
@@ -349,13 +349,13 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
   - dados necessários para o gráfico;
   - dados necessários para a lista de agendamentos em andamento.
 - Confirmar quais tipos de usuário existem de fato no contrato atual.
-- Verificar se o tipo `admin` ja chega de forma confiável ao frontend.
+- Verificar se o tipo `admin` já chega de forma confiável ao frontend.
 - Auditar o estado atual do suporte a chat e presença.
 
 ### 0.2 Checks
 
 - [x] Existe fonte canônica para o plano atual do tenant.
-- [ ] O frontend consegue resolver `companies.logo_url` e `people_identifications.short_name`.
+- [x] O frontend consegue resolver `companies.logo_url` e `people_identifications.short_name`.
 - [x] As formulas de KPI estão fechadas com base na modelagem real.
 - [x] O escopo do chat esta classificado como `UI + contrato futuro`.
 
@@ -364,7 +364,7 @@ Antes da implementação total, esta PR precisa validar ou explicitar:
 #### Fonte canônica de plano atual e branding do tenant
 
 - A fonte canônica atual do tenant no Web e `GET /api/v1/companies/current`.
-- Esse endpoint ja retorna `active_package` e `logo_url` a partir de `companies`.
+- Esse endpoint já retorna `active_package` e `logo_url` a partir de `companies`.
 - O backend resolve isso via `CompanyService.GetCurrentCompany` + query `GetCompanyByID`.
 - Durante a Fase 0, os contratos compartilhados foram alinhados para refletir corretamente:
   - `logo_url` em `CompanyDTO`
@@ -414,23 +414,29 @@ Conclusão:
 
 Conclusão:
 
-- o tipo `admin` ja chega de forma confiável ao frontend;
+- o tipo `admin` já chega de forma confiável ao frontend;
 - a seleção da home inicial por role pode ser iniciada sem mudança no fluxo de login.
 
 #### Estado atual de `short_name` do usuário autenticado
 
 - O schema possui `people_identifications.short_name`.
 - Existem queries e tabelas que manipulam `people_identifications`.
-- Porem, o frontend autenticado atual nao recebe `short_name` do usuário logado em:
-  - login;
-  - `companies/current`;
-  - store de auth.
+- Durante a Fase 0 foi introduzido o endpoint autenticado `GET /api/v1/users/me`, que expõe:
+  - `user_id`
+  - `company_id`
+  - `person_id`
+  - `role`
+  - `kind`
+  - `full_name`
+  - `short_name`
+  - `image_url`
+- O Web passou a ter contrato, client e query para resolver esse perfil autenticado de forma canônica.
 
 Conclusão:
 
-- `companies.logo_url` ja esta resolvível no Web;
-- `people_identifications.short_name` ainda nao esta resolvível para o usuário autenticado;
-- a Fase 1 ou 2 exigira um novo contrato, preferencialmente um endpoint tipo `GET /users/me` ou `GET /auth/me`, ou a extensão controlada do login.
+- `companies.logo_url` já esta resolvível no Web;
+- `people_identifications.short_name` agora também esta resolvível para o usuário autenticado;
+- a Fase 1 pode consumir esse dado sem acoplar o layout ao payload de login.
 
 #### Estado atual de `company_system_configs`
 
@@ -471,8 +477,8 @@ Conclusão:
 
 #### Status atual dos agendamentos e lista operacional
 
-- O status atual de um `schedule` ja pode ser derivado pelo ultimo evento de `schedule_status_history`.
-- As queries de `schedules` ja usam essa estrategia para preencher `current_status`.
+- O status atual de um `schedule` já pode ser derivado pelo ultimo evento de `schedule_status_history`.
+- As queries de `schedules` já usam essa estrategia para preencher `current_status`.
 - Ja existe `GetLatestScheduleStatus` e histórico completo por schedule.
 
 Conclusão:
@@ -483,7 +489,7 @@ Conclusão:
 
 #### Gráfico de performance
 
-- O domínio ja oferece janela operacional da empresa via `company_system_configs`.
+- O domínio já oferece janela operacional da empresa via `company_system_configs`.
 - Ainda nao existe query pronta agregando ocupação ou distribuição por semana comparando mes atual vs mes anterior.
 
 Conclusão:
@@ -508,6 +514,18 @@ Conclusão:
 
 ## Fase 1 - Novo Shell de Layout Autenticado
 
+Status atual:
+
+- Em andamento, com shell base já implementado no Web.
+- O layout autenticado agora usa:
+  - branding do tenant com `companies.logo_url` e fallback por iniciais;
+  - bloco de identificação do usuário com `users/me`;
+  - navegação principal enxuta com `Dashboard`, `Agendamentos`, `Clientes` e `Pets`;
+  - CTA de upgrade orientado por `active_package`;
+  - footer lateral com `Configurações` e `Sair`;
+  - suporte a desktop recolhido/expandido e drawer mobile.
+- Também foi criada a rota placeholder `/:companySlug/settings` para ancorar a nova ação de configurações no shell.
+
 ### 1.1 Ações
 
 - Refatorar o layout autenticado atual para refletir a nova estrutura visual conforme [example-001](../../example-001.png).
@@ -521,12 +539,19 @@ Conclusão:
 
 ### 1.2 Checks
 
-- [ ] A area autenticada usa o novo shell [visual](../../example-001.png).
-- [ ] A logo do tenant e exibida com fallback coerente.
-- [ ] O CTA de upgrade respeita a hierarquia de planos.
-- [ ] O footer lateral contem `Configurações` e `Sair`.
+- [x] A area autenticada usa o novo shell [visual](../../example-001.png).
+- [x] A logo do tenant e exibida com fallback coerente.
+- [x] O CTA de upgrade respeita a hierarquia de planos.
+- [x] O footer lateral contem `Configurações` e `Sair`.
+- [x] Existe rota inicial de `Configurações` para sustentar a navegação do shell.
 
 ## Fase 2 - Home Inicial por Tipo de Usuário
+
+Status atual:
+
+- Em andamento.
+- O dashboard principal já assume o recorte de `admin` como primeira home rica.
+- Perfis diferentes de `admin` agora recebem um placeholder explicito no `DashboardPage`, evitando tratar todas as roles como experiencia final idêntica.
 
 ### 2.1 Ações
 
@@ -541,11 +566,22 @@ Conclusão:
 
 ### 2.2 Checks
 
-- [ ] O Web não trata mais a home autenticada como única para todos.
-- [ ] O tipo `admin` cai na home/dash correta.
+- [x] O Web não trata mais a home autenticada como única para todos.
+- [x] O tipo `admin` cai na home/dash correta.
 - [ ] Os demais tipos possuem direção registrada, mesmo que ainda não implementados.
 
 ## Fase 3 - Header e KPIs do Dashboard `admin`
+
+Status atual:
+
+- Primeiro recorte implementado.
+- O dashboard `admin` agora consome:
+  - `companies/current`
+  - `users/me`
+  - `company-system-configs/current`
+  - `schedules`
+- O topo já exibe saudação com `short_name`, texto contextual e data.
+- Os tres cards principais já estão calculados com dados reais carregados no frontend.
 
 ### 3.1 Ações
 
@@ -558,12 +594,19 @@ Conclusão:
 
 ### 3.2 Checks
 
-- [ ] O topo exibe `short_name` real do usuário.
-- [ ] A data atual e exibida no formato definido.
-- [ ] Os tres cards refletem dados reais do tenant.
-- [ ] Os indicadores positivo/negativo respeitam o comparativo definido.
+- [x] O topo exibe `short_name` real do usuário.
+- [x] A data atual e exibida no formato definido.
+- [x] Os tres cards refletem dados reais do tenant.
+- [x] Os indicadores positivo/negativo respeitam o comparativo definido.
 
 ## Fase 4 - Gráfico de Performance
+
+Status atual:
+
+- Recorte visual ampliado e mais aderente ao plano.
+- O seletor semanal do mês corrente continua funcional no dashboard.
+- O gráfico agora usa a janela operacional do tenant (`schedule_init_time` e `schedule_end_time`) para orientar o eixo Y.
+- A leitura atual representa a ocupação média por horário dentro da semana selecionada, comparando mês atual e mês anterior.
 
 ### 4.1 Ações
 
@@ -574,12 +617,19 @@ Conclusão:
 
 ### 4.2 Checks
 
-- [ ] O gráfico e alimentado por dados reais.
-- [ ] O seletor semanal funciona.
-- [ ] O comparativo com o mês anterior esta correto.
-- [ ] A leitura do gráfico permanece clara em desktop e tablet.
+- [x] O gráfico e alimentado por dados reais.
+- [x] O seletor semanal funciona.
+- [x] O comparativo com o mês anterior esta correto.
+- [x] A leitura do gráfico permanece clara em desktop e tablet.
 
 ## Fase 5 - Lista de Agendamentos em Andamento
+
+Status atual:
+
+- Recorte expandido implementado.
+- A lista já respeita o turno atual e agora inclui agendamentos ativos e concluídos do turno.
+- O calculo de duração usa `schedule_status_history` para `finished` e `delivered`, preservando a regra `changed_at - scheduled_at`.
+- A distinção visual por status agora esta refletida na lista operacional.
 
 ### 5.1 Ações
 
@@ -590,11 +640,18 @@ Conclusão:
 
 ### 5.2 Checks
 
-- [ ] O turno atual e respeitado.
-- [ ] O tempo em atendimento e calculado corretamente.
-- [ ] A lista distingue estados em andamento e finalizados.
+- [x] O turno atual e respeitado.
+- [x] O tempo em atendimento e calculado corretamente.
+- [x] A lista distingue estados em andamento e finalizados.
 
 ## Fase 6 - Chat do `admin` com Usuários `system`
+
+Status atual:
+
+- UI estrutural implementada no dashboard `admin`.
+- O seletor visual e o cabeçalho do contato já ocupam a coluna direita.
+- O bloco esta explicitamente marcado como `UI + contrato futuro`, sem prometer persistência de mensagens nem presença em tempo real.
+- Ainda falta contrato/backend para listar usuários `system` reais do tenant e abrir conversas de verdade.
 
 ### 6.1 Ações
 
@@ -645,7 +702,7 @@ Conclusão:
 
 - Implementar nesta PR apenas a home `admin`.
 - Tratar o chat como escopo condicional:
-  - funcional, se o domínio ja existir ou puder ser introduzido sem risco alto;
+  - funcional, se o domínio já existir ou puder ser introduzido sem risco alto;
   - visual/estrutural, se o domínio ainda não estiver pronto.
 - Fechar primeiro contrato e metrics antes de estilizar o gráfico.
 - Reaproveitar o shell novo para futuras homes de `root`, `internal`, `system`, `common` e `free`.

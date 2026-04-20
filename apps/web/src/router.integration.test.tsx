@@ -9,20 +9,27 @@ import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
 const mockUseCurrentCompanyQuery = vi.fn();
+const mockUseCurrentCompanySystemConfigQuery = vi.fn();
+const mockUseCurrentUserQuery = vi.fn();
 const mockUseClientsQuery = vi.fn();
 const mockUsePetsQuery = vi.fn();
 const mockUseServicesQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
+const mockUseScheduleHistoriesQuery = vi.fn();
 const mockCreateScheduleMutation = vi.fn();
 const mockUpdateScheduleMutation = vi.fn();
 const mockDeleteScheduleMutation = vi.fn();
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanyQuery: () => mockUseCurrentCompanyQuery(),
+  useCurrentCompanySystemConfigQuery: () =>
+    mockUseCurrentCompanySystemConfigQuery(),
+  useCurrentUserQuery: () => mockUseCurrentUserQuery(),
   useClientsQuery: () => mockUseClientsQuery(),
   usePetsQuery: () => mockUsePetsQuery(),
   useServicesQuery: () => mockUseServicesQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
+  useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
   useCreateScheduleMutation: () => mockCreateScheduleMutation(),
   useUpdateScheduleMutation: () => mockUpdateScheduleMutation(),
   useDeleteScheduleMutation: () => mockDeleteScheduleMutation(),
@@ -68,10 +75,13 @@ describe('Router integration', () => {
     ];
 
     mockUseCurrentCompanyQuery.mockReset();
+    mockUseCurrentCompanySystemConfigQuery.mockReset();
+    mockUseCurrentUserQuery.mockReset();
     mockUseClientsQuery.mockReset();
     mockUsePetsQuery.mockReset();
     mockUseServicesQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
+    mockUseScheduleHistoriesQuery.mockReset();
     mockCreateScheduleMutation.mockReset();
     mockUpdateScheduleMutation.mockReset();
     mockDeleteScheduleMutation.mockReset();
@@ -98,6 +108,51 @@ describe('Router integration', () => {
       isError: false,
       refetch: vi.fn(),
     });
+    mockUseCurrentUserQuery.mockReturnValue({
+      data: {
+        user_id: 'user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'admin',
+        kind: 'owner',
+        full_name: 'Maria Silva',
+        short_name: 'Maria',
+        image_url: null,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    mockUseCurrentCompanySystemConfigQuery.mockReturnValue({
+      data: {
+        company_id: 'company-1',
+        schedule_init_time: '08:00',
+        schedule_pause_init_time: '12:00',
+        schedule_pause_end_time: '13:00',
+        schedule_end_time: '18:00',
+        min_schedules_per_day: 4,
+        max_schedules_per_day: 18,
+        schedule_days: [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+        ],
+        dynamic_cages: false,
+        total_small_cages: 8,
+        total_medium_cages: 6,
+        total_large_cages: 4,
+        total_giant_cages: 2,
+        whatsapp_notifications: true,
+        whatsapp_conversation: true,
+        whatsapp_business_phone: '+5511999990001',
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
 
     mockUseSchedulesQuery.mockReturnValue({
       data: {
@@ -107,6 +162,7 @@ describe('Router integration', () => {
       isLoading: false,
       isError: false,
     });
+    mockUseScheduleHistoriesQuery.mockReturnValue([]);
     mockUseClientsQuery.mockReturnValue({
       data: {
         data: [
@@ -173,9 +229,7 @@ describe('Router integration', () => {
     });
 
     expect(
-      screen.getByText(
-        'Dashboard conectado ao backend com dados reais de tenant, empresa e agendamentos.',
-      ),
+      screen.getByText('Agendamentos em andamento'),
     ).toBeTruthy();
   });
 
@@ -200,10 +254,10 @@ describe('Router integration', () => {
     expect(screen.getAllByText('Banho completo')).not.toHaveLength(0);
 
     const dashboardLink = screen.getByRole('link', { name: 'Dashboard' });
-    const schedulesLink = screen.getByRole('link', { name: 'Schedules' });
-    const clientsLink = screen.getByRole('link', { name: 'Clients' });
+    const schedulesLink = screen.getByRole('link', { name: 'Agendamentos' });
+    const clientsLink = screen.getByRole('link', { name: 'Clientes' });
     const petsLink = screen.getByRole('link', { name: 'Pets' });
-    const servicesLink = screen.getByRole('link', { name: 'Services' });
+    const settingsLink = screen.getByRole('link', { name: 'Configurações' });
 
     expect(dashboardLink.getAttribute('href')).toBe(
       '/petcontrol-dev/dashboard',
@@ -213,7 +267,7 @@ describe('Router integration', () => {
     );
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
-    expect(servicesLink.getAttribute('href')).toBe('/petcontrol-dev/services');
+    expect(settingsLink.getAttribute('href')).toBe('/petcontrol-dev/settings');
   });
 
   it('redireciona para o slug canônico quando o slug na URL é inválido ou diferente', async () => {
@@ -230,9 +284,10 @@ describe('Router integration', () => {
       expect(router.state.location.pathname).toBe('/petcontrol-dev/schedules');
     }, { timeout: 5000 });
 
-    // Verifica se o layout administrativo foi carregado (e consequentemente o redirect funcionou)
-    expect(await screen.findByText(/Painel administrativo/i, {}, { timeout: 5000 })).toBeTruthy();
-    expect(screen.getByText(/Tenant atual/i)).toBeTruthy();
-    expect(screen.getByText(/@petcontrol-dev/i)).toBeTruthy();
-  });
+    await waitFor(() => {
+      expect(screen.getAllByText(/Dashboard/i).length).toBeGreaterThan(0);
+    }, { timeout: 5000 });
+    expect(screen.getAllByText(/PetControl Dev/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Agendamentos do tenant/i)).toBeTruthy();
+  }, 10000);
 });

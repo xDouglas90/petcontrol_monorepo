@@ -58,69 +58,71 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-hero-radial text-foreground">
-      <div className="mx-auto grid min-h-screen max-w-7xl gap-8 px-4 py-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl lg:p-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.18),transparent_30%)]" />
-          <div className="relative flex h-full flex-col justify-between gap-10">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-white/80">
-                <Sparkles className="h-4 w-4 text-secondary" />
-                {getAuthMode() === 'mock'
-                  ? 'Modo mock ativo'
-                  : 'Login conectado à API'}
-              </div>
-              <div className="max-w-2xl space-y-4">
-                <p className="font-display text-sm uppercase tracking-[0.35em] text-secondary/80">
-                  GroomingFlow
-                </p>
-                <h1 className="font-display text-5xl leading-tight text-white sm:text-6xl">
-                  Uma base operacional para pet shops que precisam de controle
-                  real.
-                </h1>
-                <p className="max-w-xl text-lg leading-8 text-white/72">
-                  Multi-tenant, plano por módulo, auth com JWT e um frontend já
-                  pronto para evoluir com o produto.
-                </p>
-              </div>
+    <main className="min-h-screen bg-stone-50 text-stone-950">
+      <div className="mx-auto grid min-h-screen max-w-7xl gap-8 px-4 py-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+        <section className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-stone-200 bg-white p-8 shadow-premium lg:p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)]" />
+
+          <div className="relative space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-stone-100 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
+              <Sparkles className="h-4 w-4 text-sky-500" />
+              {getAuthMode() === 'mock'
+                ? 'Modo experimental ativo'
+                : 'Conexão segura com API'}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <FeatureCard
-                icon={ShieldCheck}
-                title="Autenticação"
-                description="JWT, bcrypt e middleware de tenant"
-              />
-              <FeatureCard
-                icon={Waves}
-                title="Estado"
-                description="TanStack Query para API e Zustand para UI"
-              />
-              <FeatureCard
-                icon={ArrowRight}
-                title="Fluxo"
-                description="Login direto para o dashboard"
-              />
+            <div className="max-w-2xl space-y-6">
+              <div>
+                <p className="font-display text-sm uppercase tracking-[0.35em] text-sky-600/80">
+                  GroomingFlow
+                </p>
+                <h1 className="mt-4 font-display text-5xl leading-[1.1] text-stone-900 sm:text-6xl">
+                  Gerencie sua PetShop com{' '}
+                  <span className="text-sky-600">precisão</span> e elegância.
+                </h1>
+              </div>
+              <p className="max-w-xl text-lg leading-relaxed text-stone-500">
+                Uma plataforma completa para gestão pet: de agendamentos
+                complexos a controle financeiro, tudo em um só lugar.
+              </p>
             </div>
+          </div>
+
+          <div className="relative grid gap-4 sm:grid-cols-3">
+            <FeatureCard
+              icon={ShieldCheck}
+              title="Segurança"
+              description="Proteção de dados em nível bancário"
+            />
+            <FeatureCard
+              icon={Waves}
+              title="Performance"
+              description="Interface ultra rápida e responsiva"
+            />
+            <FeatureCard
+              icon={ArrowRight}
+              title="Escalável"
+              description="Pronto para crescer com seu negócio"
+            />
           </div>
         </section>
 
         <section className="flex items-center justify-center">
-          <div className="w-full max-w-lg rounded-[2rem] border border-white/10 bg-slate-950/75 p-6 shadow-glow backdrop-blur-xl sm:p-8">
-            <div className="mb-8 space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary/80">
-                Acesso
+          <div className="w-full max-w-lg rounded-[2.5rem] border border-stone-200 bg-white p-8 shadow-premium sm:p-10">
+            <div className="mb-10 space-y-2 text-center lg:text-left">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-600/80">
+                Bem-vindo
               </p>
-              <h2 className="font-display text-3xl text-white">
-                Entre no painel
+              <h2 className="font-display text-4xl text-stone-900">
+                Acessar Painel
               </h2>
-              <p className="text-sm text-slate-300">
-                Use a conta criada na API ou o mock controlado via ambiente.
+              <p className="text-stone-500">
+                Entre com suas credenciais para continuar.
               </p>
             </div>
 
             <form
-              className="space-y-5"
+              className="space-y-6"
               onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
             >
               <Field
@@ -136,11 +138,11 @@ export function LoginPage() {
                 error={form.formState.errors.password?.message}
                 inputProps={form.register('password')}
                 type="password"
-                placeholder="Sua senha"
+                placeholder="••••••••"
               />
 
               {mutation.error instanceof ApiError ? (
-                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {mutation.error.message}
                 </div>
               ) : null}
@@ -149,26 +151,25 @@ export function LoginPage() {
                 type="submit"
                 disabled={mutation.isPending}
                 className={cn(
-                  'inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110',
+                  'group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 py-4 text-sm font-bold text-white transition-all hover:bg-sky-700 shadow-md hover:shadow-lg active:scale-[0.98]',
                   'disabled:cursor-not-allowed disabled:opacity-70',
                 )}
               >
-                {mutation.isPending ? 'Autenticando...' : 'Entrar no painel'}
-                <ArrowRight className="h-4 w-4" />
+                {mutation.isPending ? 'Autenticando...' : 'Entrar no sistema'}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
             </form>
 
-            <div className="mt-8 grid gap-3 rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
+            <div className="mt-10 grid gap-3 rounded-[1.5rem] border border-stone-100 bg-stone-50 p-5 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-white/80">API</span>
-                <code className="rounded-full bg-black/30 px-3 py-1 text-xs text-secondary">
-                  {import.meta.env.VITE_API_URL ??
-                    'http://localhost:8080/api/v1'}
+                <span className="font-medium text-stone-500">Servidor</span>
+                <code className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm">
+                  {import.meta.env.VITE_API_URL ? 'Cloud API' : 'Localhost'}
                 </code>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-white/80">Modo</span>
-                <code className="rounded-full bg-black/30 px-3 py-1 text-xs text-secondary">
+                <span className="font-medium text-stone-500">Ambiente</span>
+                <code className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm uppercase">
                   {getAuthMode()}
                 </code>
               </div>
@@ -190,10 +191,14 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 backdrop-blur-md">
-      <Icon className="mb-4 h-5 w-5 text-primary" />
-      <h3 className="font-display text-lg text-white">{title}</h3>
-      <p className="mt-1 text-sm leading-6 text-white/68">{description}</p>
+    <article className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="font-display text-lg text-stone-900">{title}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-stone-500">
+        {description}
+      </p>
     </article>
   );
 }
@@ -213,17 +218,19 @@ function Field({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-semibold text-stone-700">{label}</span>
       <input
         {...inputProps}
         type={type}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500',
-          'focus:border-primary/50 focus:ring-2 focus:ring-primary/20',
+          'w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-stone-900 outline-none transition placeholder:text-stone-400',
+          'focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/10 focus:bg-white',
         )}
       />
-      {error ? <span className="text-sm text-rose-300">{error}</span> : null}
+      {error ? (
+        <span className="text-xs font-medium text-rose-500">{error}</span>
+      ) : null}
     </label>
   );
 }

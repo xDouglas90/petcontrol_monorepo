@@ -6,26 +6,35 @@ import {
   normalizeCompanySlug,
 } from '@petcontrol/shared-constants';
 import { isUnauthorizedApiError } from '@/lib/api/rest-client';
-import { useCurrentCompanyQuery } from '@/lib/api/domain.queries';
+import {
+  useCurrentCompanyQuery,
+  useCurrentUserQuery,
+} from '@/lib/api/domain.queries';
 import { useParams } from '@tanstack/react-router';
 import { cn } from '@petcontrol/ui/web';
 import {
   CalendarRange,
-  ClipboardList,
+  ChevronRight,
+  Cog,
+  LayoutGrid,
   LogOut,
-  Menu,
-  MoonStar,
   PawPrint,
-  PanelLeftClose,
-  PanelLeftOpen,
-  SunMedium,
+  Sparkles,
   Users,
+  X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
+
+const PLAN_UPGRADE_FLOW = {
+  trial: 'starter',
+  starter: 'basic',
+  basic: 'essential',
+  essential: 'premium',
+} as const;
 
 export function AppLayout() {
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
@@ -44,17 +53,14 @@ export function AppLayout() {
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
-  const theme = useUIStore((state) => state.theme);
-  const setTheme = useUIStore((state) => state.setTheme);
   const params = useParams({ strict: false });
   const location = useLocation();
   const companyQuery = useCurrentCompanyQuery();
+  const currentUserQuery = useCurrentUserQuery();
   const unauthorizedCompanyContext =
     companyQuery.isError && isUnauthorizedApiError(companyQuery.error);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+  const unauthorizedUserContext =
+    currentUserQuery.isError && isUnauthorizedApiError(currentUserQuery.error);
 
   useEffect(() => {
     if (
@@ -85,10 +91,10 @@ export function AppLayout() {
   }, [setSidebarOpen]);
 
   useEffect(() => {
-    if (unauthorizedCompanyContext) {
+    if (unauthorizedCompanyContext || unauthorizedUserContext) {
       clearSession();
     }
-  }, [clearSession, unauthorizedCompanyContext]);
+  }, [clearSession, unauthorizedCompanyContext, unauthorizedUserContext]);
 
   if (hydrated && !session) {
     return <Navigate to={APP_ROUTES.login} replace />;
@@ -98,7 +104,7 @@ export function AppLayout() {
     return <LoadingScreen />;
   }
 
-  if (unauthorizedCompanyContext) {
+  if (unauthorizedCompanyContext || unauthorizedUserContext) {
     return <Navigate to={APP_ROUTES.login} replace />;
   }
 
@@ -108,23 +114,26 @@ export function AppLayout() {
       ? params[COMPANY_ROUTE_PARAM]
       : undefined;
 
-  if (companyQuery.isError) {
+  if (companyQuery.isError || currentUserQuery.isError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-hero-radial px-6 text-center text-white">
-        <p className="text-xl font-medium text-rose-400">Erro de Contexto</p>
-        <p className="mt-2 text-sm text-slate-400">
-          Não conseguimos identificar sua empresa atual.
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#ebe8e4] px-6 text-center text-stone-900">
+        <p className="text-xl font-medium text-rose-600">Erro de Contexto</p>
+        <p className="mt-2 text-sm text-stone-500">
+          Não conseguimos carregar sua empresa ou o perfil autenticado.
         </p>
         <div className="mt-6 flex gap-4">
           <button
-            onClick={() => void companyQuery.refetch()}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+            onClick={() => {
+              void companyQuery.refetch();
+              void currentUserQuery.refetch();
+            }}
+            className="rounded-xl bg-sky-600 px-4 py-2 text-sm text-white transition hover:bg-sky-700"
           >
             Tentar novamente
           </button>
           <button
             onClick={() => clearSession()}
-            className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-600 transition hover:bg-rose-100"
           >
             Sair
           </button>
@@ -133,11 +142,17 @@ export function AppLayout() {
     );
   }
 
-  if (companyQuery.isLoading || !currentSlug || !companyQuery.data) {
+  if (
+    companyQuery.isLoading ||
+    currentUserQuery.isLoading ||
+    !currentSlug ||
+    !companyQuery.data
+  ) {
     return <LoadingScreen />;
   }
 
   const company = companyQuery.data;
+  const currentUser = currentUserQuery.data;
   const normalizedCurrentSlug = normalizeCompanySlug(currentSlug);
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
@@ -157,9 +172,6 @@ export function AppLayout() {
         : buildCompanyRoute(normalizedCurrentSlug, 'dashboard');
 
     if (location.pathname.toLowerCase() === targetPath.toLowerCase()) {
-      // Já estamos no caminho correto (considerando case-insensitivity),
-      // mas por algum motivo o urlSlug ainda é diferente (race condition no params?).
-      // Evita disparar um Navigate que pode causar loop.
       return null;
     }
 
@@ -173,6 +185,8 @@ export function AppLayout() {
     );
   }
 
+  const suggestedPlan = resolveSuggestedPlan(company.active_package);
+
   const handleSidebarLinkClick = () => {
     if (!isDesktopViewport) {
       setSidebarOpen(false);
@@ -180,70 +194,106 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-hero-radial text-foreground">
+    <div className="min-h-screen bg-[#ebe8e4] text-stone-900">
       {!isDesktopViewport && sidebarOpen ? (
         <button
           type="button"
           aria-label="Fechar menu lateral"
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-stone-950/25 backdrop-blur-[2px] lg:hidden"
         />
       ) : null}
 
-      <div className="mx-auto flex min-h-screen max-w-[1600px] gap-4 p-4 lg:p-6">
+      <div className="mx-auto flex min-h-screen max-w-[1680px] gap-4 p-3 lg:p-6">
         <aside
           className={cn(
-            'flex-col rounded-[2rem] border border-white/10 bg-slate-950/80 p-4 shadow-glow backdrop-blur-xl transition-all duration-300',
+            'flex-col rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition-all duration-300',
             isDesktopViewport
-              ? cn('hidden lg:flex', sidebarOpen ? 'w-72' : 'w-[5.5rem]')
+              ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[6rem]')
               : cn(
-                  'fixed inset-y-4 left-4 z-50 flex w-[min(20rem,calc(100vw-2rem))] transform',
+                  'fixed inset-y-3 left-3 z-50 flex w-[min(21rem,calc(100vw-1.5rem))] transform',
                   sidebarOpen
                     ? 'translate-x-0 opacity-100'
                     : '-translate-x-[110%] opacity-0 pointer-events-none',
                 ),
           )}
-          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : false}
+          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : undefined}
         >
-          <div
-            className={cn(
-              'flex items-center border-b border-white/10 pb-4',
-              isDesktopViewport && !sidebarOpen
-                ? 'justify-center'
-                : 'justify-between gap-4',
-            )}
-          >
+          <div className="flex items-center justify-between border-b border-stone-100 px-5 py-5">
             <div
               className={cn(
-                'space-y-1 overflow-hidden transition-all duration-300',
-                isDesktopViewport && !sidebarOpen
-                  ? 'w-0 opacity-0'
-                  : 'w-auto opacity-100',
+                'flex items-center gap-3 overflow-hidden transition-all duration-300',
+                isDesktopViewport && !sidebarOpen ? 'w-0 opacity-0' : 'w-auto opacity-100',
               )}
             >
-              <p className="font-display text-2xl text-white">GroomingFlow</p>
-              <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
-                tenant aware dashboard
-              </p>
+              <TenantBrand
+                companyName={companyDisplayName}
+                logoUrl={company.logo_url}
+              />
+              <div className="min-w-0">
+                <p className="truncate font-display text-xl text-stone-900">
+                  {companyDisplayName}
+                </p>
+                <p className="truncate text-xs uppercase tracking-[0.28em] text-stone-400">
+                  admin workspace
+                </p>
+              </div>
             </div>
+
             <button
               type="button"
               onClick={toggleSidebar}
               title={sidebarOpen ? 'Recolher sidebar' : 'Expandir sidebar'}
-              className="rounded-2xl border border-white/10 bg-white/5 p-2 text-white/80 transition hover:bg-white/10"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
             >
-              {sidebarOpen ? (
-                <PanelLeftClose className="h-4 w-4" />
+              {isDesktopViewport ? (
+                <ChevronRight
+                  className={cn(
+                    'h-4 w-4 transition-transform duration-300',
+                    sidebarOpen ? 'rotate-180' : 'rotate-0',
+                  )}
+                />
               ) : (
-                <PanelLeftOpen className="h-4 w-4" />
+                <X className="h-4 w-4" />
               )}
             </button>
           </div>
 
-          <nav className="mt-6 space-y-2 text-sm">
+          <div className="px-4 py-4">
+            <div
+              className={cn(
+                'rounded-[1.6rem] bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-400 p-4 text-white transition-all duration-300',
+                isDesktopViewport && !sidebarOpen && 'px-3 py-3',
+              )}
+            >
+              <div
+                className={cn(
+                  'flex items-center gap-3',
+                  isDesktopViewport && !sidebarOpen && 'justify-center',
+                )}
+              >
+                <UserAvatar
+                  shortName={currentUser?.short_name ?? null}
+                  imageUrl={currentUser?.image_url ?? null}
+                />
+                <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm uppercase tracking-[0.22em] text-white/65">
+                      {session?.role ?? 'sem role'}
+                    </p>
+                    <p className="truncate font-medium text-white">
+                      {companyDisplayName}
+                    </p>
+                  </div>
+                </SidebarLabel>
+              </div>
+            </div>
+          </div>
+
+          <nav className="space-y-1 px-4 pb-4">
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'dashboard')}
-              icon={Menu}
+              icon={LayoutGrid}
               label="Dashboard"
               expanded={isDesktopViewport ? sidebarOpen : true}
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
@@ -252,7 +302,7 @@ export function AppLayout() {
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'schedules')}
               icon={CalendarRange}
-              label="Schedules"
+              label="Agendamentos"
               expanded={isDesktopViewport ? sidebarOpen : true}
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
@@ -260,7 +310,7 @@ export function AppLayout() {
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'clients')}
               icon={Users}
-              label="Clients"
+              label="Clientes"
               expanded={isDesktopViewport ? sidebarOpen : true}
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
@@ -273,38 +323,25 @@ export function AppLayout() {
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
+          </nav>
+
+          <div className="px-4">
+            <UpgradeCard
+              activePackage={company.active_package}
+              expanded={isDesktopViewport ? sidebarOpen : true}
+              suggestedPlan={suggestedPlan}
+            />
+          </div>
+
+          <div className="mt-auto space-y-2 border-t border-stone-100 px-4 py-4">
             <SidebarLink
-              to={buildCompanyRoute(currentSlug, 'services')}
-              icon={ClipboardList}
-              label="Services"
+              to={`/${normalizeCompanySlug(currentSlug)}/settings`}
+              icon={Cog}
+              label="Configurações"
               expanded={isDesktopViewport ? sidebarOpen : true}
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
-          </nav>
-
-          <div className="mt-auto space-y-3 border-t border-white/10 pt-4">
-            <button
-              type="button"
-              onClick={() =>
-                setTheme(theme === 'midnight' ? 'ember' : 'midnight')
-              }
-              className={cn(
-                'flex w-full items-center rounded-2xl border border-white/10 bg-white/5 py-3 text-left text-sm text-white/80 transition hover:bg-white/10',
-                isDesktopViewport && !sidebarOpen
-                  ? 'justify-center px-0'
-                  : 'gap-3 px-4',
-              )}
-            >
-              {theme === 'midnight' ? (
-                <MoonStar className="h-4 w-4 text-primary" />
-              ) : (
-                <SunMedium className="h-4 w-4 text-primary" />
-              )}
-              <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
-                Tema {theme}
-              </SidebarLabel>
-            </button>
 
             <button
               type="button"
@@ -312,60 +349,40 @@ export function AppLayout() {
                 clearSession();
               }}
               className={cn(
-                'flex w-full items-center rounded-2xl border border-white/10 bg-white/5 py-3 text-left text-sm text-white/80 transition hover:bg-white/10',
+                'flex w-full items-center rounded-2xl text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-900',
                 isDesktopViewport && !sidebarOpen
-                  ? 'justify-center px-0'
-                  : 'gap-3 px-4',
+                  ? 'justify-center px-0 py-3'
+                  : 'gap-3 px-4 py-3',
               )}
             >
-              <LogOut className="h-4 w-4 text-primary" />
+              <LogOut className="h-4 w-4" />
               <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
-                Encerrar sessão
+                Sair
               </SidebarLabel>
             </button>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <header className="rounded-[2rem] border border-white/10 bg-slate-950/75 px-4 py-3 shadow-glow backdrop-blur-xl lg:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={toggleSidebar}
-                  title="Alternar sidebar"
-                  className="rounded-2xl border border-white/10 bg-white/5 p-2 text-white/80 transition hover:bg-white/10 lg:hidden"
-                >
-                  <Menu className="h-4 w-4" />
-                </button>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
-                    Operação
-                  </p>
-                  <h1 className="font-display text-xl text-white">
-                    Painel administrativo
-                  </h1>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Tenant atual: {companyDisplayName} ({normalizedCurrentSlug})
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-sm text-slate-300">
-                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-emerald-100">
-                  @{normalizedCurrentSlug}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                  {session?.companyId.slice(0, 8)}…
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                  {session?.role}
-                </span>
-              </div>
+          <header className="flex items-center justify-between rounded-[2rem] border border-white/70 bg-white/80 px-4 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.06)] backdrop-blur-xl lg:hidden">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Alternar sidebar"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                shortName={currentUser?.short_name ?? null}
+                imageUrl={currentUser?.image_url ?? null}
+                size="sm"
+              />
             </div>
           </header>
 
-          <main className="min-h-0 flex-1 overflow-auto rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-glow backdrop-blur-xl lg:p-6">
+          <main className="min-h-0 flex-1">
             <Outlet />
           </main>
         </div>
@@ -383,7 +400,7 @@ function SidebarLink({
   onNavigate,
 }: {
   to: string;
-  icon: typeof Menu;
+  icon: typeof LayoutGrid;
   label: string;
   expanded: boolean;
   collapsedDesktop?: boolean;
@@ -394,15 +411,23 @@ function SidebarLink({
       to={to}
       onClick={onNavigate}
       className={cn(
-        'flex items-center rounded-2xl py-3 transition',
+        'group flex items-center rounded-2xl py-3 text-sm transition',
         collapsedDesktop ? 'justify-center px-0' : 'gap-3 px-4',
       )}
-      activeProps={{ className: 'bg-primary text-slate-950' }}
+      activeProps={{
+        className: cn(
+          'bg-sky-100 text-sky-600 font-bold shadow-sm',
+          collapsedDesktop ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3',
+        ),
+      }}
       inactiveProps={{
-        className: 'bg-white/5 text-white/80 hover:bg-white/10',
+        className: cn(
+          'text-stone-500 hover:bg-sky-50 hover:text-sky-600',
+          collapsedDesktop ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3',
+        ),
       }}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 shrink-0" />
       <SidebarLabel expanded={expanded}>{label}</SidebarLabel>
     </Link>
   );
@@ -420,25 +445,155 @@ function SidebarLabel({
       className={cn(
         'overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ease-out',
         expanded
-          ? 'max-w-[12rem] opacity-100 translate-x-0 delay-100'
-          : 'max-w-0 opacity-0 -translate-x-1 delay-0',
+          ? 'max-w-[14rem] translate-x-0 opacity-100 delay-100'
+          : 'max-w-0 -translate-x-1 opacity-0 delay-0',
       )}
-      aria-hidden={!expanded ? 'true' : 'false'}
+      aria-hidden={!expanded}
     >
       {children}
     </span>
   );
 }
 
+function TenantBrand({
+  companyName,
+  logoUrl,
+}: {
+  companyName: string;
+  logoUrl?: string | null;
+}) {
+  if (logoUrl) {
+    return (
+      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50">
+        <img
+          src={logoUrl}
+          alt={`Logo de ${companyName}`}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-600 font-display text-sm uppercase tracking-[0.18em] text-white">
+      {resolveInitials(companyName)}
+    </div>
+  );
+}
+
+function UserAvatar({
+  shortName,
+  imageUrl,
+  size = 'md',
+}: {
+  shortName?: string | null;
+  imageUrl?: string | null;
+  size?: 'sm' | 'md';
+}) {
+  const sizeClass = size === 'sm' ? 'h-10 w-10 text-xs' : 'h-12 w-12 text-sm';
+
+  if (imageUrl) {
+    return (
+      <div
+        className={cn(
+          'overflow-hidden rounded-2xl border border-white/20 bg-white/15',
+          sizeClass,
+        )}
+      >
+        <img
+          src={imageUrl}
+          alt={shortName ? `Avatar de ${shortName}` : 'Avatar do usuario'}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-2xl bg-sky-600 font-display uppercase tracking-[0.18em] text-white',
+        sizeClass,
+      )}
+    >
+      {resolveInitials(shortName || 'Usuario')}
+    </div>
+  );
+}
+
+function UpgradeCard({
+  activePackage,
+  expanded,
+  suggestedPlan,
+}: {
+  activePackage: string;
+  expanded: boolean;
+  suggestedPlan: string | null;
+}) {
+  const isSpecialTier =
+    activePackage === 'premium' || activePackage === 'internal';
+  
+  if (!expanded) {
+    return (
+      <div className="flex justify-center py-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-500 shadow-sm border border-sky-100">
+          <Sparkles className="h-5 w-5" />
+        </div>
+      </div>
+    );
+  }
+
+  const title = isSpecialTier
+    ? 'Plano consolidado'
+    : `Upgrade para ${suggestedPlan}`;
+
+  return (
+    <div className="mt-4 rounded-[2rem] bg-stone-50 p-6 border border-stone-100">
+      <div className="flex flex-col items-center text-center">
+        <h4 className="font-display text-lg text-stone-900">{title}</h4>
+        <p className="mt-2 text-xs leading-relaxed text-stone-400 px-2">
+          {isSpecialTier 
+            ? 'Você já possui todos os recursos liberados.' 
+            : 'Ganhe 1 mês grátis e desbloqueie novos recursos agora.'}
+        </p>
+        
+        <button
+          type="button"
+          className={cn(
+            'mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-sky-100 px-4 py-3 text-sm font-bold text-sky-600 transition hover:bg-sky-200 shadow-sm',
+            isSpecialTier && 'bg-sky-600 text-white hover:bg-sky-700',
+          )}
+        >
+          {isSpecialTier ? 'Ver detalhes' : 'Fazer Upgrade'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LoadingScreen() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-hero-radial px-6 text-center text-white">
-      <div className="max-w-sm rounded-[2rem] border border-white/10 bg-slate-950/80 px-8 py-10 shadow-glow backdrop-blur-xl">
-        <p className="font-display text-3xl">Carregando painel</p>
-        <p className="mt-3 text-sm text-slate-300">
-          Sincronizando a sessão persistida e preparando a navegação.
+    <div className="flex min-h-screen items-center justify-center bg-[#ebe8e4] px-6 text-center text-stone-900">
+      <div className="max-w-sm rounded-[2rem] border border-white/70 bg-white/90 px-8 py-10 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <p className="font-display text-3xl">PetControl</p>
+        <p className="mt-3 text-sm text-stone-500">
+          Sincronizando o novo shell e carregando o contexto autenticado.
         </p>
       </div>
     </div>
   );
+}
+
+function resolveInitials(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+}
+
+function resolveSuggestedPlan(activePackage: string) {
+  return PLAN_UPGRADE_FLOW[activePackage as keyof typeof PLAN_UPGRADE_FLOW] ?? null;
 }

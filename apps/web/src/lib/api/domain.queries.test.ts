@@ -9,10 +9,22 @@ describe('domain query keys', () => {
       'company',
       'current',
     ]);
+    expect(domainQueryKeys.currentCompanySystemConfig()).toEqual([
+      'domain',
+      'company',
+      'system-config',
+      'current',
+    ]);
     expect(domainQueryKeys.clients()).toEqual(['domain', 'clients', {}]);
     expect(domainQueryKeys.pets()).toEqual(['domain', 'pets', {}]);
     expect(domainQueryKeys.services()).toEqual(['domain', 'services', {}]);
     expect(domainQueryKeys.schedules()).toEqual(['domain', 'schedules', {}]);
+    expect(domainQueryKeys.scheduleHistory('schedule-1')).toEqual([
+      'domain',
+      'schedules',
+      'schedule-1',
+      'history',
+    ]);
   });
 
   it('inclui params na queryKey quando fornecidos', () => {

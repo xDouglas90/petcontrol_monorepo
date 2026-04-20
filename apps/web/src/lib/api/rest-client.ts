@@ -5,6 +5,10 @@ import type {
   ClientApiResponseDTO,
   ClientListApiResponseDTO,
   CompanyDTO,
+  CompanySystemConfigDTO,
+  CurrentUserApiResponseDTO,
+  CurrentCompanySystemConfigApiResponseDTO,
+  CurrentUserDTO,
   CompleteUploadApiResponseDTO,
   CompleteUploadDTO,
   CompleteUploadInput,
@@ -21,6 +25,8 @@ import type {
   LoginCredentials,
   LoginSession,
   ScheduleApiResponseDTO,
+  ScheduleHistoryApiResponseDTO,
+  ScheduleHistoryItemDTO,
   ScheduleDTO,
   ScheduleListApiResponseDTO,
   ServiceDTO,
@@ -237,6 +243,75 @@ export async function getCurrentCompany(
   return payload.data;
 }
 
+export async function getCurrentCompanySystemConfig(
+  accessToken: string,
+): Promise<CompanySystemConfigDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(140);
+    return {
+      company_id: mockCompany.id,
+      schedule_init_time: '08:00',
+      schedule_pause_init_time: '12:00',
+      schedule_pause_end_time: '13:00',
+      schedule_end_time: '18:00',
+      min_schedules_per_day: 4,
+      max_schedules_per_day: 18,
+      schedule_days: [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ],
+      dynamic_cages: false,
+      total_small_cages: 8,
+      total_medium_cages: 6,
+      total_large_cages: 4,
+      total_giant_cages: 2,
+      whatsapp_notifications: true,
+      whatsapp_conversation: true,
+      whatsapp_business_phone: '+5511999990001',
+    };
+  }
+
+  const payload = await request<CurrentCompanySystemConfigApiResponseDTO>(
+    API_PATHS.currentCompanySystemConfig,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function getCurrentUser(
+  accessToken: string,
+): Promise<CurrentUserDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return {
+      user_id: '11111111-1111-1111-1111-111111111111',
+      company_id: mockCompany.id,
+      person_id: '77777777-7777-7777-7777-777777777777',
+      role: 'admin',
+      kind: 'owner',
+      full_name: 'Maria Silva',
+      short_name: 'Maria',
+      image_url: null,
+    };
+  }
+
+  const payload = await request<CurrentUserApiResponseDTO>(
+    API_PATHS.currentUser,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
 export async function listSchedules(
   accessToken: string,
   params?: ListQueryParams,
@@ -261,6 +336,25 @@ export async function listSchedules(
     },
   );
   return payload;
+}
+
+export async function getScheduleHistory(
+  accessToken: string,
+  scheduleId: string,
+): Promise<ScheduleHistoryItemDTO[]> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(100);
+    return [];
+  }
+
+  const payload = await request<ScheduleHistoryApiResponseDTO>(
+    API_PATHS.scheduleHistory(scheduleId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
 }
 
 export async function listClients(

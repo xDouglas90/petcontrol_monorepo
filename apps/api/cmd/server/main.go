@@ -53,8 +53,10 @@ func main() {
 	}
 
 	companyService := service.NewCompanyService(queries)
+	companySystemConfigService := service.NewCompanySystemConfigService(queries)
 	planService := service.NewPlanService(queries)
 	moduleService := service.NewModuleService(queries)
+	userService := service.NewUserService(queries)
 	companyUserService := service.NewCompanyUserService(queries)
 	clientService := service.NewClientService(pool, queries)
 	petService := service.NewPetService(queries)
@@ -70,8 +72,10 @@ func main() {
 		}
 	}()
 	companyHandler := handler.NewCompanyHandler(companyService, uploadService)
+	companySystemConfigHandler := handler.NewCompanySystemConfigHandler(companySystemConfigService)
 	planHandler := handler.NewPlanHandler(planService)
 	moduleHandler := handler.NewModuleHandler(moduleService)
+	userHandler := handler.NewUserHandler(userService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
 	clientHandler := handler.NewClientHandler(clientService, uploadService)
 	petHandler := handler.NewPetHandler(petService, uploadService)
@@ -102,6 +106,8 @@ func main() {
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant(), middleware.Audit(queries, logger))
 	protected.GET("/companies/current", companyHandler.Current)
 	protected.PATCH("/companies/current", companyHandler.Update)
+	protected.GET("/company-system-configs/current", companySystemConfigHandler.Current)
+	protected.GET("/users/me", userHandler.Current)
 	protected.GET("/plans/current", planHandler.Current)
 	protected.GET("/modules/active", moduleHandler.Active)
 	protected.GET("/company-users", companyUserHandler.List)

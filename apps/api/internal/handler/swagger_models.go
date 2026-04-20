@@ -16,6 +16,48 @@ type LoginResponseDoc struct {
 	Data service.LoginResult `json:"data"`
 }
 
+// CurrentUserResponseDoc documents the current authenticated user payload.
+type CurrentUserResponseDoc struct {
+	Data CurrentUserDoc `json:"data"`
+}
+
+// CurrentUserDoc describes the authenticated user profile returned by `/users/me`.
+type CurrentUserDoc struct {
+	UserID    string  `json:"user_id" example:"11111111-1111-1111-1111-111111111111"`
+	CompanyID string  `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
+	PersonID  string  `json:"person_id" example:"33333333-3333-3333-3333-333333333333"`
+	Role      string  `json:"role" example:"admin"`
+	Kind      string  `json:"kind" example:"owner"`
+	FullName  *string `json:"full_name,omitempty" example:"Maria da Silva"`
+	ShortName *string `json:"short_name,omitempty" example:"Maria"`
+	ImageURL  *string `json:"image_url,omitempty" example:"https://cdn.example.com/users/maria.png"`
+}
+
+// CompanySystemConfigResponseDoc documents the current tenant system config payload.
+type CompanySystemConfigResponseDoc struct {
+	Data CompanySystemConfigDoc `json:"data"`
+}
+
+// CompanySystemConfigDoc describes the current tenant system configuration.
+type CompanySystemConfigDoc struct {
+	CompanyID             string   `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
+	ScheduleInitTime      string   `json:"schedule_init_time" example:"08:00"`
+	SchedulePauseInitTime string   `json:"schedule_pause_init_time" example:"12:00"`
+	SchedulePauseEndTime  string   `json:"schedule_pause_end_time" example:"13:00"`
+	ScheduleEndTime       string   `json:"schedule_end_time" example:"18:00"`
+	MinSchedulesPerDay    int16    `json:"min_schedules_per_day" example:"4"`
+	MaxSchedulesPerDay    int16    `json:"max_schedules_per_day" example:"18"`
+	ScheduleDays          []string `json:"schedule_days" example:"monday,tuesday,wednesday,thursday,friday,saturday"`
+	DynamicCages          bool     `json:"dynamic_cages" example:"false"`
+	TotalSmallCages       int16    `json:"total_small_cages" example:"8"`
+	TotalMediumCages      int16    `json:"total_medium_cages" example:"6"`
+	TotalLargeCages       int16    `json:"total_large_cages" example:"4"`
+	TotalGiantCages       int16    `json:"total_giant_cages" example:"2"`
+	WhatsappNotifications bool     `json:"whatsapp_notifications" example:"true"`
+	WhatsappConversation  bool     `json:"whatsapp_conversation" example:"true"`
+	WhatsappBusinessPhone *string  `json:"whatsapp_business_phone,omitempty" example:"+5511999990001"`
+}
+
 // ClientCreateRequestDoc documents client creation payload for Swagger.
 type ClientCreateRequestDoc struct {
 	FullName       string `json:"full_name" example:"Maria Silva"`

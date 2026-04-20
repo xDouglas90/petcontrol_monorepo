@@ -71,7 +71,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText('Senha'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /entrar no painel/i }));
+    fireEvent.click(screen.getByRole('button', { name: /entrar no sistema/i }));
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalled();

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -37,9 +38,14 @@ var defaultExposedHeaders = []string{
 
 func CORS(allowedOrigins []string) gin.HandlerFunc {
 	allowed := make(map[string]struct{}, len(allowedOrigins))
+	patterns := make([]string, 0, len(allowedOrigins))
 	for _, origin := range allowedOrigins {
 		trimmed := strings.TrimSpace(origin)
 		if trimmed == "" {
+			continue
+		}
+		if strings.HasSuffix(trimmed, ":*") {
+			patterns = append(patterns, strings.TrimSuffix(trimmed, "*"))
 			continue
 		}
 		allowed[trimmed] = struct{}{}
@@ -60,7 +66,7 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 		c.Writer.Header().Add(varyHeader, "Access-Control-Request-Method")
 		c.Writer.Header().Add(varyHeader, "Access-Control-Request-Headers")
 
-		if _, ok := allowed[origin]; !ok {
+		if !isAllowedOrigin(origin, allowed, patterns) {
 			if c.Request.Method == http.MethodOptions {
 				c.AbortWithStatus(http.StatusForbidden)
 				return
@@ -88,4 +94,24 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func isAllowedOrigin(origin string, allowed map[string]struct{}, patterns []string) bool {
+	if _, ok := allowed[origin]; ok {
+		return true
+	}
+
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+
+	baseOrigin := parsed.Scheme + "://" + parsed.Hostname()
+	for _, pattern := range patterns {
+		if strings.EqualFold(baseOrigin, strings.TrimSuffix(pattern, ":")) {
+			return true
+		}
+	}
+
+	return false
 }
