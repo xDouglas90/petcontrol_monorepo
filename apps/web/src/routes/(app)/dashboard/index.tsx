@@ -58,7 +58,9 @@ export function DashboardPage() {
   const historyScheduleIds = useMemo(
     () =>
       schedules
-        .filter((item) => ['finished', 'delivered'].includes(item.current_status))
+        .filter((item) =>
+          ['finished', 'delivered'].includes(item.current_status),
+        )
         .map((item) => item.id),
     [schedules],
   );
@@ -67,9 +69,8 @@ export function DashboardPage() {
   const weekOptions = buildWeekOptions(now);
   const defaultWeekKey = resolveCurrentWeekKey(now);
   const [selectedWeekKey, setSelectedWeekKey] = useState(defaultWeekKey);
-  const [selectedSystemContactId, setSelectedSystemContactId] = useState(
-    'contract-pending',
-  );
+  const [selectedSystemContactId, setSelectedSystemContactId] =
+    useState('contract-pending');
   const [chatDraft, setChatDraft] = useState('');
   const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -77,7 +78,8 @@ export function DashboardPage() {
   const preliminarySystemUsers = useMemo(
     () =>
       (companyUsersQuery.data ?? []).filter(
-        (user) => user.role === 'system' && user.user_id !== currentUser?.user_id,
+        (user) =>
+          user.role === 'system' && user.user_id !== currentUser?.user_id,
       ),
     [companyUsersQuery.data, currentUser?.user_id],
   );
@@ -86,9 +88,12 @@ export function DashboardPage() {
   )
     ? selectedSystemContactId
     : (preliminarySystemUsers[0]?.user_id ?? undefined);
-  const chatMessagesQuery = useAdminSystemChatMessagesQuery(effectiveSystemContactId);
-  const sendChatMessageMutation =
-    useCreateAdminSystemChatMessageMutation(effectiveSystemContactId);
+  const chatMessagesQuery = useAdminSystemChatMessagesQuery(
+    effectiveSystemContactId,
+  );
+  const sendChatMessageMutation = useCreateAdminSystemChatMessageMutation(
+    effectiveSystemContactId,
+  );
 
   const { presenceMap } = useInternalChatSocket(effectiveSystemContactId);
 
@@ -105,10 +110,10 @@ export function DashboardPage() {
   }, [chatMessagesQuery.data, effectiveSystemContactId]);
 
   const scheduleHistoryMap = useMemo(() => {
-    const entries = historyScheduleIds.map((scheduleId, index) => [
-      scheduleId,
-      scheduleHistoryQueries[index]?.data ?? [],
-    ] as const);
+    const entries = historyScheduleIds.map(
+      (scheduleId, index) =>
+        [scheduleId, scheduleHistoryQueries[index]?.data ?? []] as const,
+    );
 
     return new Map<string, ScheduleHistoryItemDTO[]>(entries);
   }, [historyScheduleIds, scheduleHistoryQueries]);
@@ -168,7 +173,6 @@ export function DashboardPage() {
     );
   }
 
-
   const greetingName =
     currentUser.short_name || currentUser.full_name || company.fantasy_name;
   const todayCount = countSchedulesInDay(schedules, now);
@@ -212,10 +216,13 @@ export function DashboardPage() {
     ? selectedSystemContactId
     : (chatContacts[0]?.id ?? 'contract-pending');
   const selectedSystemContact =
-    chatContacts.find((contact) => contact.id === normalizedSelectedSystemContactId) ??
-    chatContacts[0];
+    chatContacts.find(
+      (contact) => contact.id === normalizedSelectedSystemContactId,
+    ) ?? chatContacts[0];
 
-  const contactPresence = effectiveSystemContactId ? presenceMap[effectiveSystemContactId] : undefined;
+  const contactPresence = effectiveSystemContactId
+    ? presenceMap[effectiveSystemContactId]
+    : undefined;
   const isContactOnline = contactPresence?.status === 'online';
 
   const stats = [
@@ -249,34 +256,36 @@ export function DashboardPage() {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="flex min-w-0 flex-col gap-6">
-        <header className="rounded-[2.5rem] border border-white/70 bg-white/85 px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-6">
+        <header className="rounded-[2.5rem] border border-white/70 bg-white/85 px-6 py-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:px-8">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
                 Dashboard admin
               </p>
-              <h1 className="mt-3 font-display text-4xl text-stone-950 sm:text-5xl">
-                Olá, {greetingName}
-              </h1>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
+                  Olá, {greetingName}
+                </h1>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
+                    <CalendarDays className="h-4 w-4" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-stone-400">
+                      Hoje
+                    </p>
+                    <span className="text-sm font-medium text-stone-700">
+                      {formatLongDate(now)}
+                    </span>
+                  </div>
+                </div>
+              </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
                 Você está visualizando a operação do tenant{' '}
                 {company.fantasy_name}, com foco em agenda diária, comparação
                 mensal e eficiência da meta mínima configurada.
               </p>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-[1.6rem] border border-stone-200 bg-stone-50/80 px-4 py-3 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
-                <CalendarDays className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-stone-400">
-                  Hoje
-                </p>
-                <span className="text-sm font-medium text-stone-700">
-                  {formatLongDate(now)}
-                </span>
-              </div>
             </div>
           </div>
         </header>
@@ -445,14 +454,10 @@ export function DashboardPage() {
                   Suporte ao administrador
                 </h5>
               </div>
-              <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
-                Histórico persistido
-              </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-stone-500">
-              Esta conversa agora persiste mensagens de texto entre o
-              administrador do tenant e usuários do tipo system, com suporte a
-              sincronização em tempo real e presença.
+              Este chat persiste mensagens de textos entre os usuários, com
+              suporte a sincronização em tempo real.
             </p>
           </div>
 
@@ -461,7 +466,7 @@ export function DashboardPage() {
               htmlFor="dashboard-system-contact"
               className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-400"
             >
-              Usuário system
+              Lista de usuários
             </label>
             <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
               <select
@@ -518,8 +523,8 @@ export function DashboardPage() {
           >
             {!effectiveSystemContactId ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
-                Vincule um usuário do tipo <strong>system</strong> ao tenant
-                para iniciar uma conversa persistida com o administrador.
+                Vincule um usuário do tipo <strong>sistema</strong> para iniciar
+                uma conversa persistida com o administrador.
               </div>
             ) : chatMessagesQuery.isLoading ? (
               <div className="rounded-[1.6rem] border border-stone-100 bg-stone-50 px-4 py-6 text-sm text-stone-500">
@@ -532,11 +537,12 @@ export function DashboardPage() {
             ) : (chatMessagesQuery.data?.length ?? 0) === 0 ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
                 Ainda não existem mensagens persistidas entre este admin e o
-                contato system selecionado.
+                usuário selecionado.
               </div>
             ) : (
               chatMessagesQuery.data?.map((message) => {
-                const isOwnMessage = message.sender_user_id === currentUser.user_id;
+                const isOwnMessage =
+                  message.sender_user_id === currentUser.user_id;
 
                 return (
                   <div
@@ -577,7 +583,11 @@ export function DashboardPage() {
             onSubmit={(event) => {
               event.preventDefault();
               const message = chatDraft.trim();
-              if (!effectiveSystemContactId || !message || sendChatMessageMutation.isPending) {
+              if (
+                !effectiveSystemContactId ||
+                !message ||
+                sendChatMessageMutation.isPending
+              ) {
                 return;
               }
 
@@ -606,7 +616,9 @@ export function DashboardPage() {
                     ? 'Escreva uma mensagem...'
                     : 'Selecione um usuário system para conversar'
                 }
-                disabled={!effectiveSystemContactId || sendChatMessageMutation.isPending}
+                disabled={
+                  !effectiveSystemContactId || sendChatMessageMutation.isPending
+                }
                 className="w-full bg-transparent text-sm text-stone-700 outline-none placeholder:text-stone-400 disabled:cursor-not-allowed"
               />
               <button
@@ -674,7 +686,9 @@ function AdminStatCard({
                     : 'text-rose-500'
               }`}
             >
-              {!isNeutral ? <ChangeIcon className="h-3.5 w-3.5 stroke-[3]" /> : null}
+              {!isNeutral ? (
+                <ChangeIcon className="h-3.5 w-3.5 stroke-[3]" />
+              ) : null}
               {isNeutral ? 'estável' : `${positive ? '+' : ''}${change}`}
               {!isNeutral ? ` ${changeLabel}` : ''}
             </div>
@@ -685,9 +699,7 @@ function AdminStatCard({
       {/* Absolute Hover Box */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-2 px-4 pb-6 opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
         <div className="rounded-2xl bg-sky-600 p-4 shadow-xl ring-1 ring-sky-300/40">
-          <p className="text-xs leading-relaxed text-white/90">
-            {description}
-          </p>
+          <p className="text-xs leading-relaxed text-white/90">{description}</p>
         </div>
       </div>
     </article>
@@ -830,8 +842,9 @@ function DashboardSkeleton() {
 }
 
 function countSchedulesInDay(schedules: ScheduleDTO[], date: Date) {
-  return schedules.filter((item) => isSameDay(new Date(item.scheduled_at), date))
-    .length;
+  return schedules.filter((item) =>
+    isSameDay(new Date(item.scheduled_at), date),
+  ).length;
 }
 
 function countSchedulesInMonth(schedules: ScheduleDTO[], date: Date) {
@@ -939,10 +952,11 @@ function buildWeekOptions(date: Date) {
     const end = Math.min(start + 6, lastDayOfMonth);
     options.push({
       key: `${start}-${end}`,
-      label: `${String(start).padStart(2, '0')}-${String(end).padStart(2, '0')} ${date.toLocaleDateString('pt-BR', { month: 'short' })}`.replace(
-        '.',
-        '',
-      ),
+      label:
+        `${String(start).padStart(2, '0')}-${String(end).padStart(2, '0')} ${date.toLocaleDateString('pt-BR', { month: 'short' })}`.replace(
+          '.',
+          '',
+        ),
     });
   }
 
@@ -1040,7 +1054,10 @@ function resolveScheduleFinishedAt(
   item: ScheduleDTO,
   historyItems: ScheduleHistoryItemDTO[],
 ) {
-  if (item.current_status !== 'finished' && item.current_status !== 'delivered') {
+  if (
+    item.current_status !== 'finished' &&
+    item.current_status !== 'delivered'
+  ) {
     return null;
   }
 
@@ -1081,7 +1098,9 @@ function averageScheduledHourInDay(
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function resolveWeekDay(date: Date): CompanySystemConfigDTO['schedule_days'][number] {
+function resolveWeekDay(
+  date: Date,
+): CompanySystemConfigDTO['schedule_days'][number] {
   return [
     'sunday',
     'monday',
@@ -1093,10 +1112,7 @@ function resolveWeekDay(date: Date): CompanySystemConfigDTO['schedule_days'][num
   ][date.getDay()] as CompanySystemConfigDTO['schedule_days'][number];
 }
 
-function shiftDate(
-  date: Date,
-  shift: { days?: number; months?: number },
-) {
+function shiftDate(date: Date, shift: { days?: number; months?: number }) {
   const value = new Date(date);
   if (shift.days) {
     value.setDate(value.getDate() + shift.days);
@@ -1139,7 +1155,10 @@ function parseHourValue(time: string) {
 }
 
 function buildHourGuides(startHour: number, endHour: number) {
-  const totalSlots = Math.max(2, Math.min(5, Math.round(endHour - startHour) + 1));
+  const totalSlots = Math.max(
+    2,
+    Math.min(5, Math.round(endHour - startHour) + 1),
+  );
   const step = totalSlots === 1 ? 1 : (endHour - startHour) / (totalSlots - 1);
 
   return Array.from({ length: totalSlots }, (_, index) => {
@@ -1155,11 +1174,7 @@ function formatHourLabel(hourValue: number) {
 }
 
 function resolveInitials(value: string) {
-  const parts = value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = value.trim().split(/\s+/).filter(Boolean).slice(0, 2);
 
   if (parts.length === 0) {
     return 'PC';
@@ -1188,7 +1203,8 @@ function buildSystemContactOptions(
         id: 'contract-pending',
         label: 'Nenhum usuário system vinculado',
         name: 'Usuários system',
-        subtitle: 'Vincule um contato system ao tenant para habilitar o seletor',
+        subtitle:
+          'Vincule um contato system ao tenant para habilitar o seletor',
         avatar: 'SY',
         imageUrl: null,
         statusClass: 'bg-stone-400',

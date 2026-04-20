@@ -3,8 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 import { domainQueryKeys } from '@/lib/api/domain.queries';
 import { normalizeUrl } from '@petcontrol/shared-utils';
-
-const SUBPROTOCOL = 'petcontrol.internal-chat.v1';
+import { API_PATHS, INTERNAL_CHAT_SOCKET } from '@petcontrol/shared-constants';
 
 export interface PresenceInfo {
   user_id: string;
@@ -16,26 +15,39 @@ export function useInternalChatSocket(counterpartUserId?: string) {
   const session = useAuthStore(selectSession);
   const queryClient = useQueryClient();
   const socketRef = useRef<WebSocket | null>(null);
+  const intentionalCloseRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceInfo>>({});
 
   useEffect(() => {
     if (!session?.accessToken || !counterpartUserId) {
+      intentionalCloseRef.current = true;
       return;
     }
 
+    intentionalCloseRef.current = false;
     const apiUrl = normalizeUrl(
       import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1',
     );
-    
-    // Convert HTTP to WS and add authentication token as query param
-    const wsUrl = new URL(apiUrl.replace(/^http/, 'ws') + `/chat/system/${counterpartUserId}/ws`);
+
+    // Convert HTTP to WS and add authentication token as query param.
+    const wsUrl = new URL(
+      apiUrl.replace(/^http/, 'ws') + API_PATHS.adminSystemChatSocket(counterpartUserId),
+    );
     wsUrl.searchParams.set('token', session.accessToken);
 
-    const socket = new WebSocket(wsUrl.toString(), SUBPROTOCOL);
+    const socket = new WebSocket(
+      wsUrl.toString(),
+      INTERNAL_CHAT_SOCKET.subprotocol,
+    );
     socketRef.current = socket;
 
     socket.onopen = () => {
+      if (intentionalCloseRef.current || socketRef.current !== socket) {
+        socket.close();
+        return;
+      }
+
       setIsConnected(true);
       console.log('[ChatSocket] Connected');
     };
@@ -50,11 +62,25 @@ export function useInternalChatSocket(counterpartUserId?: string) {
     };
 
     socket.onclose = (event) => {
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+
       setIsConnected(false);
+
+      if (intentionalCloseRef.current || event.code === 1000) {
+        console.log('[ChatSocket] Closing connection');
+        return;
+      }
+
       console.log('[ChatSocket] Disconnected', event.code, event.reason);
     };
 
     socket.onerror = (err) => {
+      if (intentionalCloseRef.current || socketRef.current !== socket) {
+        return;
+      }
+
       console.error('[ChatSocket] Error', err);
     };
 
@@ -96,9 +122,21 @@ export function useInternalChatSocket(counterpartUserId?: string) {
     }
 
     return () => {
-      console.log('[ChatSocket] Closing connection');
-      socket.close();
-      socketRef.current = null;
+      intentionalCloseRef.current = true;
+
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+
+      setIsConnected(false);
+      setPresenceMap({});
+
+      if (
+        socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING
+      ) {
+        socket.close(1000, 'component cleanup');
+      }
     };
   }, [session?.accessToken, counterpartUserId, queryClient]);
 
