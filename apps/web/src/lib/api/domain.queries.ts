@@ -38,6 +38,7 @@ import {
   updatePet,
   updateSchedule,
   updateService,
+  checkHealth,
 } from '@/lib/api/rest-client';
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
@@ -65,6 +66,7 @@ export const domainQueryKeys = {
   allPets: () => ['domain', 'pets'] as const,
   allServices: () => ['domain', 'services'] as const,
   allSchedules: () => ['domain', 'schedules'] as const,
+  health: () => ['domain', 'system', 'health'] as const,
 };
 
 export function useCurrentCompanyQuery() {
@@ -511,5 +513,14 @@ export function useDeleteScheduleMutation() {
         queryKey: domainQueryKeys.allSchedules(),
       });
     },
+  });
+}
+
+export function useHealthQuery() {
+  return useQuery({
+    queryKey: domainQueryKeys.health(),
+    queryFn: checkHealth,
+    refetchInterval: 30000,
+    retry: 2,
   });
 }

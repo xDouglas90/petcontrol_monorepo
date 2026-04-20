@@ -1,25 +1,55 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/realtime"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
 type AdminSystemChatHandler struct {
-	service *service.AdminSystemChatService
+	service                 *service.AdminSystemChatService
+	hub                     *realtime.InternalChatHub
+	websocketAllowedOrigins []string
 }
 
 type createAdminSystemMessageRequest struct {
 	Message string `json:"message"`
 }
 
-func NewAdminSystemChatHandler(service *service.AdminSystemChatService) *AdminSystemChatHandler {
-	return &AdminSystemChatHandler{service: service}
+type internalChatInboundEvent struct {
+	Type   string `json:"type"`
+	Status string `json:"status"`
+}
+
+const (
+	internalChatSocketSubprotocol = "petcontrol.internal-chat.v1"
+	internalChatMaxMessageBytes   = 4096
+	internalChatWriteTimeout      = 10 * time.Second
+	internalChatPingInterval      = 30 * time.Second
+	internalChatPingTimeout       = 10 * time.Second
+)
+
+func NewAdminSystemChatHandler(
+	service *service.AdminSystemChatService,
+	hub *realtime.InternalChatHub,
+	websocketAllowedOrigins []string,
+) *AdminSystemChatHandler {
+	return &AdminSystemChatHandler{
+		service:                 service,
+		hub:                     hub,
+		websocketAllowedOrigins: websocketAllowedOrigins,
+	}
 }
 
 // ListMessages godoc
@@ -125,5 +155,261 @@ func (h *AdminSystemChatHandler) CreateMessage(c *gin.Context) {
 		return
 	}
 
+	h.hub.BroadcastConversationEvent(
+		c.Request.Context(),
+		uuidToString(companyID),
+		uuidToString(currentUserID),
+		uuidToString(contactUserID),
+		"",
+		func(connection realtime.InternalChatConnection) map[string]any {
+			return h.newMessageCreatedEvent(connection, item)
+		},
+	)
+
 	middleware.JSONData(c, http.StatusCreated, mapAdminSystemChatMessage(item))
+}
+
+func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
+	companyID, ok := middleware.GetCompanyID(c)
+	if !ok {
+		middleware.JSONError(c, http.StatusForbidden, "company_context_required", "company context required")
+		return
+	}
+
+	claims, ok := middleware.GetClaims(c)
+	if !ok || claims.UserID == "" {
+		middleware.JSONError(c, http.StatusUnauthorized, "auth_claims_required", "auth claims required")
+		return
+	}
+
+	currentUserID, err := parseUUID(claims.UserID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnauthorized, "invalid_user_context", "invalid user context")
+		return
+	}
+
+	contactUserID, err := parseUUID(c.Param("user_id"))
+	if err != nil {
+		middleware.JSONError(c, http.StatusBadRequest, "invalid_contact_user_id", "invalid contact user id")
+		return
+	}
+
+	if _, _, err := h.service.ResolveParticipants(c.Request.Context(), companyID, currentUserID, contactUserID); err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "connect_admin_system_chat_failed", "failed to connect chat socket")
+		return
+	}
+
+	socket, err := websocket.Accept(c.Writer, c.Request, &websocket.AcceptOptions{
+		Subprotocols:   []string{internalChatSocketSubprotocol},
+		OriginPatterns: h.websocketAllowedOrigins,
+	})
+	if err != nil {
+		return
+	}
+
+	if socket.Subprotocol() == "" {
+		_ = socket.Close(websocket.StatusPolicyViolation, "subprotocol required")
+		return
+	}
+
+	socket.SetReadLimit(internalChatMaxMessageBytes)
+
+	connectionID := uuid.NewString()
+	connection := realtime.InternalChatConnection{
+		ID:                connectionID,
+		CompanyID:         uuidToString(companyID),
+		UserID:            uuidToString(currentUserID),
+		CounterpartUserID: uuidToString(contactUserID),
+		UserRole:          claims.Role,
+		ConnectedAt:       time.Now().UTC(),
+		Socket:            socket,
+	}
+
+	_, statusChanged := h.hub.Register(connection)
+	defer func() {
+		disconnectedConnection, presence, becameOffline := h.hub.Unregister(connectionID)
+		if becameOffline {
+			h.hub.BroadcastConversationEvent(
+				context.Background(),
+				disconnectedConnection.CompanyID,
+				disconnectedConnection.UserID,
+				disconnectedConnection.CounterpartUserID,
+				"",
+				func(target realtime.InternalChatConnection) map[string]any {
+					return h.newPresenceUpdatedEvent(target, presence)
+				},
+			)
+		}
+	}()
+	defer func() {
+		_ = socket.Close(websocket.StatusNormalClosure, "connection closed")
+	}()
+
+	if err := h.writeSocketEvent(c.Request.Context(), socket, map[string]any{
+		"type":                "chat.connected",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          connection.ConnectedAt.Format(time.RFC3339),
+		"connection_id":       connection.ID,
+		"viewer_user_id":      connection.UserID,
+		"viewer_role":         connection.UserRole,
+	}); err != nil {
+		_ = socket.Close(websocket.StatusInternalError, "failed to initialize connection")
+		return
+	}
+
+	if err := h.writeSocketEvent(c.Request.Context(), socket, h.newPresenceSnapshotEvent(connection)); err != nil {
+		_ = socket.Close(websocket.StatusInternalError, "failed to initialize presence snapshot")
+		return
+	}
+
+	if statusChanged {
+		h.hub.BroadcastConversationEvent(
+			c.Request.Context(),
+			connection.CompanyID,
+			connection.UserID,
+			connection.CounterpartUserID,
+			connection.ID,
+			func(target realtime.InternalChatConnection) map[string]any {
+				return h.newPresenceUpdatedEvent(target, h.hub.Presence(connection.CompanyID, connection.UserID))
+			},
+		)
+	}
+
+	lifecycleCtx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	go h.runSocketHeartbeat(lifecycleCtx, socket)
+	h.runSocketInboundLoop(lifecycleCtx, connection)
+}
+
+func (h *AdminSystemChatHandler) writeSocketEvent(ctx context.Context, socket *websocket.Conn, payload map[string]any) error {
+	writeCtx, cancel := context.WithTimeout(ctx, internalChatWriteTimeout)
+	defer cancel()
+
+	return wsjson.Write(writeCtx, socket, payload)
+}
+
+func (h *AdminSystemChatHandler) runSocketHeartbeat(ctx context.Context, socket *websocket.Conn) {
+	ticker := time.NewTicker(internalChatPingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			pingCtx, cancel := context.WithTimeout(context.Background(), internalChatPingTimeout)
+			err := socket.Ping(pingCtx)
+			cancel()
+			if err != nil {
+				h.hub.RecordPingFailure()
+				_ = socket.Close(websocket.StatusGoingAway, "ping timeout")
+				return
+			}
+		}
+	}
+}
+
+func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, connection realtime.InternalChatConnection) {
+	for {
+		var event internalChatInboundEvent
+		err := wsjson.Read(ctx, connection.Socket, &event)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+
+			status := websocket.CloseStatus(err)
+			if status == websocket.StatusNormalClosure ||
+				status == websocket.StatusGoingAway ||
+				status == websocket.StatusNoStatusRcvd {
+				return
+			}
+			if !errors.Is(err, context.Canceled) {
+				h.hub.RecordSocketError()
+			}
+			return
+		}
+
+		if event.Type == "chat.presence.update" && event.Status != "" {
+			presence, ok := h.hub.UpdateParticipantStatus(connection.CompanyID, connection.UserID, event.Status)
+			if ok {
+				h.hub.BroadcastConversationEvent(
+					context.Background(),
+					connection.CompanyID,
+					connection.UserID,
+					connection.CounterpartUserID,
+					"",
+					func(target realtime.InternalChatConnection) map[string]any {
+						return h.newPresenceUpdatedEvent(target, presence)
+					},
+				)
+			}
+			continue
+		}
+
+		h.hub.RecordInvalidPayload()
+		_ = h.writeSocketEvent(context.Background(), connection.Socket, map[string]any{
+			"type":                "chat.error",
+			"company_id":          connection.CompanyID,
+			"counterpart_user_id": connection.CounterpartUserID,
+			"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+			"code":                "invalid_socket_payload",
+			"message":             "unexpected client payload",
+		})
+		_ = connection.Socket.Close(websocket.StatusPolicyViolation, "unexpected client payload")
+		return
+	}
+}
+
+func (h *AdminSystemChatHandler) newMessageCreatedEvent(
+	connection realtime.InternalChatConnection,
+	item service.AdminSystemChatMessage,
+) map[string]any {
+	return map[string]any{
+		"type":                "chat.message.created",
+		"company_id":          uuidToString(item.CompanyID),
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          formatTimestamptz(item.CreatedAt),
+		"message":             mapAdminSystemChatMessage(item),
+	}
+}
+
+func (h *AdminSystemChatHandler) newPresenceSnapshotEvent(connection realtime.InternalChatConnection) map[string]any {
+	presences := h.hub.ConversationSnapshot(connection.CompanyID, connection.UserID, connection.CounterpartUserID)
+	items := make([]map[string]any, 0, len(presences))
+	for _, presence := range presences {
+		items = append(items, mapInternalChatPresence(presence))
+	}
+
+	return map[string]any{
+		"type":                "chat.presence.snapshot",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+		"presences":           items,
+	}
+}
+
+func (h *AdminSystemChatHandler) newPresenceUpdatedEvent(
+	connection realtime.InternalChatConnection,
+	presence realtime.InternalChatPresence,
+) map[string]any {
+	return map[string]any{
+		"type":                "chat.presence.updated",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+		"presence":            mapInternalChatPresence(presence),
+	}
+}
+
+func mapInternalChatPresence(presence realtime.InternalChatPresence) map[string]any {
+	return map[string]any{
+		"user_id":         presence.UserID,
+		"status":          presence.Status,
+		"connections":     presence.Connections,
+		"last_changed_at": presence.LastChangedAt.Format(time.RFC3339),
+	}
 }

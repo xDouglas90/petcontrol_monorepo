@@ -66,3 +66,21 @@ body {
     @apply text-inherit no-underline;
   }
 }
+
+/* Custom Scrollbar for Executive Light */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-200 rounded-full transition-colors;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-300;
+}

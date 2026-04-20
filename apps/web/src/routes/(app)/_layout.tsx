@@ -1,4 +1,10 @@
-import { Link, Navigate, Outlet, useLocation } from '@tanstack/react-router';
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router';
 import {
   APP_ROUTES,
   COMPANY_ROUTE_PARAM,
@@ -37,6 +43,7 @@ const PLAN_UPGRADE_FLOW = {
 } as const;
 
 export function AppLayout() {
+  const navigate = useNavigate();
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
     if (
       typeof window === 'undefined' ||
@@ -96,16 +103,27 @@ export function AppLayout() {
     }
   }, [clearSession, unauthorizedCompanyContext, unauthorizedUserContext]);
 
-  if (hydrated && !session) {
-    return <Navigate to={APP_ROUTES.login} replace />;
-  }
+  const shouldRedirectToLogin =
+    hydrated &&
+    (!session || unauthorizedCompanyContext || unauthorizedUserContext);
+
+  useEffect(() => {
+    if (!shouldRedirectToLogin || location.pathname === APP_ROUTES.login) {
+      return;
+    }
+
+    void navigate({
+      to: APP_ROUTES.login,
+      replace: true,
+    });
+  }, [location.pathname, navigate, shouldRedirectToLogin]);
 
   if (!hydrated) {
     return <LoadingScreen />;
   }
 
-  if (unauthorizedCompanyContext || unauthorizedUserContext) {
-    return <Navigate to={APP_ROUTES.login} replace />;
+  if (shouldRedirectToLogin) {
+    return <LoadingScreen />;
   }
 
   const currentSlug = companyQuery.data?.slug;
@@ -194,7 +212,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#ebe8e4] text-stone-900">
+    <div className="min-h-screen bg-white text-stone-900">
       {!isDesktopViewport && sidebarOpen ? (
         <button
           type="button"
@@ -204,12 +222,12 @@ export function AppLayout() {
         />
       ) : null}
 
-      <div className="mx-auto flex min-h-screen max-w-[1680px] gap-4 p-3 lg:p-6">
+      <div className="mx-auto flex min-h-screen max-w-[1920px]">
         <aside
           className={cn(
-            'flex-col rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition-all duration-300',
+            'flex-col bg-white border-r border-stone-100 transition-all duration-300',
             isDesktopViewport
-              ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[6rem]')
+              ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[5rem]')
               : cn(
                   'fixed inset-y-3 left-3 z-50 flex w-[min(21rem,calc(100vw-1.5rem))] transform',
                   sidebarOpen
@@ -217,13 +235,15 @@ export function AppLayout() {
                     : '-translate-x-[110%] opacity-0 pointer-events-none',
                 ),
           )}
-          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : undefined}
+          aria-hidden={!isDesktopViewport && !sidebarOpen ? 'true' : undefined}
         >
           <div className="flex items-center justify-between border-b border-stone-100 px-5 py-5">
             <div
               className={cn(
                 'flex items-center gap-3 overflow-hidden transition-all duration-300',
-                isDesktopViewport && !sidebarOpen ? 'w-0 opacity-0' : 'w-auto opacity-100',
+                isDesktopViewport && !sidebarOpen
+                  ? 'w-0 opacity-0'
+                  : 'w-auto opacity-100',
               )}
             >
               <TenantBrand
@@ -259,38 +279,9 @@ export function AppLayout() {
             </button>
           </div>
 
-          <div className="px-4 py-4">
-            <div
-              className={cn(
-                'rounded-[1.6rem] bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-400 p-4 text-white transition-all duration-300',
-                isDesktopViewport && !sidebarOpen && 'px-3 py-3',
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center gap-3',
-                  isDesktopViewport && !sidebarOpen && 'justify-center',
-                )}
-              >
-                <UserAvatar
-                  shortName={currentUser?.short_name ?? null}
-                  imageUrl={currentUser?.image_url ?? null}
-                />
-                <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm uppercase tracking-[0.22em] text-white/65">
-                      {session?.role ?? 'sem role'}
-                    </p>
-                    <p className="truncate font-medium text-white">
-                      {companyDisplayName}
-                    </p>
-                  </div>
-                </SidebarLabel>
-              </div>
-            </div>
-          </div>
+          <div className="h-4" />
 
-          <nav className="space-y-1 px-4 pb-4">
+          <nav className="mt-7 space-y-1 px-4 pb-4">
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'dashboard')}
               icon={LayoutGrid}
@@ -448,7 +439,7 @@ function SidebarLabel({
           ? 'max-w-[14rem] translate-x-0 opacity-100 delay-100'
           : 'max-w-0 -translate-x-1 opacity-0 delay-0',
       )}
-      aria-hidden={!expanded}
+      aria-hidden={!expanded ? 'true' : undefined}
     >
       {children}
     </span>
@@ -502,7 +493,7 @@ function UserAvatar({
       >
         <img
           src={imageUrl}
-          alt={shortName ? `Avatar de ${shortName}` : 'Avatar do usuario'}
+          alt={shortName ? `Avatar de ${shortName}` : 'Avatar do usuário'}
           className="h-full w-full object-cover"
         />
       </div>
@@ -516,7 +507,7 @@ function UserAvatar({
         sizeClass,
       )}
     >
-      {resolveInitials(shortName || 'Usuario')}
+      {resolveInitials(shortName || 'Usuário')}
     </div>
   );
 }
@@ -532,7 +523,7 @@ function UpgradeCard({
 }) {
   const isSpecialTier =
     activePackage === 'premium' || activePackage === 'internal';
-  
+
   if (!expanded) {
     return (
       <div className="flex justify-center py-4">
@@ -552,11 +543,11 @@ function UpgradeCard({
       <div className="flex flex-col items-center text-center">
         <h4 className="font-display text-lg text-stone-900">{title}</h4>
         <p className="mt-2 text-xs leading-relaxed text-stone-400 px-2">
-          {isSpecialTier 
-            ? 'Você já possui todos os recursos liberados.' 
+          {isSpecialTier
+            ? 'Você já possui todos os recursos liberados.'
             : 'Ganhe 1 mês grátis e desbloqueie novos recursos agora.'}
         </p>
-        
+
         <button
           type="button"
           className={cn(
@@ -595,5 +586,7 @@ function resolveInitials(value: string) {
 }
 
 function resolveSuggestedPlan(activePackage: string) {
-  return PLAN_UPGRADE_FLOW[activePackage as keyof typeof PLAN_UPGRADE_FLOW] ?? null;
+  return (
+    PLAN_UPGRADE_FLOW[activePackage as keyof typeof PLAN_UPGRADE_FLOW] ?? null
+  );
 }

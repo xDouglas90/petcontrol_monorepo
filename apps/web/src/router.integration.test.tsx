@@ -53,6 +53,7 @@ describe('Router integration', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.stubGlobal('scrollTo', vi.fn());
+    HTMLElement.prototype.scrollTo = vi.fn();
 
     const company: CompanyDTO = {
       id: 'company-1',
@@ -268,9 +269,10 @@ describe('Router integration', () => {
       expect(router.state.location.pathname).toBe('/petcontrol-dev/dashboard');
     });
 
+    expect(screen.getByText('Ocupação por horário operacional')).toBeTruthy();
     expect(
-      screen.getByText('Agendamentos em andamento'),
-    ).toBeTruthy();
+      screen.getAllByRole('heading', { name: 'Olá, Maria' }).length,
+    ).toBeGreaterThan(0);
   });
 
   it('mantém o slug atual nos links internos e navega corretamente em /:companySlug/schedules', async () => {

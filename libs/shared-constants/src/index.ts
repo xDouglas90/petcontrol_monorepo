@@ -8,6 +8,7 @@ export const API_PATHS = {
   currentCompanySystemConfig: '/company-system-configs/current',
   companyUsers: '/company-users',
   adminSystemChatMessages: (userId: string) => `/chat/system/${userId}/messages`,
+  adminSystemChatSocket: (userId: string) => `/chat/system/${userId}/ws`,
   schedules: '/schedules',
   scheduleHistory: (scheduleId: string) => `/schedules/${scheduleId}/history`,
   clients: '/clients',
@@ -15,6 +16,7 @@ export const API_PATHS = {
   services: '/services',
   uploadsIntent: '/uploads/intent',
   uploadsComplete: '/uploads/complete',
+  health: '/health',
 } as const;
 
 export const MODULE_CODES = {
@@ -31,4 +33,12 @@ export const STORAGE_KEYS = {
 export const AUTH_MODES = {
   api: 'api',
   mock: 'mock',
+} as const;
+
+export const INTERNAL_CHAT_SOCKET = {
+  subprotocol: 'petcontrol.internal-chat.v1',
+  reconnectBackoffMs: [1000, 2000, 5000, 10000] as const,
+  heartbeatIntervalMs: 30000,
+  writeTimeoutMs: 10000,
+  maxMessageBytes: 4096,
 } as const;

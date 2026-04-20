@@ -15,7 +15,8 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useInternalChatSocket } from '@/hooks/use-internal-chat-socket';
 
 import {
   useAdminSystemChatMessagesQuery,
@@ -57,7 +58,9 @@ export function DashboardPage() {
   const historyScheduleIds = useMemo(
     () =>
       schedules
-        .filter((item) => ['finished', 'delivered'].includes(item.current_status))
+        .filter((item) =>
+          ['finished', 'delivered'].includes(item.current_status),
+        )
         .map((item) => item.id),
     [schedules],
   );
@@ -66,16 +69,17 @@ export function DashboardPage() {
   const weekOptions = buildWeekOptions(now);
   const defaultWeekKey = resolveCurrentWeekKey(now);
   const [selectedWeekKey, setSelectedWeekKey] = useState(defaultWeekKey);
-  const [selectedSystemContactId, setSelectedSystemContactId] = useState(
-    'contract-pending',
-  );
+  const [selectedSystemContactId, setSelectedSystemContactId] =
+    useState('contract-pending');
   const [chatDraft, setChatDraft] = useState('');
+  const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Derive the effective system user ID for chat hooks (must be before early returns)
   const preliminarySystemUsers = useMemo(
     () =>
       (companyUsersQuery.data ?? []).filter(
-        (user) => user.role === 'system' && user.user_id !== currentUser?.user_id,
+        (user) =>
+          user.role === 'system' && user.user_id !== currentUser?.user_id,
       ),
     [companyUsersQuery.data, currentUser?.user_id],
   );
@@ -84,14 +88,40 @@ export function DashboardPage() {
   )
     ? selectedSystemContactId
     : (preliminarySystemUsers[0]?.user_id ?? undefined);
-  const chatMessagesQuery = useAdminSystemChatMessagesQuery(effectiveSystemContactId);
-  const sendChatMessageMutation =
-    useCreateAdminSystemChatMessageMutation(effectiveSystemContactId);
+  const chatMessagesQuery = useAdminSystemChatMessagesQuery(
+    effectiveSystemContactId,
+  );
+  const sendChatMessageMutation = useCreateAdminSystemChatMessageMutation(
+    effectiveSystemContactId,
+  );
+
+  const { presenceMap, updatePresenceStatus } = useInternalChatSocket(
+    effectiveSystemContactId,
+  );
+  const [userStatus, setUserStatus] = useState('online');
+
+  const handleStatusChange = (status: string) => {
+    setUserStatus(status);
+    updatePresenceStatus(status);
+  };
+
+  useEffect(() => {
+    const container = chatMessagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [chatMessagesQuery.data, effectiveSystemContactId]);
+
   const scheduleHistoryMap = useMemo(() => {
-    const entries = historyScheduleIds.map((scheduleId, index) => [
-      scheduleId,
-      scheduleHistoryQueries[index]?.data ?? [],
-    ] as const);
+    const entries = historyScheduleIds.map(
+      (scheduleId, index) =>
+        [scheduleId, scheduleHistoryQueries[index]?.data ?? []] as const,
+    );
 
     return new Map<string, ScheduleHistoryItemDTO[]>(entries);
   }, [historyScheduleIds, scheduleHistoryQueries]);
@@ -122,7 +152,7 @@ export function DashboardPage() {
           Dashboard indisponível
         </p>
         <h2 className="mt-3 font-display text-3xl text-rose-900">
-          Não foi possível carregar os dados operacionais do tenant.
+          Não foi possível carregar os dados operacionais da empresa.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7">
           Verifique a disponibilidade da API, do perfil autenticado e da
@@ -145,7 +175,7 @@ export function DashboardPage() {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
           Nesta etapa, o dashboard completo está sendo priorizado para o papel
-          de administrador do tenant.
+          de administrador da empresa.
         </p>
       </section>
     );
@@ -194,109 +224,112 @@ export function DashboardPage() {
     ? selectedSystemContactId
     : (chatContacts[0]?.id ?? 'contract-pending');
   const selectedSystemContact =
-    chatContacts.find((contact) => contact.id === normalizedSelectedSystemContactId) ??
-    chatContacts[0];
+    chatContacts.find(
+      (contact) => contact.id === normalizedSelectedSystemContactId,
+    ) ?? chatContacts[0];
+
+  const contactPresence = effectiveSystemContactId
+    ? presenceMap[effectiveSystemContactId]
+    : undefined;
+  const isContactOnline = contactPresence?.status === 'online';
 
   const stats = [
     {
       label: 'Agendamentos/dia',
       value: String(todayCount),
       change: todayCount - previousDayCount,
-      changeLabel: 'vs ontem',
-      description: 'Atualizado a cada novo agendamento criado no tenant.',
+      changeLabel: '-> ontem',
+      description: 'Atualizado a cada novo agendamento criado no sistema.',
       icon: CalendarDays,
     },
     {
       label: 'Agendamentos/mês',
       value: String(currentMonthCount),
       change: currentMonthCount - previousMonthCount,
-      changeLabel: 'vs mês anterior',
+      changeLabel: '-> mês anterior',
       description: 'Volume operacional acumulado no mês corrente.',
       icon: CalendarRange,
     },
     {
-      label: 'Eficiência',
+      label: 'Eficiência (meta mensal)',
       value: `${Math.round(efficiencyPercentage)}%`,
       change: Math.round(efficiencyPercentage - 100),
-      changeLabel:
-        efficiencyPercentage >= 100 ? 'acima da meta' : 'abaixo da meta',
+      changeLabel: efficiencyPercentage >= 100 ? '%' : '%',
       description: `${currentMonthCount} de ${monthlyTarget} agendamentos mínimos previstos.`,
       icon: Activity,
     },
   ] as const;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
-      <div className="flex min-w-0 flex-col gap-6">
-        <header className="rounded-[2.5rem] border border-white/70 bg-white/85 px-6 py-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-6">
+    <div className="flex flex-col xl:flex-row divide-y xl:divide-y-0 xl:divide-x divide-stone-100 min-h-full">
+      <main className="flex flex-1 min-w-0 flex-col divide-y divide-stone-100">
+        <header className="px-6 py-8 lg:px-10">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
                 Dashboard admin
               </p>
-              <h1 className="mt-3 font-display text-4xl text-stone-950 sm:text-5xl">
-                Olá, {greetingName}
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
-                Você está visualizando a operação do tenant{' '}
-                {company.fantasy_name}, com foco em agenda diária, comparação
-                mensal e eficiência da meta mínima configurada.
-              </p>
-            </div>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
+                  Olá, {greetingName}
+                </h1>
 
-            <div className="flex items-center gap-3 rounded-[1.6rem] border border-stone-200 bg-stone-50/80 px-4 py-3 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
-                <CalendarDays className="h-4 w-4" />
+                <div className="flex items-center gap-3 text-stone-400">
+                  <CalendarDays className="h-5 w-5" />
+                  <div className="hidden sm:block">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em]">
+                      Hoje
+                    </p>
+                    <span className="text-sm font-medium text-stone-700">
+                      {formatLongDate(now)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-stone-400">
-                  Hoje
-                </p>
-                <span className="text-sm font-medium text-stone-700">
-                  {formatLongDate(now)}
-                </span>
-              </div>
+              <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
+                Você está visualizando a operação de {company.fantasy_name}, com
+                foco em agenda diária, comparação mensal e eficiência da meta.
+              </p>
             </div>
           </div>
         </header>
-
-        <section className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+        <section className="p-6 lg:p-10">
+          <div className="grid gap-6 sm:grid-cols-3">
             {stats.map((stat) => (
               <AdminStatCard key={stat.label} {...stat} />
             ))}
           </div>
         </section>
 
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] lg:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-                Performance
-              </p>
-              <h3 className="mt-2 font-display text-2xl text-stone-950">
+        <section className="p-6 lg:p-10">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+              Performance
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-display text-2xl text-stone-950">
                 Ocupação por horário operacional
               </h3>
-              <p className="mt-2 text-sm text-stone-500">
-                Comparativo da semana selecionada com o mesmo recorte do mês
-                anterior, respeitando a janela operacional do tenant.
-              </p>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
+                <select
+                  id="dashboard-week-range"
+                  aria-label="Selecionar semana de performance"
+                  value={normalizedSelectedWeekKey}
+                  onChange={(event) => setSelectedWeekKey(event.target.value)}
+                  className="bg-transparent outline-none"
+                >
+                  {weekOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
-              <select
-                id="dashboard-week-range"
-                aria-label="Selecionar semana de performance"
-                value={normalizedSelectedWeekKey}
-                onChange={(event) => setSelectedWeekKey(event.target.value)}
-                className="bg-transparent outline-none"
-              >
-                {weekOptions.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <p className="mt-2 text-sm text-stone-500">
+              Comparativo da semana selecionada com o mesmo recorte do mês
+              anterior, respeitando a janela operacional da empresa.
+            </p>
           </div>
 
           <div className="mt-8">
@@ -314,7 +347,7 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] lg:p-8">
+        <section className="p-6 lg:p-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
@@ -380,11 +413,11 @@ export function DashboardPage() {
             )}
           </div>
         </section>
-      </div>
+      </main>
 
-      <aside className="flex w-full shrink-0 flex-col gap-6 xl:w-[24rem]">
-        <section className="rounded-[2.5rem] border border-stone-100 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
-          <div className="flex flex-col items-center text-center">
+      <aside className="w-full xl:w-[24rem] flex flex-col divide-y divide-stone-100">
+        <div className="p-8 text-center">
+          <div className="flex flex-col items-center">
             <div className="relative">
               <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
                 <img
@@ -396,24 +429,27 @@ export function DashboardPage() {
                   className="h-full w-full rounded-full object-cover"
                 />
               </div>
-              <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
+              <StatusPicker
+                currentStatus={userStatus}
+                onStatusChange={handleStatusChange}
+              />
             </div>
-            <h4 className="mt-4 font-display text-xl text-stone-950">
+            <h4 className="mt-2 font-display text-xl text-stone-950">
               {greetingName}
             </h4>
-            <p className="mt-1 text-sm text-stone-400">
-              Administrador do tenant
+            <p className="mb-3 text-sm text-stone-400">
+              Administrador {company.fantasy_name}
             </p>
 
             <div className="mt-6 grid w-full grid-cols-3 gap-3">
               <MiniBadge icon={ShieldCheck} label="Admin" />
               <MiniBadge icon={CalendarDays} label={formatCompactDate(now)} />
               <MiniBadge icon={Activity} label={`${todayCount} hoje`} />
-            </div>
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section className="flex flex-1 flex-col rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-1 flex-col p-6 pt-8">
           <div className="border-b border-stone-100 pb-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -424,14 +460,10 @@ export function DashboardPage() {
                   Suporte ao administrador
                 </h5>
               </div>
-              <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
-                Histórico persistido
-              </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-stone-500">
-              Esta conversa agora persiste mensagens de texto entre o
-              administrador do tenant e usuários do tipo system. Presença em
-              tempo real continua fora deste recorte.
+              Este chat persiste mensagens de textos entre os usuários, com
+              suporte a sincronização em tempo real.
             </p>
           </div>
 
@@ -440,7 +472,7 @@ export function DashboardPage() {
               htmlFor="dashboard-system-contact"
               className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-400"
             >
-              Usuário system
+              Lista de usuários
             </label>
             <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
               <select
@@ -476,7 +508,9 @@ export function DashboardPage() {
                 </div>
               )}
               <div
-                className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${selectedSystemContact.statusClass}`}
+                className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                  isContactOnline ? 'bg-emerald-500' : 'bg-stone-300'
+                }`}
               />
             </div>
             <div className="min-w-0">
@@ -489,11 +523,14 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex-1 space-y-5 overflow-y-auto pr-2">
+          <div
+            ref={chatMessagesContainerRef}
+            className="mt-6 h-[22rem] space-y-5 overflow-y-auto pr-2"
+          >
             {!effectiveSystemContactId ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
-                Vincule um usuário do tipo <strong>system</strong> ao tenant
-                para iniciar uma conversa persistida com o administrador.
+                Vincule um usuário do tipo <strong>sistema</strong> para iniciar
+                uma conversa persistida com o administrador.
               </div>
             ) : chatMessagesQuery.isLoading ? (
               <div className="rounded-[1.6rem] border border-stone-100 bg-stone-50 px-4 py-6 text-sm text-stone-500">
@@ -506,11 +543,12 @@ export function DashboardPage() {
             ) : (chatMessagesQuery.data?.length ?? 0) === 0 ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
                 Ainda não existem mensagens persistidas entre este admin e o
-                contato system selecionado.
+                usuário selecionado.
               </div>
             ) : (
               chatMessagesQuery.data?.map((message) => {
-                const isOwnMessage = message.sender_user_id === currentUser.user_id;
+                const isOwnMessage =
+                  message.sender_user_id === currentUser.user_id;
 
                 return (
                   <div
@@ -551,7 +589,11 @@ export function DashboardPage() {
             onSubmit={(event) => {
               event.preventDefault();
               const message = chatDraft.trim();
-              if (!effectiveSystemContactId || !message || sendChatMessageMutation.isPending) {
+              if (
+                !effectiveSystemContactId ||
+                !message ||
+                sendChatMessageMutation.isPending
+              ) {
                 return;
               }
 
@@ -568,7 +610,10 @@ export function DashboardPage() {
             <div className="flex items-center gap-3">
               <MessageSquareText className="h-4 w-4 text-stone-500" />
               <input
+                id="dashboard-chat-message"
+                name="message"
                 type="text"
+                autoComplete="off"
                 aria-label="Escrever mensagem para usuário system"
                 value={chatDraft}
                 onChange={(event) => setChatDraft(event.target.value)}
@@ -577,7 +622,9 @@ export function DashboardPage() {
                     ? 'Escreva uma mensagem...'
                     : 'Selecione um usuário system para conversar'
                 }
-                disabled={!effectiveSystemContactId || sendChatMessageMutation.isPending}
+                disabled={
+                  !effectiveSystemContactId || sendChatMessageMutation.isPending
+                }
                 className="w-full bg-transparent text-sm text-stone-700 outline-none placeholder:text-stone-400 disabled:cursor-not-allowed"
               />
               <button
@@ -598,7 +645,7 @@ export function DashboardPage() {
               </p>
             ) : null}
           </form>
-        </section>
+        </div>
       </aside>
     </div>
   );
@@ -624,7 +671,7 @@ function AdminStatCard({
   const ChangeIcon = positive ? TrendingUp : TrendingDown;
 
   return (
-    <article className="group relative rounded-[2rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+    <article className="group relative rounded-[2.5rem] border border-stone-100 bg-stone-50/50 p-6 transition hover:bg-white hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
       {/* Title at the top */}
       <p className="text-sm font-medium text-stone-400">{label}</p>
 
@@ -633,11 +680,11 @@ function AdminStatCard({
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-900 shadow-sm transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
           <Icon className="h-6 w-6" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-3">
-            <p className="font-display text-3xl text-stone-950">{value}</p>
+        <div className="min-w-0 flex flex-1 justify-center">
+          <div className="flex flex-col items-center justify-center gap-1 text-center">
+            <p className="font-display text-4xl text-stone-950">{value}</p>
             <div
-              className={`inline-flex items-center gap-1 text-xs font-bold ${
+              className={`inline-flex items-center justify-center gap-1 text-xs font-bold ${
                 isNeutral
                   ? 'text-stone-400'
                   : positive
@@ -645,7 +692,9 @@ function AdminStatCard({
                     : 'text-rose-500'
               }`}
             >
-              {!isNeutral ? <ChangeIcon className="h-3.5 w-3.5 stroke-[3]" /> : null}
+              {!isNeutral ? (
+                <ChangeIcon className="h-3.5 w-3.5 stroke-[3]" />
+              ) : null}
               {isNeutral ? 'estável' : `${positive ? '+' : ''}${change}`}
               {!isNeutral ? ` ${changeLabel}` : ''}
             </div>
@@ -656,9 +705,7 @@ function AdminStatCard({
       {/* Absolute Hover Box */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-2 px-4 pb-6 opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
         <div className="rounded-2xl bg-sky-600 p-4 shadow-xl ring-1 ring-sky-300/40">
-          <p className="text-xs leading-relaxed text-white/90">
-            {description}
-          </p>
+          <p className="text-xs leading-relaxed text-white/90">{description}</p>
         </div>
       </div>
     </article>
@@ -742,7 +789,7 @@ function WeeklyPerformanceChart({
           strokeLinejoin="round"
           strokeLinecap="round"
           points={buildPoints(current)}
-          style={{ filter: 'drop-shadow(0px 4px 8px rgba(56, 189, 248, 0.2))' }}
+          className="drop-shadow-[0px_4px_8px_rgba(56,189,248,0.2)]"
         />
 
         {current.map((item, index) => {
@@ -801,8 +848,9 @@ function DashboardSkeleton() {
 }
 
 function countSchedulesInDay(schedules: ScheduleDTO[], date: Date) {
-  return schedules.filter((item) => isSameDay(new Date(item.scheduled_at), date))
-    .length;
+  return schedules.filter((item) =>
+    isSameDay(new Date(item.scheduled_at), date),
+  ).length;
 }
 
 function countSchedulesInMonth(schedules: ScheduleDTO[], date: Date) {
@@ -910,10 +958,11 @@ function buildWeekOptions(date: Date) {
     const end = Math.min(start + 6, lastDayOfMonth);
     options.push({
       key: `${start}-${end}`,
-      label: `${String(start).padStart(2, '0')}-${String(end).padStart(2, '0')} ${date.toLocaleDateString('pt-BR', { month: 'short' })}`.replace(
-        '.',
-        '',
-      ),
+      label:
+        `${String(start).padStart(2, '0')}-${String(end).padStart(2, '0')} ${date.toLocaleDateString('pt-BR', { month: 'short' })}`.replace(
+          '.',
+          '',
+        ),
     });
   }
 
@@ -1011,7 +1060,10 @@ function resolveScheduleFinishedAt(
   item: ScheduleDTO,
   historyItems: ScheduleHistoryItemDTO[],
 ) {
-  if (item.current_status !== 'finished' && item.current_status !== 'delivered') {
+  if (
+    item.current_status !== 'finished' &&
+    item.current_status !== 'delivered'
+  ) {
     return null;
   }
 
@@ -1052,7 +1104,9 @@ function averageScheduledHourInDay(
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function resolveWeekDay(date: Date): CompanySystemConfigDTO['schedule_days'][number] {
+function resolveWeekDay(
+  date: Date,
+): CompanySystemConfigDTO['schedule_days'][number] {
   return [
     'sunday',
     'monday',
@@ -1064,10 +1118,7 @@ function resolveWeekDay(date: Date): CompanySystemConfigDTO['schedule_days'][num
   ][date.getDay()] as CompanySystemConfigDTO['schedule_days'][number];
 }
 
-function shiftDate(
-  date: Date,
-  shift: { days?: number; months?: number },
-) {
+function shiftDate(date: Date, shift: { days?: number; months?: number }) {
   const value = new Date(date);
   if (shift.days) {
     value.setDate(value.getDate() + shift.days);
@@ -1110,7 +1161,10 @@ function parseHourValue(time: string) {
 }
 
 function buildHourGuides(startHour: number, endHour: number) {
-  const totalSlots = Math.max(2, Math.min(5, Math.round(endHour - startHour) + 1));
+  const totalSlots = Math.max(
+    2,
+    Math.min(5, Math.round(endHour - startHour) + 1),
+  );
   const step = totalSlots === 1 ? 1 : (endHour - startHour) / (totalSlots - 1);
 
   return Array.from({ length: totalSlots }, (_, index) => {
@@ -1126,11 +1180,7 @@ function formatHourLabel(hourValue: number) {
 }
 
 function resolveInitials(value: string) {
-  const parts = value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = value.trim().split(/\s+/).filter(Boolean).slice(0, 2);
 
   if (parts.length === 0) {
     return 'PC';
@@ -1157,9 +1207,9 @@ function buildSystemContactOptions(
     return [
       {
         id: 'contract-pending',
-        label: 'Nenhum usuário system vinculado',
-        name: 'Usuários system',
-        subtitle: 'Vincule um contato system ao tenant para habilitar o seletor',
+        label: 'Nenhum usuário vinculado',
+        name: 'Usuários',
+        subtitle: 'Vincule um contato a empresa para habilitar o seletor',
         avatar: 'SY',
         imageUrl: null,
         statusClass: 'bg-stone-400',
@@ -1168,12 +1218,12 @@ function buildSystemContactOptions(
   }
 
   return systemUsers.map((item) => {
-    const name = item.short_name || item.full_name || 'Usuário system';
+    const name = item.short_name || item.full_name || 'Usuário do sistema';
     return {
       id: item.user_id,
       label: name,
       name,
-      subtitle: 'Contato system do tenant',
+      subtitle: 'Usuário do sistema',
       avatar: resolveInitials(name),
       imageUrl: item.image_url ?? null,
       statusClass: 'bg-emerald-500',
@@ -1190,4 +1240,65 @@ function formatChatTimestamp(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+}
+
+interface StatusPickerProps {
+  currentStatus: string;
+  onStatusChange: (status: string) => void;
+}
+
+function StatusPicker({ currentStatus, onStatusChange }: StatusPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const statusOptions = [
+    { id: 'online', label: 'Online', color: 'bg-emerald-500' },
+    { id: 'busy', label: 'Ocupado', color: 'bg-rose-500' },
+    { id: 'away', label: 'Ausente', color: 'bg-amber-500' },
+  ];
+
+  const currentOption =
+    statusOptions.find((o) => o.id === currentStatus) || statusOptions[0];
+
+  return (
+    <div className="absolute bottom-1 right-1">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`h-5 w-5 rounded-full border-2 border-white shadow-sm transition-all hover:scale-110 active:scale-95 ${currentOption.color}`}
+        title="Alterar status de presença"
+      />
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
+            role="presentation"
+          />
+          <div className="absolute top-full right-0 z-50 mt-2 w-32 origin-top-right rounded-2xl border border-stone-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex flex-col gap-1">
+              {statusOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    onStatusChange(opt.id);
+                    setIsOpen(false);
+                  }}
+                  className={`flex items-center gap-2 rounded-xl px-2 py-2 text-xs transition-colors ${
+                    currentStatus === opt.id
+                      ? 'bg-stone-50 font-medium text-stone-900'
+                      : 'text-stone-500 hover:bg-stone-50/50 hover:text-stone-700'
+                  }`}
+                >
+                  <div className={`h-2.5 w-2.5 rounded-full ${opt.color}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }

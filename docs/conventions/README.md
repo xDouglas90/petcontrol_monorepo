@@ -12,6 +12,8 @@ O objetivo aqui e registrar regras compartilhadas entre apps e libs que ajudam a
 
 - [company-slug-routing.md](./company-slug-routing.md)
   Convenção de rotas autenticadas com `company_slug`, separando claramente contexto de URL/UX de autorização baseada em JWT e `company_id`.
+- [internal-chat-realtime.md](./internal-chat-realtime.md)
+  Contrato inicial de WebSocket, presença dinâmica e eventos do chat interno entre `admin` e `system`.
 - [modules.md](./modules.md)
   Códigos, descrições e pacotes mínimos de cada módulo do sistema.
 - [permissions.md](./permissions.md)

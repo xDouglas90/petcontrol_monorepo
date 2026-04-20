@@ -44,6 +44,7 @@ import type {
   CreateUploadIntentInput,
   UploadIntentDTO,
   UploadIntentApiResponseDTO,
+  HealthDTO,
 } from '@petcontrol/shared-types';
 import {
   isNonEmptyTrimmed,
@@ -202,6 +203,31 @@ export async function login(
   }
 
   return mapLoginSession((payload as LoginApiResponseDTO).data);
+}
+
+export async function checkHealth(): Promise<HealthDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(150);
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: 'mock-1.0.0',
+    };
+  }
+
+  try {
+    const baseUrl = new URL(apiUrl).origin;
+    const healthUrl = `${baseUrl}${API_PATHS.health}`;
+    const response = await fetch(healthUrl);
+
+    if (!response.ok) {
+      throw new Error('API indisponível');
+    }
+
+    return response.json();
+  } catch {
+    throw new Error('Erro ao verificar saúde da API');
+  }
 }
 
 export async function createUploadIntent(
