@@ -648,12 +648,15 @@ Status atual:
 
 Status atual:
 
-- UI estrutural implementada no dashboard `admin`.
-- O seletor visual e o cabeçalho do contato já ocupam a coluna direita.
-- O dashboard agora consome usuários reais do tenant via `company-users`, filtrando contatos com `role = system`.
-- O seed local passou a incluir ao menos um usuário `system` vinculado ao tenant para alimentar a experiência.
-- O bloco esta explicitamente marcado como `UI + contrato futuro`, sem prometer persistência de mensagens nem presença em tempo real.
-- Ainda falta contrato/backend para abrir conversas de verdade e sustentar histórico/presença.
+- Conversa persistida implementada entre `admin` e `system` no contexto do tenant.
+- O seletor visual e o cabeçalho do contato seguem ocupando a coluna direita.
+- O dashboard consome usuários reais do tenant via `company-users`, filtrando contatos com `role = system`.
+- O seed local passou a incluir um usuário `system` vinculado ao tenant e histórico inicial de mensagens para alimentar a experiência.
+- O recorte funcional desta PR ficou definido como:
+  - mensagens de texto persistidas;
+  - sem voz/video;
+  - sem presença em tempo real.
+- Ainda falta, para uma etapa futura, presença online/offline dinâmica, indicadores de ocupado e sincronização em tempo real.
 
 ### 6.1 Ações
 
@@ -671,6 +674,8 @@ Status atual:
 - [x] O contato selecionado exibe avatar e nome curto.
 - [x] O escopo funcional do chat ficou explicitamente fechado.
 - [x] Nao ha promessa de voz/video fora do recorte.
+- [x] O histórico de mensagens entre `admin` e `system` fica persistido.
+- [x] O dashboard consegue enviar novas mensagens de texto para o contato selecionado.
 
 ## Fase 7 - Testes, Observabilidade e Documentação
 

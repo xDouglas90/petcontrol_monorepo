@@ -49,7 +49,8 @@ Após o seed, o ambiente local fica com uma massa mínima pronta para uso:
 - 1 cliente ativo com pet vinculado;
 - 1 serviço ativo de catálogo;
 - configuração operacional em `company_system_configs`;
-- conjunto de agendamentos distribuídos entre hoje, ontem, mês atual e mês anterior para alimentar o dashboard `admin`.
+- conjunto de agendamentos distribuídos entre hoje, ontem, mês atual e mês anterior para alimentar o dashboard `admin`;
+- conversa persistida inicial entre `admin@petcontrol.local` e `system@petcontrol.local`.
 
 Com essa massa, o Web já permite validar:
 
