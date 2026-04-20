@@ -358,6 +358,64 @@ WHERE NOT EXISTS (
   SELECT 1 FROM people_identifications pi WHERE pi.person_id = sp.person_id
 );
 
+-- Persisted admin-system conversation for dashboard chat
+WITH dev_company AS (
+  SELECT id
+  FROM companies
+  WHERE slug = 'petcontrol-dev'
+  LIMIT 1
+), admin_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'admin@petcontrol.local'
+  LIMIT 1
+), support_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO admin_system_conversations (company_id, admin_user_id, system_user_id, updated_at)
+SELECT dc.id, au.id, su.id, NOW()
+FROM dev_company dc
+CROSS JOIN admin_user au
+CROSS JOIN support_user su
+ON CONFLICT (company_id, admin_user_id, system_user_id) DO UPDATE SET
+  updated_at = EXCLUDED.updated_at;
+
+WITH conversation_seed AS (
+  SELECT ascv.id AS conversation_id, ascv.company_id, ascv.admin_user_id, ascv.system_user_id
+  FROM admin_system_conversations ascv
+  INNER JOIN companies c ON c.id = ascv.company_id
+  INNER JOIN users au ON au.id = ascv.admin_user_id
+  INNER JOIN users su ON su.id = ascv.system_user_id
+  WHERE c.slug = 'petcontrol-dev'
+    AND au.email = 'admin@petcontrol.local'
+    AND su.email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO admin_system_messages (conversation_id, company_id, sender_user_id, body, created_at)
+SELECT cs.conversation_id, cs.company_id, seed.sender_user_id, raw_messages.body, raw_messages.created_at
+FROM conversation_seed cs
+CROSS JOIN (
+  VALUES
+    ('admin'::text, 'Bom dia, preciso acompanhar a operação desta semana.', NOW() - INTERVAL '1 day'),
+    ('system'::text, 'Tudo certo. Já deixei o suporte operacional monitorando os agendamentos.', NOW() - INTERVAL '23 hours'),
+    ('admin'::text, 'Perfeito. Quero validar também a eficiência mensal no novo dashboard.', NOW() - INTERVAL '22 hours'),
+    ('system'::text, 'O histórico persistido deste chat já está ativo para o tenant de desenvolvimento.', NOW() - INTERVAL '21 hours')
+) AS raw_messages(sender_kind, body, created_at)
+CROSS JOIN LATERAL (
+  SELECT CASE
+    WHEN raw_messages.sender_kind = 'admin' THEN cs.admin_user_id
+    ELSE cs.system_user_id
+  END AS sender_user_id
+) AS seed
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM admin_system_messages asm
+  WHERE asm.conversation_id = cs.conversation_id
+);
+
 -- Active subscription for current seeded plan
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
