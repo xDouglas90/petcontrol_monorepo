@@ -504,7 +504,7 @@ export function DashboardPage() {
 
           <div
             ref={chatMessagesContainerRef}
-            className="mt-6 h-[20rem] space-y-5 overflow-y-auto pr-2"
+            className="mt-6 h-[22rem] space-y-5 overflow-y-auto pr-2"
           >
             {!effectiveSystemContactId ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
