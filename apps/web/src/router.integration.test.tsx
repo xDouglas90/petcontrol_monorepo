@@ -12,6 +12,8 @@ const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
 const mockUseCompanyUsersQuery = vi.fn();
+const mockUseAdminSystemChatMessagesQuery = vi.fn();
+const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
 const mockUseClientsQuery = vi.fn();
 const mockUsePetsQuery = vi.fn();
 const mockUseServicesQuery = vi.fn();
@@ -27,6 +29,9 @@ vi.mock('@/lib/api/domain.queries', () => ({
     mockUseCurrentCompanySystemConfigQuery(),
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
   useCompanyUsersQuery: () => mockUseCompanyUsersQuery(),
+  useAdminSystemChatMessagesQuery: () => mockUseAdminSystemChatMessagesQuery(),
+  useCreateAdminSystemChatMessageMutation: () =>
+    mockUseCreateAdminSystemChatMessageMutation(),
   useClientsQuery: () => mockUseClientsQuery(),
   usePetsQuery: () => mockUsePetsQuery(),
   useServicesQuery: () => mockUseServicesQuery(),
@@ -80,6 +85,8 @@ describe('Router integration', () => {
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
     mockUseCompanyUsersQuery.mockReset();
+    mockUseAdminSystemChatMessagesQuery.mockReset();
+    mockUseCreateAdminSystemChatMessageMutation.mockReset();
     mockUseClientsQuery.mockReset();
     mockUsePetsQuery.mockReset();
     mockUseServicesQuery.mockReset();
@@ -183,6 +190,16 @@ describe('Router integration', () => {
         },
       ],
       isLoading: false,
+      isError: false,
+    });
+    mockUseAdminSystemChatMessagesQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCreateAdminSystemChatMessageMutation.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
       isError: false,
     });
     mockUseScheduleHistoriesQuery.mockReturnValue([]);
