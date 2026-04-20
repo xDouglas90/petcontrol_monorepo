@@ -552,6 +552,8 @@ definitions:
       role:
         example: admin
         type: string
+      settings_access:
+        $ref: '#/definitions/handler.CurrentUserSettingsAccessDoc'
       short_name:
         example: Maria
         type: string
@@ -563,6 +565,29 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/handler.CurrentUserDoc'
+    type: object
+  handler.CurrentUserSettingsAccessDoc:
+    properties:
+      active_permission_codes:
+        example:
+        - company_settings:edit
+        - plan_settings:edit
+        items:
+          type: string
+        type: array
+      can_manage_permissions:
+        example: true
+        type: boolean
+      can_view:
+        example: true
+        type: boolean
+      editable_permission_codes:
+        example:
+        - company_settings:edit
+        - plan_settings:edit
+        items:
+          type: string
+        type: array
     type: object
   handler.LoginRequestDoc:
     properties:

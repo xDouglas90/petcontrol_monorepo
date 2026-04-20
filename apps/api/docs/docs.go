@@ -2765,6 +2765,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "admin"
                 },
+                "settings_access": {
+                    "$ref": "#/definitions/handler.CurrentUserSettingsAccessDoc"
+                },
                 "short_name": {
                     "type": "string",
                     "example": "Maria"
@@ -2780,6 +2783,39 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/handler.CurrentUserDoc"
+                }
+            }
+        },
+        "handler.CurrentUserSettingsAccessDoc": {
+            "type": "object",
+            "properties": {
+                "active_permission_codes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "company_settings:edit",
+                        "plan_settings:edit"
+                    ]
+                },
+                "can_manage_permissions": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "can_view": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "editable_permission_codes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "company_settings:edit",
+                        "plan_settings:edit"
+                    ]
                 }
             }
         },

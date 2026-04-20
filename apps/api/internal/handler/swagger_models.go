@@ -23,14 +23,23 @@ type CurrentUserResponseDoc struct {
 
 // CurrentUserDoc describes the authenticated user profile returned by `/users/me`.
 type CurrentUserDoc struct {
-	UserID    string  `json:"user_id" example:"11111111-1111-1111-1111-111111111111"`
-	CompanyID string  `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
-	PersonID  string  `json:"person_id" example:"33333333-3333-3333-3333-333333333333"`
-	Role      string  `json:"role" example:"admin"`
-	Kind      string  `json:"kind" example:"owner"`
-	FullName  *string `json:"full_name,omitempty" example:"Maria da Silva"`
-	ShortName *string `json:"short_name,omitempty" example:"Maria"`
-	ImageURL  *string `json:"image_url,omitempty" example:"https://cdn.example.com/users/maria.png"`
+	UserID         string                       `json:"user_id" example:"11111111-1111-1111-1111-111111111111"`
+	CompanyID      string                       `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
+	PersonID       string                       `json:"person_id" example:"33333333-3333-3333-3333-333333333333"`
+	Role           string                       `json:"role" example:"admin"`
+	Kind           string                       `json:"kind" example:"owner"`
+	FullName       *string                      `json:"full_name,omitempty" example:"Maria da Silva"`
+	ShortName      *string                      `json:"short_name,omitempty" example:"Maria"`
+	ImageURL       *string                      `json:"image_url,omitempty" example:"https://cdn.example.com/users/maria.png"`
+	SettingsAccess CurrentUserSettingsAccessDoc `json:"settings_access"`
+}
+
+// CurrentUserSettingsAccessDoc describes the effective settings access for the authenticated user.
+type CurrentUserSettingsAccessDoc struct {
+	CanView                 bool     `json:"can_view" example:"true"`
+	CanManagePermissions    bool     `json:"can_manage_permissions" example:"true"`
+	ActivePermissionCodes   []string `json:"active_permission_codes" example:"company_settings:edit,plan_settings:edit"`
+	EditablePermissionCodes []string `json:"editable_permission_codes" example:"company_settings:edit,plan_settings:edit"`
 }
 
 // CompanyUpdateRequestDoc documents the update payload for the current company.
