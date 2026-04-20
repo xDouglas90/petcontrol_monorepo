@@ -37,7 +37,7 @@ func (s *AdminSystemChatService) ListMessages(
 	currentUserID pgtype.UUID,
 	contactUserID pgtype.UUID,
 ) ([]AdminSystemChatMessage, error) {
-	adminUserID, systemUserID, err := s.resolveParticipants(ctx, companyID, currentUserID, contactUserID)
+	adminUserID, systemUserID, err := s.ResolveParticipants(ctx, companyID, currentUserID, contactUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *AdminSystemChatService) SendMessage(
 		return AdminSystemChatMessage{}, apperror.ErrBadRequest
 	}
 
-	adminUserID, systemUserID, err := s.resolveParticipants(ctx, companyID, currentUserID, contactUserID)
+	adminUserID, systemUserID, err := s.ResolveParticipants(ctx, companyID, currentUserID, contactUserID)
 	if err != nil {
 		return AdminSystemChatMessage{}, err
 	}
@@ -151,7 +151,7 @@ func (s *AdminSystemChatService) GetSenderProfile(ctx context.Context, userID pg
 	return userService.GetCurrentUserProfile(ctx, userID)
 }
 
-func (s *AdminSystemChatService) resolveParticipants(
+func (s *AdminSystemChatService) ResolveParticipants(
 	ctx context.Context,
 	companyID pgtype.UUID,
 	currentUserID pgtype.UUID,

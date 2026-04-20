@@ -1,25 +1,47 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/realtime"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
 type AdminSystemChatHandler struct {
-	service *service.AdminSystemChatService
+	service                 *service.AdminSystemChatService
+	hub                     *realtime.InternalChatHub
+	websocketAllowedOrigins []string
 }
 
 type createAdminSystemMessageRequest struct {
 	Message string `json:"message"`
 }
 
-func NewAdminSystemChatHandler(service *service.AdminSystemChatService) *AdminSystemChatHandler {
-	return &AdminSystemChatHandler{service: service}
+const (
+	internalChatSocketSubprotocol = "petcontrol.internal-chat.v1"
+	internalChatMaxMessageBytes   = 4096
+	internalChatWriteTimeout      = 10 * time.Second
+)
+
+func NewAdminSystemChatHandler(
+	service *service.AdminSystemChatService,
+	hub *realtime.InternalChatHub,
+	websocketAllowedOrigins []string,
+) *AdminSystemChatHandler {
+	return &AdminSystemChatHandler{
+		service:                 service,
+		hub:                     hub,
+		websocketAllowedOrigins: websocketAllowedOrigins,
+	}
 }
 
 // ListMessages godoc
@@ -126,4 +148,89 @@ func (h *AdminSystemChatHandler) CreateMessage(c *gin.Context) {
 	}
 
 	middleware.JSONData(c, http.StatusCreated, mapAdminSystemChatMessage(item))
+}
+
+func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
+	companyID, ok := middleware.GetCompanyID(c)
+	if !ok {
+		middleware.JSONError(c, http.StatusForbidden, "company_context_required", "company context required")
+		return
+	}
+
+	claims, ok := middleware.GetClaims(c)
+	if !ok || claims.UserID == "" {
+		middleware.JSONError(c, http.StatusUnauthorized, "auth_claims_required", "auth claims required")
+		return
+	}
+
+	currentUserID, err := parseUUID(claims.UserID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnauthorized, "invalid_user_context", "invalid user context")
+		return
+	}
+
+	contactUserID, err := parseUUID(c.Param("user_id"))
+	if err != nil {
+		middleware.JSONError(c, http.StatusBadRequest, "invalid_contact_user_id", "invalid contact user id")
+		return
+	}
+
+	if _, _, err := h.service.ResolveParticipants(c.Request.Context(), companyID, currentUserID, contactUserID); err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "connect_admin_system_chat_failed", "failed to connect chat socket")
+		return
+	}
+
+	socket, err := websocket.Accept(c.Writer, c.Request, &websocket.AcceptOptions{
+		Subprotocols:   []string{internalChatSocketSubprotocol},
+		OriginPatterns: h.websocketAllowedOrigins,
+	})
+	if err != nil {
+		return
+	}
+
+	if socket.Subprotocol() == "" {
+		_ = socket.Close(websocket.StatusPolicyViolation, "subprotocol required")
+		return
+	}
+
+	socket.SetReadLimit(internalChatMaxMessageBytes)
+
+	connectionID := uuid.NewString()
+	connection := realtime.InternalChatConnection{
+		ID:                connectionID,
+		CompanyID:         uuidToString(companyID),
+		UserID:            uuidToString(currentUserID),
+		CounterpartUserID: uuidToString(contactUserID),
+		UserRole:          claims.Role,
+		ConnectedAt:       time.Now().UTC(),
+	}
+
+	h.hub.Register(connection)
+	defer h.hub.Unregister(connectionID)
+	defer func() {
+		_ = socket.Close(websocket.StatusNormalClosure, "connection closed")
+	}()
+
+	if err := h.writeSocketEvent(c.Request.Context(), socket, map[string]any{
+		"type":                "chat.connected",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          connection.ConnectedAt.Format(time.RFC3339),
+		"connection_id":       connection.ID,
+		"viewer_user_id":      connection.UserID,
+		"viewer_role":         connection.UserRole,
+	}); err != nil {
+		_ = socket.Close(websocket.StatusInternalError, "failed to initialize connection")
+		return
+	}
+
+	ctx := socket.CloseRead(c.Request.Context())
+	<-ctx.Done()
+}
+
+func (h *AdminSystemChatHandler) writeSocketEvent(ctx context.Context, socket *websocket.Conn, payload map[string]any) error {
+	writeCtx, cancel := context.WithTimeout(ctx, internalChatWriteTimeout)
+	defer cancel()
+
+	return wsjson.Write(writeCtx, socket, payload)
 }

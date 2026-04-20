@@ -182,6 +182,19 @@ Status atual:
 
 ## Fase 1 - Infraestrutura de WebSocket na API
 
+Status atual:
+
+- `coder/websocket` adicionado na API e pronto para uso no endpoint do chat interno.
+- Novo hub em `internal/realtime` registrando conexões por `company_id + user_id`.
+- Endpoint `GET /api/v1/chat/system/:user_id/ws` implementado com autenticação, validação do par `admin <-> system` e subprotocol `petcontrol.internal-chat.v1`.
+- Lifecycle inicial fechado com `context.Context`, `CloseRead`, limite de payload e cleanup no disconnect.
+- Evento inicial `chat.connected` já emitido após handshake bem-sucedido.
+- Cobertura criada para:
+  - conexão válida;
+  - rejeição sem token;
+  - rejeição de par proibido;
+  - cleanup do hub ao desconectar.
+
 ### 1.1 Ações
 
 - Introduzir `coder/websocket`.
@@ -191,9 +204,9 @@ Status atual:
 
 ### 1.2 Checks
 
-- [ ] A conexão autentica e conecta corretamente.
-- [ ] Conexões inválidas são rejeitadas.
-- [ ] Cleanup ocorre ao desconectar.
+- [x] A conexão autentica e conecta corretamente.
+- [x] Conexões inválidas são rejeitadas.
+- [x] Cleanup ocorre ao desconectar.
 
 ## Fase 2 - Broadcast de Mensagens
 

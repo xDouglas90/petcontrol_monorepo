@@ -13,6 +13,7 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/queue"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/realtime"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/storage/gcs"
 )
@@ -59,6 +60,7 @@ func main() {
 	userService := service.NewUserService(queries)
 	companyUserService := service.NewCompanyUserService(queries)
 	adminSystemChatService := service.NewAdminSystemChatService(queries)
+	internalChatHub := realtime.NewInternalChatHub()
 	clientService := service.NewClientService(pool, queries)
 	petService := service.NewPetService(queries)
 	serviceService := service.NewServiceService(pool, queries)
@@ -78,7 +80,7 @@ func main() {
 	moduleHandler := handler.NewModuleHandler(moduleService)
 	userHandler := handler.NewUserHandler(userService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService)
-	adminSystemChatHandler := handler.NewAdminSystemChatHandler(adminSystemChatService)
+	adminSystemChatHandler := handler.NewAdminSystemChatHandler(adminSystemChatService, internalChatHub, cfg.CORSAllowedOrigins)
 	clientHandler := handler.NewClientHandler(clientService, uploadService)
 	petHandler := handler.NewPetHandler(petService, uploadService)
 	serviceHandler := handler.NewServiceHandler(serviceService)
@@ -154,6 +156,10 @@ func main() {
 	schedules.GET("/:id/history", scheduleHandler.History)
 	schedules.PUT("/:id", scheduleHandler.Update)
 	schedules.DELETE("/:id", scheduleHandler.Delete)
+
+	protectedRealtime := v1.Group("/")
+	protectedRealtime.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant())
+	protectedRealtime.GET("/chat/system/:user_id/ws", adminSystemChatHandler.Connect)
 
 	log.Printf("api listening on %s", cfg.Address())
 	if err := router.Run(cfg.Address()); err != nil {
