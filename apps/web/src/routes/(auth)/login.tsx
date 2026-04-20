@@ -5,6 +5,9 @@ import {
   Sparkles,
   ShieldCheck,
   Waves,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { type UseFormRegisterReturn, useForm } from 'react-hook-form';
@@ -18,6 +21,7 @@ import {
   getAuthMode,
   ApiError,
 } from '@/lib/api/rest-client';
+import { useHealthQuery } from '@/lib/api/domain.queries';
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
 const loginSchema = z.object({
@@ -52,6 +56,12 @@ export function LoginPage() {
     },
   });
 
+  const {
+    isLoading: isHealthLoading,
+    isError: isHealthError,
+  } = useHealthQuery();
+  const authMode = getAuthMode();
+
   if (hydrated && session) {
     return <Navigate to={APP_ROUTES.home} replace />;
   }
@@ -63,11 +73,34 @@ export function LoginPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)]" />
 
           <div className="relative space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-stone-100 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
-              <Sparkles className="h-4 w-4 text-sky-500" />
-              {getAuthMode() === 'mock'
-                ? 'Modo experimental ativo'
-                : 'Conexão segura com API'}
+            <div
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300',
+                isHealthLoading
+                  ? 'border-stone-100 bg-stone-50 text-stone-400'
+                  : isHealthError
+                    ? 'border-red-100 bg-red-50 text-red-600'
+                    : authMode === 'mock'
+                      ? 'border-amber-100 bg-amber-50 text-amber-600'
+                      : 'border-emerald-100 bg-emerald-50 text-emerald-600',
+              )}
+            >
+              {isHealthLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-stone-400" />
+              ) : isHealthError ? (
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              ) : authMode === 'mock' ? (
+                <Sparkles className="h-4 w-4 text-amber-500" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              )}
+              {isHealthLoading
+                ? 'Verificando conexão...'
+                : isHealthError
+                  ? 'API indisponível'
+                  : authMode === 'mock'
+                    ? 'Modo experimental ativo'
+                    : 'Conexão segura com API'}
             </div>
 
             <div className="max-w-2xl space-y-6">

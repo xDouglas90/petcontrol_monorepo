@@ -584,3 +584,9 @@ export interface CompleteUploadDTO {
 export interface CompleteUploadApiResponseDTO {
   data: CompleteUploadDTO;
 }
+
+export interface HealthDTO {
+  status: string;
+  timestamp: string;
+  version?: string;
+}

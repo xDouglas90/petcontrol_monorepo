@@ -16,6 +16,7 @@ export const API_PATHS = {
   services: '/services',
   uploadsIntent: '/uploads/intent',
   uploadsComplete: '/uploads/complete',
+  health: '/health',
 } as const;
 
 export const MODULE_CODES = {
