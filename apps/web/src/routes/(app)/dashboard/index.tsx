@@ -280,7 +280,7 @@ export function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
+              <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
                 Você está visualizando a operação de {company.fantasy_name}, com
                 foco em agenda diária, comparação mensal e eficiência da meta.
               </p>
@@ -426,10 +426,10 @@ export function DashboardPage() {
               </div>
               <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
             </div>
-            <h4 className="mt-4 font-display text-xl text-stone-950">
+            <h4 className="mt-2 font-display text-xl text-stone-950">
               {greetingName}
             </h4>
-            <p className="mt-1 text-sm text-stone-400">
+            <p className="mb-3 text-sm text-stone-400">
               Administrador {company.fantasy_name}
             </p>
 
