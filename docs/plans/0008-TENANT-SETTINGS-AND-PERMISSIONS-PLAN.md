@@ -268,17 +268,65 @@ Comportamentos esperados:
 
 ## Fase 0 - Fechamento de Escopo e Regras
 
+Status atual:
+
+- A tela desta PR está fechada em três seções:
+  - `Configurações da empresa`
+  - `Configurações de negócios`
+  - `Permissões`
+- O acesso à tela está fechado para:
+  - `admin`, sempre;
+  - `system`, apenas quando houver permissão explícita concedida por algum `admin`.
+- Usuários de tipos diferentes de `admin` e `system` não entram nesta tela nesta PR.
+- A seção `Permissões` fica visível apenas para `admin`.
+- Usuários `system` autorizados podem entrar na tela, visualizar os dados e editar somente os blocos cujas permissões de configuração estiverem ativas.
+- O escopo inicial da gestão de permissões nesta PR ficará focado no módulo `Configurações da Empresa`, mesmo que a estrutura da API e da UI já seja preparada para expansão futura.
+
 ### 0.1 Ações
 
-- confirmar quais blocos da tela entram nesta PR;
-- confirmar que, nesta fase, apenas `admin` gerencia permissões de outros usuários;
-- confirmar quais blocos podem ser editados por `system` quando houver permissão correspondente.
+- [x] Fechar quais blocos da tela entram nesta PR.
+- [x] Confirmar que, nesta fase, apenas `admin` gerencia permissões de outros usuários.
+- [x] Confirmar quais blocos podem ser editados por `system` quando houver permissão correspondente.
+
+### 0.1 Decisões Fechadas
+
+#### Acesso à tela
+
+- `admin` sempre acessa a tela.
+- `system` só acessa a tela quando possuir ao menos uma permissão ativa do módulo de configurações em `user_permissions`.
+- `root`, `internal`, `common` e `free` não acessam esta tela nesta PR, mesmo que existam permissões padrão em outros módulos.
+
+#### Edição por seção
+
+- `Configurações da empresa`
+  - `admin`: pode visualizar e editar.
+  - `system` autorizado: pode visualizar sempre que entrar na tela e só edita quando possuir `company_settings:edit`.
+- `Configurações de negócios`
+  - `admin`: pode visualizar e editar.
+  - `system` autorizado: pode visualizar sempre que entrar na tela e só edita os blocos correspondentes quando possuir a permissão respectiva.
+  - mapeamento inicial desta PR:
+    - `plan_settings:edit` controla edição de blocos relacionados a plano, se existirem no recorte desta tela;
+    - `payment_settings:edit` controla edição de blocos relacionados a pagamento, se existirem no recorte desta tela;
+    - `notification_settings:edit` controla edição de blocos relacionados a notificações;
+    - `integration_settings:edit` controla edição de blocos relacionados a integrações;
+    - `security_settings:edit` controla edição de blocos relacionados a segurança.
+- `Permissões`
+  - visível e editável apenas para `admin`.
+  - não deve ser renderizada para `system`.
+
+#### Escopo funcional desta PR
+
+- A seção `Configurações da empresa` cobre os campos pertinentes da tabela `companies` que já estiverem disponíveis no contrato atual.
+- A seção `Configurações de negócios` cobre todos os campos pertinentes da tabela `company_system_configs`.
+- A seção `Permissões` cobre a gestão das permissões dos usuários vinculados ao tenant.
+- O foco mínimo obrigatório da gestão de permissões nesta PR será o módulo `Configurações da Empresa`.
+- A estrutura deve permitir expansão futura para demais módulos, sem obrigar que toda a matriz de permissões do sistema seja exposta já nesta entrega.
 
 ### 0.2 Checks
 
-- [ ] Regra de acesso à tela está fechada.
-- [ ] Regra de edição por bloco está fechada.
-- [ ] Escopo da gestão de permissões desta PR está fechado.
+- [x] Regra de acesso à tela está fechada.
+- [x] Regra de edição por bloco está fechada.
+- [x] Escopo da gestão de permissões desta PR está fechado.
 
 ## Fase 1 - Catálogo de Permissões e Seeds
 

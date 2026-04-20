@@ -35,6 +35,141 @@ VALUES
   ('FIN', 'Finance', 'Cashflow and finance controls', 'basic')
 ON CONFLICT (code) DO NOTHING;
 
+-- Permissions catalog based on docs/conventions/permissions.md
+WITH permission_seed(code, description, default_roles) AS (
+  VALUES
+    ('company_settings:edit', 'Editar configurações gerais', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('plan_settings:edit', 'Editar configurações de plano', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('payment_settings:edit', 'Editar configurações de pagamento', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('notification_settings:edit', 'Editar configurações de notificações', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('integration_settings:edit', 'Editar configurações de integração', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('security_settings:edit', 'Editar configurações de segurança', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:create', 'Criar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:view', 'Visualizar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:update', 'Atualizar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:delete', 'Deletar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:restore', 'Restaurar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:block', 'Bloquear usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('users:unblock', 'Desbloquear usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('clients:create', 'Criar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:view', 'Visualizar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:update', 'Atualizar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:delete', 'Deletar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:restore', 'Restaurar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:deactivate', 'Desativar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('clients:reactivate', 'Reativar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pets:create', 'Criar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('pets:view', 'Visualizar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('pets:update', 'Atualizar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('pets:delete', 'Deletar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('pets:deactivate', 'Desativar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('pets:reactivate', 'Reativar pet', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:create', 'Criar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:view', 'Visualizar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:update', 'Atualizar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:delete', 'Deletar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:deactivate', 'Desativar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('schedules:reactivate', 'Reativar agendamento', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('products:create', 'Criar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('products:view', 'Visualizar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('products:update', 'Atualizar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('products:delete', 'Deletar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('products:deactivate', 'Desativar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('products:reactivate', 'Reativar produto', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('services:create', 'Criar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('services:view', 'Visualizar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type, 'common'::user_role_type]::user_role_type[]),
+    ('services:update', 'Atualizar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('services:delete', 'Deletar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('services:deactivate', 'Desativar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('services:reactivate', 'Reativar serviço', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('logs:view', 'Visualizar logs', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('plans:create', 'Criar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:view', 'Visualizar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:update', 'Atualizar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:delete', 'Deletar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:restore', 'Restaurar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:deactivate', 'Desativar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('plans:reactivate', 'Reativar plano', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:create', 'Criar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:view', 'Visualizar relatórios', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('reports:update', 'Atualizar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:delete', 'Deletar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:restore', 'Restaurar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:deactivate', 'Desativar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('reports:reactivate', 'Reativar relatório', ARRAY['root'::user_role_type]::user_role_type[]),
+    ('finances:create', 'Criar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:view', 'Visualizar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:update', 'Atualizar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:delete', 'Deletar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:restore', 'Restaurar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:deactivate', 'Desativar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('finances:reactivate', 'Reativar transação', ARRAY['root'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('suppliers:create', 'Criar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:view', 'Visualizar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:update', 'Atualizar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:delete', 'Deletar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:restore', 'Restaurar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:deactivate', 'Desativar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('suppliers:reactivate', 'Reativar fornecedor', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:create', 'Criar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:view', 'Visualizar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:update', 'Atualizar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:delete', 'Deletar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:deactivate', 'Desativar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('external_access:reactivate', 'Reativar acesso', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:create', 'Criar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:view', 'Visualizar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:update', 'Atualizar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:delete', 'Deletar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:deactivate', 'Desativar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('stock:reactivate', 'Reativar estoque', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:create', 'Criar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:view', 'Visualizar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:update', 'Atualizar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:delete', 'Deletar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:restore', 'Restaurar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:deactivate', 'Desativar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('daycare:reactivate', 'Reativar creche', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:create', 'Criar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:view', 'Visualizar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:update', 'Atualizar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:delete', 'Deletar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:restore', 'Restaurar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:deactivate', 'Desativar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('hotel:reactivate', 'Reativar hotel', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:create', 'Criar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:view', 'Visualizar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:update', 'Atualizar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:delete', 'Deletar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:restore', 'Restaurar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:deactivate', 'Desativar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('chat:reactivate', 'Reativar chat', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:create', 'Criar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:view', 'Visualizar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:update', 'Atualizar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:delete', 'Deletar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:restore', 'Restaurar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:deactivate', 'Desativar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('notifications:reactivate', 'Reativar notificação', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:create', 'Criar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:view', 'Visualizar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:update', 'Atualizar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:delete', 'Deletar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:restore', 'Restaurar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:deactivate', 'Desativar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('pickup_delivery:reactivate', 'Reativar serviço de tele-busca', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[])
+)
+INSERT INTO permissions (code, description, default_roles)
+SELECT
+  ps.code,
+  ps.description,
+  ps.default_roles
+FROM permission_seed ps
+ON CONFLICT (code) DO UPDATE SET
+  description = EXCLUDED.description,
+  default_roles = EXCLUDED.default_roles,
+  updated_at = NOW();
+
 -- Plan types
 INSERT INTO plan_types (name, description)
 SELECT 'Monthly', 'Default monthly billing cycle'
@@ -175,6 +310,21 @@ WHERE NOT EXISTS (
   SELECT 1
   FROM company_users cu
   WHERE cu.company_id = dc.id AND cu.user_id = su.id
+);
+
+-- Default permissions for every user according to permissions.default_roles
+INSERT INTO user_permissions (user_id, permission_id, granted_by)
+SELECT
+  u.id,
+  p.id,
+  NULL
+FROM users u
+INNER JOIN permissions p ON u.role = ANY(p.default_roles)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_permissions up
+  WHERE up.user_id = u.id
+    AND up.permission_id = p.id
 );
 
 -- System people for seeded users
