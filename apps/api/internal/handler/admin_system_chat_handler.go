@@ -147,6 +147,16 @@ func (h *AdminSystemChatHandler) CreateMessage(c *gin.Context) {
 		return
 	}
 
+	h.hub.BroadcastConversationEvent(
+		c.Request.Context(),
+		uuidToString(companyID),
+		uuidToString(currentUserID),
+		uuidToString(contactUserID),
+		func(connection realtime.InternalChatConnection) map[string]any {
+			return h.newMessageCreatedEvent(connection, item)
+		},
+	)
+
 	middleware.JSONData(c, http.StatusCreated, mapAdminSystemChatMessage(item))
 }
 
@@ -203,6 +213,7 @@ func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
 		CounterpartUserID: uuidToString(contactUserID),
 		UserRole:          claims.Role,
 		ConnectedAt:       time.Now().UTC(),
+		Socket:            socket,
 	}
 
 	h.hub.Register(connection)
@@ -233,4 +244,17 @@ func (h *AdminSystemChatHandler) writeSocketEvent(ctx context.Context, socket *w
 	defer cancel()
 
 	return wsjson.Write(writeCtx, socket, payload)
+}
+
+func (h *AdminSystemChatHandler) newMessageCreatedEvent(
+	connection realtime.InternalChatConnection,
+	item service.AdminSystemChatMessage,
+) map[string]any {
+	return map[string]any{
+		"type":                "chat.message.created",
+		"company_id":          uuidToString(item.CompanyID),
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          formatTimestamptz(item.CreatedAt),
+		"message":             mapAdminSystemChatMessage(item),
+	}
 }

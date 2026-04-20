@@ -1,8 +1,12 @@
 package realtime
 
 import (
+	"context"
 	"sync"
 	"time"
+
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 )
 
 type InternalChatConnection struct {
@@ -12,6 +16,7 @@ type InternalChatConnection struct {
 	CounterpartUserID string
 	UserRole          string
 	ConnectedAt       time.Time
+	Socket            *websocket.Conn
 }
 
 type InternalChatHub struct {
@@ -19,6 +24,8 @@ type InternalChatHub struct {
 	connections       map[string]InternalChatConnection
 	participantCounts map[string]int
 }
+
+const internalChatSocketWriteTimeout = 10 * time.Second
 
 func NewInternalChatHub() *InternalChatHub {
 	return &InternalChatHub{
@@ -28,7 +35,7 @@ func NewInternalChatHub() *InternalChatHub {
 }
 
 func (h *InternalChatHub) Register(connection InternalChatConnection) {
-	if connection.ID == "" {
+	if connection.ID == "" || connection.Socket == nil {
 		return
 	}
 
@@ -78,6 +85,54 @@ func (h *InternalChatHub) TotalConnections() int {
 	return len(h.connections)
 }
 
+func (h *InternalChatHub) BroadcastConversationEvent(
+	ctx context.Context,
+	companyID string,
+	firstUserID string,
+	secondUserID string,
+	payloadForConnection func(connection InternalChatConnection) map[string]any,
+) {
+	targets := h.matchingConversationConnections(companyID, firstUserID, secondUserID)
+
+	for _, connection := range targets {
+		payload := payloadForConnection(connection)
+		if payload == nil {
+			continue
+		}
+
+		writeCtx, cancel := context.WithTimeout(ctx, internalChatSocketWriteTimeout)
+		err := wsjson.Write(writeCtx, connection.Socket, payload)
+		cancel()
+		if err != nil {
+			_ = connection.Socket.Close(websocket.StatusInternalError, "broadcast failed")
+			h.Unregister(connection.ID)
+		}
+	}
+}
+
 func (h *InternalChatHub) participantKey(companyID string, userID string) string {
 	return companyID + ":" + userID
+}
+
+func (h *InternalChatHub) matchingConversationConnections(
+	companyID string,
+	firstUserID string,
+	secondUserID string,
+) []InternalChatConnection {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	items := make([]InternalChatConnection, 0)
+	for _, connection := range h.connections {
+		if connection.CompanyID != companyID {
+			continue
+		}
+
+		if (connection.UserID == firstUserID && connection.CounterpartUserID == secondUserID) ||
+			(connection.UserID == secondUserID && connection.CounterpartUserID == firstUserID) {
+			items = append(items, connection)
+		}
+	}
+
+	return items
 }

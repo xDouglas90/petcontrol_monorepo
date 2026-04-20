@@ -210,6 +210,16 @@ Status atual:
 
 ## Fase 2 - Broadcast de Mensagens
 
+Status atual:
+
+- O `POST /api/v1/chat/system/:user_id/messages` agora dispara fan-out WebSocket após persistir a mensagem.
+- O hub passou a manter as conexões vivas da conversa e filtrar o broadcast pelo par exato `admin <-> system`.
+- O evento `chat.message.created` já chega em tempo real para sessões conectadas da conversa.
+- A emissão continua dependente da persistência bem-sucedida no banco, preservando o REST como fonte canônica.
+- Cobertura criada para:
+  - broadcast do hub para a conversa correta;
+  - envio REST seguido de recebimento do evento no socket.
+
 ### 2.1 Ações
 
 - Emitir evento ao persistir nova mensagem.
@@ -218,8 +228,8 @@ Status atual:
 
 ### 2.2 Checks
 
-- [ ] Novas mensagens aparecem em tempo real sem refresh.
-- [ ] O histórico persistido continua íntegro.
+- [x] Novas mensagens aparecem em tempo real sem refresh.
+- [x] O histórico persistido continua íntegro.
 
 ## Fase 3 - Presença Dinâmica
 
