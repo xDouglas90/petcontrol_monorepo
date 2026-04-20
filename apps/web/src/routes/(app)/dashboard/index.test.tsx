@@ -6,6 +6,7 @@ import { DashboardPage } from './index';
 import { useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 
+const mockUseInternalChatSocket = vi.fn();
 const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
@@ -14,6 +15,10 @@ const mockUseAdminSystemChatMessagesQuery = vi.fn();
 const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockUseScheduleHistoriesQuery = vi.fn();
+
+vi.mock('@/hooks/use-internal-chat-socket', () => ({
+  useInternalChatSocket: () => mockUseInternalChatSocket(),
+}));
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanyQuery: () => mockUseCurrentCompanyQuery(),
@@ -31,6 +36,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
 describe('DashboardPage', () => {
   beforeEach(() => {
     localStorage.clear();
+    HTMLElement.prototype.scrollTo = vi.fn();
     useAuthStore.setState({
       session: {
         accessToken: 'token-123',
@@ -58,6 +64,7 @@ describe('DashboardPage', () => {
     mockUseCreateAdminSystemChatMessageMutation.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockUseScheduleHistoriesQuery.mockReset();
+    mockUseInternalChatSocket.mockReset();
     vi.useRealTimers();
   });
 
@@ -190,6 +197,16 @@ describe('DashboardPage', () => {
       isPending: false,
       isError: false,
     });
+    mockUseInternalChatSocket.mockReturnValue({
+      presenceMap: {
+        'user-system-1': {
+          user_id: 'user-system-1',
+          status: 'online',
+          last_changed_at: '2026-04-19T10:20:00-03:00',
+        },
+      },
+      updatePresenceStatus: vi.fn(),
+    });
     mockUseScheduleHistoriesQuery.mockReturnValue([
       {
         data: [
@@ -210,7 +227,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Olá, Maria')).toBeTruthy();
     expect(screen.getByText('Agendamentos/dia')).toBeTruthy();
     expect(screen.getByText('Agendamentos/mês')).toBeTruthy();
-    expect(screen.getByText('Eficiência')).toBeTruthy();
+    expect(screen.getByText('Eficiência (meta mensal)')).toBeTruthy();
     expect(screen.getByText('Performance')).toBeTruthy();
     expect(screen.getByText('Ocupação por horário operacional')).toBeTruthy();
     expect(screen.getByText('Agendamentos em andamento')).toBeTruthy();
@@ -218,7 +235,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Finalizado')).toBeTruthy();
     expect(screen.getByText('1h 15min')).toBeTruthy();
     expect(screen.getByText('Chat do sistema')).toBeTruthy();
-    expect(screen.getByText('Histórico persistido')).toBeTruthy();
+    expect(screen.getByText('Suporte ao administrador')).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Selecionar usuário system' })).toBeTruthy();
     expect(screen.getAllByText('System').length).toBeGreaterThan(0);
     expect(
@@ -329,6 +346,10 @@ describe('DashboardPage', () => {
       isPending: false,
       isError: false,
     });
+    mockUseInternalChatSocket.mockReturnValue({
+      presenceMap: {},
+      updatePresenceStatus: vi.fn(),
+    });
     mockUseScheduleHistoriesQuery.mockReturnValue([]);
 
     render(<DashboardPage />);
@@ -340,9 +361,9 @@ describe('DashboardPage', () => {
     ).toBeTruthy();
     expect(
       screen.getByRole('option', {
-        name: 'Nenhum usuário system vinculado',
+        name: 'Nenhum usuário vinculado',
       }),
     ).toBeTruthy();
-    expect(screen.getByText('Usuários system')).toBeTruthy();
+    expect(screen.getByText('Lista de usuários')).toBeTruthy();
   });
 });
