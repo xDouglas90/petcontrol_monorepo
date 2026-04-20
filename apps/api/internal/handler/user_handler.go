@@ -57,6 +57,12 @@ func (h *UserHandler) Current(c *gin.Context) {
 		"full_name":  profile.FullName,
 		"short_name": profile.ShortName,
 		"image_url":  profile.ImageURL,
+		"settings_access": gin.H{
+			"can_view":                  profile.SettingsAccess.CanView,
+			"can_manage_permissions":    profile.SettingsAccess.CanManagePermissions,
+			"active_permission_codes":   profile.SettingsAccess.ActivePermissionCodes,
+			"editable_permission_codes": profile.SettingsAccess.EditablePermissionCodes,
+		},
 	})
 }
 

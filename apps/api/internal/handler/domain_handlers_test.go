@@ -65,6 +65,58 @@ func TestCompanyHandler_Current(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestUserHandler_CurrentIncludesSettingsAccess(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewUserService(queries)
+	handlerUnderTest := NewUserHandler(serviceUnderTest)
+
+	userID := domainHandlerUUID(t)
+	companyID := domainHandlerUUID(t)
+	personID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
+		WithArgs(userID, int32(0), int32(1000)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}))
+	mock.ExpectQuery(`(?s)name: GetUserByID`).
+		WithArgs(userID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(userID, "admin@petcontrol.local", true, time.Now(), sqlc.UserRoleTypeAdmin, true, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetUserProfile`).
+		WithArgs(userID).
+		WillReturnRows(pgxmock.NewRows([]string{"user_id", "person_id", "created_at"}).
+			AddRow(userID, personID, time.Now()))
+	mock.ExpectQuery(`(?s)name: GetPerson`).
+		WithArgs(personID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "kind", "is_active", "has_system_user", "created_at", "updated_at", "full_name", "short_name", "gender_identity", "marital_status", "image_url", "birth_date", "cpf", "identifications_created_at", "identifications_updated_at"}).
+			AddRow(personID, sqlc.PersonKindEmployee, true, true, time.Now(), time.Now(), "Maria da Silva", "Maria", nil, nil, nil, nil, nil, time.Now(), time.Now()))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+	router.GET("/users/me", handlerUnderTest.Current)
+
+	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "\"can_view\":true")
+	require.Contains(t, res.Body.String(), "\"can_manage_permissions\":true")
+	require.Contains(t, res.Body.String(), "\"editable_permission_codes\":[\"company_settings:edit\"")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestCompanySystemConfigHandler_Update(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

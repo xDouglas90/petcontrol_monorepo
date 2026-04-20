@@ -11,15 +11,6 @@ import (
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 )
 
-var tenantSettingsPermissionCodes = []string{
-	"company_settings:edit",
-	"plan_settings:edit",
-	"payment_settings:edit",
-	"notification_settings:edit",
-	"integration_settings:edit",
-	"security_settings:edit",
-}
-
 type CompanyUserPermissionItem struct {
 	ID               pgtype.UUID
 	Code             string
@@ -69,7 +60,7 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 		return CompanyUserPermissionsSnapshot{}, err
 	}
 
-	catalog, err := s.queries.ListPermissionsByCodes(ctx, tenantSettingsPermissionCodes)
+	catalog, err := s.queries.ListPermissionsByCodes(ctx, TenantSettingsPermissionCodes())
 	if err != nil {
 		return CompanyUserPermissionsSnapshot{}, err
 	}
@@ -162,8 +153,8 @@ func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx conte
 }
 
 func normalizeManagedPermissionCodes(values []string) (map[string]struct{}, error) {
-	allowed := make(map[string]struct{}, len(tenantSettingsPermissionCodes))
-	for _, code := range tenantSettingsPermissionCodes {
+	allowed := make(map[string]struct{}, len(TenantSettingsPermissionCodes()))
+	for _, code := range TenantSettingsPermissionCodes() {
 		allowed[code] = struct{}{}
 	}
 
