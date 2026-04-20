@@ -45,6 +45,21 @@ ORDER BY
     p.code ASC
 LIMIT sqlc.arg('Limit')::int OFFSET sqlc.arg('Offset')::int;
 
+-- name: ListPermissionsByCodes :many
+SELECT
+    p.id,
+    p.code,
+    p.description,
+    p.default_roles,
+    p.created_at,
+    p.updated_at
+FROM
+    permissions p
+WHERE
+    p.code = ANY (sqlc.slice('Codes')::varchar[])
+ORDER BY
+    p.code ASC;
+
 -- name: ListPermissionsByModule :many
 SELECT
     p.id,
@@ -76,4 +91,3 @@ WHERE
 -- name: DeletePermission :execrows
 DELETE FROM permissions
 WHERE id = sqlc.arg('ID')::uuid;
-

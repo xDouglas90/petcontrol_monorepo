@@ -369,9 +369,9 @@ Status atual:
 
 ### 3.2 Checks
 
-- [ ] O admin consegue consultar permissões de qualquer usuário do tenant.
-- [ ] O admin consegue conceder e revogar permissões.
-- [ ] Usuários fora do tenant não podem ser alterados.
+- [x] O admin consegue consultar permissões de qualquer usuário do tenant.
+- [x] O admin consegue conceder e revogar permissões.
+- [x] Usuários fora do tenant não podem ser alterados.
 
 ## Fase 4 - Middleware e Gating de Autorização
 

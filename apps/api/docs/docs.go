@@ -73,6 +73,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/chat/system/{user_id}/messages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the persisted text conversation between the authenticated admin/system user and the selected counterpart in the same tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "List persisted admin-system chat messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Counterpart user id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.AdminSystemChatMessageListResponseDoc"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Persists a text message in the admin-system tenant conversation.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Create persisted admin-system chat message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Counterpart user id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AdminSystemChatMessageCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.AdminSystemChatMessageItemResponseDoc"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
         "/clients": {
             "get": {
                 "security": [
@@ -394,6 +508,171 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the authenticated company's data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "companies"
+                ],
+                "summary": "Update current company",
+                "parameters": [
+                    {
+                        "description": "Update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-system-configs/current": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the system configuration resolved from the authenticated tenant context.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company-system-configs"
+                ],
+                "summary": "Get current company system config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanySystemConfigResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the authenticated tenant system configuration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company-system-configs"
+                ],
+                "summary": "Update current company system config",
+                "parameters": [
+                    {
+                        "description": "Update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanySystemConfigUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanySystemConfigResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
             }
         },
         "/company-users": {
@@ -515,6 +794,132 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/company-users/{user_id}/permissions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists the configurable tenant settings permissions for a user linked to the authenticated company. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "List company user manageable permissions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserPermissionsResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the configurable tenant settings permissions for a user linked to the authenticated company. Admin only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company_users"
+                ],
+                "summary": "Update company user manageable permissions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permissions payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserPermissionsUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CompanyUserPermissionsResponseDoc"
+                        }
                     },
                     "403": {
                         "description": "Forbidden",
@@ -1548,6 +1953,49 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the authenticated user profile required by the Web shell.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CurrentUserResponseDoc"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1562,6 +2010,75 @@ const docTemplate = `{
                 },
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.AdminSystemChatMessageCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Tudo certo por aí? Precisamos revisar os agendamentos de hoje."
+                }
+            }
+        },
+        "handler.AdminSystemChatMessageDoc": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string",
+                    "example": "Tudo certo por aí? Precisamos revisar os agendamentos de hoje."
+                },
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "conversation_id": {
+                    "type": "string",
+                    "example": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-20T09:30:00Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+                },
+                "sender_image_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/users/system.png"
+                },
+                "sender_name": {
+                    "type": "string",
+                    "example": "System"
+                },
+                "sender_role": {
+                    "type": "string",
+                    "example": "system"
+                },
+                "sender_user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.AdminSystemChatMessageItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.AdminSystemChatMessageDoc"
+                }
+            }
+        },
+        "handler.AdminSystemChatMessageListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.AdminSystemChatMessageDoc"
+                    }
                 }
             }
         },
@@ -1840,6 +2357,193 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CompanySystemConfigDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "dynamic_cages": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "max_schedules_per_day": {
+                    "type": "integer",
+                    "example": 18
+                },
+                "min_schedules_per_day": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "schedule_days": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday"
+                    ]
+                },
+                "schedule_end_time": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "schedule_init_time": {
+                    "type": "string",
+                    "example": "08:00"
+                },
+                "schedule_pause_end_time": {
+                    "type": "string",
+                    "example": "13:00"
+                },
+                "schedule_pause_init_time": {
+                    "type": "string",
+                    "example": "12:00"
+                },
+                "total_giant_cages": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "total_large_cages": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "total_medium_cages": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "total_small_cages": {
+                    "type": "integer",
+                    "example": 8
+                },
+                "whatsapp_business_phone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "whatsapp_conversation": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "whatsapp_notifications": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "handler.CompanySystemConfigResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanySystemConfigDoc"
+                }
+            }
+        },
+        "handler.CompanySystemConfigUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "dynamic_cages": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "max_schedules_per_day": {
+                    "type": "integer",
+                    "example": 18
+                },
+                "min_schedules_per_day": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "schedule_days": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday"
+                    ]
+                },
+                "schedule_end_time": {
+                    "type": "string",
+                    "example": "18:00"
+                },
+                "schedule_init_time": {
+                    "type": "string",
+                    "example": "08:00"
+                },
+                "schedule_pause_end_time": {
+                    "type": "string",
+                    "example": "13:00"
+                },
+                "schedule_pause_init_time": {
+                    "type": "string",
+                    "example": "12:00"
+                },
+                "total_giant_cages": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "total_large_cages": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "total_medium_cages": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "total_small_cages": {
+                    "type": "integer",
+                    "example": 8
+                },
+                "whatsapp_business_phone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "whatsapp_conversation": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "whatsapp_notifications": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "handler.CompanyUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "fantasy_name": {
+                    "type": "string",
+                    "example": "PetControl"
+                },
+                "foundation_date": {
+                    "type": "string",
+                    "example": "2020-01-15"
+                },
+                "logo_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/companies/logo.png"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "PetControl Matriz"
+                },
+                "upload_object_key": {
+                    "type": "string",
+                    "example": "uploads/companies/logo_url/2026/04/company-logo.png"
+                }
+            }
+        },
         "handler.CompanyUserCreateRequestDoc": {
             "type": "object",
             "properties": {
@@ -1860,9 +2564,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "11111111-1111-1111-1111-111111111111"
                 },
+                "full_name": {
+                    "type": "string",
+                    "example": "System PetControl"
+                },
                 "id": {
                     "type": "string",
                     "example": "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/users/system.png"
                 },
                 "is_active": {
                     "type": "boolean",
@@ -1876,9 +2588,21 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2026-04-10T10:00:00Z"
                 },
+                "kind": {
+                    "type": "string",
+                    "example": "employee"
+                },
                 "left_at": {
                     "type": "string",
                     "example": "2026-04-11T11:00:00Z"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "system"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "System"
                 },
                 "user_id": {
                     "type": "string",
@@ -1902,6 +2626,160 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.CompanyUserDoc"
                     }
+                }
+            }
+        },
+        "handler.CompanyUserPermissionDoc": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "company_settings:edit"
+                },
+                "default_roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "root",
+                        "admin"
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Editar configurações gerais"
+                },
+                "granted_at": {
+                    "type": "string",
+                    "example": "2026-04-20T09:30:00Z"
+                },
+                "granted_by": {
+                    "type": "string",
+                    "example": "33333333-3333-3333-3333-333333333333"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_default_for_role": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "handler.CompanyUserPermissionsDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_owner": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "employee"
+                },
+                "managed_by": {
+                    "type": "string",
+                    "example": "33333333-3333-3333-3333-333333333333"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CompanyUserPermissionDoc"
+                    }
+                },
+                "role": {
+                    "type": "string",
+                    "example": "system"
+                },
+                "scope": {
+                    "type": "string",
+                    "example": "tenant_settings"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                }
+            }
+        },
+        "handler.CompanyUserPermissionsResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CompanyUserPermissionsDoc"
+                }
+            }
+        },
+        "handler.CompanyUserPermissionsUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "permission_codes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "plan_settings:edit",
+                        "notification_settings:edit"
+                    ]
+                }
+            }
+        },
+        "handler.CurrentUserDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria da Silva"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/users/maria.png"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "owner"
+                },
+                "person_id": {
+                    "type": "string",
+                    "example": "33333333-3333-3333-3333-333333333333"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                }
+            }
+        },
+        "handler.CurrentUserResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.CurrentUserDoc"
                 }
             }
         },
@@ -2033,6 +2911,10 @@ const docTemplate = `{
                 "temperament": {
                     "type": "string",
                     "example": "playful"
+                },
+                "upload_object_key": {
+                    "type": "string",
+                    "example": "uploads/pets/image_url/2026/04/uuid-thor.png"
                 }
             }
         },
@@ -2154,6 +3036,10 @@ const docTemplate = `{
                 "temperament": {
                     "type": "string",
                     "example": "loving"
+                },
+                "upload_object_key": {
+                    "type": "string",
+                    "example": "uploads/pets/image_url/2026/04/uuid-thor.png"
                 }
             }
         },

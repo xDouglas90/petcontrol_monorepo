@@ -255,6 +255,7 @@ type Querier interface {
 	ListNotificationsByCompanyID(ctx context.Context, arg ListNotificationsByCompanyIDParams) ([]Notification, error)
 	ListPeople(ctx context.Context, arg ListPeopleParams) ([]ListPeopleRow, error)
 	ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]Permission, error)
+	ListPermissionsByCodes(ctx context.Context, codes []string) ([]Permission, error)
 	ListPermissionsByModule(ctx context.Context, arg ListPermissionsByModuleParams) ([]Permission, error)
 	ListPermissionsByPlanID(ctx context.Context, arg ListPermissionsByPlanIDParams) ([]Permission, error)
 	ListPermissionsByRole(ctx context.Context, arg ListPermissionsByRoleParams) ([]Permission, error)
@@ -289,6 +290,7 @@ type Querier interface {
 	MarkEmailVerificationTokenAsUsed(ctx context.Context, arg MarkEmailVerificationTokenAsUsedParams) (int64, error)
 	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (int64, error)
 	MarkPasswordRecoveryTokenAsUsed(ctx context.Context, arg MarkPasswordRecoveryTokenAsUsedParams) (int64, error)
+	ReactivateUserPermission(ctx context.Context, arg ReactivateUserPermissionParams) (int64, error)
 	ResetUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
 	RestoreUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	RevokeEmailVerificationToken(ctx context.Context, arg RevokeEmailVerificationTokenParams) (int64, error)

@@ -118,6 +118,49 @@ func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams
 	return items, nil
 }
 
+const listPermissionsByCodes = `-- name: ListPermissionsByCodes :many
+SELECT
+    p.id,
+    p.code,
+    p.description,
+    p.default_roles,
+    p.created_at,
+    p.updated_at
+FROM
+    permissions p
+WHERE
+    p.code = ANY ($1::varchar[])
+ORDER BY
+    p.code ASC
+`
+
+func (q *Queries) ListPermissionsByCodes(ctx context.Context, codes []string) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissionsByCodes, codes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DefaultRoles,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPermissionsByModule = `-- name: ListPermissionsByModule :many
 SELECT
     p.id,
