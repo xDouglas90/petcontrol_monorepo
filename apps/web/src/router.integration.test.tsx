@@ -11,6 +11,7 @@ import { useUIStore } from '@/stores/ui.store';
 const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
+const mockUseCompanyUsersQuery = vi.fn();
 const mockUseClientsQuery = vi.fn();
 const mockUsePetsQuery = vi.fn();
 const mockUseServicesQuery = vi.fn();
@@ -25,6 +26,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanySystemConfigQuery: () =>
     mockUseCurrentCompanySystemConfigQuery(),
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
+  useCompanyUsersQuery: () => mockUseCompanyUsersQuery(),
   useClientsQuery: () => mockUseClientsQuery(),
   usePetsQuery: () => mockUsePetsQuery(),
   useServicesQuery: () => mockUseServicesQuery(),
@@ -77,6 +79,7 @@ describe('Router integration', () => {
     mockUseCurrentCompanyQuery.mockReset();
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
+    mockUseCompanyUsersQuery.mockReset();
     mockUseClientsQuery.mockReset();
     mockUsePetsQuery.mockReset();
     mockUseServicesQuery.mockReset();
@@ -159,6 +162,26 @@ describe('Router integration', () => {
         data: schedules,
         meta: { total: schedules.length, page: 1, limit: 10, total_pages: 1 }
       },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCompanyUsersQuery.mockReturnValue({
+      data: [
+        {
+          id: 'company-user-system-1',
+          company_id: 'company-1',
+          user_id: 'user-system-1',
+          kind: 'employee',
+          role: 'system',
+          is_owner: false,
+          is_active: true,
+          full_name: 'System PetControl',
+          short_name: 'System',
+          image_url: null,
+          joined_at: '2026-04-10T10:00:00Z',
+          left_at: null,
+        },
+      ],
       isLoading: false,
       isError: false,
     });

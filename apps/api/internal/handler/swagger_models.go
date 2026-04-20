@@ -389,8 +389,13 @@ type CompanyUserDoc struct {
 	ID        string  `json:"id" example:"dddddddd-dddd-dddd-dddd-dddddddddddd"`
 	CompanyID string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
 	UserID    string  `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
+	Kind      string  `json:"kind" example:"employee"`
+	Role      string  `json:"role" example:"system"`
 	IsOwner   bool    `json:"is_owner" example:"false"`
 	IsActive  bool    `json:"is_active" example:"true"`
+	FullName  *string `json:"full_name,omitempty" example:"System PetControl"`
+	ShortName *string `json:"short_name,omitempty" example:"System"`
+	ImageURL  *string `json:"image_url,omitempty" example:"https://cdn.example.com/users/system.png"`
 	JoinedAt  string  `json:"joined_at" example:"2026-04-10T10:00:00Z"`
 	LeftAt    *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
 }

@@ -18,6 +18,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import {
+  useCompanyUsersQuery,
   useCurrentCompanyQuery,
   useCurrentCompanySystemConfigQuery,
   useCurrentUserQuery,
@@ -42,6 +43,7 @@ export function DashboardPage() {
   const currentUserQuery = useCurrentUserQuery();
   const systemConfigQuery = useCurrentCompanySystemConfigQuery();
   const schedulesQuery = useSchedulesQuery();
+  const companyUsersQuery = useCompanyUsersQuery();
 
   const company = companyQuery.data;
   const currentUser = currentUserQuery.data;
@@ -78,7 +80,8 @@ export function DashboardPage() {
     companyQuery.isLoading ||
     currentUserQuery.isLoading ||
     systemConfigQuery.isLoading ||
-    schedulesQuery.isLoading
+    schedulesQuery.isLoading ||
+    companyUsersQuery.isLoading
   ) {
     return <DashboardSkeleton />;
   }
@@ -88,6 +91,7 @@ export function DashboardPage() {
     currentUserQuery.isError ||
     systemConfigQuery.isError ||
     schedulesQuery.isError ||
+    companyUsersQuery.isError ||
     !company ||
     !currentUser ||
     !systemConfig
@@ -160,7 +164,10 @@ export function DashboardPage() {
     systemConfig,
     normalizedSelectedWeekKey,
   );
-  const chatContacts = buildSystemContactOptions();
+  const chatContacts = buildSystemContactOptions(
+    companyUsersQuery.data ?? [],
+    currentUser.user_id,
+  );
   const selectedSystemContact =
     chatContacts.find((contact) => contact.id === selectedSystemContactId) ??
     chatContacts[0];
@@ -1008,17 +1015,58 @@ function formatHourLabel(hourValue: number) {
   return `${String(hours).padStart(2, '0')}h${minutes === '30' ? '30' : ''}`;
 }
 
-function buildSystemContactOptions() {
-  return [
-    {
-      id: 'contract-pending',
-      label: 'Integração de usuários system pendente',
-      name: 'Usuários system',
-      subtitle: 'Contrato futuro para conversa interna',
-      avatar: 'SY',
-      statusClass: 'bg-stone-400',
-    },
-  ];
+function resolveInitials(value: string) {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'PC';
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
+
+function buildSystemContactOptions(
+  companyUsers: Array<{
+    id: string;
+    user_id: string;
+    role: string;
+    short_name?: string | null;
+    full_name?: string | null;
+  }>,
+  currentUserId: string,
+) {
+  const systemUsers = companyUsers.filter(
+    (item) => item.role === 'system' && item.user_id !== currentUserId,
+  );
+
+  if (systemUsers.length === 0) {
+    return [
+      {
+        id: 'contract-pending',
+        label: 'Nenhum usuário system vinculado',
+        name: 'Usuários system',
+        subtitle: 'Vincule um contato system ao tenant para habilitar o seletor',
+        avatar: 'SY',
+        statusClass: 'bg-stone-400',
+      },
+    ];
+  }
+
+  return systemUsers.map((item) => {
+    const name = item.short_name || item.full_name || 'Usuário system';
+    return {
+      id: item.id,
+      label: name,
+      name,
+      subtitle: 'Contato system do tenant',
+      avatar: resolveInitials(name),
+      statusClass: 'bg-emerald-500',
+    };
+  });
 }
 
 function buildSupportMessages({

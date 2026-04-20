@@ -42,13 +42,13 @@ func (h *CompanyUserHandler) List(c *gin.Context) {
 		return
 	}
 
-	users, err := h.service.ListCompanyUsers(c.Request.Context(), companyID)
+	users, err := h.service.ListCompanyUsersWithProfile(c.Request.Context(), companyID)
 	if err != nil {
 		middleware.JSONError(c, 500, "list_company_users_failed", "failed to list company users")
 		return
 	}
 
-	middleware.JSONData(c, 200, users)
+	middleware.JSONData(c, 200, mapCompanyUsers(users))
 }
 
 // Create godoc

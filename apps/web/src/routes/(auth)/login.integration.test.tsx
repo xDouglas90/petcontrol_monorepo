@@ -10,6 +10,7 @@ import { useUIStore } from '@/stores/ui.store';
 const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
+const mockUseCompanyUsersQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockUseScheduleHistoriesQuery = vi.fn();
 
@@ -18,6 +19,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanySystemConfigQuery: () =>
     mockUseCurrentCompanySystemConfigQuery(),
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
+  useCompanyUsersQuery: () => mockUseCompanyUsersQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
   useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
   domainQueryKeys: {
@@ -33,6 +35,7 @@ describe('Login flow integration', () => {
     mockUseCurrentCompanyQuery.mockReset();
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
+    mockUseCompanyUsersQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockUseScheduleHistoriesQuery.mockReset();
 
@@ -114,6 +117,26 @@ describe('Login flow integration', () => {
 
     mockUseSchedulesQuery.mockReturnValue({
       data: [],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCompanyUsersQuery.mockReturnValue({
+      data: [
+        {
+          id: 'company-user-system-1',
+          company_id: 'company-1',
+          user_id: 'user-system-1',
+          kind: 'employee',
+          role: 'system',
+          is_owner: false,
+          is_active: true,
+          full_name: 'System PetControl',
+          short_name: 'System',
+          image_url: null,
+          joined_at: '2026-04-10T10:00:00Z',
+          left_at: null,
+        },
+      ],
       isLoading: false,
       isError: false,
     });

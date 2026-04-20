@@ -650,8 +650,10 @@ Status atual:
 
 - UI estrutural implementada no dashboard `admin`.
 - O seletor visual e o cabeçalho do contato já ocupam a coluna direita.
+- O dashboard agora consome usuários reais do tenant via `company-users`, filtrando contatos com `role = system`.
+- O seed local passou a incluir ao menos um usuário `system` vinculado ao tenant para alimentar a experiência.
 - O bloco esta explicitamente marcado como `UI + contrato futuro`, sem prometer persistência de mensagens nem presença em tempo real.
-- Ainda falta contrato/backend para listar usuários `system` reais do tenant e abrir conversas de verdade.
+- Ainda falta contrato/backend para abrir conversas de verdade e sustentar histórico/presença.
 
 ### 6.1 Ações
 
@@ -665,12 +667,22 @@ Status atual:
 
 ### 6.2 Checks
 
-- [ ] Existe seletor de usuários do chat.
-- [ ] O contato selecionado exibe avatar e nome curto.
-- [ ] O escopo funcional do chat ficou explicitamente fechado.
-- [ ] Nao ha promessa de voz/video fora do recorte.
+- [x] Existe seletor de usuários do chat.
+- [x] O contato selecionado exibe avatar e nome curto.
+- [x] O escopo funcional do chat ficou explicitamente fechado.
+- [x] Nao ha promessa de voz/video fora do recorte.
 
 ## Fase 7 - Testes, Observabilidade e Documentação
+
+Status atual:
+
+- O shell autenticado e o dashboard `admin` já possuem cobertura relevante de layout, navegação e integração.
+- Os cenários de fallback agora incluem:
+  - tenant sem logo;
+  - usuário sem imagem;
+  - tenant em `premium`;
+  - tenant com configuração operacional mínima e sem dados suficientes para KPI completo.
+- A documentação operacional já descreve as credenciais seedadas e o uso da home `admin` no ambiente local.
 
 ### 7.1 Ações
 
@@ -685,9 +697,9 @@ Status atual:
 
 ### 7.2 Checks
 
-- [ ] O novo layout possui cobertura de testes relevante.
-- [ ] O dashboard `admin` não quebra sem dados completos.
-- [ ] A documentação explica o novo comportamento da home.
+- [x] O novo layout possui cobertura de testes relevante.
+- [x] O dashboard `admin` não quebra sem dados completos.
+- [x] A documentação explica o novo comportamento da home.
 
 ## Riscos e Cuidados
 

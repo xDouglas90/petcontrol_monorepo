@@ -9,6 +9,7 @@ import { useUIStore } from '@/stores/ui.store';
 const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
+const mockUseCompanyUsersQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockUseScheduleHistoriesQuery = vi.fn();
 
@@ -17,6 +18,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanySystemConfigQuery: () =>
     mockUseCurrentCompanySystemConfigQuery(),
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
+  useCompanyUsersQuery: () => mockUseCompanyUsersQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
   useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
 }));
@@ -46,6 +48,7 @@ describe('DashboardPage', () => {
     mockUseCurrentCompanyQuery.mockReset();
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
+    mockUseCompanyUsersQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockUseScheduleHistoriesQuery.mockReset();
     vi.useRealTimers();
@@ -130,6 +133,26 @@ describe('DashboardPage', () => {
         whatsapp_business_phone: '+5511999990001',
       },
     });
+    mockUseCompanyUsersQuery.mockReturnValue({
+      data: [
+        {
+          id: 'company-user-system-1',
+          company_id: 'company-1',
+          user_id: 'user-system-1',
+          kind: 'employee',
+          role: 'system',
+          is_owner: false,
+          is_active: true,
+          full_name: 'System PetControl',
+          short_name: 'System',
+          image_url: null,
+          joined_at: '2026-04-10T10:00:00Z',
+          left_at: null,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
     mockUseSchedulesQuery.mockReturnValue({
       data: {
         data: schedules,
@@ -167,6 +190,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText('1h 15min')).toBeTruthy();
     expect(screen.getByText('Chat do sistema')).toBeTruthy();
     expect(screen.getByText('UI + contrato futuro')).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Selecionar usuário system' })).toBeTruthy();
+    expect(screen.getAllByText('System').length).toBeGreaterThan(0);
     const weekSelect = screen.getByRole('combobox', {
       name: 'Selecionar semana de performance',
     }) as HTMLSelectElement;
@@ -186,5 +211,91 @@ describe('DashboardPage', () => {
       }),
     ).toBeTruthy();
     expect(weekSelect.value).toBe('1-7');
+  });
+
+  it('mantém o dashboard estável com dados operacionais mínimos', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-19T14:30:00-03:00'));
+
+    const company: CompanyDTO = {
+      id: 'company-1',
+      slug: 'petcontrol-dev',
+      name: 'PetControl Desenvolvimento LTDA',
+      fantasy_name: 'PetControl Premium',
+      cnpj: '12345678000195',
+      active_package: 'premium',
+      is_active: true,
+      logo_url: null,
+    };
+
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      data: company,
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCurrentUserQuery.mockReturnValue({
+      data: {
+        user_id: 'user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'admin',
+        kind: 'owner',
+        full_name: 'Administrador Premium',
+        short_name: 'Admin',
+        image_url: null,
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCurrentCompanySystemConfigQuery.mockReturnValue({
+      data: {
+        company_id: 'company-1',
+        schedule_init_time: '08:00',
+        schedule_pause_init_time: '12:00',
+        schedule_pause_end_time: '13:00',
+        schedule_end_time: '18:00',
+        min_schedules_per_day: 0,
+        max_schedules_per_day: 18,
+        schedule_days: [],
+        dynamic_cages: false,
+        total_small_cages: 0,
+        total_medium_cages: 0,
+        total_large_cages: 0,
+        total_giant_cages: 0,
+        whatsapp_notifications: false,
+        whatsapp_conversation: false,
+        whatsapp_business_phone: null,
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCompanyUsersQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseSchedulesQuery.mockReturnValue({
+      data: {
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, total_pages: 0 },
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseScheduleHistoriesQuery.mockReturnValue([]);
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText('Olá, Admin')).toBeTruthy();
+    expect(screen.getByText('0%')).toBeTruthy();
+    expect(
+      screen.getByText('Nenhum atendimento registrado para o turno atual.'),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('option', {
+        name: 'Nenhum usuário system vinculado',
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText('Usuários system')).toBeTruthy();
   });
 });

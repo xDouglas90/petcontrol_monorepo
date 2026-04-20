@@ -235,6 +235,59 @@ describe('AppLayout', () => {
     expect(screen.getByText('Upgrade para basic')).toBeTruthy();
   });
 
+  it('usa fallback visual quando tenant não possui logo e usuário não possui imagem', () => {
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Acme Vet',
+        name: 'Acme Vet LTDA',
+        active_package: 'starter',
+        logo_url: null,
+      },
+    });
+    mockUseCurrentUserQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        user_id: 'user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'admin',
+        kind: 'owner',
+        full_name: 'Joana Souza',
+        short_name: 'Joana',
+        image_url: null,
+      },
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+
+    render(<AppLayout />);
+
+    expect(screen.getByText('AV')).toBeTruthy();
+    expect(screen.getAllByText('J').length).toBeGreaterThan(0);
+  });
+
+  it('ajusta o card de upgrade para tenants em premium', () => {
+    mockUseCurrentCompanyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        slug: 'correct-slug',
+        fantasy_name: 'Correct Company',
+        name: 'Correct Company LTDA',
+        active_package: 'premium',
+        logo_url: null,
+      },
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+
+    render(<AppLayout />);
+
+    expect(screen.getByText('Plano consolidado')).toBeTruthy();
+    expect(screen.getByText('Ver detalhes')).toBeTruthy();
+  });
+
   it('reabre a sidebar automaticamente em telas grandes', () => {
     useUIStore.setState({ sidebarOpen: false });
     mockUseCurrentCompanyQuery.mockReturnValue({

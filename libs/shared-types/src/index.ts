@@ -192,6 +192,25 @@ export interface CurrentCompanySystemConfigApiResponseDTO {
   data: CompanySystemConfigDTO;
 }
 
+export interface CompanyUserDTO {
+  id: UUID;
+  company_id: UUID;
+  user_id: UUID;
+  kind: UserKind;
+  role: UserRole;
+  is_owner: boolean;
+  is_active: boolean;
+  full_name?: string | null;
+  short_name?: string | null;
+  image_url?: string | null;
+  joined_at: string;
+  left_at?: string | null;
+}
+
+export interface CompanyUserListApiResponseDTO {
+  data: CompanyUserDTO[];
+}
+
 export interface ClientDTO {
   id: UUID;
   person_id: UUID;

@@ -141,11 +141,26 @@ ON CONFLICT (user_id) DO UPDATE SET
   must_change_password = EXCLUDED.must_change_password,
   updated_at = NOW();
 
+-- System user for tenant support flows
+INSERT INTO users (email, email_verified, email_verified_at, role, is_active)
+SELECT 'system@petcontrol.local', TRUE, NOW(), 'system', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'system@petcontrol.local');
+
+-- System auth profile (password: password123)
+INSERT INTO user_auth (user_id, password_hash, must_change_password)
+SELECT u.id, '$2a$12$HAtO6l.iXD27nYmeaFjSEeeiYPo0TVPANJzxhUG/DvC5xzdAp2QrG', FALSE
+FROM users u
+WHERE u.email = 'system@petcontrol.local'
+ON CONFLICT (user_id) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  must_change_password = EXCLUDED.must_change_password,
+  updated_at = NOW();
+
 -- Active memberships for seeded users
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), seeded_users AS (
-  SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local')
+  SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local', 'system@petcontrol.local')
 )
 INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
 SELECT
@@ -179,6 +194,15 @@ WHERE NOT EXISTS (
   FROM user_profiles up
   INNER JOIN users u ON u.id = up.user_id
   WHERE u.email = 'admin@petcontrol.local'
+);
+
+INSERT INTO people (kind, is_active, has_system_user)
+SELECT 'employee', TRUE, TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'system@petcontrol.local'
 );
 
 WITH root_user AS (
@@ -225,6 +249,26 @@ FROM admin_user au
 CROSS JOIN admin_person ap
 WHERE NOT EXISTS (
   SELECT 1 FROM user_profiles up WHERE up.user_id = au.id
+);
+
+INSERT INTO user_profiles (user_id, person_id)
+SELECT
+  su.id,
+  sp.id
+FROM users su
+CROSS JOIN LATERAL (
+  SELECT p.id
+  FROM people p
+  LEFT JOIN user_profiles up ON up.person_id = p.id
+  WHERE p.kind = 'employee'
+    AND p.has_system_user = TRUE
+    AND up.user_id IS NULL
+  ORDER BY p.created_at DESC
+  LIMIT 1
+) sp
+WHERE su.email = 'system@petcontrol.local'
+  AND NOT EXISTS (
+  SELECT 1 FROM user_profiles up WHERE up.user_id = su.id
 );
 
 WITH root_profile AS (
@@ -283,6 +327,35 @@ SELECT
 FROM admin_profile ap
 WHERE NOT EXISTS (
   SELECT 1 FROM people_identifications pi WHERE pi.person_id = ap.person_id
+);
+
+WITH system_profile AS (
+  SELECT up.person_id
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO people_identifications (
+  person_id,
+  full_name,
+  short_name,
+  gender_identity,
+  marital_status,
+  birth_date,
+  cpf
+)
+SELECT
+  sp.person_id,
+  'System PetControl',
+  'System',
+  'not_to_expose',
+  'single',
+  DATE '1992-01-01',
+  '00000000003'
+FROM system_profile sp
+WHERE NOT EXISTS (
+  SELECT 1 FROM people_identifications pi WHERE pi.person_id = sp.person_id
 );
 
 -- Active subscription for current seeded plan

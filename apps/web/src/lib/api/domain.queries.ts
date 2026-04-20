@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  CompanyUserDTO,
   CreateClientInput,
   CreatePetInput,
   CreateScheduleInput,
@@ -24,6 +25,7 @@ import {
   getCurrentCompany,
   getCurrentCompanySystemConfig,
   getCurrentUser,
+  listCompanyUsers,
   listClients,
   listPets,
   listSchedules,
@@ -42,6 +44,7 @@ export const domainQueryKeys = {
   currentCompanySystemConfig: () =>
     ['domain', 'company', 'system-config', 'current'] as const,
   currentUser: () => ['domain', 'user', 'current'] as const,
+  companyUsers: () => ['domain', 'company-users'] as const,
   clients: (params?: ListQueryParams) =>
     ['domain', 'clients', params ?? EMPTY_PARAMS] as const,
   pets: (params?: ListQueryParams) =>
@@ -99,6 +102,21 @@ export function useCurrentUserQuery() {
         throw new Error('Sessão não disponível');
       }
       return getCurrentUser(session.accessToken);
+    },
+  });
+}
+
+export function useCompanyUsersQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<CompanyUserDTO[]>({
+    queryKey: domainQueryKeys.companyUsers(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return listCompanyUsers(session.accessToken);
     },
   });
 }

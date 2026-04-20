@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
 func parseUUID(raw string) (pgtype.UUID, error) {
@@ -97,4 +98,40 @@ func weekDaysToStrings(values []sqlc.WeekDay) []string {
 		items = append(items, string(value))
 	}
 	return items
+}
+
+func mapCompanyUsers(items []service.CompanyUserWithProfile) []map[string]any {
+	result := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		result = append(result, map[string]any{
+			"id":         uuidToString(item.ID),
+			"company_id": uuidToString(item.CompanyID),
+			"user_id":    uuidToString(item.UserID),
+			"kind":       string(item.Kind),
+			"role":       string(item.Role),
+			"is_owner":   item.IsOwner,
+			"is_active":  item.IsActive,
+			"full_name":  item.FullName,
+			"short_name": item.ShortName,
+			"image_url":  item.ImageURL,
+			"joined_at":  formatTimestamptz(item.JoinedAt),
+			"left_at":    nullableTimestamptz(item.LeftAt),
+		})
+	}
+	return result
+}
+
+func formatTimestamptz(value pgtype.Timestamptz) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.Time.Format(time.RFC3339)
+}
+
+func nullableTimestamptz(value pgtype.Timestamptz) *string {
+	if !value.Valid {
+		return nil
+	}
+	formatted := value.Time.Format(time.RFC3339)
+	return &formatted
 }

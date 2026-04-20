@@ -15,6 +15,10 @@ describe('domain query keys', () => {
       'system-config',
       'current',
     ]);
+    expect(domainQueryKeys.companyUsers()).toEqual([
+      'domain',
+      'company-users',
+    ]);
     expect(domainQueryKeys.clients()).toEqual(['domain', 'clients', {}]);
     expect(domainQueryKeys.pets()).toEqual(['domain', 'pets', {}]);
     expect(domainQueryKeys.services()).toEqual(['domain', 'services', {}]);

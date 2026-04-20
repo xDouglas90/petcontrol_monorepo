@@ -5,6 +5,8 @@ import type {
   ClientApiResponseDTO,
   ClientListApiResponseDTO,
   CompanyDTO,
+  CompanyUserDTO,
+  CompanyUserListApiResponseDTO,
   CompanySystemConfigDTO,
   CurrentUserApiResponseDTO,
   CurrentCompanySystemConfigApiResponseDTO,
@@ -349,6 +351,39 @@ export async function getScheduleHistory(
 
   const payload = await request<ScheduleHistoryApiResponseDTO>(
     API_PATHS.scheduleHistory(scheduleId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function listCompanyUsers(
+  accessToken: string,
+): Promise<CompanyUserDTO[]> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return [
+      {
+        id: 'company-user-system-1',
+        company_id: mockCompany.id,
+        user_id: 'system-user-1',
+        kind: 'employee',
+        role: 'system',
+        is_owner: false,
+        is_active: true,
+        full_name: 'System PetControl',
+        short_name: 'System',
+        image_url: null,
+        joined_at: new Date().toISOString(),
+        left_at: null,
+      },
+    ];
+  }
+
+  const payload = await request<CompanyUserListApiResponseDTO>(
+    API_PATHS.companyUsers,
     {
       method: 'GET',
       accessToken,
