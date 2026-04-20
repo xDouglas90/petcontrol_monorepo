@@ -15,7 +15,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useAdminSystemChatMessagesQuery,
@@ -70,6 +70,7 @@ export function DashboardPage() {
     'contract-pending',
   );
   const [chatDraft, setChatDraft] = useState('');
+  const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Derive the effective system user ID for chat hooks (must be before early returns)
   const preliminarySystemUsers = useMemo(
@@ -87,6 +88,18 @@ export function DashboardPage() {
   const chatMessagesQuery = useAdminSystemChatMessagesQuery(effectiveSystemContactId);
   const sendChatMessageMutation =
     useCreateAdminSystemChatMessageMutation(effectiveSystemContactId);
+  useEffect(() => {
+    const container = chatMessagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [chatMessagesQuery.data, effectiveSystemContactId]);
+
   const scheduleHistoryMap = useMemo(() => {
     const entries = historyScheduleIds.map((scheduleId, index) => [
       scheduleId,
@@ -489,7 +502,10 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex-1 space-y-5 overflow-y-auto pr-2">
+          <div
+            ref={chatMessagesContainerRef}
+            className="mt-6 h-[20rem] space-y-5 overflow-y-auto pr-2"
+          >
             {!effectiveSystemContactId ? (
               <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
                 Vincule um usuário do tipo <strong>system</strong> ao tenant
@@ -568,7 +584,10 @@ export function DashboardPage() {
             <div className="flex items-center gap-3">
               <MessageSquareText className="h-4 w-4 text-stone-500" />
               <input
+                id="dashboard-chat-message"
+                name="message"
                 type="text"
+                autoComplete="off"
                 aria-label="Escrever mensagem para usuário system"
                 value={chatDraft}
                 onChange={(event) => setChatDraft(event.target.value)}
