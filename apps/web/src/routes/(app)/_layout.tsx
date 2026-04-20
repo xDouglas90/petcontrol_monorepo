@@ -493,7 +493,7 @@ function UserAvatar({
       >
         <img
           src={imageUrl}
-          alt={shortName ? `Avatar de ${shortName}` : 'Avatar do usuario'}
+          alt={shortName ? `Avatar de ${shortName}` : 'Avatar do usuário'}
           className="h-full w-full object-cover"
         />
       </div>
@@ -507,7 +507,7 @@ function UserAvatar({
         sizeClass,
       )}
     >
-      {resolveInitials(shortName || 'Usuario')}
+      {resolveInitials(shortName || 'Usuário')}
     </div>
   );
 }

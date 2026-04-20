@@ -789,7 +789,7 @@ function WeeklyPerformanceChart({
           strokeLinejoin="round"
           strokeLinecap="round"
           points={buildPoints(current)}
-          style={{ filter: 'drop-shadow(0px 4px 8px rgba(56, 189, 248, 0.2))' }}
+          className="drop-shadow-[0px_4px_8px_rgba(56,189,248,0.2)]"
         />
 
         {current.map((item, index) => {
