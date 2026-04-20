@@ -19,6 +19,13 @@ describe('domain query keys', () => {
       'domain',
       'company-users',
     ]);
+    expect(domainQueryKeys.adminSystemChatMessages('user-system-1')).toEqual([
+      'domain',
+      'chat',
+      'admin-system',
+      'user-system-1',
+      'messages',
+    ]);
     expect(domainQueryKeys.clients()).toEqual(['domain', 'clients', {}]);
     expect(domainQueryKeys.pets()).toEqual(['domain', 'pets', {}]);
     expect(domainQueryKeys.services()).toEqual(['domain', 'services', {}]);

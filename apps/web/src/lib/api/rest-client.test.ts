@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  createAdminSystemChatMessage,
   completeUpload,
   createSchedule,
   createUploadIntent,
@@ -8,6 +9,7 @@ import {
   getCurrentCompany,
   getCurrentCompanySystemConfig,
   getCurrentUser,
+  listAdminSystemChatMessages,
   listClients,
   listPets,
   listSchedules,
@@ -177,6 +179,80 @@ describe('rest-client login', () => {
     );
     expect(config.schedule_days).toEqual(['monday', 'tuesday', 'wednesday']);
     expect(config.min_schedules_per_day).toBe(4);
+  });
+
+  it('busca histórico persistido do chat admin-system com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: 'chat-message-1',
+              conversation_id: 'chat-conversation-1',
+              company_id: 'c-1',
+              sender_user_id: 'u-2',
+              sender_name: 'System',
+              sender_role: 'system',
+              sender_image_url: null,
+              body: 'Tudo certo por aqui.',
+              created_at: '2026-04-20T09:00:00Z',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const messages = await listAdminSystemChatMessages('token-123', 'u-2');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/chat/system/u-2/messages',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'Bearer token-123' }),
+      }),
+    );
+    expect(messages[0]?.body).toBe('Tudo certo por aqui.');
+  });
+
+  it('envia mensagem persistida do chat admin-system com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            id: 'chat-message-2',
+            conversation_id: 'chat-conversation-1',
+            company_id: 'c-1',
+            sender_user_id: 'u-1',
+            sender_name: 'Maria',
+            sender_role: 'admin',
+            sender_image_url: null,
+            body: 'Precisamos revisar os atendimentos do dia.',
+            created_at: '2026-04-20T09:15:00Z',
+          },
+        }),
+        { status: 201 },
+      ),
+    );
+
+    const message = await createAdminSystemChatMessage('token-123', 'u-2', {
+      message: 'Precisamos revisar os atendimentos do dia.',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/chat/system/u-2/messages',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token-123',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({
+          message: 'Precisamos revisar os atendimentos do dia.',
+        }),
+      }),
+    );
+    expect(message.sender_role).toBe('admin');
   });
 
   it('usa o contrato completo do upload intent e propaga headers no upload para o GCS', async () => {
