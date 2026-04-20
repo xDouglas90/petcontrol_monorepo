@@ -10,6 +10,8 @@ const mockUseCurrentCompanyQuery = vi.fn();
 const mockUseCurrentCompanySystemConfigQuery = vi.fn();
 const mockUseCurrentUserQuery = vi.fn();
 const mockUseCompanyUsersQuery = vi.fn();
+const mockUseAdminSystemChatMessagesQuery = vi.fn();
+const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockUseScheduleHistoriesQuery = vi.fn();
 
@@ -19,6 +21,9 @@ vi.mock('@/lib/api/domain.queries', () => ({
     mockUseCurrentCompanySystemConfigQuery(),
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
   useCompanyUsersQuery: () => mockUseCompanyUsersQuery(),
+  useAdminSystemChatMessagesQuery: () => mockUseAdminSystemChatMessagesQuery(),
+  useCreateAdminSystemChatMessageMutation: () =>
+    mockUseCreateAdminSystemChatMessageMutation(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
   useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
 }));
@@ -49,6 +54,8 @@ describe('DashboardPage', () => {
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
     mockUseCompanyUsersQuery.mockReset();
+    mockUseAdminSystemChatMessagesQuery.mockReset();
+    mockUseCreateAdminSystemChatMessageMutation.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockUseScheduleHistoriesQuery.mockReset();
     vi.useRealTimers();
@@ -161,6 +168,28 @@ describe('DashboardPage', () => {
       isLoading: false,
       isError: false,
     });
+    mockUseAdminSystemChatMessagesQuery.mockReturnValue({
+      data: [
+        {
+          id: 'chat-message-1',
+          conversation_id: 'chat-conversation-1',
+          company_id: 'company-1',
+          sender_user_id: 'user-system-1',
+          sender_name: 'System',
+          sender_role: 'system',
+          sender_image_url: null,
+          body: 'Tudo certo. O monitoramento do tenant já está ativo.',
+          created_at: '2026-04-19T10:20:00-03:00',
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCreateAdminSystemChatMessageMutation.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    });
     mockUseScheduleHistoriesQuery.mockReturnValue([
       {
         data: [
@@ -189,9 +218,17 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Finalizado')).toBeTruthy();
     expect(screen.getByText('1h 15min')).toBeTruthy();
     expect(screen.getByText('Chat do sistema')).toBeTruthy();
-    expect(screen.getByText('UI + contrato futuro')).toBeTruthy();
+    expect(screen.getByText('Histórico persistido')).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Selecionar usuário system' })).toBeTruthy();
     expect(screen.getAllByText('System').length).toBeGreaterThan(0);
+    expect(
+      screen.getByText('Tudo certo. O monitoramento do tenant já está ativo.'),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Escrever mensagem para usuário system',
+      }),
+    ).toBeTruthy();
     const weekSelect = screen.getByRole('combobox', {
       name: 'Selecionar semana de performance',
     }) as HTMLSelectElement;
@@ -280,6 +317,16 @@ describe('DashboardPage', () => {
         meta: { total: 0, page: 1, limit: 10, total_pages: 0 },
       },
       isLoading: false,
+      isError: false,
+    });
+    mockUseAdminSystemChatMessagesQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCreateAdminSystemChatMessageMutation.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
       isError: false,
     });
     mockUseScheduleHistoriesQuery.mockReturnValue([]);

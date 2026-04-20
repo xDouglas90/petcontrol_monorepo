@@ -18,6 +18,8 @@ import {
 import { useMemo, useState } from 'react';
 
 import {
+  useAdminSystemChatMessagesQuery,
+  useCreateAdminSystemChatMessageMutation,
   useCompanyUsersQuery,
   useCurrentCompanyQuery,
   useCurrentCompanySystemConfigQuery,
@@ -67,6 +69,24 @@ export function DashboardPage() {
   const [selectedSystemContactId, setSelectedSystemContactId] = useState(
     'contract-pending',
   );
+  const [chatDraft, setChatDraft] = useState('');
+
+  // Derive the effective system user ID for chat hooks (must be before early returns)
+  const preliminarySystemUsers = useMemo(
+    () =>
+      (companyUsersQuery.data ?? []).filter(
+        (user) => user.role === 'system' && user.user_id !== currentUser?.user_id,
+      ),
+    [companyUsersQuery.data, currentUser?.user_id],
+  );
+  const effectiveSystemContactId = preliminarySystemUsers.some(
+    (user) => user.user_id === selectedSystemContactId,
+  )
+    ? selectedSystemContactId
+    : (preliminarySystemUsers[0]?.user_id ?? undefined);
+  const chatMessagesQuery = useAdminSystemChatMessagesQuery(effectiveSystemContactId);
+  const sendChatMessageMutation =
+    useCreateAdminSystemChatMessageMutation(effectiveSystemContactId);
   const scheduleHistoryMap = useMemo(() => {
     const entries = historyScheduleIds.map((scheduleId, index) => [
       scheduleId,
@@ -168,16 +188,14 @@ export function DashboardPage() {
     companyUsersQuery.data ?? [],
     currentUser.user_id,
   );
+  const normalizedSelectedSystemContactId = chatContacts.some(
+    (contact) => contact.id === selectedSystemContactId,
+  )
+    ? selectedSystemContactId
+    : (chatContacts[0]?.id ?? 'contract-pending');
   const selectedSystemContact =
-    chatContacts.find((contact) => contact.id === selectedSystemContactId) ??
+    chatContacts.find((contact) => contact.id === normalizedSelectedSystemContactId) ??
     chatContacts[0];
-  const supportMessages = buildSupportMessages({
-    todayCount,
-    currentMonthCount,
-    efficiencyPercentage,
-    shiftSchedulesCount: shiftSchedules.length,
-    currentShiftLabel,
-  });
 
   const stats = [
     {
@@ -407,13 +425,13 @@ export function DashboardPage() {
                 </h5>
               </div>
               <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
-                UI + contrato futuro
+                Histórico persistido
               </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-stone-500">
-              A interface do chat já segue o layout previsto no plano, mas a
-              persistência de mensagens e presença online ainda dependem de
-              contrato dedicado no backend.
+              Esta conversa agora persiste mensagens de texto entre o
+              administrador do tenant e usuários do tipo system. Presença em
+              tempo real continua fora deste recorte.
             </p>
           </div>
 
@@ -428,8 +446,11 @@ export function DashboardPage() {
               <select
                 id="dashboard-system-contact"
                 aria-label="Selecionar usuário system"
-                value={selectedSystemContactId}
-                onChange={(event) => setSelectedSystemContactId(event.target.value)}
+                value={normalizedSelectedSystemContactId}
+                onChange={(event) => {
+                  setSelectedSystemContactId(event.target.value);
+                  setChatDraft('');
+                }}
                 className="w-full bg-transparent text-sm text-stone-700 outline-none"
               >
                 {chatContacts.map((contact) => (
@@ -443,9 +464,17 @@ export function DashboardPage() {
 
           <div className="mt-6 flex items-center gap-3 rounded-[1.8rem] border border-stone-100 bg-stone-50/70 p-4">
             <div className="relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-600 text-sm font-semibold uppercase tracking-[0.16em] text-white">
-                {selectedSystemContact.avatar}
-              </div>
+              {selectedSystemContact.imageUrl ? (
+                <img
+                  src={selectedSystemContact.imageUrl}
+                  alt={selectedSystemContact.name}
+                  className="h-12 w-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-600 text-sm font-semibold uppercase tracking-[0.16em] text-white">
+                  {selectedSystemContact.avatar}
+                </div>
+              )}
               <div
                 className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${selectedSystemContact.statusClass}`}
               />
@@ -461,33 +490,114 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-6 flex-1 space-y-5 overflow-y-auto pr-2">
-            {supportMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.side === 'right' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[88%] rounded-[1.6rem] px-4 py-3 text-sm leading-6 ${
-                    message.side === 'right'
-                      ? 'bg-sky-500 text-white'
-                      : 'border border-stone-100 bg-stone-50 text-stone-600'
-                  }`}
-                >
-                  {message.text}
-                </div>
+            {!effectiveSystemContactId ? (
+              <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
+                Vincule um usuário do tipo <strong>system</strong> ao tenant
+                para iniciar uma conversa persistida com o administrador.
               </div>
-            ))}
+            ) : chatMessagesQuery.isLoading ? (
+              <div className="rounded-[1.6rem] border border-stone-100 bg-stone-50 px-4 py-6 text-sm text-stone-500">
+                Carregando histórico da conversa...
+              </div>
+            ) : chatMessagesQuery.isError ? (
+              <div className="rounded-[1.6rem] border border-rose-100 bg-rose-50 px-4 py-6 text-sm text-rose-600">
+                Não foi possível carregar o histórico persistido desta conversa.
+              </div>
+            ) : (chatMessagesQuery.data?.length ?? 0) === 0 ? (
+              <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
+                Ainda não existem mensagens persistidas entre este admin e o
+                contato system selecionado.
+              </div>
+            ) : (
+              chatMessagesQuery.data?.map((message) => {
+                const isOwnMessage = message.sender_user_id === currentUser.user_id;
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[88%] rounded-[1.6rem] px-4 py-3 text-sm leading-6 ${
+                        isOwnMessage
+                          ? 'bg-sky-500 text-white'
+                          : 'border border-stone-100 bg-stone-50 text-stone-600'
+                      }`}
+                    >
+                      <p
+                        className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                          isOwnMessage ? 'text-white/70' : 'text-stone-400'
+                        }`}
+                      >
+                        {message.sender_name}
+                      </p>
+                      <p className="mt-2 whitespace-pre-wrap">{message.body}</p>
+                      <p
+                        className={`mt-2 text-[11px] ${
+                          isOwnMessage ? 'text-white/70' : 'text-stone-400'
+                        }`}
+                      >
+                        {formatChatTimestamp(message.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
-          <div className="mt-6 rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-4">
-            <div className="flex items-center gap-3 text-stone-500">
-              <MessageSquareText className="h-4 w-4" />
-              <p className="text-sm">
-                Envio de mensagens será habilitado quando o domínio de conversa
-                interna estiver exposto pela API.
-              </p>
+          <form
+            className="mt-6 rounded-[1.6rem] border border-stone-200 bg-stone-50 px-4 py-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const message = chatDraft.trim();
+              if (!effectiveSystemContactId || !message || sendChatMessageMutation.isPending) {
+                return;
+              }
+
+              sendChatMessageMutation.mutate(
+                { message },
+                {
+                  onSuccess: () => {
+                    setChatDraft('');
+                  },
+                },
+              );
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <MessageSquareText className="h-4 w-4 text-stone-500" />
+              <input
+                type="text"
+                aria-label="Escrever mensagem para usuário system"
+                value={chatDraft}
+                onChange={(event) => setChatDraft(event.target.value)}
+                placeholder={
+                  effectiveSystemContactId
+                    ? 'Escreva uma mensagem...'
+                    : 'Selecione um usuário system para conversar'
+                }
+                disabled={!effectiveSystemContactId || sendChatMessageMutation.isPending}
+                className="w-full bg-transparent text-sm text-stone-700 outline-none placeholder:text-stone-400 disabled:cursor-not-allowed"
+              />
+              <button
+                type="submit"
+                disabled={
+                  !effectiveSystemContactId ||
+                  !chatDraft.trim() ||
+                  sendChatMessageMutation.isPending
+                }
+                className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-stone-300"
+              >
+                {sendChatMessageMutation.isPending ? 'Enviando' : 'Enviar'}
+              </button>
             </div>
-          </div>
+            {sendChatMessageMutation.isError ? (
+              <p className="mt-3 text-sm text-rose-600">
+                Não foi possível persistir a mensagem desta conversa.
+              </p>
+            ) : null}
+          </form>
         </section>
       </aside>
     </div>
@@ -1031,11 +1141,11 @@ function resolveInitials(value: string) {
 
 function buildSystemContactOptions(
   companyUsers: Array<{
-    id: string;
     user_id: string;
     role: string;
     short_name?: string | null;
     full_name?: string | null;
+    image_url?: string | null;
   }>,
   currentUserId: string,
 ) {
@@ -1051,6 +1161,7 @@ function buildSystemContactOptions(
         name: 'Usuários system',
         subtitle: 'Vincule um contato system ao tenant para habilitar o seletor',
         avatar: 'SY',
+        imageUrl: null,
         statusClass: 'bg-stone-400',
       },
     ];
@@ -1059,44 +1170,24 @@ function buildSystemContactOptions(
   return systemUsers.map((item) => {
     const name = item.short_name || item.full_name || 'Usuário system';
     return {
-      id: item.id,
+      id: item.user_id,
       label: name,
       name,
       subtitle: 'Contato system do tenant',
       avatar: resolveInitials(name),
+      imageUrl: item.image_url ?? null,
       statusClass: 'bg-emerald-500',
     };
   });
 }
 
-function buildSupportMessages({
-  todayCount,
-  currentMonthCount,
-  efficiencyPercentage,
-  shiftSchedulesCount,
-  currentShiftLabel,
-}: {
-  todayCount: number;
-  currentMonthCount: number;
-  efficiencyPercentage: number;
-  shiftSchedulesCount: number;
-  currentShiftLabel: string;
-}) {
-  return [
-    {
-      id: 'support-1',
-      side: 'left' as const,
-      text: `O tenant registra ${todayCount} agendamento(s) hoje e ${currentMonthCount} no mês atual.`,
-    },
-    {
-      id: 'support-2',
-      side: 'left' as const,
-      text: `Eficiência atual em ${Math.round(efficiencyPercentage)}%. O turno monitorado agora é ${currentShiftLabel.toLowerCase()}.`,
-    },
-    {
-      id: 'support-3',
-      side: 'right' as const,
-      text: `Há ${shiftSchedulesCount} atendimento(s) visíveis na lista operacional deste turno.`,
-    },
-  ];
+function formatChatTimestamp(value: string) {
+  const date = new Date(value);
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
