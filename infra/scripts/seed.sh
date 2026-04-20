@@ -141,11 +141,26 @@ ON CONFLICT (user_id) DO UPDATE SET
   must_change_password = EXCLUDED.must_change_password,
   updated_at = NOW();
 
+-- System user for tenant support flows
+INSERT INTO users (email, email_verified, email_verified_at, role, is_active)
+SELECT 'system@petcontrol.local', TRUE, NOW(), 'system', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'system@petcontrol.local');
+
+-- System auth profile (password: password123)
+INSERT INTO user_auth (user_id, password_hash, must_change_password)
+SELECT u.id, '$2a$12$HAtO6l.iXD27nYmeaFjSEeeiYPo0TVPANJzxhUG/DvC5xzdAp2QrG', FALSE
+FROM users u
+WHERE u.email = 'system@petcontrol.local'
+ON CONFLICT (user_id) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  must_change_password = EXCLUDED.must_change_password,
+  updated_at = NOW();
+
 -- Active memberships for seeded users
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), seeded_users AS (
-  SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local')
+  SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local', 'system@petcontrol.local')
 )
 INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
 SELECT
@@ -160,6 +175,245 @@ WHERE NOT EXISTS (
   SELECT 1
   FROM company_users cu
   WHERE cu.company_id = dc.id AND cu.user_id = su.id
+);
+
+-- System people for seeded users
+INSERT INTO people (kind, is_active, has_system_user)
+SELECT 'employee', TRUE, TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'root@petcontrol.local'
+);
+
+INSERT INTO people (kind, is_active, has_system_user)
+SELECT 'employee', TRUE, TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'admin@petcontrol.local'
+);
+
+INSERT INTO people (kind, is_active, has_system_user)
+SELECT 'employee', TRUE, TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'system@petcontrol.local'
+);
+
+WITH root_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'root@petcontrol.local'
+  LIMIT 1
+), root_person AS (
+  SELECT p.id
+  FROM people p
+  LEFT JOIN user_profiles up ON up.person_id = p.id
+  WHERE p.kind = 'employee'
+    AND p.has_system_user = TRUE
+    AND up.user_id IS NULL
+  ORDER BY p.created_at ASC
+  LIMIT 1
+)
+INSERT INTO user_profiles (user_id, person_id)
+SELECT ru.id, rp.id
+FROM root_user ru
+CROSS JOIN root_person rp
+WHERE NOT EXISTS (
+  SELECT 1 FROM user_profiles up WHERE up.user_id = ru.id
+);
+
+WITH admin_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'admin@petcontrol.local'
+  LIMIT 1
+), admin_person AS (
+  SELECT p.id
+  FROM people p
+  LEFT JOIN user_profiles up ON up.person_id = p.id
+  WHERE p.kind = 'employee'
+    AND p.has_system_user = TRUE
+    AND up.user_id IS NULL
+  ORDER BY p.created_at DESC
+  LIMIT 1
+)
+INSERT INTO user_profiles (user_id, person_id)
+SELECT au.id, ap.id
+FROM admin_user au
+CROSS JOIN admin_person ap
+WHERE NOT EXISTS (
+  SELECT 1 FROM user_profiles up WHERE up.user_id = au.id
+);
+
+INSERT INTO user_profiles (user_id, person_id)
+SELECT
+  su.id,
+  sp.id
+FROM users su
+CROSS JOIN LATERAL (
+  SELECT p.id
+  FROM people p
+  LEFT JOIN user_profiles up ON up.person_id = p.id
+  WHERE p.kind = 'employee'
+    AND p.has_system_user = TRUE
+    AND up.user_id IS NULL
+  ORDER BY p.created_at DESC
+  LIMIT 1
+) sp
+WHERE su.email = 'system@petcontrol.local'
+  AND NOT EXISTS (
+  SELECT 1 FROM user_profiles up WHERE up.user_id = su.id
+);
+
+WITH root_profile AS (
+  SELECT up.person_id
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'root@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO people_identifications (
+  person_id,
+  full_name,
+  short_name,
+  gender_identity,
+  marital_status,
+  birth_date,
+  cpf
+)
+SELECT
+  rp.person_id,
+  'Root PetControl',
+  'Root',
+  'not_to_expose',
+  'single',
+  DATE '1990-01-01',
+  '00000000001'
+FROM root_profile rp
+WHERE NOT EXISTS (
+  SELECT 1 FROM people_identifications pi WHERE pi.person_id = rp.person_id
+);
+
+WITH admin_profile AS (
+  SELECT up.person_id
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'admin@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO people_identifications (
+  person_id,
+  full_name,
+  short_name,
+  gender_identity,
+  marital_status,
+  birth_date,
+  cpf
+)
+SELECT
+  ap.person_id,
+  'Admin PetControl',
+  'Admin',
+  'not_to_expose',
+  'single',
+  DATE '1991-01-01',
+  '00000000002'
+FROM admin_profile ap
+WHERE NOT EXISTS (
+  SELECT 1 FROM people_identifications pi WHERE pi.person_id = ap.person_id
+);
+
+WITH system_profile AS (
+  SELECT up.person_id
+  FROM user_profiles up
+  INNER JOIN users u ON u.id = up.user_id
+  WHERE u.email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO people_identifications (
+  person_id,
+  full_name,
+  short_name,
+  gender_identity,
+  marital_status,
+  birth_date,
+  cpf
+)
+SELECT
+  sp.person_id,
+  'System PetControl',
+  'System',
+  'not_to_expose',
+  'single',
+  DATE '1992-01-01',
+  '00000000003'
+FROM system_profile sp
+WHERE NOT EXISTS (
+  SELECT 1 FROM people_identifications pi WHERE pi.person_id = sp.person_id
+);
+
+-- Persisted admin-system conversation for dashboard chat
+WITH dev_company AS (
+  SELECT id
+  FROM companies
+  WHERE slug = 'petcontrol-dev'
+  LIMIT 1
+), admin_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'admin@petcontrol.local'
+  LIMIT 1
+), support_user AS (
+  SELECT id
+  FROM users
+  WHERE email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO admin_system_conversations (company_id, admin_user_id, system_user_id, updated_at)
+SELECT dc.id, au.id, su.id, NOW()
+FROM dev_company dc
+CROSS JOIN admin_user au
+CROSS JOIN support_user su
+ON CONFLICT (company_id, admin_user_id, system_user_id) DO UPDATE SET
+  updated_at = EXCLUDED.updated_at;
+
+WITH conversation_seed AS (
+  SELECT ascv.id AS conversation_id, ascv.company_id, ascv.admin_user_id, ascv.system_user_id
+  FROM admin_system_conversations ascv
+  INNER JOIN companies c ON c.id = ascv.company_id
+  INNER JOIN users au ON au.id = ascv.admin_user_id
+  INNER JOIN users su ON su.id = ascv.system_user_id
+  WHERE c.slug = 'petcontrol-dev'
+    AND au.email = 'admin@petcontrol.local'
+    AND su.email = 'system@petcontrol.local'
+  LIMIT 1
+)
+INSERT INTO admin_system_messages (conversation_id, company_id, sender_user_id, body, created_at)
+SELECT cs.conversation_id, cs.company_id, seed.sender_user_id, raw_messages.body, raw_messages.created_at
+FROM conversation_seed cs
+CROSS JOIN (
+  VALUES
+    ('admin'::text, 'Bom dia, preciso acompanhar a operação desta semana.', NOW() - INTERVAL '1 day'),
+    ('system'::text, 'Tudo certo. Já deixei o suporte operacional monitorando os agendamentos.', NOW() - INTERVAL '23 hours'),
+    ('admin'::text, 'Perfeito. Quero validar também a eficiência mensal no novo dashboard.', NOW() - INTERVAL '22 hours'),
+    ('system'::text, 'O histórico persistido deste chat já está ativo para o tenant de desenvolvimento.', NOW() - INTERVAL '21 hours')
+) AS raw_messages(sender_kind, body, created_at)
+CROSS JOIN LATERAL (
+  SELECT CASE
+    WHEN raw_messages.sender_kind = 'admin' THEN cs.admin_user_id
+    ELSE cs.system_user_id
+  END AS sender_user_id
+) AS seed
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM admin_system_messages asm
+  WHERE asm.conversation_id = cs.conversation_id
 );
 
 -- Active subscription for current seeded plan
@@ -201,6 +455,71 @@ FROM dev_company dc
 CROSS JOIN starter_modules sm
 ON CONFLICT (company_id, module_id) DO UPDATE SET
   is_active = EXCLUDED.is_active,
+  updated_at = NOW();
+
+-- System configuration required by admin dashboard
+WITH dev_company AS (
+  SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
+)
+INSERT INTO company_system_configs (
+  company_id,
+  schedule_init_time,
+  schedule_pause_init_time,
+  schedule_pause_end_time,
+  schedule_end_time,
+  min_schedules_per_day,
+  max_schedules_per_day,
+  schedule_days,
+  dynamic_cages,
+  total_small_cages,
+  total_medium_cages,
+  total_large_cages,
+  total_giant_cages,
+  whatsapp_notifications,
+  whatsapp_conversation,
+  whatsapp_business_phone
+)
+SELECT
+  dc.id,
+  TIME '08:00',
+  TIME '12:00',
+  TIME '13:00',
+  TIME '18:00',
+  4,
+  18,
+  ARRAY[
+    'monday'::week_day,
+    'tuesday'::week_day,
+    'wednesday'::week_day,
+    'thursday'::week_day,
+    'friday'::week_day,
+    'saturday'::week_day
+  ],
+  FALSE,
+  8,
+  6,
+  4,
+  2,
+  TRUE,
+  TRUE,
+  '+5511999990001'
+FROM dev_company dc
+ON CONFLICT (company_id) DO UPDATE SET
+  schedule_init_time = EXCLUDED.schedule_init_time,
+  schedule_pause_init_time = EXCLUDED.schedule_pause_init_time,
+  schedule_pause_end_time = EXCLUDED.schedule_pause_end_time,
+  schedule_end_time = EXCLUDED.schedule_end_time,
+  min_schedules_per_day = EXCLUDED.min_schedules_per_day,
+  max_schedules_per_day = EXCLUDED.max_schedules_per_day,
+  schedule_days = EXCLUDED.schedule_days,
+  dynamic_cages = EXCLUDED.dynamic_cages,
+  total_small_cages = EXCLUDED.total_small_cages,
+  total_medium_cages = EXCLUDED.total_medium_cages,
+  total_large_cages = EXCLUDED.total_large_cages,
+  total_giant_cages = EXCLUDED.total_giant_cages,
+  whatsapp_notifications = EXCLUDED.whatsapp_notifications,
+  whatsapp_conversation = EXCLUDED.whatsapp_conversation,
+  whatsapp_business_phone = EXCLUDED.whatsapp_business_phone,
   updated_at = NOW();
 
 -- Seeded client person for operational flows
@@ -454,6 +773,81 @@ WITH dev_company AS (
   FROM users
   WHERE email = 'admin@petcontrol.local'
   LIMIT 1
+), dashboard_schedule_scenarios AS (
+  SELECT *
+  FROM (
+    VALUES
+      (
+        'dashboard-yesterday-confirmed',
+        ((CURRENT_DATE - 1) + TIME '10:00')::timestamp,
+        ((CURRENT_DATE - 1) + TIME '11:00')::timestamp,
+        'Dashboard seed: comparativo diário (ontem)',
+        'confirmed'
+      ),
+      (
+        'dashboard-today-morning-waiting',
+        (CURRENT_DATE + TIME '09:00')::timestamp,
+        (CURRENT_DATE + TIME '10:00')::timestamp,
+        'Dashboard seed: turno manhã aguardando',
+        'waiting'
+      ),
+      (
+        'dashboard-today-morning-in-progress',
+        (CURRENT_DATE + TIME '10:30')::timestamp,
+        (CURRENT_DATE + TIME '11:45')::timestamp,
+        'Dashboard seed: turno manhã em andamento',
+        'in_progress'
+      ),
+      (
+        'dashboard-today-afternoon-confirmed',
+        (CURRENT_DATE + TIME '14:00')::timestamp,
+        (CURRENT_DATE + TIME '15:00')::timestamp,
+        'Dashboard seed: turno tarde confirmado',
+        'confirmed'
+      ),
+      (
+        'dashboard-today-afternoon-finished',
+        (CURRENT_DATE + TIME '15:15')::timestamp,
+        (CURRENT_DATE + TIME '16:15')::timestamp,
+        'Dashboard seed: turno tarde finalizado',
+        'finished'
+      ),
+      (
+        'dashboard-current-month-week-1',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:30')::timestamp,
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '10:30')::timestamp,
+        'Dashboard seed: desempenho mês atual semana 1',
+        'delivered'
+      ),
+      (
+        'dashboard-current-month-week-2',
+        (((date_trunc('month', CURRENT_DATE)::date) + 7) + TIME '13:30')::timestamp,
+        (((date_trunc('month', CURRENT_DATE)::date) + 7) + TIME '14:30')::timestamp,
+        'Dashboard seed: desempenho mês atual semana 2',
+        'confirmed'
+      ),
+      (
+        'dashboard-current-month-week-3',
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '16:00')::timestamp,
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '17:00')::timestamp,
+        'Dashboard seed: desempenho mês atual semana 3',
+        'finished'
+      ),
+      (
+        'dashboard-previous-month-week-1',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '09:00')::timestamp,
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '10:00')::timestamp,
+        'Dashboard seed: desempenho mês anterior semana 1',
+        'delivered'
+      ),
+      (
+        'dashboard-previous-month-week-2',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 6) + TIME '14:00')::timestamp,
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 6) + TIME '15:00')::timestamp,
+        'Dashboard seed: desempenho mês anterior semana 2',
+        'confirmed'
+      )
+  ) AS scenarios(label, scheduled_local, estimated_end_local, notes, final_status)
 )
 INSERT INTO schedules (
   company_id,
@@ -468,37 +862,204 @@ SELECT
   dc.id,
   sc.id,
   sp.id,
-  TIMESTAMPTZ '2026-04-15 14:00:00+00',
-  TIMESTAMPTZ '2026-04-15 15:00:00+00',
-  'Agendamento seedado para fluxo local do módulo schedules',
+  ds.scheduled_local AT TIME ZONE 'America/Sao_Paulo',
+  ds.estimated_end_local AT TIME ZONE 'America/Sao_Paulo',
+  ds.notes,
   sa.id
 FROM dev_company dc
 CROSS JOIN seeded_client sc
 CROSS JOIN seeded_pet sp
 CROSS JOIN seeded_admin sa
+CROSS JOIN dashboard_schedule_scenarios ds
 WHERE NOT EXISTS (
   SELECT 1
   FROM schedules s
   WHERE s.company_id = dc.id
     AND s.client_id = sc.id
     AND s.pet_id = sp.id
-    AND s.scheduled_at = TIMESTAMPTZ '2026-04-15 14:00:00+00'
+    AND s.scheduled_at = ds.scheduled_local AT TIME ZONE 'America/Sao_Paulo'
     AND s.deleted_at IS NULL
 );
 
-WITH seeded_schedule AS (
-  SELECT s.id
+WITH dashboard_schedule_scenarios AS (
+  SELECT *
+  FROM (
+    VALUES
+      (
+        'dashboard-yesterday-confirmed',
+        ((CURRENT_DATE - 1) + TIME '10:00')::timestamp,
+        'confirmed',
+        ((CURRENT_DATE - 1) + TIME '09:30')::timestamp,
+        'Aguardando confirmação automática do seed'
+      ),
+      (
+        'dashboard-yesterday-confirmed',
+        ((CURRENT_DATE - 1) + TIME '10:00')::timestamp,
+        'confirmed',
+        ((CURRENT_DATE - 1) + TIME '09:50')::timestamp,
+        'Confirmado para alimentar comparativo diário'
+      ),
+      (
+        'dashboard-today-morning-waiting',
+        (CURRENT_DATE + TIME '09:00')::timestamp,
+        'waiting',
+        (CURRENT_DATE + TIME '08:45')::timestamp,
+        'Aguardando início do atendimento'
+      ),
+      (
+        'dashboard-today-morning-in-progress',
+        (CURRENT_DATE + TIME '10:30')::timestamp,
+        'waiting',
+        (CURRENT_DATE + TIME '10:15')::timestamp,
+        'Entrada na fila do turno da manhã'
+      ),
+      (
+        'dashboard-today-morning-in-progress',
+        (CURRENT_DATE + TIME '10:30')::timestamp,
+        'confirmed',
+        (CURRENT_DATE + TIME '10:25')::timestamp,
+        'Confirmado no check-in local'
+      ),
+      (
+        'dashboard-today-morning-in-progress',
+        (CURRENT_DATE + TIME '10:30')::timestamp,
+        'in_progress',
+        (CURRENT_DATE + TIME '10:40')::timestamp,
+        'Atendimento iniciado para o dashboard'
+      ),
+      (
+        'dashboard-today-afternoon-confirmed',
+        (CURRENT_DATE + TIME '14:00')::timestamp,
+        'waiting',
+        (CURRENT_DATE + TIME '13:30')::timestamp,
+        'Aguardando atendimento do turno da tarde'
+      ),
+      (
+        'dashboard-today-afternoon-confirmed',
+        (CURRENT_DATE + TIME '14:00')::timestamp,
+        'confirmed',
+        (CURRENT_DATE + TIME '13:50')::timestamp,
+        'Confirmado para o turno da tarde'
+      ),
+      (
+        'dashboard-today-afternoon-finished',
+        (CURRENT_DATE + TIME '15:15')::timestamp,
+        'waiting',
+        (CURRENT_DATE + TIME '14:55')::timestamp,
+        'Entrada na fila do banho da tarde'
+      ),
+      (
+        'dashboard-today-afternoon-finished',
+        (CURRENT_DATE + TIME '15:15')::timestamp,
+        'confirmed',
+        (CURRENT_DATE + TIME '15:05')::timestamp,
+        'Confirmado no balcão'
+      ),
+      (
+        'dashboard-today-afternoon-finished',
+        (CURRENT_DATE + TIME '15:15')::timestamp,
+        'in_progress',
+        (CURRENT_DATE + TIME '15:20')::timestamp,
+        'Execução iniciada'
+      ),
+      (
+        'dashboard-today-afternoon-finished',
+        (CURRENT_DATE + TIME '15:15')::timestamp,
+        'finished',
+        (CURRENT_DATE + TIME '16:10')::timestamp,
+        'Concluído para alimentar duração final'
+      ),
+      (
+        'dashboard-current-month-week-1',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:30')::timestamp,
+        'waiting',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:00')::timestamp,
+        'Aguardando atendimento da primeira semana'
+      ),
+      (
+        'dashboard-current-month-week-1',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:30')::timestamp,
+        'confirmed',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:20')::timestamp,
+        'Confirmado na primeira semana'
+      ),
+      (
+        'dashboard-current-month-week-1',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:30')::timestamp,
+        'finished',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '10:20')::timestamp,
+        'Finalizado na primeira semana'
+      ),
+      (
+        'dashboard-current-month-week-1',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '09:30')::timestamp,
+        'delivered',
+        (((date_trunc('month', CURRENT_DATE)::date) + 2) + TIME '10:35')::timestamp,
+        'Entregue na primeira semana'
+      ),
+      (
+        'dashboard-current-month-week-2',
+        (((date_trunc('month', CURRENT_DATE)::date) + 7) + TIME '13:30')::timestamp,
+        'confirmed',
+        (((date_trunc('month', CURRENT_DATE)::date) + 7) + TIME '13:10')::timestamp,
+        'Confirmado na segunda semana'
+      ),
+      (
+        'dashboard-current-month-week-3',
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '16:00')::timestamp,
+        'confirmed',
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '15:40')::timestamp,
+        'Confirmado na terceira semana'
+      ),
+      (
+        'dashboard-current-month-week-3',
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '16:00')::timestamp,
+        'finished',
+        (((date_trunc('month', CURRENT_DATE)::date) + 11) + TIME '16:50')::timestamp,
+        'Finalizado na terceira semana'
+      ),
+      (
+        'dashboard-previous-month-week-1',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '09:00')::timestamp,
+        'confirmed',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '08:45')::timestamp,
+        'Confirmado no mês anterior semana 1'
+      ),
+      (
+        'dashboard-previous-month-week-1',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '09:00')::timestamp,
+        'finished',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '09:50')::timestamp,
+        'Finalizado no mês anterior semana 1'
+      ),
+      (
+        'dashboard-previous-month-week-1',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '09:00')::timestamp,
+        'delivered',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 2) + TIME '10:05')::timestamp,
+        'Entregue no mês anterior semana 1'
+      ),
+      (
+        'dashboard-previous-month-week-2',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 6) + TIME '14:00')::timestamp,
+        'confirmed',
+        (((date_trunc('month', CURRENT_DATE - INTERVAL '1 month')::date) + 6) + TIME '13:45')::timestamp,
+        'Confirmado no mês anterior semana 2'
+      )
+  ) AS history(label, scheduled_local, status, changed_at_local, notes)
+), seeded_schedules AS (
+  SELECT s.id, dss.status, dss.changed_at_local, dss.notes
   FROM schedules s
   INNER JOIN companies c ON c.id = s.company_id
   INNER JOIN clients cl ON cl.id = s.client_id
   INNER JOIN people_identifications pi ON pi.person_id = cl.person_id
   INNER JOIN pets p ON p.id = s.pet_id
+  INNER JOIN dashboard_schedule_scenarios dss
+    ON dss.scheduled_local AT TIME ZONE 'America/Sao_Paulo' = s.scheduled_at
   WHERE c.slug = 'petcontrol-dev'
     AND pi.cpf = '12345678901'
     AND p.name = 'Thor'
-    AND s.scheduled_at = TIMESTAMPTZ '2026-04-15 14:00:00+00'
     AND s.deleted_at IS NULL
-  LIMIT 1
 ), seeded_admin AS (
   SELECT id
   FROM users
@@ -508,20 +1069,23 @@ WITH seeded_schedule AS (
 INSERT INTO schedule_status_history (
   schedule_id,
   status,
+  changed_at,
   changed_by,
   notes
 )
 SELECT
   ss.id,
-  'confirmed',
+  ss.status::schedule_status,
+  ss.changed_at_local AT TIME ZONE 'America/Sao_Paulo',
   sa.id,
-  'Status inicial do agendamento seedado'
-FROM seeded_schedule ss
+  ss.notes
+FROM seeded_schedules ss
 CROSS JOIN seeded_admin sa
 WHERE NOT EXISTS (
   SELECT 1
   FROM schedule_status_history ssh
   WHERE ssh.schedule_id = ss.id
-    AND ssh.status = 'confirmed'
+    AND ssh.status = ss.status::schedule_status
+    AND ssh.changed_at = ss.changed_at_local AT TIME ZONE 'America/Sao_Paulo'
 );
 SQL

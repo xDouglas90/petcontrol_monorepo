@@ -1,15 +1,21 @@
 export const USER_ROLES = [
   'root',
+  'internal',
   'admin',
-  'manager',
-  'employee',
-  'aux',
-  'general',
+  'system',
+  'common',
+  'free',
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const USER_KINDS = ['internal', 'owner', 'staff', 'free'] as const;
+export const USER_KINDS = [
+  'owner',
+  'employee',
+  'client',
+  'supplier',
+  'outsourced_employee',
+] as const;
 
 export type UserKind = (typeof USER_KINDS)[number];
 
@@ -87,6 +93,7 @@ export const MODULE_PACKAGES = [
   'basic',
   'essential',
   'premium',
+  'trial',
 ] as const;
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
@@ -127,12 +134,101 @@ export interface CompanyDTO {
   cnpj: string;
   active_package: ModulePackage;
   is_active: boolean;
-  image_url?: string | null;
+  logo_url?: string | null;
   upload_object_key?: string;
 }
 
 export interface CurrentCompanyApiResponseDTO {
   data: CompanyDTO;
+}
+
+export interface CurrentUserDTO {
+  user_id: UUID;
+  company_id: UUID;
+  person_id: UUID;
+  role: UserRole;
+  kind: UserKind;
+  full_name?: string | null;
+  short_name?: string | null;
+  image_url?: string | null;
+}
+
+export interface CurrentUserApiResponseDTO {
+  data: CurrentUserDTO;
+}
+
+export const WEEK_DAYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
+
+export type WeekDay = (typeof WEEK_DAYS)[number];
+
+export interface CompanySystemConfigDTO {
+  company_id: UUID;
+  schedule_init_time: string;
+  schedule_pause_init_time: string;
+  schedule_pause_end_time: string;
+  schedule_end_time: string;
+  min_schedules_per_day: number;
+  max_schedules_per_day: number;
+  schedule_days: WeekDay[];
+  dynamic_cages: boolean;
+  total_small_cages: number;
+  total_medium_cages: number;
+  total_large_cages: number;
+  total_giant_cages: number;
+  whatsapp_notifications: boolean;
+  whatsapp_conversation: boolean;
+  whatsapp_business_phone?: string | null;
+}
+
+export interface CurrentCompanySystemConfigApiResponseDTO {
+  data: CompanySystemConfigDTO;
+}
+
+export interface CompanyUserDTO {
+  id: UUID;
+  company_id: UUID;
+  user_id: UUID;
+  kind: UserKind;
+  role: UserRole;
+  is_owner: boolean;
+  is_active: boolean;
+  full_name?: string | null;
+  short_name?: string | null;
+  image_url?: string | null;
+  joined_at: string;
+  left_at?: string | null;
+}
+
+export interface CompanyUserListApiResponseDTO {
+  data: CompanyUserDTO[];
+}
+
+export interface AdminSystemChatMessageDTO {
+  id: UUID;
+  conversation_id: UUID;
+  company_id: UUID;
+  sender_user_id: UUID;
+  sender_name: string;
+  sender_role: UserRole;
+  sender_image_url?: string | null;
+  body: string;
+  created_at: string;
+}
+
+export interface AdminSystemChatMessageListApiResponseDTO {
+  data: AdminSystemChatMessageDTO[];
+}
+
+export interface CreateAdminSystemChatMessageInput {
+  message: string;
 }
 
 export interface ClientDTO {
@@ -343,6 +439,19 @@ export interface ScheduleListApiResponseDTO extends PaginatedResponse<ScheduleDT
 
 export interface ScheduleApiResponseDTO {
   data: ScheduleDTO;
+}
+
+export interface ScheduleHistoryItemDTO {
+  id: UUID;
+  schedule_id: UUID;
+  status: ScheduleStatus;
+  changed_at: string;
+  changed_by: UUID;
+  notes?: string | null;
+}
+
+export interface ScheduleHistoryApiResponseDTO {
+  data: ScheduleHistoryItemDTO[];
 }
 
 export interface CreateScheduleInput {

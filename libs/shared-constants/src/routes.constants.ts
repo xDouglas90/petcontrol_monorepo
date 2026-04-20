@@ -6,6 +6,7 @@ export const APP_ROUTES = {
   clients: "/$companySlug/clients",
   pets: "/$companySlug/pets",
   services: "/$companySlug/services",
+  settings: "/$companySlug/settings",
 } as const;
 
 export const APP_ROUTE_SEGMENTS = {
@@ -15,6 +16,7 @@ export const APP_ROUTE_SEGMENTS = {
   clients: "clients",
   pets: "pets",
   services: "services",
+  settings: "settings",
 } as const;
 
 export const COMPANY_ROUTE_PARAM = "companySlug" as const;
@@ -25,6 +27,7 @@ export const COMPANY_ROUTE_PATTERNS = {
   clients: "/$companySlug/clients",
   pets: "/$companySlug/pets",
   services: "/$companySlug/services",
+  settings: "/$companySlug/settings",
 } as const;
 
 // `companySlug` is URL/UX context only. Authorization remains JWT + company_id.

@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  createAdminSystemChatMessage,
   completeUpload,
   createSchedule,
   createUploadIntent,
   deleteSchedule,
   getCurrentCompany,
+  getCurrentCompanySystemConfig,
+  getCurrentUser,
+  listAdminSystemChatMessages,
   listClients,
   listPets,
   listSchedules,
@@ -104,6 +108,151 @@ describe('rest-client login', () => {
       }),
     );
     expect(company.slug).toBe('petcontrol-dev');
+  });
+
+  it('busca usuário corrente com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            user_id: 'u-1',
+            company_id: 'c-1',
+            person_id: 'p-1',
+            role: 'admin',
+            kind: 'owner',
+            full_name: 'Maria Silva',
+            short_name: 'Maria',
+            image_url: 'https://cdn.example.com/users/maria.png',
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const user = await getCurrentUser('token-123');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/users/me',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'Bearer token-123' }),
+      }),
+    );
+    expect(user.short_name).toBe('Maria');
+  });
+
+  it('busca company-system-configs/current com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            company_id: 'c-1',
+            schedule_init_time: '08:00',
+            schedule_pause_init_time: '12:00',
+            schedule_pause_end_time: '13:00',
+            schedule_end_time: '18:00',
+            min_schedules_per_day: 4,
+            max_schedules_per_day: 18,
+            schedule_days: ['monday', 'tuesday', 'wednesday'],
+            dynamic_cages: false,
+            total_small_cages: 8,
+            total_medium_cages: 6,
+            total_large_cages: 4,
+            total_giant_cages: 2,
+            whatsapp_notifications: true,
+            whatsapp_conversation: true,
+            whatsapp_business_phone: '+5511999990001',
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const config = await getCurrentCompanySystemConfig('token-123');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/company-system-configs/current',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'Bearer token-123' }),
+      }),
+    );
+    expect(config.schedule_days).toEqual(['monday', 'tuesday', 'wednesday']);
+    expect(config.min_schedules_per_day).toBe(4);
+  });
+
+  it('busca histórico persistido do chat admin-system com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: 'chat-message-1',
+              conversation_id: 'chat-conversation-1',
+              company_id: 'c-1',
+              sender_user_id: 'u-2',
+              sender_name: 'System',
+              sender_role: 'system',
+              sender_image_url: null,
+              body: 'Tudo certo por aqui.',
+              created_at: '2026-04-20T09:00:00Z',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const messages = await listAdminSystemChatMessages('token-123', 'u-2');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/chat/system/u-2/messages',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'Bearer token-123' }),
+      }),
+    );
+    expect(messages[0]?.body).toBe('Tudo certo por aqui.');
+  });
+
+  it('envia mensagem persistida do chat admin-system com bearer token', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            id: 'chat-message-2',
+            conversation_id: 'chat-conversation-1',
+            company_id: 'c-1',
+            sender_user_id: 'u-1',
+            sender_name: 'Maria',
+            sender_role: 'admin',
+            sender_image_url: null,
+            body: 'Precisamos revisar os atendimentos do dia.',
+            created_at: '2026-04-20T09:15:00Z',
+          },
+        }),
+        { status: 201 },
+      ),
+    );
+
+    const message = await createAdminSystemChatMessage('token-123', 'u-2', {
+      message: 'Precisamos revisar os atendimentos do dia.',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/chat/system/u-2/messages',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token-123',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({
+          message: 'Precisamos revisar os atendimentos do dia.',
+        }),
+      }),
+    );
+    expect(message.sender_role).toBe('admin');
   });
 
   it('usa o contrato completo do upload intent e propaga headers no upload para o GCS', async () => {

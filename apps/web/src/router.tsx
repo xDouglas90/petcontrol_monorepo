@@ -18,6 +18,7 @@ import { ClientsPage } from '@/routes/(app)/clients';
 import { DashboardPage } from '@/routes/(app)/dashboard';
 import { PetsPage } from '@/routes/(app)/pets';
 import { SchedulesPage } from '@/routes/(app)/schedules';
+import { SettingsPage } from '@/routes/(app)/settings';
 import { ServicesPage } from '@/routes/(app)/services';
 import { LoginPage } from '@/routes/(auth)/login';
 import { isUnauthorizedApiError } from '@/lib/api/rest-client';
@@ -89,6 +90,12 @@ const servicesRoute = createRoute({
   component: ServicesPage,
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => companyRoute,
+  path: 'settings',
+  component: SettingsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
@@ -98,6 +105,7 @@ const routeTree = rootRoute.addChildren([
     clientsRoute,
     petsRoute,
     servicesRoute,
+    settingsRoute,
   ]),
 ]);
 

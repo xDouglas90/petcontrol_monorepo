@@ -14,12 +14,75 @@ type CompanyUserService struct {
 	queries sqlc.Querier
 }
 
+type CompanyUserWithProfile struct {
+	ID        pgtype.UUID
+	CompanyID pgtype.UUID
+	UserID    pgtype.UUID
+	Kind      sqlc.UserKind
+	Role      sqlc.UserRoleType
+	IsOwner   bool
+	IsActive  bool
+	JoinedAt  pgtype.Timestamptz
+	LeftAt    pgtype.Timestamptz
+	FullName  *string
+	ShortName *string
+	ImageURL  *string
+}
+
 func NewCompanyUserService(queries sqlc.Querier) *CompanyUserService {
 	return &CompanyUserService{queries: queries}
 }
 
 func (s *CompanyUserService) ListCompanyUsers(ctx context.Context, companyID pgtype.UUID) ([]sqlc.CompanyUser, error) {
 	return s.queries.ListCompanyUsersByCompanyID(ctx, companyID)
+}
+
+func (s *CompanyUserService) ListCompanyUsersWithProfile(ctx context.Context, companyID pgtype.UUID) ([]CompanyUserWithProfile, error) {
+	items, err := s.queries.ListCompanyUsersByCompanyID(ctx, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]CompanyUserWithProfile, 0, len(items))
+	for _, item := range items {
+		user, err := s.queries.GetUserByID(ctx, item.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		profile := CompanyUserWithProfile{
+			ID:        item.ID,
+			CompanyID: item.CompanyID,
+			UserID:    item.UserID,
+			Kind:      item.Kind,
+			Role:      user.Role,
+			IsOwner:   item.IsOwner,
+			IsActive:  item.IsActive,
+			JoinedAt:  item.CreatedAt,
+			LeftAt:    item.DeletedAt,
+		}
+
+		userProfile, err := s.queries.GetUserProfile(ctx, item.UserID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return nil, err
+		}
+
+		if err == nil {
+			person, personErr := s.queries.GetPerson(ctx, userProfile.PersonID)
+			if personErr != nil && !errors.Is(personErr, pgx.ErrNoRows) {
+				return nil, personErr
+			}
+			if personErr == nil {
+				profile.FullName = textValuePointer(person.FullName)
+				profile.ShortName = textValuePointer(person.ShortName)
+				profile.ImageURL = textValuePointer(person.ImageUrl)
+			}
+		}
+
+		result = append(result, profile)
+	}
+
+	return result, nil
 }
 
 func (s *CompanyUserService) GetCompanyUser(ctx context.Context, companyID pgtype.UUID, userID pgtype.UUID) (sqlc.CompanyUser, error) {

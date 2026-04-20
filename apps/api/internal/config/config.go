@@ -118,7 +118,10 @@ func resolveRedisAddr() string {
 func resolveAllowedOrigins() []string {
 	raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS"))
 	if raw == "" {
-		return []string{"http://localhost:5173"}
+		return []string{
+			"http://localhost:*",
+			"http://127.0.0.1:*",
+		}
 	}
 
 	parts := strings.Split(raw, ",")
@@ -132,7 +135,10 @@ func resolveAllowedOrigins() []string {
 	}
 
 	if len(origins) == 0 {
-		return []string{"http://localhost:5173"}
+		return []string{
+			"http://localhost:*",
+			"http://127.0.0.1:*",
+		}
 	}
 
 	return origins

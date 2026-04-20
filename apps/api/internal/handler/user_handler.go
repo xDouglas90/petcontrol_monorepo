@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
@@ -15,6 +16,48 @@ type UserHandler struct {
 
 func NewUserHandler(service *service.UserService) *UserHandler {
 	return &UserHandler{service: service}
+}
+
+// Current godoc
+// @Summary Get current user
+// @Description Returns the authenticated user profile required by the Web shell.
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} CurrentUserResponseDoc
+// @Failure 401 {object} APIErrorResponseDoc
+// @Failure 404 {object} APIErrorResponseDoc
+// @Failure 500 {object} APIErrorResponseDoc
+// @Router /users/me [get]
+func (h *UserHandler) Current(c *gin.Context) {
+	claims, ok := middleware.GetClaims(c)
+	if !ok || claims.UserID == "" || claims.CompanyID == "" {
+		middleware.JSONError(c, http.StatusUnauthorized, "auth_claims_required", "auth claims required")
+		return
+	}
+
+	userID, err := parseUUID(claims.UserID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnauthorized, "invalid_user_context", "invalid user context")
+		return
+	}
+
+	profile, err := h.service.GetCurrentUserProfile(c.Request.Context(), userID)
+	if err != nil {
+		middleware.JSONError(c, apperror.HTTPStatus(err), "get_current_user_failed", "failed to get current user")
+		return
+	}
+
+	middleware.JSONData(c, http.StatusOK, gin.H{
+		"user_id":    claims.UserID,
+		"company_id": claims.CompanyID,
+		"person_id":  uuidToString(profile.PersonID),
+		"role":       claims.Role,
+		"kind":       claims.Kind,
+		"full_name":  profile.FullName,
+		"short_name": profile.ShortName,
+		"image_url":  profile.ImageURL,
+	})
 }
 
 func (h *UserHandler) List(c *gin.Context) {

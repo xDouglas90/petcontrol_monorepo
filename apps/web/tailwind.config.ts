@@ -20,7 +20,12 @@ export default {
         display: ['var(--font-display)'],
       },
       boxShadow: {
-        glow: '0 24px 80px rgba(14, 23, 42, 0.45)',
+        premium: '0 20px 50px rgba(0, 0, 0, 0.04)',
+        card: '0 14px 30px rgba(15, 23, 42, 0.08)',
+        glow: '0 24px 80px rgba(2, 132, 199, 0.15)',
+      },
+      borderRadius: {
+        '2.5rem': '2.5rem',
       },
       backgroundImage: {
         'hero-radial':

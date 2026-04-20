@@ -863,6 +863,9 @@ volumes:
 .PHONY: dev test lint build migrate sqlc swagger
 
 # Desenvolvimento
+dev:
+ # sobe api, worker e web juntos
+
 dev-api:
  cd apps/api && go run ./cmd/server
 

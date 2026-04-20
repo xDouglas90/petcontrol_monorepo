@@ -45,14 +45,32 @@ make seed DATABASE_URL="postgres://petcontrol:petcontrol@localhost:5432/petcontr
 Após o seed, o ambiente local fica com uma massa mínima pronta para uso:
 
 - tenant `petcontrol-dev`;
-- usuários `admin@petcontrol.local` e `root@petcontrol.local` com senha `password123`;
+- usuários `admin@petcontrol.local`, `root@petcontrol.local` e `system@petcontrol.local` com senha `password123`;
 - 1 cliente ativo com pet vinculado;
 - 1 serviço ativo de catálogo;
-- 1 agendamento confirmado para validação do fluxo de `schedules`.
+- configuração operacional em `company_system_configs`;
+- conjunto de agendamentos distribuídos entre hoje, ontem, mês atual e mês anterior para alimentar o dashboard `admin`;
+- conversa persistida inicial entre `admin@petcontrol.local` e `system@petcontrol.local`.
 
-Com essa massa, o Web já permite validar o núcleo operacional completo em `/:companySlug/clients`, `/:companySlug/pets`, `/:companySlug/services` e `/:companySlug/schedules`.
+Com essa massa, o Web já permite validar:
+
+- o shell autenticado com branding do tenant e card de upgrade;
+- a home `admin` em `/:companySlug/dashboard`;
+- o núcleo operacional completo em `/:companySlug/clients`, `/:companySlug/pets`, `/:companySlug/services` e `/:companySlug/schedules`.
+
+Credenciais recomendadas para validar a home rica do tenant:
+
+- `admin@petcontrol.local` / `password123` para o dashboard `admin`;
+- `system@petcontrol.local` / `password123` para validar o papel `system` seedado;
+- `root@petcontrol.local` / `password123` para bootstrap administrativo.
 
 ## Comandos de desenvolvimento
+
+Tudo em um unico terminal:
+
+```bash
+make dev
+```
 
 API:
 
@@ -74,9 +92,8 @@ pnpm --filter web dev
 
 Sequência recomendada para desenvolvimento local:
 
-1. `make dev-api`
-2. `make dev-worker`
-3. `pnpm --filter web dev`
+1. `make dev`
+2. Se preferir logs separados, use `make dev-api`, `make dev-worker` e `pnpm --filter web dev`
 
 ## Banco de dados
 

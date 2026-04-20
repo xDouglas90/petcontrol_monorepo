@@ -1,13 +1,22 @@
 import { API_PATHS, AUTH_MODES } from '@petcontrol/shared-constants';
 import type {
+  AdminSystemChatMessageDTO,
+  AdminSystemChatMessageListApiResponseDTO,
   ApiErrorPayloadDTO,
   ClientDTO,
   ClientApiResponseDTO,
   ClientListApiResponseDTO,
   CompanyDTO,
+  CompanyUserDTO,
+  CompanyUserListApiResponseDTO,
+  CompanySystemConfigDTO,
+  CurrentUserApiResponseDTO,
+  CurrentCompanySystemConfigApiResponseDTO,
+  CurrentUserDTO,
   CompleteUploadApiResponseDTO,
   CompleteUploadDTO,
   CompleteUploadInput,
+  CreateAdminSystemChatMessageInput,
   CreateClientInput,
   CreatePetInput,
   CreateScheduleInput,
@@ -21,6 +30,8 @@ import type {
   LoginCredentials,
   LoginSession,
   ScheduleApiResponseDTO,
+  ScheduleHistoryApiResponseDTO,
+  ScheduleHistoryItemDTO,
   ScheduleDTO,
   ScheduleListApiResponseDTO,
   ServiceDTO,
@@ -114,6 +125,31 @@ let mockServices: ServiceDTO[] = [
     price: '89.90',
     discount_rate: '0.00',
     is_active: true,
+  },
+];
+
+let mockAdminSystemChatMessages: AdminSystemChatMessageDTO[] = [
+  {
+    id: 'chat-message-1',
+    conversation_id: 'chat-conversation-1',
+    company_id: mockCompany.id,
+    sender_user_id: '11111111-1111-1111-1111-111111111111',
+    sender_name: 'Maria',
+    sender_role: 'admin',
+    sender_image_url: null,
+    body: 'Bom dia, preciso acompanhar a operação desta semana.',
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'chat-message-2',
+    conversation_id: 'chat-conversation-1',
+    company_id: mockCompany.id,
+    sender_user_id: 'system-user-1',
+    sender_name: 'System',
+    sender_role: 'system',
+    sender_image_url: null,
+    body: 'Tudo certo. O monitoramento do tenant já está ativo.',
+    created_at: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
@@ -237,6 +273,75 @@ export async function getCurrentCompany(
   return payload.data;
 }
 
+export async function getCurrentCompanySystemConfig(
+  accessToken: string,
+): Promise<CompanySystemConfigDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(140);
+    return {
+      company_id: mockCompany.id,
+      schedule_init_time: '08:00',
+      schedule_pause_init_time: '12:00',
+      schedule_pause_end_time: '13:00',
+      schedule_end_time: '18:00',
+      min_schedules_per_day: 4,
+      max_schedules_per_day: 18,
+      schedule_days: [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ],
+      dynamic_cages: false,
+      total_small_cages: 8,
+      total_medium_cages: 6,
+      total_large_cages: 4,
+      total_giant_cages: 2,
+      whatsapp_notifications: true,
+      whatsapp_conversation: true,
+      whatsapp_business_phone: '+5511999990001',
+    };
+  }
+
+  const payload = await request<CurrentCompanySystemConfigApiResponseDTO>(
+    API_PATHS.currentCompanySystemConfig,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function getCurrentUser(
+  accessToken: string,
+): Promise<CurrentUserDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return {
+      user_id: '11111111-1111-1111-1111-111111111111',
+      company_id: mockCompany.id,
+      person_id: '77777777-7777-7777-7777-777777777777',
+      role: 'admin',
+      kind: 'owner',
+      full_name: 'Maria Silva',
+      short_name: 'Maria',
+      image_url: null,
+    };
+  }
+
+  const payload = await request<CurrentUserApiResponseDTO>(
+    API_PATHS.currentUser,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
 export async function listSchedules(
   accessToken: string,
   params?: ListQueryParams,
@@ -261,6 +366,115 @@ export async function listSchedules(
     },
   );
   return payload;
+}
+
+export async function getScheduleHistory(
+  accessToken: string,
+  scheduleId: string,
+): Promise<ScheduleHistoryItemDTO[]> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(100);
+    return [];
+  }
+
+  const payload = await request<ScheduleHistoryApiResponseDTO>(
+    API_PATHS.scheduleHistory(scheduleId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function listCompanyUsers(
+  accessToken: string,
+): Promise<CompanyUserDTO[]> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return [
+      {
+        id: 'company-user-system-1',
+        company_id: mockCompany.id,
+        user_id: 'system-user-1',
+        kind: 'employee',
+        role: 'system',
+        is_owner: false,
+        is_active: true,
+        full_name: 'System PetControl',
+        short_name: 'System',
+        image_url: null,
+        joined_at: new Date().toISOString(),
+        left_at: null,
+      },
+    ];
+  }
+
+  const payload = await request<CompanyUserListApiResponseDTO>(
+    API_PATHS.companyUsers,
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function listAdminSystemChatMessages(
+  accessToken: string,
+  userId: string,
+): Promise<AdminSystemChatMessageDTO[]> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    if (userId !== 'system-user-1') {
+      return [];
+    }
+    return [...mockAdminSystemChatMessages];
+  }
+
+  const payload = await request<AdminSystemChatMessageListApiResponseDTO>(
+    API_PATHS.adminSystemChatMessages(userId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function createAdminSystemChatMessage(
+  accessToken: string,
+  userId: string,
+  input: CreateAdminSystemChatMessageInput,
+): Promise<AdminSystemChatMessageDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(140);
+    const created: AdminSystemChatMessageDTO = {
+      id: crypto.randomUUID(),
+      conversation_id: 'chat-conversation-1',
+      company_id: mockCompany.id,
+      sender_user_id: '11111111-1111-1111-1111-111111111111',
+      sender_name: 'Maria',
+      sender_role: 'admin',
+      sender_image_url: null,
+      body: input.message,
+      created_at: new Date().toISOString(),
+    };
+    if (userId === 'system-user-1') {
+      mockAdminSystemChatMessages = [...mockAdminSystemChatMessages, created];
+    }
+    return created;
+  }
+
+  const payload = await request<{ data: AdminSystemChatMessageDTO }>(
+    API_PATHS.adminSystemChatMessages(userId),
+    {
+      method: 'POST',
+      accessToken,
+      body: input,
+    },
+  );
+  return payload.data;
 }
 
 export async function listClients(

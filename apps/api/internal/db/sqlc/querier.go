@@ -151,6 +151,7 @@ type Querier interface {
 	HasActiveCompanyModuleByCode(ctx context.Context, arg HasActiveCompanyModuleByCodeParams) (bool, error)
 	IncrementUserAuthLoginAttempts(ctx context.Context, userid pgtype.UUID) error
 	InsertAddress(ctx context.Context, arg InsertAddressParams) (int64, error)
+	InsertAdminSystemMessage(ctx context.Context, arg InsertAdminSystemMessageParams) (AdminSystemMessage, error)
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertAuthLog(ctx context.Context, arg InsertAuthLogParams) error
 	InsertCOmpanySubscription(ctx context.Context, arg InsertCOmpanySubscriptionParams) (int64, error)
@@ -221,6 +222,7 @@ type Querier interface {
 	ListActiveModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error)
 	ListActivePasswordRecoveryTokensByUserID(ctx context.Context, arg ListActivePasswordRecoveryTokensByUserIDParams) ([]ListActivePasswordRecoveryTokensByUserIDRow, error)
 	ListActiveServicePlans(ctx context.Context, arg ListActiveServicePlansParams) ([]ServicePlan, error)
+	ListAdminSystemMessages(ctx context.Context, arg ListAdminSystemMessagesParams) ([]ListAdminSystemMessagesRow, error)
 	ListAuthLogsByCompanyID(ctx context.Context, arg ListAuthLogsByCompanyIDParams) ([]AuthLog, error)
 	ListAuthLogsByUserID(ctx context.Context, arg ListAuthLogsByUserIDParams) ([]AuthLog, error)
 	ListClientServicePlans(ctx context.Context, arg ListClientServicePlansParams) ([]ListClientServicePlansRow, error)
@@ -346,6 +348,7 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (int64, error)
 	UpdateUserSession(ctx context.Context, arg UpdateUserSessionParams) (int64, error)
 	UpdateUserSettings(ctx context.Context, arg UpdateUserSettingsParams) (int64, error)
+	UpsertAdminSystemConversation(ctx context.Context, arg UpsertAdminSystemConversationParams) (AdminSystemConversation, error)
 	UpsertTranslation(ctx context.Context, arg UpsertTranslationParams) (Translation, error)
 	ValidatePetOwnerByCompany(ctx context.Context, arg ValidatePetOwnerByCompanyParams) (bool, error)
 	ValidateScheduleOwnership(ctx context.Context, arg ValidateScheduleOwnershipParams) (bool, error)

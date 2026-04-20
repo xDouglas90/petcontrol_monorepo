@@ -1,6 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  AdminSystemChatMessageDTO,
+  CompanyUserDTO,
   CreateClientInput,
+  CreateAdminSystemChatMessageInput,
   CreatePetInput,
   CreateScheduleInput,
   CreateServiceInput,
@@ -12,6 +15,7 @@ import type {
 } from '@petcontrol/shared-types';
 
 import {
+  createAdminSystemChatMessage,
   createClient,
   createPet,
   createSchedule,
@@ -20,7 +24,12 @@ import {
   deletePet,
   deleteSchedule,
   deleteService,
+  getScheduleHistory,
   getCurrentCompany,
+  getCurrentCompanySystemConfig,
+  getCurrentUser,
+  listAdminSystemChatMessages,
+  listCompanyUsers,
   listClients,
   listPets,
   listSchedules,
@@ -36,6 +45,12 @@ const EMPTY_PARAMS: ListQueryParams = {};
 
 export const domainQueryKeys = {
   currentCompany: () => ['domain', 'company', 'current'] as const,
+  currentCompanySystemConfig: () =>
+    ['domain', 'company', 'system-config', 'current'] as const,
+  currentUser: () => ['domain', 'user', 'current'] as const,
+  companyUsers: () => ['domain', 'company-users'] as const,
+  adminSystemChatMessages: (userId: string) =>
+    ['domain', 'chat', 'admin-system', userId, 'messages'] as const,
   clients: (params?: ListQueryParams) =>
     ['domain', 'clients', params ?? EMPTY_PARAMS] as const,
   pets: (params?: ListQueryParams) =>
@@ -44,6 +59,8 @@ export const domainQueryKeys = {
     ['domain', 'services', params ?? EMPTY_PARAMS] as const,
   schedules: (params?: ListQueryParams) =>
     ['domain', 'schedules', params ?? EMPTY_PARAMS] as const,
+  scheduleHistory: (scheduleId: string) =>
+    ['domain', 'schedules', scheduleId, 'history'] as const,
   allClients: () => ['domain', 'clients'] as const,
   allPets: () => ['domain', 'pets'] as const,
   allServices: () => ['domain', 'services'] as const,
@@ -65,6 +82,88 @@ export function useCurrentCompanyQuery() {
   });
 }
 
+export function useCurrentCompanySystemConfigQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.currentCompanySystemConfig(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return getCurrentCompanySystemConfig(session.accessToken);
+    },
+  });
+}
+
+export function useCurrentUserQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.currentUser(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return getCurrentUser(session.accessToken);
+    },
+  });
+}
+
+export function useCompanyUsersQuery() {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<CompanyUserDTO[]>({
+    queryKey: domainQueryKeys.companyUsers(),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return listCompanyUsers(session.accessToken);
+    },
+  });
+}
+
+export function useAdminSystemChatMessagesQuery(userId?: string) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<AdminSystemChatMessageDTO[]>({
+    queryKey: domainQueryKeys.adminSystemChatMessages(userId ?? 'none'),
+    enabled: Boolean(session?.accessToken && userId),
+    queryFn: async () => {
+      if (!session?.accessToken || !userId) {
+        throw new Error('Sessão não disponível');
+      }
+      return listAdminSystemChatMessages(session.accessToken, userId);
+    },
+  });
+}
+
+export function useCreateAdminSystemChatMessageMutation(userId?: string) {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async (input: CreateAdminSystemChatMessageInput) => {
+      if (!session?.accessToken || !userId) {
+        throw new Error('Sessão não disponível');
+      }
+      return createAdminSystemChatMessage(session.accessToken, userId, input);
+    },
+    onSuccess: async () => {
+      if (!userId) {
+        return;
+      }
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.adminSystemChatMessages(userId),
+      });
+    },
+  });
+}
+
 export function useSchedulesQuery(params?: ListQueryParams) {
   const session = useAuthStore(selectSession);
 
@@ -77,6 +176,23 @@ export function useSchedulesQuery(params?: ListQueryParams) {
       }
       return listSchedules(session.accessToken, params);
     },
+  });
+}
+
+export function useScheduleHistoriesQuery(scheduleIds: string[]) {
+  const session = useAuthStore(selectSession);
+
+  return useQueries({
+    queries: scheduleIds.map((scheduleId) => ({
+      queryKey: domainQueryKeys.scheduleHistory(scheduleId),
+      enabled: Boolean(session?.accessToken && scheduleId),
+      queryFn: async () => {
+        if (!session?.accessToken) {
+          throw new Error('Sessão não disponível');
+        }
+        return getScheduleHistory(session.accessToken, scheduleId);
+      },
+    })),
   });
 }
 

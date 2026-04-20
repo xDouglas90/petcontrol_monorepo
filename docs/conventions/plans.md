@@ -13,6 +13,7 @@
     - [essential](#essential)
     - [premium](#premium)
     - [trial](#trial)
+  - [Hierarquia de planos](#hierarquia-de-planos)
 
 ## Tipos de planos
 
@@ -102,3 +103,11 @@ O plano trial possui as seguintes características:
 - Não pode ser movido
 - Não pode ser renomeado
 - Não pode ser duplicado
+
+## Hierarquia de planos
+
+A hierarquia de planos para os clientes(tenants) é a seguinte:
+
+```text
+premium > essential > basic > starter > trial
+```

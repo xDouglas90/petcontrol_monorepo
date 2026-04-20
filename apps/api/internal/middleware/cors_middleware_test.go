@@ -73,3 +73,23 @@ func TestCORS_BlocksUnknownOriginPreflight(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, res.Code)
 	require.Empty(t, res.Header().Get("Access-Control-Allow-Origin"))
 }
+
+func TestCORS_AllowsWildcardLocalhostOriginPreflight(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(CORS([]string{"http://localhost:*"}))
+	router.POST("/api/v1/auth/login", func(c *gin.Context) {
+		JSONData(c, http.StatusOK, gin.H{"ok": true})
+	})
+
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/auth/login", nil)
+	req.Header.Set("Origin", "http://localhost:5174")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusNoContent, res.Code)
+	require.Equal(t, "http://localhost:5174", res.Header().Get("Access-Control-Allow-Origin"))
+}

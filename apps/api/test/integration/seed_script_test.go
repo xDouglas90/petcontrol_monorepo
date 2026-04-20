@@ -24,10 +24,12 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	require.NoError(t, err, "seed script should be idempotent: %s", string(output))
 
 	var (
-		clientCount   int
-		petCount      int
-		serviceCount  int
-		scheduleCount int
+		clientCount          int
+		configCount          int
+		petCount             int
+		serviceCount         int
+		confirmedStatusCount int
+		dashboardSeedCount   int
 	)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
@@ -42,6 +44,19 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	`).Scan(&clientCount)
 	require.NoError(t, err)
 	require.Equal(t, 1, clientCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM company_system_configs csc
+		INNER JOIN companies c ON c.id = csc.company_id
+		WHERE c.slug = 'petcontrol-dev'
+		  AND csc.schedule_init_time = TIME '08:00'
+		  AND csc.schedule_end_time = TIME '18:00'
+		  AND csc.min_schedules_per_day = 4
+		  AND csc.max_schedules_per_day = 18
+	`).Scan(&configCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, configCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)
@@ -82,7 +97,18 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 		  AND p.name = 'Thor'
 		  AND ssh.status = 'confirmed'
 		  AND s.deleted_at IS NULL
-	`).Scan(&scheduleCount)
+	`).Scan(&confirmedStatusCount)
 	require.NoError(t, err)
-	require.Equal(t, 1, scheduleCount)
+	require.GreaterOrEqual(t, confirmedStatusCount, 1)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM schedules s
+		INNER JOIN companies c ON c.id = s.company_id
+		WHERE c.slug = 'petcontrol-dev'
+		  AND s.notes LIKE 'Dashboard seed:%'
+		  AND s.deleted_at IS NULL
+	`).Scan(&dashboardSeedCount)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, dashboardSeedCount, 10)
 }

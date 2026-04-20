@@ -996,6 +996,26 @@ type Address struct {
 	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type AdminSystemConversation struct {
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	CompanyID    pgtype.UUID        `db:"company_id" json:"company_id"`
+	AdminUserID  pgtype.UUID        `db:"admin_user_id" json:"admin_user_id"`
+	SystemUserID pgtype.UUID        `db:"system_user_id" json:"system_user_id"`
+	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type AdminSystemMessage struct {
+	ID             pgtype.UUID        `db:"id" json:"id"`
+	ConversationID pgtype.UUID        `db:"conversation_id" json:"conversation_id"`
+	CompanyID      pgtype.UUID        `db:"company_id" json:"company_id"`
+	SenderUserID   pgtype.UUID        `db:"sender_user_id" json:"sender_user_id"`
+	Body           string             `db:"body" json:"body"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt      pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+}
+
 type AuditLog struct {
 	ID          pgtype.UUID        `db:"id" json:"id"`
 	Action      LogAction          `db:"action" json:"action"`
