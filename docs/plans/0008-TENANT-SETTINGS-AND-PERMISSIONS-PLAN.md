@@ -7,8 +7,12 @@ Definir o escopo técnico, funcional e arquitetural da próxima PR do PetControl
 Esta PR deve introduzir:
 
 - tela real de configurações em `/:companySlug/settings`;
-- carregamento e edição das configurações da empresa;
-- carregamento e edição das configurações operacionais em `company_system_configs`;
+- três seções explícitas na tela:
+  - `Configurações da empresa`;
+  - `Configurações de negócios`;
+  - `Permissões`;
+- carregamento e edição das configurações da empresa com base na tabela `companies`;
+- carregamento e edição das configurações de negócios com base na tabela `company_system_configs`;
 - visibilidade da tela apenas para `admin` e para usuários do tipo `system` que tenham recebido permissão explícita de algum `admin`;
 - comportamento readonly para usuários sem permissão de edição;
 - seção administrativa para gestão de permissões dos usuários vinculados ao tenant, visível apenas para `admin`;
@@ -45,7 +49,8 @@ Ao final desta PR, o sistema deve apresentar:
 - uma tela de configurações funcional, acessível a partir do shell autenticado;
 - bloqueio de acesso para qualquer usuário que não seja `admin` nem `system` autorizado;
 - visualização em modo readonly para usuários sem permissão de edição;
-- leitura e edição dos dados do tenant e de `company_system_configs`;
+- leitura e edição dos dados pertinentes à tabela `companies`;
+- leitura e edição de todos os itens pertinentes à tabela `company_system_configs`;
 - uma área de gestão de permissões por usuário do tenant visível apenas para `admin`;
 - todos os usuários seedados com permissões mínimas coerentes com seu `role`;
 - base pronta para o futuro módulo de criação de usuários já nascer compatível com `user_permissions`.
@@ -78,25 +83,28 @@ Decisão prática recomendada para esta PR:
 - manter a tela em readonly quando nenhuma permissão de edição estiver ativa;
 - a seção de gestão de permissões de outros usuários aparece apenas para `admin`.
 
-## 2. Seção de Configurações da Empresa
+## 2. Seção `Configurações da Empresa`
 
 Esta seção deve consumir `GET /companies/current` e `PATCH /companies/current`.
 
-Escopo mínimo recomendado:
+Escopo esperado:
 
 - nome da empresa;
+- nome fantasia;
 - slug, se fizer sentido exibir como somente leitura;
-- logo, branding ou demais campos já suportados pelo contrato atual da empresa;
-- dados que já possuam API estável hoje.
+- logo;
+- demais campos da tabela `companies` que sejam pertinentes ao tenant e já estejam disponíveis no contrato atual;
+- outras informações institucionais e cadastrais da empresa que façam parte da tabela `companies`.
 
 Observação:
 
 - a PR não deve inventar campos sem lastro no backend atual;
-- se houver campos desejados mas ainda não expostos pelo contrato atual, devem entrar como follow-up explícito.
+- se houver campos de `companies` desejados mas ainda não expostos pelo contrato atual, devem entrar como follow-up explícito;
+- esta deve ser a seção responsável por todas as configurações institucionais da empresa.
 
-## 3. Seção de Configurações Operacionais do Tenant
+## 3. Seção `Configurações de Negócios`
 
-Esta seção deve ser baseada diretamente na tabela `company_system_configs`.
+Esta seção deve ser baseada diretamente na tabela `company_system_configs` e concentrar todas as configurações operacionais e de negócio do tenant.
 
 Campos confirmados no schema:
 
@@ -133,9 +141,10 @@ Agrupamento recomendado no Web:
 
 Requisito técnico adicional:
 
-- criar endpoint de update para `company_system_configs`, reaproveitando a query SQL já gerada para `UpdateCompanySystemConfig`.
+- criar endpoint de update para `company_system_configs`, reaproveitando a query SQL já gerada para `UpdateCompanySystemConfig`;
+- garantir que esta seção cubra todos os itens pertinentes da tabela `company_system_configs`.
 
-## 4. Seção de Permissões de Usuários do Tenant
+## 4. Seção `Permissões`
 
 Esta seção deve existir dentro da própria tela de configurações, mas deve ser renderizada apenas para usuários do tipo `admin`.
 
@@ -243,9 +252,9 @@ Regras de autorização recomendadas:
 
 Separar a tela em blocos independentes:
 
-- `Perfil/empresa`
-- `Configurações operacionais`
-- `Permissões de usuários`
+- `Configurações da empresa`
+- `Configurações de negócios`
+- `Permissões`
 
 Comportamentos esperados:
 
@@ -366,24 +375,32 @@ Comportamentos esperados:
 
 ## Contrato Inicial de UX da Tela
 
+A tela deve ser organizada explicitamente em três seções principais:
+
+- `Configurações da empresa`
+- `Configurações de negócios`
+- `Permissões`
+
 ## Cabeçalho
 
 - título da página `Configurações`;
 - texto de apoio explicando que a tela concentra ajustes do tenant e gestão de acesso.
 
-## Bloco 1 - Empresa
+## Bloco 1 - Configurações da Empresa
 
-- dados institucionais do tenant;
+- dados institucionais e cadastrais do tenant vindos de `companies`;
+- campos como nome, nome fantasia, logo e demais informações pertinentes à empresa;
 - ação de salvar separada.
 
-## Bloco 2 - Operação
+## Bloco 2 - Configurações de Negócios
 
+- todos os itens pertinentes de `company_system_configs`;
 - horários, pausa, dias de atendimento;
 - limites de agendamentos;
 - capacidade física;
 - canais de WhatsApp.
 
-## Bloco 3 - Permissões de Usuários
+## Bloco 3 - Permissões
 
 - visível apenas para `admin`;
 - select de usuário do tenant;
