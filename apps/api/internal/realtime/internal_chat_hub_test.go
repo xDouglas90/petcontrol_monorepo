@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -62,6 +64,12 @@ func TestInternalChatHubRegisterAndUnregister(t *testing.T) {
 
 	require.Equal(t, 0, hub.TotalConnections())
 	require.Equal(t, 0, hub.ConnectionCount("company-1", "user-1"))
+
+	stats := hub.Stats()
+	require.Equal(t, 0, stats.ActiveConnections)
+	require.Equal(t, 0, stats.OnlineParticipants)
+	require.EqualValues(t, 2, stats.TotalConnectionsOpened)
+	require.EqualValues(t, 2, stats.TotalConnectionsClosed)
 }
 
 func TestInternalChatHubBroadcastConversationEvent(t *testing.T) {
@@ -121,6 +129,11 @@ func TestInternalChatHubBroadcastConversationEvent(t *testing.T) {
 	require.Equal(t, "chat.message.created", event["type"])
 	require.Equal(t, "company-1", event["company_id"])
 	require.Equal(t, "system-1", event["counterpart_user_id"])
+
+	stats := hub.Stats()
+	require.EqualValues(t, 1, stats.TotalBroadcastEvents)
+	require.EqualValues(t, 1, stats.TotalBroadcastDeliveries)
+	require.EqualValues(t, 0, stats.TotalBroadcastFailures)
 }
 
 func TestInternalChatHubConversationSnapshot(t *testing.T) {
@@ -143,4 +156,210 @@ func TestInternalChatHubConversationSnapshot(t *testing.T) {
 	require.Equal(t, "system-1", snapshot[1].UserID)
 	require.Equal(t, "offline", snapshot[1].Status)
 	require.Equal(t, 0, snapshot[1].Connections)
+}
+
+func TestInternalChatHubStatsCounters(t *testing.T) {
+	hub := NewInternalChatHub()
+
+	hub.RecordInvalidPayload()
+	hub.RecordInvalidPayload()
+	hub.RecordPingFailure()
+	hub.RecordSocketError()
+
+	stats := hub.Stats()
+	require.EqualValues(t, 2, stats.InvalidPayloads)
+	require.EqualValues(t, 1, stats.PingFailures)
+	require.EqualValues(t, 1, stats.SocketErrors)
+}
+
+func TestInternalChatHubConcurrentRegisterBroadcastAndUnregister(t *testing.T) {
+	hub := NewInternalChatHub()
+
+	const totalConnections = 32
+	serverConnected := make(chan struct{}, totalConnections)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			Subprotocols:   []string{"petcontrol.internal-chat.v1"},
+			OriginPatterns: []string{"127.0.0.1:*", "localhost:*"},
+		})
+		require.NoError(t, err)
+
+		id := r.URL.Query().Get("id")
+		role := "admin"
+		userID := "admin-1"
+		counterpartID := "system-1"
+		if r.URL.Query().Get("role") == "system" {
+			role = "system"
+			userID = "system-1"
+			counterpartID = "admin-1"
+		}
+
+		hub.Register(InternalChatConnection{
+			ID:                id,
+			CompanyID:         "company-1",
+			UserID:            userID,
+			CounterpartUserID: counterpartID,
+			UserRole:          role,
+			ConnectedAt:       time.Now(),
+			Socket:            conn,
+		})
+		serverConnected <- struct{}{}
+
+		ctx := conn.CloseRead(r.Context())
+		<-ctx.Done()
+		_, _, _ = hub.Unregister(id)
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	connections := make([]*websocket.Conn, 0, totalConnections)
+	for i := range totalConnections {
+		role := "admin"
+		if i >= totalConnections/2 {
+			role = "system"
+		}
+		conn, _, err := websocket.Dial(ctx, "ws"+server.URL[len("http"):]+"?id=conn-"+strconv.Itoa(i)+"&role="+role, &websocket.DialOptions{
+			Subprotocols: []string{"petcontrol.internal-chat.v1"},
+		})
+		require.NoError(t, err)
+		connections = append(connections, conn)
+	}
+
+	for range totalConnections {
+		<-serverConnected
+	}
+
+	var wg sync.WaitGroup
+	for _, conn := range connections {
+		wg.Add(1)
+		go func(connection *websocket.Conn) {
+			defer wg.Done()
+			var event map[string]any
+			require.NoError(t, wsjson.Read(ctx, connection, &event))
+			require.Equal(t, "chat.message.created", event["type"])
+		}(conn)
+	}
+
+	hub.BroadcastConversationEvent(ctx, "company-1", "admin-1", "system-1", "", func(connection InternalChatConnection) map[string]any {
+		return map[string]any{
+			"type":                "chat.message.created",
+			"company_id":          connection.CompanyID,
+			"counterpart_user_id": connection.CounterpartUserID,
+			"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+			"message": map[string]any{
+				"id": "message-stress",
+			},
+		}
+	})
+
+	wg.Wait()
+
+	for _, conn := range connections {
+		_ = conn.Close(websocket.StatusNormalClosure, "done")
+	}
+
+	require.Eventually(t, func() bool {
+		return hub.TotalConnections() == 0
+	}, 5*time.Second, 20*time.Millisecond)
+
+	stats := hub.Stats()
+	require.EqualValues(t, totalConnections, stats.TotalConnectionsOpened)
+	require.EqualValues(t, totalConnections, stats.TotalConnectionsClosed)
+	require.EqualValues(t, 1, stats.TotalBroadcastEvents)
+	require.EqualValues(t, totalConnections, stats.TotalBroadcastDeliveries)
+}
+
+func BenchmarkInternalChatHubBroadcastConversationEvent(b *testing.B) {
+	hub := NewInternalChatHub()
+	const totalConnections = 24
+	serverConnected := make(chan struct{}, totalConnections)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			Subprotocols:   []string{"petcontrol.internal-chat.v1"},
+			OriginPatterns: []string{"127.0.0.1:*", "localhost:*"},
+		})
+		require.NoError(b, err)
+
+		id := r.URL.Query().Get("id")
+		role := "admin"
+		userID := "admin-1"
+		counterpartID := "system-1"
+		if r.URL.Query().Get("role") == "system" {
+			role = "system"
+			userID = "system-1"
+			counterpartID = "admin-1"
+		}
+
+		hub.Register(InternalChatConnection{
+			ID:                id,
+			CompanyID:         "company-1",
+			UserID:            userID,
+			CounterpartUserID: counterpartID,
+			UserRole:          role,
+			ConnectedAt:       time.Now(),
+			Socket:            conn,
+		})
+		serverConnected <- struct{}{}
+
+		ctx := conn.CloseRead(r.Context())
+		<-ctx.Done()
+		_, _, _ = hub.Unregister(id)
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	connections := make([]*websocket.Conn, 0, totalConnections)
+	for i := range totalConnections {
+		role := "admin"
+		if i >= totalConnections/2 {
+			role = "system"
+		}
+		conn, _, err := websocket.Dial(ctx, "ws"+server.URL[len("http"):]+"?id=bench-"+strconv.Itoa(i)+"&role="+role, &websocket.DialOptions{
+			Subprotocols: []string{"petcontrol.internal-chat.v1"},
+		})
+		require.NoError(b, err)
+		connections = append(connections, conn)
+	}
+
+	for range totalConnections {
+		<-serverConnected
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var wg sync.WaitGroup
+		for _, conn := range connections {
+			wg.Add(1)
+			go func(connection *websocket.Conn) {
+				defer wg.Done()
+				var event map[string]any
+				require.NoError(b, wsjson.Read(ctx, connection, &event))
+			}(conn)
+		}
+
+		hub.BroadcastConversationEvent(ctx, "company-1", "admin-1", "system-1", "", func(connection InternalChatConnection) map[string]any {
+			return map[string]any{
+				"type":                "chat.message.created",
+				"company_id":          connection.CompanyID,
+				"counterpart_user_id": connection.CounterpartUserID,
+				"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+				"message": map[string]any{
+					"id": "bench-" + strconv.Itoa(i),
+				},
+			}
+		})
+
+		wg.Wait()
+	}
+	b.StopTimer()
+
+	for _, conn := range connections {
+		_ = conn.Close(websocket.StatusNormalClosure, "done")
+	}
 }

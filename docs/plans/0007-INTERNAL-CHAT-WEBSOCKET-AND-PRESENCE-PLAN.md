@@ -257,6 +257,26 @@ Status atual:
 
 ## Fase 4 - Robustez, Observabilidade e Carga
 
+Status atual:
+
+- O hub agora expõe snapshot interno de métricas com:
+  - conexões ativas;
+  - participantes online;
+  - conexões abertas/fechadas;
+  - eventos e entregas de broadcast;
+  - falhas de broadcast;
+  - payloads inválidos;
+  - falhas de ping;
+  - erros de socket.
+- O socket passou a usar heartbeat com `Ping` periódico do servidor.
+- Payload inesperado enviado pelo cliente agora gera `chat.error` e fechamento com `StatusPolicyViolation`.
+- O módulo `internal/realtime` ganhou teste concorrente de registro/broadcast/unregister e benchmark de fan-out.
+- Cobertura criada para:
+  - contadores do hub;
+  - rejeição de payload inválido no socket.
+  - cenário concorrente com múltiplas conexões;
+  - benchmark simples de broadcast.
+
 ### 4.1 Ações
 
 - Adicionar métricas básicas.
@@ -265,8 +285,13 @@ Status atual:
 
 ### 4.2 Checks
 
-- [ ] Existem métricas mínimas para conexões e erros.
+- [x] Existem métricas mínimas para conexões e erros.
 - [ ] O sistema suporta carga compatível com o ambiente esperado.
+
+Observação:
+
+- A PR já possui benchmark e teste concorrente como smoke/load check inicial.
+- Ainda falta, se desejado, ampliar isso para soak test com volume significativamente maior e alvo explícito de capacidade.
 
 ## Testes Esperados
 

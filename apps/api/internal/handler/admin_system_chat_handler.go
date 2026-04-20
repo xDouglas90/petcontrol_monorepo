@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -30,6 +31,8 @@ const (
 	internalChatSocketSubprotocol = "petcontrol.internal-chat.v1"
 	internalChatMaxMessageBytes   = 4096
 	internalChatWriteTimeout      = 10 * time.Second
+	internalChatPingInterval      = 30 * time.Second
+	internalChatPingTimeout       = 10 * time.Second
 )
 
 func NewAdminSystemChatHandler(
@@ -268,8 +271,11 @@ func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
 		)
 	}
 
-	ctx := socket.CloseRead(c.Request.Context())
-	<-ctx.Done()
+	lifecycleCtx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	go h.runSocketHeartbeat(lifecycleCtx, socket)
+	h.runSocketInboundLoop(lifecycleCtx, connection)
 }
 
 func (h *AdminSystemChatHandler) writeSocketEvent(ctx context.Context, socket *websocket.Conn, payload map[string]any) error {
@@ -277,6 +283,62 @@ func (h *AdminSystemChatHandler) writeSocketEvent(ctx context.Context, socket *w
 	defer cancel()
 
 	return wsjson.Write(writeCtx, socket, payload)
+}
+
+func (h *AdminSystemChatHandler) runSocketHeartbeat(ctx context.Context, socket *websocket.Conn) {
+	ticker := time.NewTicker(internalChatPingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			pingCtx, cancel := context.WithTimeout(context.Background(), internalChatPingTimeout)
+			err := socket.Ping(pingCtx)
+			cancel()
+			if err != nil {
+				h.hub.RecordPingFailure()
+				_ = socket.Close(websocket.StatusGoingAway, "ping timeout")
+				return
+			}
+		}
+	}
+}
+
+func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, connection realtime.InternalChatConnection) {
+	for {
+		_, _, err := connection.Socket.Read(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+
+			status := websocket.CloseStatus(err)
+			if status == websocket.StatusNormalClosure ||
+				status == websocket.StatusGoingAway ||
+				status == websocket.StatusNoStatusRcvd ||
+				status == websocket.StatusPolicyViolation {
+				return
+			}
+			if !errors.Is(err, context.Canceled) {
+				h.hub.RecordSocketError()
+			}
+			return
+		}
+
+		h.hub.RecordInvalidPayload()
+		_ = h.writeSocketEvent(context.Background(), connection.Socket, map[string]any{
+			"type":                "chat.error",
+			"company_id":          connection.CompanyID,
+			"counterpart_user_id": connection.CounterpartUserID,
+			"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+			"code":                "invalid_socket_payload",
+			"message":             "unexpected client payload",
+		})
+		_ = connection.Socket.Close(websocket.StatusPolicyViolation, "unexpected data message")
+		return
+	}
 }
 
 func (h *AdminSystemChatHandler) newMessageCreatedEvent(

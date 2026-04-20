@@ -404,3 +404,58 @@ func TestAdminSystemChatHandler_Connect_BroadcastsPresenceUpdates(t *testing.T) 
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestAdminSystemChatHandler_Connect_RejectsUnexpectedSocketPayload(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	serviceUnderTest, mock := adminSystemChatServiceWithMock(t)
+	defer mock.Close()
+
+	companyID := newHandlerUUID(t)
+	currentUserID := newHandlerUUID(t)
+	contactUserID := newHandlerUUID(t)
+	token := chatToken(t, companyID, currentUserID, "admin")
+
+	expectParticipantValidation(t, mock, companyID, currentUserID, contactUserID, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem)
+
+	hub := realtime.NewInternalChatHub()
+	server := httptest.NewServer(newChatSocketRouter(serviceUnderTest, hub))
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, resp, err := websocket.Dial(ctx, websocketURL(server.URL, contactUserID), &websocket.DialOptions{
+		HTTPHeader: http.Header{
+			"Authorization": []string{"Bearer " + token},
+		},
+		Subprotocols: []string{internalChatSocketSubprotocol},
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+	defer func() {
+		_ = conn.Close(websocket.StatusNormalClosure, "done")
+	}()
+
+	require.Equal(t, "chat.connected", readSocketEvent(t, ctx, conn)["type"])
+	require.Equal(t, "chat.presence.snapshot", readSocketEvent(t, ctx, conn)["type"])
+
+	require.NoError(t, wsjson.Write(ctx, conn, map[string]any{
+		"type":    "client.message",
+		"message": "not allowed",
+	}))
+
+	event := readSocketEvent(t, ctx, conn)
+	require.Equal(t, "chat.error", event["type"])
+	require.Equal(t, companyID.String(), event["company_id"])
+	require.Equal(t, contactUserID.String(), event["counterpart_user_id"])
+	require.Equal(t, "invalid_socket_payload", event["code"])
+
+	_, _, err = conn.Read(ctx)
+	require.Error(t, err)
+	require.Equal(t, websocket.StatusPolicyViolation, websocket.CloseStatus(err))
+
+	stats := hub.Stats()
+	require.EqualValues(t, 1, stats.InvalidPayloads)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
