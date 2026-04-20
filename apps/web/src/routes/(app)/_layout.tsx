@@ -174,6 +174,8 @@ export function AppLayout() {
   const normalizedCurrentSlug = normalizeCompanySlug(currentSlug);
   const normalizedUrlSlug = urlSlug?.toLowerCase();
   const companyDisplayName = company.fantasy_name || company.name;
+  const canViewSettings =
+    currentUser?.settings_access?.can_view ?? currentUser?.role === 'admin';
 
   if (
     urlSlug &&
@@ -325,14 +327,16 @@ export function AppLayout() {
           </div>
 
           <div className="mt-auto space-y-2 border-t border-stone-100 px-4 py-4">
-            <SidebarLink
-              to={`/${normalizeCompanySlug(currentSlug)}/settings`}
-              icon={Cog}
-              label="Configurações"
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              collapsedDesktop={isDesktopViewport && !sidebarOpen}
-              onNavigate={handleSidebarLinkClick}
-            />
+            {canViewSettings ? (
+              <SidebarLink
+                to={`/${normalizeCompanySlug(currentSlug)}/settings`}
+                icon={Cog}
+                label="Configurações"
+                expanded={isDesktopViewport ? sidebarOpen : true}
+                collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                onNavigate={handleSidebarLinkClick}
+              />
+            ) : null}
 
             <button
               type="button"

@@ -99,6 +99,12 @@ describe('AppLayout', () => {
         full_name: 'Maria da Silva',
         short_name: 'Maria',
         image_url: null,
+        settings_access: {
+          can_view: true,
+          can_manage_permissions: true,
+          active_permission_codes: ['company_settings:edit'],
+          editable_permission_codes: ['company_settings:edit'],
+        },
       },
       refetch: vi.fn(),
     });
@@ -261,6 +267,12 @@ describe('AppLayout', () => {
         full_name: 'Joana Souza',
         short_name: 'Joana',
         image_url: null,
+        settings_access: {
+          can_view: true,
+          can_manage_permissions: true,
+          active_permission_codes: ['company_settings:edit'],
+          editable_permission_codes: ['company_settings:edit'],
+        },
       },
     });
 
@@ -290,6 +302,36 @@ describe('AppLayout', () => {
 
     expect(screen.getByText('Plano consolidado')).toBeTruthy();
     expect(screen.getByText('Ver detalhes')).toBeTruthy();
+  });
+
+  it('esconde o link de Configurações quando o usuário não pode visualizar a tela', () => {
+    mockUseCurrentUserQuery.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: {
+        user_id: 'user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'system',
+        kind: 'employee',
+        full_name: 'Operação',
+        short_name: 'Ops',
+        image_url: null,
+        settings_access: {
+          can_view: false,
+          can_manage_permissions: false,
+          active_permission_codes: [],
+          editable_permission_codes: [],
+        },
+      },
+      refetch: vi.fn(),
+    });
+
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+
+    render(<AppLayout />);
+
+    expect(screen.queryByRole('link', { name: 'Configurações' })).toBeNull();
   });
 
   it('reabre a sidebar automaticamente em telas grandes', () => {

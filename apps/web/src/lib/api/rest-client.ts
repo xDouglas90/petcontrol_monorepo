@@ -355,6 +355,26 @@ export async function getCurrentUser(
       full_name: 'Maria Silva',
       short_name: 'Maria',
       image_url: null,
+      settings_access: {
+        can_view: true,
+        can_manage_permissions: true,
+        active_permission_codes: [
+          'company_settings:edit',
+          'plan_settings:edit',
+          'payment_settings:edit',
+          'notification_settings:edit',
+          'integration_settings:edit',
+          'security_settings:edit',
+        ],
+        editable_permission_codes: [
+          'company_settings:edit',
+          'plan_settings:edit',
+          'payment_settings:edit',
+          'notification_settings:edit',
+          'integration_settings:edit',
+          'security_settings:edit',
+        ],
+      },
     };
   }
 
