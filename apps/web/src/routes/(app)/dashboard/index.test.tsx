@@ -63,7 +63,7 @@ describe('DashboardPage', () => {
 
   it('renderiza dados reais da empresa corrente e dos schedules', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-04-19T10:30:00-03:00'));
+    vi.setSystemTime(new Date(2026, 3, 19, 10, 30, 0));
 
     const company: CompanyDTO = {
       id: 'company-1',
@@ -252,7 +252,7 @@ describe('DashboardPage', () => {
 
   it('mantém o dashboard estável com dados operacionais mínimos', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-04-19T14:30:00-03:00'));
+    vi.setSystemTime(new Date(2026, 3, 19, 14, 30, 0));
 
     const company: CompanyDTO = {
       id: 'company-1',
