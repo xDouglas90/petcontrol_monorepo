@@ -211,6 +211,26 @@ export interface CompanyUserListApiResponseDTO {
   data: CompanyUserDTO[];
 }
 
+export interface AdminSystemChatMessageDTO {
+  id: UUID;
+  conversation_id: UUID;
+  company_id: UUID;
+  sender_user_id: UUID;
+  sender_name: string;
+  sender_role: UserRole;
+  sender_image_url?: string | null;
+  body: string;
+  created_at: string;
+}
+
+export interface AdminSystemChatMessageListApiResponseDTO {
+  data: AdminSystemChatMessageDTO[];
+}
+
+export interface CreateAdminSystemChatMessageInput {
+  message: string;
+}
+
 export interface ClientDTO {
   id: UUID;
   person_id: UUID;
