@@ -358,6 +358,8 @@ func (h *AdminSystemChatHandler) runSocketInboundLoop(ctx context.Context, conne
 			"code":                "invalid_socket_payload",
 			"message":             "unexpected client payload",
 		})
+		_ = connection.Socket.Close(websocket.StatusPolicyViolation, "unexpected client payload")
+		return
 	}
 }
 
