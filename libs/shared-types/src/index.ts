@@ -151,10 +151,18 @@ export interface CurrentUserDTO {
   full_name?: string | null;
   short_name?: string | null;
   image_url?: string | null;
+  settings_access?: CurrentUserSettingsAccessDTO;
 }
 
 export interface CurrentUserApiResponseDTO {
   data: CurrentUserDTO;
+}
+
+export interface CurrentUserSettingsAccessDTO {
+  can_view: boolean;
+  can_manage_permissions: boolean;
+  active_permission_codes: string[];
+  editable_permission_codes: string[];
 }
 
 export const WEEK_DAYS = [

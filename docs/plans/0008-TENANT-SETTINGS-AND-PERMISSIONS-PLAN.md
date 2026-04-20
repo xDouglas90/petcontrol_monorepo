@@ -383,10 +383,10 @@ Status atual:
 
 ### 4.2 Checks
 
-- [ ] Usuário que não seja `admin` nem `system` autorizado não acessa a tela.
-- [ ] Usuário com permissão parcial enxerga apenas o que pode usar.
-- [ ] Usuário sem permissão de edição vê a tela em readonly.
-- [ ] A autorização não depende apenas do front-end.
+- [x] Usuário que não seja `admin` nem `system` autorizado não acessa a tela.
+- [x] Usuário com permissão parcial enxerga apenas o que pode usar.
+- [x] Usuário sem permissão de edição vê a tela em readonly.
+- [x] A autorização não depende apenas do front-end.
 
 ## Fase 5 - Tela Web de Configurações
 
