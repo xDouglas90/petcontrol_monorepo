@@ -305,34 +305,34 @@ export function DashboardPage() {
         </section>
 
         <section className="rounded-[2.5rem] border border-stone-100 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] lg:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-                Performance
-              </p>
-              <h3 className="mt-2 font-display text-2xl text-stone-950">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+              Performance
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-display text-2xl text-stone-950">
                 Ocupação por horário operacional
               </h3>
-              <p className="mt-2 text-sm text-stone-500">
-                Comparativo da semana selecionada com o mesmo recorte do mês
-                anterior, respeitando a janela operacional do tenant.
-              </p>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
+                <select
+                  id="dashboard-week-range"
+                  aria-label="Selecionar semana de performance"
+                  value={normalizedSelectedWeekKey}
+                  onChange={(event) => setSelectedWeekKey(event.target.value)}
+                  className="bg-transparent outline-none"
+                >
+                  {weekOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
-              <select
-                id="dashboard-week-range"
-                aria-label="Selecionar semana de performance"
-                value={normalizedSelectedWeekKey}
-                onChange={(event) => setSelectedWeekKey(event.target.value)}
-                className="bg-transparent outline-none"
-              >
-                {weekOptions.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <p className="mt-2 text-sm text-stone-500">
+              Comparativo da semana selecionada com o mesmo recorte do mês
+              anterior, respeitando a janela operacional do tenant.
+            </p>
           </div>
 
           <div className="mt-8">
@@ -683,11 +683,11 @@ function AdminStatCard({
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-900 shadow-sm transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
           <Icon className="h-6 w-6" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-3">
-            <p className="font-display text-3xl text-stone-950">{value}</p>
+        <div className="min-w-0 flex flex-1 justify-center">
+          <div className="flex flex-col items-center justify-center gap-1 text-center">
+            <p className="font-display text-4xl text-stone-950">{value}</p>
             <div
-              className={`inline-flex items-center gap-1 text-xs font-bold ${
+              className={`inline-flex items-center justify-center gap-1 text-xs font-bold ${
                 isNeutral
                   ? 'text-stone-400'
                   : positive
@@ -1279,7 +1279,7 @@ function StatusPicker({ currentStatus, onStatusChange }: StatusPickerProps) {
             onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
             role="presentation"
           />
-          <div className="absolute bottom-full right-0 z-50 mb-2 w-32 origin-bottom-right rounded-2xl border border-stone-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute top-full right-0 z-50 mt-2 w-32 origin-top-right rounded-2xl border border-stone-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex flex-col gap-1">
               {statusOptions.map((opt) => (
                 <button
