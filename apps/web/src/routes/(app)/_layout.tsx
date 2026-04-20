@@ -277,36 +277,7 @@ export function AppLayout() {
             </button>
           </div>
 
-          <div className="px-4 py-4">
-            <div
-              className={cn(
-                'rounded-[1.6rem] bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-400 p-4 text-white transition-all duration-300',
-                isDesktopViewport && !sidebarOpen && 'px-3 py-3',
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center gap-3',
-                  isDesktopViewport && !sidebarOpen && 'justify-center',
-                )}
-              >
-                <UserAvatar
-                  shortName={currentUser?.short_name ?? null}
-                  imageUrl={currentUser?.image_url ?? null}
-                />
-                <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm uppercase tracking-[0.22em] text-white/65">
-                      {session?.role ?? 'sem role'}
-                    </p>
-                    <p className="truncate font-medium text-white">
-                      {companyDisplayName}
-                    </p>
-                  </div>
-                </SidebarLabel>
-              </div>
-            </div>
-          </div>
+          <div className="h-4" />
 
           <nav className="space-y-1 px-4 pb-4">
             <SidebarLink

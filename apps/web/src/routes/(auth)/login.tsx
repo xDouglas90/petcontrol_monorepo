@@ -56,10 +56,8 @@ export function LoginPage() {
     },
   });
 
-  const {
-    isLoading: isHealthLoading,
-    isError: isHealthError,
-  } = useHealthQuery();
+  const { isLoading: isHealthLoading, isError: isHealthError } =
+    useHealthQuery();
   const authMode = getAuthMode();
 
   if (hydrated && session) {
@@ -100,7 +98,7 @@ export function LoginPage() {
                   ? 'API indisponível'
                   : authMode === 'mock'
                     ? 'Modo experimental ativo'
-                    : 'Conexão segura com API'}
+                    : 'Conexão segura'}
             </div>
 
             <div className="max-w-2xl space-y-6">
