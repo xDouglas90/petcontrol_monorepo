@@ -241,7 +241,9 @@ export function AppLayout() {
             <div
               className={cn(
                 'flex items-center gap-3 overflow-hidden transition-all duration-300',
-                isDesktopViewport && !sidebarOpen ? 'w-0 opacity-0' : 'w-auto opacity-100',
+                isDesktopViewport && !sidebarOpen
+                  ? 'w-0 opacity-0'
+                  : 'w-auto opacity-100',
               )}
             >
               <TenantBrand
@@ -279,7 +281,7 @@ export function AppLayout() {
 
           <div className="h-4" />
 
-          <nav className="space-y-1 px-4 pb-4">
+          <nav className="mt-7 space-y-1 px-4 pb-4">
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'dashboard')}
               icon={LayoutGrid}
@@ -437,7 +439,7 @@ function SidebarLabel({
           ? 'max-w-[14rem] translate-x-0 opacity-100 delay-100'
           : 'max-w-0 -translate-x-1 opacity-0 delay-0',
       )}
-      aria-hidden={!expanded}
+      aria-hidden={!expanded ? 'true' : undefined}
     >
       {children}
     </span>
@@ -521,7 +523,7 @@ function UpgradeCard({
 }) {
   const isSpecialTier =
     activePackage === 'premium' || activePackage === 'internal';
-  
+
   if (!expanded) {
     return (
       <div className="flex justify-center py-4">
@@ -541,11 +543,11 @@ function UpgradeCard({
       <div className="flex flex-col items-center text-center">
         <h4 className="font-display text-lg text-stone-900">{title}</h4>
         <p className="mt-2 text-xs leading-relaxed text-stone-400 px-2">
-          {isSpecialTier 
-            ? 'Você já possui todos os recursos liberados.' 
+          {isSpecialTier
+            ? 'Você já possui todos os recursos liberados.'
             : 'Ganhe 1 mês grátis e desbloqueie novos recursos agora.'}
         </p>
-        
+
         <button
           type="button"
           className={cn(
@@ -584,5 +586,7 @@ function resolveInitials(value: string) {
 }
 
 function resolveSuggestedPlan(activePackage: string) {
-  return PLAN_UPGRADE_FLOW[activePackage as keyof typeof PLAN_UPGRADE_FLOW] ?? null;
+  return (
+    PLAN_UPGRADE_FLOW[activePackage as keyof typeof PLAN_UPGRADE_FLOW] ?? null
+  );
 }
