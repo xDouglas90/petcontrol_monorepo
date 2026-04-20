@@ -261,197 +261,195 @@ export function DashboardPage() {
   ] as const;
 
   return (
-    <div className="flex flex-col min-h-full">
-      <header className="border-b border-stone-100 px-6 py-8 lg:px-10">
-        <div className="flex flex-col gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
-              Dashboard admin
-            </p>
-            <div className="mt-3 flex items-center justify-between gap-4">
-              <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
-                Olá, {greetingName}
-              </h1>
+    <div className="flex flex-col xl:flex-row divide-y xl:divide-y-0 xl:divide-x divide-stone-100 min-h-full">
+      <main className="flex flex-1 min-w-0 flex-col divide-y divide-stone-100">
+        <header className="px-6 py-8 lg:px-10">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
+                Dashboard admin
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
+                  Olá, {greetingName}
+                </h1>
 
-              <div className="flex items-center gap-3 text-stone-400">
-                <CalendarDays className="h-5 w-5" />
-                <div className="hidden sm:block">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em]">
-                    Hoje
-                  </p>
-                  <span className="text-sm font-medium text-stone-700">
-                    {formatLongDate(now)}
-                  </span>
+                <div className="flex items-center gap-3 text-stone-400">
+                  <CalendarDays className="h-5 w-5" />
+                  <div className="hidden sm:block">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em]">
+                      Hoje
+                    </p>
+                    <span className="text-sm font-medium text-stone-700">
+                      {formatLongDate(now)}
+                    </span>
+                  </div>
                 </div>
               </div>
+              <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
+                Você está visualizando a operação de {company.fantasy_name}, com
+                foco em agenda diária, comparação mensal e eficiência da meta.
+              </p>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
-              Você está visualizando a operação de {company.fantasy_name}, com
-              foco em agenda diária, comparação mensal e eficiência da meta.
+          </div>
+        </header>
+        <section className="p-6 lg:p-10">
+          <div className="grid gap-6 sm:grid-cols-3">
+            {stats.map((stat) => (
+              <AdminStatCard key={stat.label} {...stat} />
+            ))}
+          </div>
+        </section>
+
+        <section className="p-6 lg:p-10">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+              Performance
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-display text-2xl text-stone-950">
+                Ocupação por horário operacional
+              </h3>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
+                <select
+                  id="dashboard-week-range"
+                  aria-label="Selecionar semana de performance"
+                  value={normalizedSelectedWeekKey}
+                  onChange={(event) => setSelectedWeekKey(event.target.value)}
+                  className="bg-transparent outline-none"
+                >
+                  {weekOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p className="mt-2 text-sm text-stone-500">
+              Comparativo da semana selecionada com o mesmo recorte do mês
+              anterior, respeitando a janela operacional da empresa.
             </p>
           </div>
-        </div>
-      </header>
 
-      <div className="flex flex-col xl:flex-row divide-y xl:divide-y-0 xl:divide-x divide-stone-100">
-        <main className="flex flex-1 min-w-0 flex-col divide-y divide-stone-100">
-          <section className="p-6 lg:p-10">
-            <div className="grid gap-6 sm:grid-cols-3">
-              {stats.map((stat) => (
-                <AdminStatCard key={stat.label} {...stat} />
-              ))}
-            </div>
-          </section>
+          <div className="mt-8">
+            <WeeklyPerformanceChart
+              current={weeklySeries.current}
+              previous={weeklySeries.previous}
+              scheduleInitTime={systemConfig.schedule_init_time}
+              scheduleEndTime={systemConfig.schedule_end_time}
+            />
+          </div>
 
-          <section className="p-6 lg:p-10">
-            <div>
+          <div className="mt-6 flex flex-wrap gap-6 text-sm text-stone-500">
+            <LegendDot color="bg-sky-400" label="Mês atual" />
+            <LegendDot color="bg-amber-400" label="Mês anterior" />
+          </div>
+        </section>
+
+        <section className="p-6 lg:p-10">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-                Performance
+                Operação atual
               </p>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-display text-2xl text-stone-950">
-                  Ocupação por horário operacional
-                </h3>
-                <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
-                  <select
-                    id="dashboard-week-range"
-                    aria-label="Selecionar semana de performance"
-                    value={normalizedSelectedWeekKey}
-                    onChange={(event) => setSelectedWeekKey(event.target.value)}
-                    className="bg-transparent outline-none"
-                  >
-                    {weekOptions.map((option) => (
-                      <option key={option.key} value={option.key}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <h3 className="font-display text-2xl text-stone-950">
+                Agendamentos em andamento
+              </h3>
+              <span className="text-xs font-medium text-stone-400">
+                {currentShiftLabel}
+              </span>
+            </div>
+            <div className="rounded-[1.4rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
+              Meta mensal concluída: {completionPercentage}%
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-4">
+            {shiftSchedules.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center text-stone-400">
+                Nenhum atendimento registrado para o turno atual.
               </div>
-              <p className="mt-2 text-sm text-stone-500">
-                Comparativo da semana selecionada com o mesmo recorte do mês
-                anterior, respeitando a janela operacional da empresa.
-              </p>
-            </div>
-
-            <div className="mt-8">
-              <WeeklyPerformanceChart
-                current={weeklySeries.current}
-                previous={weeklySeries.previous}
-                scheduleInitTime={systemConfig.schedule_init_time}
-                scheduleEndTime={systemConfig.schedule_end_time}
-              />
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-6 text-sm text-stone-500">
-              <LegendDot color="bg-sky-400" label="Mês atual" />
-              <LegendDot color="bg-amber-400" label="Mês anterior" />
-            </div>
-          </section>
-
-          <section className="p-6 lg:p-10">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-                  Operação atual
-                </p>
-                <h3 className="font-display text-2xl text-stone-950">
-                  Agendamentos em andamento
-                </h3>
-                <span className="text-xs font-medium text-stone-400">
-                  {currentShiftLabel}
-                </span>
-              </div>
-              <div className="rounded-[1.4rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
-                Meta mensal concluída: {completionPercentage}%
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-4">
-              {shiftSchedules.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center text-stone-400">
-                  Nenhum atendimento registrado para o turno atual.
-                </div>
-              ) : (
-                shiftSchedules.map((item) => (
-                  <article
-                    key={item.id}
-                    className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-stone-100 bg-stone-50/60 p-4 transition hover:border-stone-200 hover:bg-stone-50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
-                        <PawPrint className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-stone-900 group-hover:text-sky-600 transition">
-                          {item.pet_name ?? 'Pet sem nome'}
-                        </p>
-                        <p className="text-sm text-stone-400">
-                          {item.client_name ?? 'Tutor não identificado'}
-                        </p>
-                      </div>
+            ) : (
+              shiftSchedules.map((item) => (
+                <article
+                  key={item.id}
+                  className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-stone-100 bg-stone-50/60 p-4 transition hover:border-stone-200 hover:bg-stone-50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
+                      <PawPrint className="h-5 w-5" />
                     </div>
-
-                    <div className="flex items-center gap-8">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`h-2 w-2 rounded-full ${resolveScheduleStatusDotClass(item.current_status)}`}
-                        />
-                        <span className="text-sm font-medium text-stone-600">
-                          {formatScheduleStatus(item.current_status)}
-                        </span>
-                      </div>
-                      <div className="hidden sm:flex items-center gap-1.5 text-sm text-stone-400">
-                        <Clock3 className="h-4 w-4" />
-                        {formatElapsedTime(
-                          item,
-                          now,
-                          scheduleHistoryMap.get(item.id) ?? [],
-                        )}
-                      </div>
+                    <div>
+                      <p className="font-medium text-stone-900 group-hover:text-sky-600 transition">
+                        {item.pet_name ?? 'Pet sem nome'}
+                      </p>
+                      <p className="text-sm text-stone-400">
+                        {item.client_name ?? 'Tutor não identificado'}
+                      </p>
                     </div>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
-        </main>
+                  </div>
 
-        <aside className="w-full xl:w-[24rem] flex flex-col divide-y divide-stone-100">
-          <div className="p-8 text-center">
-            <div className="flex flex-col items-center">
-              <div className="relative">
-                <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
-                  <img
-                    src={
-                      currentUser.image_url ||
-                      `https://ui-avatars.com/api/?name=${greetingName}&background=0D1117&color=fff`
-                    }
-                    alt={greetingName}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                </div>
-                <StatusPicker
-                  currentStatus={userStatus}
-                  onStatusChange={handleStatusChange}
+                  <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2 w-2 rounded-full ${resolveScheduleStatusDotClass(item.current_status)}`}
+                      />
+                      <span className="text-sm font-medium text-stone-600">
+                        {formatScheduleStatus(item.current_status)}
+                      </span>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1.5 text-sm text-stone-400">
+                      <Clock3 className="h-4 w-4" />
+                      {formatElapsedTime(
+                        item,
+                        now,
+                        scheduleHistoryMap.get(item.id) ?? [],
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+      </main>
+
+      <aside className="w-full xl:w-[24rem] flex flex-col divide-y divide-stone-100">
+        <div className="p-8 text-center">
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
+                <img
+                  src={
+                    currentUser.image_url ||
+                    `https://ui-avatars.com/api/?name=${greetingName}&background=0D1117&color=fff`
+                  }
+                  alt={greetingName}
+                  className="h-full w-full rounded-full object-cover"
                 />
               </div>
-              <h4 className="mt-2 font-display text-xl text-stone-950">
-                {greetingName}
-              </h4>
-              <p className="mb-3 text-sm text-stone-400">
-                Administrador {company.fantasy_name}
-              </p>
-
-              <div className="mt-6 grid w-full grid-cols-3 gap-3">
-                <MiniBadge icon={ShieldCheck} label="Admin" />
-                <MiniBadge icon={CalendarDays} label={formatCompactDate(now)} />
-                <MiniBadge icon={Activity} label={`${todayCount} hoje`} />
-              </div>
+              <StatusPicker
+                currentStatus={userStatus}
+                onStatusChange={handleStatusChange}
+              />
             </div>
-          </div>
+            <h4 className="mt-2 font-display text-xl text-stone-950">
+              {greetingName}
+            </h4>
+            <p className="mb-3 text-sm text-stone-400">
+              Administrador {company.fantasy_name}
+            </p>
 
-          <div className="flex flex-1 flex-col p-6 pt-8">
+            <div className="mt-6 grid w-full grid-cols-3 gap-3">
+              <MiniBadge icon={ShieldCheck} label="Admin" />
+              <MiniBadge icon={CalendarDays} label={formatCompactDate(now)} />
+              <MiniBadge icon={Activity} label={`${todayCount} hoje`} />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-6 pt-8">
           <div className="border-b border-stone-100 pb-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -650,8 +648,7 @@ export function DashboardPage() {
         </div>
       </aside>
     </div>
-  </div>
-);
+  );
 }
 
 function AdminStatCard({
