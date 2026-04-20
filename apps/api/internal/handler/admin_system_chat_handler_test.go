@@ -92,6 +92,14 @@ func messagesURL(baseURL string, userID pgtype.UUID) string {
 	return baseURL + "/api/v1/chat/system/" + userID.String() + "/messages"
 }
 
+func readSocketEvent(t *testing.T, ctx context.Context, conn *websocket.Conn) map[string]any {
+	t.Helper()
+
+	var event map[string]any
+	require.NoError(t, wsjson.Read(ctx, conn, &event))
+	return event
+}
+
 func expectParticipantValidation(
 	t *testing.T,
 	mock pgxmock.PgxPoolIface,
@@ -146,12 +154,18 @@ func TestAdminSystemChatHandler_Connect_Success(t *testing.T) {
 	require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
 
 	var event map[string]any
-	require.NoError(t, wsjson.Read(ctx, conn, &event))
+	event = readSocketEvent(t, ctx, conn)
 	require.Equal(t, "chat.connected", event["type"])
 	require.Equal(t, companyID.String(), event["company_id"])
 	require.Equal(t, contactUserID.String(), event["counterpart_user_id"])
 	require.Equal(t, currentUserID.String(), event["viewer_user_id"])
 	require.Equal(t, "admin", event["viewer_role"])
+
+	event = readSocketEvent(t, ctx, conn)
+	require.Equal(t, "chat.presence.snapshot", event["type"])
+	presences, ok := event["presences"].([]any)
+	require.True(t, ok)
+	require.Len(t, presences, 2)
 
 	require.Equal(t, 1, hub.TotalConnections())
 	require.Equal(t, 1, hub.ConnectionCount(companyID.String(), currentUserID.String()))
@@ -287,9 +301,10 @@ func TestAdminSystemChatHandler_CreateMessage_BroadcastsRealtimeEvent(t *testing
 		_ = conn.Close(websocket.StatusNormalClosure, "done")
 	}()
 
-	var connectedEvent map[string]any
-	require.NoError(t, wsjson.Read(ctx, conn, &connectedEvent))
+	connectedEvent := readSocketEvent(t, ctx, conn)
 	require.Equal(t, "chat.connected", connectedEvent["type"])
+	snapshotEvent := readSocketEvent(t, ctx, conn)
+	require.Equal(t, "chat.presence.snapshot", snapshotEvent["type"])
 
 	payload, err := json.Marshal(map[string]string{"message": "Nova mensagem em tempo real"})
 	require.NoError(t, err)
@@ -304,8 +319,7 @@ func TestAdminSystemChatHandler_CreateMessage_BroadcastsRealtimeEvent(t *testing
 	defer res.Body.Close()
 	require.Equal(t, http.StatusCreated, res.StatusCode)
 
-	var event map[string]any
-	require.NoError(t, wsjson.Read(ctx, conn, &event))
+	event := readSocketEvent(t, ctx, conn)
 	require.Equal(t, "chat.message.created", event["type"])
 	require.Equal(t, companyID.String(), event["company_id"])
 	require.Equal(t, contactUserID.String(), event["counterpart_user_id"])
@@ -315,6 +329,78 @@ func TestAdminSystemChatHandler_CreateMessage_BroadcastsRealtimeEvent(t *testing
 	require.Equal(t, messageID.String(), messagePayload["id"])
 	require.Equal(t, "Nova mensagem em tempo real", messagePayload["body"])
 	require.Equal(t, currentUserID.String(), messagePayload["sender_user_id"])
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestAdminSystemChatHandler_Connect_BroadcastsPresenceUpdates(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	serviceUnderTest, mock := adminSystemChatServiceWithMock(t)
+	defer mock.Close()
+
+	companyID := newHandlerUUID(t)
+	adminUserID := newHandlerUUID(t)
+	systemUserID := newHandlerUUID(t)
+	adminToken := chatToken(t, companyID, adminUserID, "admin")
+	systemToken := chatToken(t, companyID, systemUserID, "system")
+
+	expectParticipantValidation(t, mock, companyID, adminUserID, systemUserID, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem)
+	expectParticipantValidation(t, mock, companyID, systemUserID, adminUserID, sqlc.UserRoleTypeSystem, sqlc.UserRoleTypeAdmin)
+
+	hub := realtime.NewInternalChatHub()
+	server := httptest.NewServer(newChatSocketRouter(serviceUnderTest, hub))
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	adminConn, resp, err := websocket.Dial(ctx, websocketURL(server.URL, systemUserID), &websocket.DialOptions{
+		HTTPHeader: http.Header{
+			"Authorization": []string{"Bearer " + adminToken},
+		},
+		Subprotocols: []string{internalChatSocketSubprotocol},
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+	defer func() {
+		_ = adminConn.Close(websocket.StatusNormalClosure, "done")
+	}()
+
+	require.Equal(t, "chat.connected", readSocketEvent(t, ctx, adminConn)["type"])
+	adminSnapshot := readSocketEvent(t, ctx, adminConn)
+	require.Equal(t, "chat.presence.snapshot", adminSnapshot["type"])
+
+	systemConn, resp, err := websocket.Dial(ctx, websocketURL(server.URL, adminUserID), &websocket.DialOptions{
+		HTTPHeader: http.Header{
+			"Authorization": []string{"Bearer " + systemToken},
+		},
+		Subprotocols: []string{internalChatSocketSubprotocol},
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+
+	require.Equal(t, "chat.connected", readSocketEvent(t, ctx, systemConn)["type"])
+	systemSnapshot := readSocketEvent(t, ctx, systemConn)
+	require.Equal(t, "chat.presence.snapshot", systemSnapshot["type"])
+
+	adminPresenceUpdated := readSocketEvent(t, ctx, adminConn)
+	require.Equal(t, "chat.presence.updated", adminPresenceUpdated["type"])
+	presence, ok := adminPresenceUpdated["presence"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, systemUserID.String(), presence["user_id"])
+	require.Equal(t, "online", presence["status"])
+	require.EqualValues(t, 1, presence["connections"])
+
+	require.NoError(t, systemConn.Close(websocket.StatusNormalClosure, "disconnect"))
+
+	adminPresenceOffline := readSocketEvent(t, ctx, adminConn)
+	require.Equal(t, "chat.presence.updated", adminPresenceOffline["type"])
+	presence, ok = adminPresenceOffline["presence"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, systemUserID.String(), presence["user_id"])
+	require.Equal(t, "offline", presence["status"])
+	require.EqualValues(t, 0, presence["connections"])
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }

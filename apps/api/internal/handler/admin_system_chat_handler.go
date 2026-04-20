@@ -152,6 +152,7 @@ func (h *AdminSystemChatHandler) CreateMessage(c *gin.Context) {
 		uuidToString(companyID),
 		uuidToString(currentUserID),
 		uuidToString(contactUserID),
+		"",
 		func(connection realtime.InternalChatConnection) map[string]any {
 			return h.newMessageCreatedEvent(connection, item)
 		},
@@ -216,8 +217,22 @@ func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
 		Socket:            socket,
 	}
 
-	h.hub.Register(connection)
-	defer h.hub.Unregister(connectionID)
+	_, statusChanged := h.hub.Register(connection)
+	defer func() {
+		disconnectedConnection, presence, becameOffline := h.hub.Unregister(connectionID)
+		if becameOffline {
+			h.hub.BroadcastConversationEvent(
+				context.Background(),
+				disconnectedConnection.CompanyID,
+				disconnectedConnection.UserID,
+				disconnectedConnection.CounterpartUserID,
+				"",
+				func(target realtime.InternalChatConnection) map[string]any {
+					return h.newPresenceUpdatedEvent(target, presence)
+				},
+			)
+		}
+	}()
 	defer func() {
 		_ = socket.Close(websocket.StatusNormalClosure, "connection closed")
 	}()
@@ -233,6 +248,24 @@ func (h *AdminSystemChatHandler) Connect(c *gin.Context) {
 	}); err != nil {
 		_ = socket.Close(websocket.StatusInternalError, "failed to initialize connection")
 		return
+	}
+
+	if err := h.writeSocketEvent(c.Request.Context(), socket, h.newPresenceSnapshotEvent(connection)); err != nil {
+		_ = socket.Close(websocket.StatusInternalError, "failed to initialize presence snapshot")
+		return
+	}
+
+	if statusChanged {
+		h.hub.BroadcastConversationEvent(
+			c.Request.Context(),
+			connection.CompanyID,
+			connection.UserID,
+			connection.CounterpartUserID,
+			connection.ID,
+			func(target realtime.InternalChatConnection) map[string]any {
+				return h.newPresenceUpdatedEvent(target, h.hub.Presence(connection.CompanyID, connection.UserID))
+			},
+		)
 	}
 
 	ctx := socket.CloseRead(c.Request.Context())
@@ -256,5 +289,43 @@ func (h *AdminSystemChatHandler) newMessageCreatedEvent(
 		"counterpart_user_id": connection.CounterpartUserID,
 		"emitted_at":          formatTimestamptz(item.CreatedAt),
 		"message":             mapAdminSystemChatMessage(item),
+	}
+}
+
+func (h *AdminSystemChatHandler) newPresenceSnapshotEvent(connection realtime.InternalChatConnection) map[string]any {
+	presences := h.hub.ConversationSnapshot(connection.CompanyID, connection.UserID, connection.CounterpartUserID)
+	items := make([]map[string]any, 0, len(presences))
+	for _, presence := range presences {
+		items = append(items, mapInternalChatPresence(presence))
+	}
+
+	return map[string]any{
+		"type":                "chat.presence.snapshot",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+		"presences":           items,
+	}
+}
+
+func (h *AdminSystemChatHandler) newPresenceUpdatedEvent(
+	connection realtime.InternalChatConnection,
+	presence realtime.InternalChatPresence,
+) map[string]any {
+	return map[string]any{
+		"type":                "chat.presence.updated",
+		"company_id":          connection.CompanyID,
+		"counterpart_user_id": connection.CounterpartUserID,
+		"emitted_at":          time.Now().UTC().Format(time.RFC3339),
+		"presence":            mapInternalChatPresence(presence),
+	}
+}
+
+func mapInternalChatPresence(presence realtime.InternalChatPresence) map[string]any {
+	return map[string]any{
+		"user_id":         presence.UserID,
+		"status":          presence.Status,
+		"connections":     presence.Connections,
+		"last_changed_at": presence.LastChangedAt.Format(time.RFC3339),
 	}
 }

@@ -22,6 +22,7 @@ func TestInternalChatHubRegisterAndUnregister(t *testing.T) {
 		CounterpartUserID: "user-2",
 		UserRole:          "admin",
 		ConnectedAt:       time.Now(),
+		Socket:            &websocket.Conn{},
 	}
 	second := InternalChatConnection{
 		ID:                "conn-2",
@@ -30,20 +31,34 @@ func TestInternalChatHubRegisterAndUnregister(t *testing.T) {
 		CounterpartUserID: "user-2",
 		UserRole:          "admin",
 		ConnectedAt:       time.Now(),
+		Socket:            &websocket.Conn{},
 	}
 
-	hub.Register(first)
-	hub.Register(second)
+	presence, becameOnline := hub.Register(first)
+	require.True(t, becameOnline)
+	require.Equal(t, "online", presence.Status)
+	require.Equal(t, 1, presence.Connections)
+
+	presence, becameOnline = hub.Register(second)
+	require.False(t, becameOnline)
+	require.Equal(t, "online", presence.Status)
+	require.Equal(t, 2, presence.Connections)
 
 	require.Equal(t, 2, hub.TotalConnections())
 	require.Equal(t, 2, hub.ConnectionCount("company-1", "user-1"))
 
-	hub.Unregister("conn-1")
+	_, presence, becameOffline := hub.Unregister("conn-1")
+	require.False(t, becameOffline)
+	require.Equal(t, "online", presence.Status)
+	require.Equal(t, 1, presence.Connections)
 
 	require.Equal(t, 1, hub.TotalConnections())
 	require.Equal(t, 1, hub.ConnectionCount("company-1", "user-1"))
 
-	hub.Unregister("conn-2")
+	_, presence, becameOffline = hub.Unregister("conn-2")
+	require.True(t, becameOffline)
+	require.Equal(t, "offline", presence.Status)
+	require.Equal(t, 0, presence.Connections)
 
 	require.Equal(t, 0, hub.TotalConnections())
 	require.Equal(t, 0, hub.ConnectionCount("company-1", "user-1"))
@@ -89,7 +104,7 @@ func TestInternalChatHubBroadcastConversationEvent(t *testing.T) {
 
 	<-serverConnected
 
-	hub.BroadcastConversationEvent(ctx, "company-1", "admin-1", "system-1", func(connection InternalChatConnection) map[string]any {
+	hub.BroadcastConversationEvent(ctx, "company-1", "admin-1", "system-1", "", func(connection InternalChatConnection) map[string]any {
 		return map[string]any{
 			"type":                "chat.message.created",
 			"company_id":          connection.CompanyID,
@@ -106,4 +121,26 @@ func TestInternalChatHubBroadcastConversationEvent(t *testing.T) {
 	require.Equal(t, "chat.message.created", event["type"])
 	require.Equal(t, "company-1", event["company_id"])
 	require.Equal(t, "system-1", event["counterpart_user_id"])
+}
+
+func TestInternalChatHubConversationSnapshot(t *testing.T) {
+	hub := NewInternalChatHub()
+	hub.Register(InternalChatConnection{
+		ID:                "conn-1",
+		CompanyID:         "company-1",
+		UserID:            "admin-1",
+		CounterpartUserID: "system-1",
+		UserRole:          "admin",
+		ConnectedAt:       time.Now(),
+		Socket:            &websocket.Conn{},
+	})
+
+	snapshot := hub.ConversationSnapshot("company-1", "admin-1", "system-1")
+	require.Len(t, snapshot, 2)
+	require.Equal(t, "admin-1", snapshot[0].UserID)
+	require.Equal(t, "online", snapshot[0].Status)
+	require.Equal(t, 1, snapshot[0].Connections)
+	require.Equal(t, "system-1", snapshot[1].UserID)
+	require.Equal(t, "offline", snapshot[1].Status)
+	require.Equal(t, 0, snapshot[1].Connections)
 }

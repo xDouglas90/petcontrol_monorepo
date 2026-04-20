@@ -233,6 +233,17 @@ Status atual:
 
 ## Fase 3 - Presença Dinâmica
 
+Status atual:
+
+- O hub agora calcula presença `online/offline` por `company_id + user_id`, com contagem de conexões e `last_changed_at`.
+- O socket passou a emitir `chat.presence.snapshot` logo após `chat.connected`.
+- Mudanças reais de status são propagadas por `chat.presence.updated` quando o participante entra ou sai da conversa.
+- Múltiplas conexões do mesmo usuário mantêm o estado `online` enquanto houver ao menos uma sessão ativa.
+- Cobertura criada para:
+  - snapshot inicial da conversa;
+  - atualização `online` quando o outro participante conecta;
+  - atualização `offline` quando ele desconecta.
+
 ### 3.1 Ações
 
 - Calcular presença com base em conexões ativas.
@@ -241,8 +252,8 @@ Status atual:
 
 ### 3.2 Checks
 
-- [ ] `online` e `offline` mudam em tempo real.
-- [ ] Múltiplas conexões do mesmo usuário não quebram a presença.
+- [x] `online` e `offline` mudam em tempo real.
+- [x] Múltiplas conexões do mesmo usuário não quebram a presença.
 
 ## Fase 4 - Robustez, Observabilidade e Carga
 
