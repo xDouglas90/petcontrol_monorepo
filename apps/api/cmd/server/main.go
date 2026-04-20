@@ -111,6 +111,7 @@ func main() {
 	protected.GET("/companies/current", companyHandler.Current)
 	protected.PATCH("/companies/current", companyHandler.Update)
 	protected.GET("/company-system-configs/current", companySystemConfigHandler.Current)
+	protected.PATCH("/company-system-configs/current", companySystemConfigHandler.Update)
 	protected.GET("/users/me", userHandler.Current)
 	protected.GET("/plans/current", planHandler.Current)
 	protected.GET("/modules/active", moduleHandler.Active)

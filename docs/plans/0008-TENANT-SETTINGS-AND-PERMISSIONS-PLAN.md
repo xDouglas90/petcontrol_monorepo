@@ -339,8 +339,8 @@ Status atual:
 
 ### 1.2 Checks
 
-- [ ] Todos os usuários seedados possuem permissões básicas.
-- [ ] Nenhuma permissão é duplicada ao rodar seed mais de uma vez.
+- [x] Todos os usuários seedados possuem permissões básicas.
+- [x] Nenhuma permissão é duplicada ao rodar seed mais de uma vez.
 
 ## Fase 2 - API de Configurações do Tenant
 
@@ -353,9 +353,9 @@ Status atual:
 
 ### 2.2 Checks
 
-- [ ] O tenant consegue ler suas configurações atuais.
-- [ ] O tenant consegue salvar mudanças válidas.
-- [ ] O backend rejeita payload inconsistente.
+- [x] O tenant consegue ler suas configurações atuais.
+- [x] O tenant consegue salvar mudanças válidas.
+- [x] O backend rejeita payload inconsistente.
 
 ## Fase 3 - API de Permissões por Usuário do Tenant
 

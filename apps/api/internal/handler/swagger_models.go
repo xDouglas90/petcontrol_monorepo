@@ -38,6 +38,25 @@ type CompanySystemConfigResponseDoc struct {
 	Data CompanySystemConfigDoc `json:"data"`
 }
 
+// CompanySystemConfigUpdateRequestDoc documents the update payload for tenant system config.
+type CompanySystemConfigUpdateRequestDoc struct {
+	ScheduleInitTime      string   `json:"schedule_init_time" example:"08:00"`
+	SchedulePauseInitTime *string  `json:"schedule_pause_init_time,omitempty" example:"12:00"`
+	SchedulePauseEndTime  *string  `json:"schedule_pause_end_time,omitempty" example:"13:00"`
+	ScheduleEndTime       string   `json:"schedule_end_time" example:"18:00"`
+	MinSchedulesPerDay    int16    `json:"min_schedules_per_day" example:"4"`
+	MaxSchedulesPerDay    int16    `json:"max_schedules_per_day" example:"18"`
+	ScheduleDays          []string `json:"schedule_days" example:"monday,tuesday,wednesday,thursday,friday,saturday"`
+	DynamicCages          bool     `json:"dynamic_cages" example:"false"`
+	TotalSmallCages       int16    `json:"total_small_cages" example:"8"`
+	TotalMediumCages      int16    `json:"total_medium_cages" example:"6"`
+	TotalLargeCages       int16    `json:"total_large_cages" example:"4"`
+	TotalGiantCages       int16    `json:"total_giant_cages" example:"2"`
+	WhatsappNotifications bool     `json:"whatsapp_notifications" example:"true"`
+	WhatsappConversation  bool     `json:"whatsapp_conversation" example:"true"`
+	WhatsappBusinessPhone *string  `json:"whatsapp_business_phone,omitempty" example:"+5511999990001"`
+}
+
 // CompanySystemConfigDoc describes the current tenant system configuration.
 type CompanySystemConfigDoc struct {
 	CompanyID             string   `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`

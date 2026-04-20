@@ -64,6 +64,151 @@ func TestCompanyHandler_Current(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestCompanySystemConfigHandler_Update(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewCompanySystemConfigService(queries)
+	handlerUnderTest := NewCompanySystemConfigHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+	scheduleDays := []sqlc.WeekDay{sqlc.WeekDayMonday, sqlc.WeekDayTuesday, sqlc.WeekDayWednesday}
+
+	mock.ExpectExec(`(?s)name: UpdateCompanySystemConfig`).
+		WithArgs(
+			pgtype.Time{Microseconds: int64(8 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(12 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(13 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(18 * time.Hour / time.Microsecond), Valid: true},
+			int16(4),
+			int16(10),
+			scheduleDays,
+			true,
+			int16(1),
+			int16(2),
+			int16(3),
+			int16(4),
+			true,
+			false,
+			pgtype.Text{String: "+5511999990001", Valid: true},
+			companyID,
+		).
+		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+
+	mock.ExpectQuery(`(?s)name: GetCompanySystemConfig`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{
+			"company_id", "schedule_init_time", "schedule_pause_init_time", "schedule_pause_end_time", "schedule_end_time",
+			"min_schedules_per_day", "max_schedules_per_day", "schedule_days", "dynamic_cages",
+			"total_small_cages", "total_medium_cages", "total_large_cages", "total_giant_cages",
+			"whatsapp_notifications", "whatsapp_conversation", "whatsapp_business_phone", "created_at", "updated_at",
+		}).AddRow(
+			companyID,
+			pgtype.Time{Microseconds: int64(8 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(12 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(13 * time.Hour / time.Microsecond), Valid: true},
+			pgtype.Time{Microseconds: int64(18 * time.Hour / time.Microsecond), Valid: true},
+			int16(4),
+			int16(10),
+			scheduleDays,
+			true,
+			int16(1),
+			int16(2),
+			int16(3),
+			int16(4),
+			true,
+			false,
+			pgtype.Text{String: "+5511999990001", Valid: true},
+			time.Now(),
+			time.Now(),
+		))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Next()
+	})
+	router.PATCH("/company-system-configs/current", handlerUnderTest.Update)
+
+	body, err := json.Marshal(map[string]any{
+		"schedule_init_time":       "08:00",
+		"schedule_pause_init_time": "12:00",
+		"schedule_pause_end_time":  "13:00",
+		"schedule_end_time":        "18:00",
+		"min_schedules_per_day":    4,
+		"max_schedules_per_day":    10,
+		"schedule_days":            []string{"monday", "tuesday", "wednesday"},
+		"dynamic_cages":            true,
+		"total_small_cages":        1,
+		"total_medium_cages":       2,
+		"total_large_cages":        3,
+		"total_giant_cages":        4,
+		"whatsapp_notifications":   true,
+		"whatsapp_conversation":    false,
+		"whatsapp_business_phone":  "+5511999990001",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, "/company-system-configs/current", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "\"schedule_init_time\":\"08:00\"")
+	require.Contains(t, res.Body.String(), "\"schedule_days\":[\"monday\",\"tuesday\",\"wednesday\"]")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCompanySystemConfigHandler_UpdateRejectsInvalidPauseWindow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewCompanySystemConfigService(queries)
+	handlerUnderTest := NewCompanySystemConfigHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Next()
+	})
+	router.PATCH("/company-system-configs/current", handlerUnderTest.Update)
+
+	body, err := json.Marshal(map[string]any{
+		"schedule_init_time":       "08:00",
+		"schedule_pause_init_time": "07:00",
+		"schedule_pause_end_time":  "09:00",
+		"schedule_end_time":        "18:00",
+		"min_schedules_per_day":    4,
+		"max_schedules_per_day":    10,
+		"schedule_days":            []string{"monday", "tuesday"},
+		"dynamic_cages":            true,
+		"total_small_cages":        1,
+		"total_medium_cages":       2,
+		"total_large_cages":        3,
+		"total_giant_cages":        4,
+		"whatsapp_notifications":   true,
+		"whatsapp_conversation":    false,
+		"whatsapp_business_phone":  "+5511999990001",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, "/company-system-configs/current", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.Contains(t, res.Body.String(), "pause window must be inside operational hours")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestPlanHandler_Current(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

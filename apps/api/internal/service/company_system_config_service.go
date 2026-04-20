@@ -25,3 +25,14 @@ func (s *CompanySystemConfigService) GetCurrent(ctx context.Context, companyID p
 	}
 	return item, err
 }
+
+func (s *CompanySystemConfigService) UpdateCurrent(ctx context.Context, params sqlc.UpdateCompanySystemConfigParams) (sqlc.GetCompanySystemConfigRow, error) {
+	rows, err := s.queries.UpdateCompanySystemConfig(ctx, params)
+	if err != nil {
+		return sqlc.GetCompanySystemConfigRow{}, err
+	}
+	if rows == 0 {
+		return sqlc.GetCompanySystemConfigRow{}, apperror.ErrNotFound
+	}
+	return s.GetCurrent(ctx, params.CompanyID)
+}
