@@ -7,9 +7,11 @@ import { useAuthStore } from '@/lib/auth/auth.store';
 
 const navigateMock = vi.fn();
 const loginMock = vi.fn();
+const checkHealthMock = vi.fn();
 
 vi.mock('@/lib/api/rest-client', () => ({
   login: (...args: unknown[]) => loginMock(...args),
+  checkHealth: (...args: unknown[]) => checkHealthMock(...args),
   getAuthMode: () => 'api',
   ApiError: class ApiError extends Error {
     status: number;
@@ -38,6 +40,12 @@ describe('LoginPage', () => {
     localStorage.clear();
     navigateMock.mockReset();
     loginMock.mockReset();
+    checkHealthMock.mockReset();
+    checkHealthMock.mockResolvedValue({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: 'test',
+    });
     useAuthStore.setState({
       session: null,
       hydrated: true,

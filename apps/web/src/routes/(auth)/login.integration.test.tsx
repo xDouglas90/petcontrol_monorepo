@@ -37,6 +37,7 @@ describe('Login flow integration', () => {
   beforeEach(async () => {
     localStorage.clear();
     vi.stubGlobal('scrollTo', vi.fn());
+    HTMLElement.prototype.scrollTo = vi.fn();
     mockUseCurrentCompanyQuery.mockReset();
     mockUseCurrentCompanySystemConfigQuery.mockReset();
     mockUseCurrentUserQuery.mockReset();
@@ -179,9 +180,7 @@ describe('Login flow integration', () => {
       expect(router.state.location.pathname).toBe('/petcontrol-dev/dashboard');
     });
 
-    expect(
-      screen.getByText('Agendamentos em andamento'),
-    ).toBeTruthy();
+    expect(screen.getByText('Ocupação por horário operacional')).toBeTruthy();
     expect(screen.getAllByText('PetControl Dev').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Olá, Maria' }).length).toBeGreaterThan(0);
   });
