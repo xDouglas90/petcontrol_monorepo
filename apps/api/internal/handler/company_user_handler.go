@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	appjwt "github.com/xdouglas90/petcontrol_monorepo/internal/jwt"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
+	appjwt "github.com/xdouglas90/petcontrol_monorepo/internal/jwt"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
@@ -324,16 +324,42 @@ func mapCompanyUserPermissionsSnapshot(snapshot service.CompanyUserPermissionsSn
 		})
 	}
 
+	permissionGroups := make([]map[string]any, 0, len(snapshot.PermissionGroups))
+	for _, group := range snapshot.PermissionGroups {
+		groupPermissions := make([]map[string]any, 0, len(group.Permissions))
+		for _, item := range group.Permissions {
+			groupPermissions = append(groupPermissions, map[string]any{
+				"id":                  uuidToString(item.ID),
+				"code":                item.Code,
+				"description":         item.Description,
+				"default_roles":       userRolesToStrings(item.DefaultRoles),
+				"is_active":           item.IsActive,
+				"is_default_for_role": item.IsDefaultForRole,
+				"granted_by":          nullableUUID(item.GrantedBy),
+				"granted_at":          nullableTimestamptz(item.GrantedAt),
+			})
+		}
+		permissionGroups = append(permissionGroups, map[string]any{
+			"module_code":        group.ModuleCode,
+			"module_name":        group.ModuleName,
+			"module_description": group.ModuleDescription,
+			"min_package":        string(group.MinPackage),
+			"permissions":        groupPermissions,
+		})
+	}
+
 	return map[string]any{
-		"user_id":      uuidToString(snapshot.UserID),
-		"company_id":   uuidToString(snapshot.CompanyID),
-		"role":         string(snapshot.Role),
-		"kind":         string(snapshot.Kind),
-		"is_owner":     snapshot.IsOwner,
-		"is_active":    snapshot.IsActive,
-		"managed_by":   claims.UserID,
-		"permissions":  permissions,
-		"scope":        "tenant_settings",
+		"user_id":           uuidToString(snapshot.UserID),
+		"company_id":        uuidToString(snapshot.CompanyID),
+		"active_package":    string(snapshot.ActivePackage),
+		"role":              string(snapshot.Role),
+		"kind":              string(snapshot.Kind),
+		"is_owner":          snapshot.IsOwner,
+		"is_active":         snapshot.IsActive,
+		"managed_by":        claims.UserID,
+		"permissions":       permissions,
+		"permission_groups": permissionGroups,
+		"scope":             "tenant_settings",
 	}
 }
 

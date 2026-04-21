@@ -22,14 +22,24 @@ type CompanyUserPermissionItem struct {
 	GrantedAt        pgtype.Timestamptz
 }
 
+type CompanyUserPermissionGroup struct {
+	ModuleCode        string
+	ModuleName        string
+	ModuleDescription string
+	MinPackage        sqlc.ModulePackage
+	Permissions       []CompanyUserPermissionItem
+}
+
 type CompanyUserPermissionsSnapshot struct {
-	UserID      pgtype.UUID
-	CompanyID   pgtype.UUID
-	Role        sqlc.UserRoleType
-	Kind        sqlc.UserKind
-	IsOwner     bool
-	IsActive    bool
-	Permissions []CompanyUserPermissionItem
+	UserID           pgtype.UUID
+	CompanyID        pgtype.UUID
+	ActivePackage    sqlc.ModulePackage
+	Role             sqlc.UserRoleType
+	Kind             sqlc.UserKind
+	IsOwner          bool
+	IsActive         bool
+	Permissions      []CompanyUserPermissionItem
+	PermissionGroups []CompanyUserPermissionGroup
 }
 
 type CompanyUserPermissionService struct {
@@ -41,6 +51,14 @@ func NewCompanyUserPermissionService(queries sqlc.Querier) *CompanyUserPermissio
 }
 
 func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context.Context, companyID pgtype.UUID, userID pgtype.UUID) (CompanyUserPermissionsSnapshot, error) {
+	company, err := s.queries.GetCompanyByID(ctx, companyID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return CompanyUserPermissionsSnapshot{}, apperror.ErrNotFound
+	}
+	if err != nil {
+		return CompanyUserPermissionsSnapshot{}, err
+	}
+
 	membership, err := s.queries.GetCompanyUser(ctx, sqlc.GetCompanyUserParams{
 		CompanyID: companyID,
 		UserID:    userID,
@@ -60,7 +78,9 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 		return CompanyUserPermissionsSnapshot{}, err
 	}
 
-	catalog, err := s.queries.ListPermissionsByCodes(ctx, TenantSettingsPermissionCodes())
+	manageableCodes := TenantSettingsManageablePermissionCodesByPackage(company.ActivePackage)
+
+	catalog, err := s.queries.ListPermissionsByCodes(ctx, manageableCodes)
 	if err != nil {
 		return CompanyUserPermissionsSnapshot{}, err
 	}
@@ -94,19 +114,31 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 		})
 	}
 
+	permissionGroups := buildCompanyUserPermissionGroups(company.ActivePackage, permissions)
+
 	return CompanyUserPermissionsSnapshot{
-		UserID:      userID,
-		CompanyID:   companyID,
-		Role:        user.Role,
-		Kind:        membership.Kind,
-		IsOwner:     membership.IsOwner,
-		IsActive:    membership.IsActive,
-		Permissions: permissions,
+		UserID:           userID,
+		CompanyID:        companyID,
+		ActivePackage:    company.ActivePackage,
+		Role:             user.Role,
+		Kind:             membership.Kind,
+		IsOwner:          membership.IsOwner,
+		IsActive:         membership.IsActive,
+		Permissions:      permissions,
+		PermissionGroups: permissionGroups,
 	}, nil
 }
 
 func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx context.Context, companyID pgtype.UUID, actorUserID pgtype.UUID, targetUserID pgtype.UUID, permissionCodes []string) (CompanyUserPermissionsSnapshot, error) {
-	desiredCodes, err := normalizeManagedPermissionCodes(permissionCodes)
+	company, err := s.queries.GetCompanyByID(ctx, companyID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return CompanyUserPermissionsSnapshot{}, apperror.ErrNotFound
+	}
+	if err != nil {
+		return CompanyUserPermissionsSnapshot{}, err
+	}
+
+	desiredCodes, err := normalizeManagedPermissionCodes(permissionCodes, company.ActivePackage)
 	if err != nil {
 		return CompanyUserPermissionsSnapshot{}, err
 	}
@@ -152,9 +184,10 @@ func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx conte
 	return s.ListTenantSettingsPermissions(ctx, companyID, targetUserID)
 }
 
-func normalizeManagedPermissionCodes(values []string) (map[string]struct{}, error) {
-	allowed := make(map[string]struct{}, len(TenantSettingsPermissionCodes()))
-	for _, code := range TenantSettingsPermissionCodes() {
+func normalizeManagedPermissionCodes(values []string, pkg sqlc.ModulePackage) (map[string]struct{}, error) {
+	allowedCodes := TenantSettingsManageablePermissionCodesByPackage(pkg)
+	allowed := make(map[string]struct{}, len(allowedCodes))
+	for _, code := range allowedCodes {
 		allowed[code] = struct{}{}
 	}
 
@@ -176,4 +209,40 @@ func roleInDefaultRoles(role sqlc.UserRoleType, defaultRoles []sqlc.UserRoleType
 		}
 	}
 	return false
+}
+
+func buildCompanyUserPermissionGroups(pkg sqlc.ModulePackage, permissions []CompanyUserPermissionItem) []CompanyUserPermissionGroup {
+	byCode := make(map[string]CompanyUserPermissionItem, len(permissions))
+	for _, permission := range permissions {
+		byCode[permission.Code] = permission
+	}
+
+	groups := make([]CompanyUserPermissionGroup, 0)
+	for _, group := range TenantSettingsPermissionGroupsByPackage(pkg) {
+		items := make([]CompanyUserPermissionItem, 0)
+		for _, code := range group.PermissionCodes {
+			if permission, ok := byCode[code]; ok {
+				items = append(items, permission)
+			}
+		}
+		for _, prefix := range group.PermissionPrefixes {
+			for _, permission := range permissions {
+				if len(permission.Code) >= len(prefix) && permission.Code[:len(prefix)] == prefix {
+					items = append(items, permission)
+				}
+			}
+		}
+		if len(items) == 0 {
+			continue
+		}
+		groups = append(groups, CompanyUserPermissionGroup{
+			ModuleCode:        group.ModuleCode,
+			ModuleName:        group.ModuleName,
+			ModuleDescription: group.ModuleDescription,
+			MinPackage:        group.MinPackage,
+			Permissions:       items,
+		})
+	}
+
+	return groups
 }

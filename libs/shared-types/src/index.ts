@@ -255,9 +255,18 @@ export interface CompanyUserPermissionDTO {
   granted_at?: string | null;
 }
 
+export interface CompanyUserPermissionGroupDTO {
+  module_code: string;
+  module_name: string;
+  module_description: string;
+  min_package: ModulePackage;
+  permissions: CompanyUserPermissionDTO[];
+}
+
 export interface CompanyUserPermissionsDTO {
   user_id: UUID;
   company_id: UUID;
+  active_package: ModulePackage;
   role: UserRole;
   kind: UserKind;
   is_owner: boolean;
@@ -265,6 +274,7 @@ export interface CompanyUserPermissionsDTO {
   managed_by: UUID;
   scope: string;
   permissions: CompanyUserPermissionDTO[];
+  permission_groups: CompanyUserPermissionGroupDTO[];
 }
 
 export interface CompanyUserPermissionsApiResponseDTO {

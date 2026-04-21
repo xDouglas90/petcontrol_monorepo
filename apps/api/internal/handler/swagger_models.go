@@ -449,15 +449,25 @@ type CompanyUserPermissionsResponseDoc struct {
 
 // CompanyUserPermissionsDoc describes the manageable permissions snapshot for a tenant user.
 type CompanyUserPermissionsDoc struct {
-	UserID      string                     `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
-	CompanyID   string                     `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
-	Role        string                     `json:"role" example:"system"`
-	Kind        string                     `json:"kind" example:"employee"`
-	IsOwner     bool                       `json:"is_owner" example:"false"`
-	IsActive    bool                       `json:"is_active" example:"true"`
-	ManagedBy   string                     `json:"managed_by" example:"33333333-3333-3333-3333-333333333333"`
-	Scope       string                     `json:"scope" example:"tenant_settings"`
-	Permissions []CompanyUserPermissionDoc `json:"permissions"`
+	UserID           string                          `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
+	CompanyID        string                          `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	ActivePackage    string                          `json:"active_package" example:"starter"`
+	Role             string                          `json:"role" example:"system"`
+	Kind             string                          `json:"kind" example:"employee"`
+	IsOwner          bool                            `json:"is_owner" example:"false"`
+	IsActive         bool                            `json:"is_active" example:"true"`
+	ManagedBy        string                          `json:"managed_by" example:"33333333-3333-3333-3333-333333333333"`
+	Scope            string                          `json:"scope" example:"tenant_settings"`
+	Permissions      []CompanyUserPermissionDoc      `json:"permissions"`
+	PermissionGroups []CompanyUserPermissionGroupDoc `json:"permission_groups"`
+}
+
+type CompanyUserPermissionGroupDoc struct {
+	ModuleCode        string                     `json:"module_code" example:"CFG"`
+	ModuleName        string                     `json:"module_name" example:"Configurações"`
+	ModuleDescription string                     `json:"module_description" example:"Configurações institucionais, plano, pagamentos, notificações, integrações e segurança do tenant."`
+	MinPackage        string                     `json:"min_package" example:"starter"`
+	Permissions       []CompanyUserPermissionDoc `json:"permissions"`
 }
 
 // CompanyUserPermissionDoc describes a single manageable permission for a tenant user.

@@ -426,6 +426,11 @@ func TestCompanyUserHandler_ListPermissions(t *testing.T) {
 	adminUserID := domainHandlerUUID(t)
 	grantedAt := time.Now().UTC()
 
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
+
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, targetUserID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -464,6 +469,9 @@ func TestCompanyUserHandler_ListPermissions(t *testing.T) {
 	require.Contains(t, res.Body.String(), "\"code\":\"plan_settings:edit\"")
 	require.Contains(t, res.Body.String(), "\"is_active\":true")
 	require.Contains(t, res.Body.String(), "\"managed_by\":\""+uuidToString(adminUserID)+"\"")
+	require.Contains(t, res.Body.String(), "\"active_package\":\"starter\"")
+	require.Contains(t, res.Body.String(), "\"permission_groups\"")
+	require.Contains(t, res.Body.String(), "\"module_code\":\"CFG\"")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -483,6 +491,10 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	companyPermissionID := domainHandlerUUID(t)
 	planPermissionID := domainHandlerUUID(t)
 
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, targetUserID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -501,6 +513,14 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
 			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
 
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, targetUserID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -529,6 +549,10 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 		WithArgs(targetUserID, planPermissionID, adminUserID).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, targetUserID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -568,6 +592,7 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	require.Equal(t, http.StatusOK, res.Code)
 	require.Contains(t, res.Body.String(), "\"code\":\"plan_settings:edit\"")
 	require.NotContains(t, res.Body.String(), "\"code\":\"company_settings:edit\",\"is_active\":true")
+	require.Contains(t, res.Body.String(), "\"permission_groups\"")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -616,6 +641,10 @@ func TestCompanyUserHandler_UpdatePermissionsRejectsUserOutsideTenant(t *testing
 	targetUserID := domainHandlerUUID(t)
 	adminUserID := domainHandlerUUID(t)
 
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
 		WithArgs(companyID, targetUserID).
 		WillReturnError(pgx.ErrNoRows)
@@ -640,5 +669,70 @@ func TestCompanyUserHandler_UpdatePermissionsRejectsUserOutsideTenant(t *testing
 
 	require.Equal(t, http.StatusNotFound, res.Code)
 	require.Contains(t, res.Body.String(), "failed to load company user permissions")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCompanyUserHandler_UpdatePermissionsRejectsPermissionOutsideCompanyPackage(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	companyUserService := service.NewCompanyUserService(queries)
+	permissionService := service.NewCompanyUserPermissionService(queries)
+	handlerUnderTest := NewCompanyUserHandler(companyUserService, permissionService)
+
+	companyID := domainHandlerUUID(t)
+	targetUserID := domainHandlerUUID(t)
+	adminUserID := domainHandlerUUID(t)
+	companyPermissionID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
+		WithArgs(companyID, targetUserID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(domainHandlerUUID(t), companyID, targetUserID, sqlc.UserKindEmployee, false, true, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: GetUserByID`).
+		WithArgs(targetUserID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(targetUserID, "system@petcontrol.local", true, time.Now(), sqlc.UserRoleTypeSystem, true, time.Now(), nil, nil))
+	mock.ExpectQuery(`(?s)name: ListPermissionsByCodes`).
+		WithArgs(pgxmock.AnyArg()).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "created_at", "updated_at"}).
+			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil))
+	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
+		WithArgs(targetUserID, int32(0), int32(1000)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
+			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
+
+	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(companyID, "petcontrol", "PetControl", "PetControl", "12345678000195", nil, nil, domainHandlerUUID(t), sqlc.ModulePackageStarter, true, time.Now(), nil, nil))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{UserID: uuidToString(adminUserID), Role: "admin"})
+		c.Next()
+	})
+	router.PATCH("/company-users/:user_id/permissions", handlerUnderTest.UpdatePermissions)
+
+	body, err := json.Marshal(map[string]any{
+		"permission_codes": []string{"chat:view"},
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, "/company-users/"+uuidToString(targetUserID)+"/permissions", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.Contains(t, res.Body.String(), "update_company_user_permissions_failed")
+	require.Contains(t, res.Body.String(), "failed to update company user permissions")
 	require.NoError(t, mock.ExpectationsWereMet())
 }

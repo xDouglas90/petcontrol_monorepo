@@ -486,8 +486,31 @@ definitions:
         example: false
         type: boolean
     type: object
+  handler.CompanyUserPermissionGroupDoc:
+    properties:
+      min_package:
+        example: starter
+        type: string
+      module_code:
+        example: CFG
+        type: string
+      module_description:
+        example: Configurações institucionais, plano, pagamentos, notificações, integrações
+          e segurança do tenant.
+        type: string
+      module_name:
+        example: Configurações
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/handler.CompanyUserPermissionDoc'
+        type: array
+    type: object
   handler.CompanyUserPermissionsDoc:
     properties:
+      active_package:
+        example: starter
+        type: string
       company_id:
         example: 11111111-1111-1111-1111-111111111111
         type: string
@@ -503,6 +526,10 @@ definitions:
       managed_by:
         example: 33333333-3333-3333-3333-333333333333
         type: string
+      permission_groups:
+        items:
+          $ref: '#/definitions/handler.CompanyUserPermissionGroupDoc'
+        type: array
       permissions:
         items:
           $ref: '#/definitions/handler.CompanyUserPermissionDoc'
