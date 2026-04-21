@@ -141,6 +141,14 @@ Observação:
 
 ## Fase 0 - Descoberta e Contrato
 
+Status atual:
+
+- Fonte de verdade do plano atual do tenant fechada em `companies.active_package`.
+- Regra de visibilidade por plano fechada por `Pacote Mínimo` de `modules.md`.
+- Módulos `internal` e módulos fora do escopo do tenant já estão explicitamente fora do catálogo inicial.
+- `trial` foi fechado, nesta etapa, como equivalente de visibilidade ao pacote `starter`.
+- A base técnica inicial do catálogo foi introduzida no backend para sustentar o agrupamento por módulo nas próximas fases.
+
 ### 0.1 Ações
 
 - Confirmar a fonte de verdade do plano atual do tenant no backend.
@@ -150,10 +158,23 @@ Observação:
 
 ### 0.2 Checks
 
-- [ ] O contrato de módulos exibíveis por plano está fechado.
-- [ ] O contrato da API agrupada por módulo está documentado.
+- [x] O contrato de módulos exibíveis por plano está fechado.
+- [x] O contrato da API agrupada por módulo está documentado.
 
 ## Fase 1 - Catálogo Agrupado por Módulo
+
+Status atual:
+
+- Catálogo backend inicial criado para mapear:
+  - módulos exibíveis no `/settings`;
+  - pacote mínimo por módulo;
+  - prefixos e códigos de permissões pertencentes a cada módulo.
+- O catálogo inicial já exclui módulos `internal` e outros módulos fora do escopo do tenant.
+- Cobertura inicial criada para:
+  - pacote `starter`;
+  - equivalência `trial -> starter`;
+  - inclusão de módulos `premium`;
+  - exclusão de módulos internos.
 
 ### 1.1 Ações
 
@@ -163,10 +184,18 @@ Observação:
 
 ### 1.2 Checks
 
-- [ ] Toda permissão exibível em `/settings` pertence a um módulo bem definido.
-- [ ] Todo módulo exibível respeita o pacote mínimo do plano atual.
+- [x] Toda permissão exibível em `/settings` pertence a um módulo bem definido.
+- [x] Todo módulo exibível respeita o pacote mínimo do plano atual.
 
 ## Fase 2 - API de Permissões por Módulo
+
+Status atual:
+
+- O endpoint de permissões por usuário do tenant passou a retornar `permission_groups`, agrupando permissões por módulo.
+- O contrato mantém `permissions` plano para retrocompatibilidade enquanto o Web não migra para o novo formato.
+- A API agora filtra o catálogo exibível pelo `active_package` da empresa.
+- O update passou a rejeitar permissões fora do pacote ativo do tenant.
+- Tipos compartilhados e modelos Swagger foram atualizados para refletir o novo contrato.
 
 ### 2.1 Ações
 
@@ -176,8 +205,8 @@ Observação:
 
 ### 2.2 Checks
 
-- [ ] A API lista permissões agrupadas por módulo.
-- [ ] A API rejeita atribuição de permissão fora do plano do tenant.
+- [x] A API lista permissões agrupadas por módulo.
+- [x] A API rejeita atribuição de permissão fora do plano do tenant.
 
 ## Fase 3 - Refactor da Seção `Permissões` no Web
 
