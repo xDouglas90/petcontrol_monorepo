@@ -401,10 +401,10 @@ Status atual:
 
 ### 5.2 Checks
 
-- [ ] A tela carrega dados reais.
-- [ ] A edição das configurações salva corretamente.
-- [ ] A gestão de permissões funciona para `admin`.
-- [ ] Usuários `system` autorizados não visualizam a área de gestão de permissões.
+- [x] A tela carrega dados reais.
+- [x] A edição das configurações salva corretamente.
+- [x] A gestão de permissões funciona para `admin`.
+- [x] Usuários `system` autorizados não visualizam a área de gestão de permissões.
 
 ## Fase 6 - Testes e Robustez
 
@@ -417,9 +417,9 @@ Status atual:
 
 ### 6.2 Checks
 
-- [ ] Existe cobertura de acesso e edição.
-- [ ] Existe cobertura para usuários seedados com permissões padrão.
-- [ ] Existe cobertura para tentativas inválidas entre tenants.
+- [x] Existe cobertura de acesso e edição.
+- [x] Existe cobertura para usuários seedados com permissões padrão.
+- [x] Existe cobertura para tentativas inválidas entre tenants.
 
 ## Contrato Inicial de UX da Tela
 
