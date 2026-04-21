@@ -60,6 +60,10 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentUserQuery: () => mockUseCurrentUserQuery(),
 }));
 
+vi.mock('@/components/admin-support-chat-aside', () => ({
+  AdminSupportChatAside: () => <div data-testid="support-chat">Chat</div>,
+}));
+
 describe('AppLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();

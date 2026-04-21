@@ -34,6 +34,7 @@ import { useEffect, useState } from 'react';
 
 import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 import { useUIStore } from '@/stores/ui.store';
+import { AdminSupportChatAside } from '@/components/admin-support-chat-aside';
 
 const PLAN_UPGRADE_FLOW = {
   trial: 'starter',
@@ -381,6 +382,10 @@ export function AppLayout() {
             <Outlet />
           </main>
         </div>
+
+        {currentUser?.role === 'admin' ? (
+          <AdminSupportChatAside className="hidden xl:flex" />
+        ) : null}
       </div>
     </div>
   );
