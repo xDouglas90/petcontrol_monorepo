@@ -9,6 +9,8 @@ import type {
   CompanyDTO,
   CompanyUserDTO,
   CompanyUserListApiResponseDTO,
+  CompanyUserPermissionsApiResponseDTO,
+  CompanyUserPermissionsDTO,
   CompanySystemConfigDTO,
   CurrentUserApiResponseDTO,
   CurrentCompanySystemConfigApiResponseDTO,
@@ -38,6 +40,9 @@ import type {
   ServiceApiResponseDTO,
   ServiceListApiResponseDTO,
   UpdateClientInput,
+  UpdateCompanyUserPermissionsInput,
+  UpdateCurrentCompanyInput,
+  UpdateCurrentCompanySystemConfigInput,
   UpdatePetInput,
   UpdateScheduleInput,
   UpdateServiceInput,
@@ -280,7 +285,6 @@ export async function completeUpload(
   return payload.data;
 }
 
-
 export async function getCurrentCompany(
   accessToken: string,
 ): Promise<CompanyDTO> {
@@ -294,6 +298,34 @@ export async function getCurrentCompany(
     {
       method: 'GET',
       accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function updateCurrentCompany(
+  accessToken: string,
+  input: UpdateCurrentCompanyInput,
+): Promise<CompanyDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(180);
+    Object.assign(mockCompany, {
+      ...mockCompany,
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.fantasy_name !== undefined
+        ? { fantasy_name: input.fantasy_name }
+        : {}),
+      ...(input.logo_url !== undefined ? { logo_url: input.logo_url } : {}),
+    });
+    return mockCompany;
+  }
+
+  const payload = await request<CurrentCompanyApiResponseDTO>(
+    API_PATHS.currentCompany,
+    {
+      method: 'PATCH',
+      accessToken,
+      body: input,
     },
   );
   return payload.data;
@@ -336,6 +368,43 @@ export async function getCurrentCompanySystemConfig(
     {
       method: 'GET',
       accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function updateCurrentCompanySystemConfig(
+  accessToken: string,
+  input: UpdateCurrentCompanySystemConfigInput,
+): Promise<CompanySystemConfigDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(180);
+    return {
+      company_id: mockCompany.id,
+      schedule_init_time: input.schedule_init_time,
+      schedule_pause_init_time: input.schedule_pause_init_time ?? null,
+      schedule_pause_end_time: input.schedule_pause_end_time ?? null,
+      schedule_end_time: input.schedule_end_time,
+      min_schedules_per_day: input.min_schedules_per_day,
+      max_schedules_per_day: input.max_schedules_per_day,
+      schedule_days: input.schedule_days,
+      dynamic_cages: input.dynamic_cages,
+      total_small_cages: input.total_small_cages,
+      total_medium_cages: input.total_medium_cages,
+      total_large_cages: input.total_large_cages,
+      total_giant_cages: input.total_giant_cages,
+      whatsapp_notifications: input.whatsapp_notifications,
+      whatsapp_conversation: input.whatsapp_conversation,
+      whatsapp_business_phone: input.whatsapp_business_phone ?? null,
+    };
+  }
+
+  const payload = await request<CurrentCompanySystemConfigApiResponseDTO>(
+    API_PATHS.currentCompanySystemConfig,
+    {
+      method: 'PATCH',
+      accessToken,
+      body: input,
     },
   );
   return payload.data;
@@ -399,7 +468,7 @@ export async function listSchedules(
     );
     return {
       data: mockData,
-      meta: { total: mockData.length, page: 1, limit: 100, total_pages: 1 }
+      meta: { total: mockData.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -461,6 +530,88 @@ export async function listCompanyUsers(
     {
       method: 'GET',
       accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function getCompanyUserPermissions(
+  accessToken: string,
+  userId: string,
+): Promise<CompanyUserPermissionsDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return {
+      user_id: userId,
+      company_id: mockCompany.id,
+      role: userId === 'system-user-1' ? 'system' : 'admin',
+      kind: 'employee',
+      is_owner: false,
+      is_active: true,
+      managed_by: '11111111-1111-1111-1111-111111111111',
+      scope: 'tenant_settings',
+      permissions: [
+        {
+          id: crypto.randomUUID(),
+          code: 'company_settings:edit',
+          description: 'Editar configurações gerais',
+          default_roles: ['root', 'admin'],
+          is_active: false,
+          is_default_for_role: false,
+          granted_by: null,
+          granted_at: null,
+        },
+        {
+          id: crypto.randomUUID(),
+          code: 'plan_settings:edit',
+          description: 'Editar configurações de plano',
+          default_roles: ['root', 'admin', 'system'],
+          is_active: true,
+          is_default_for_role: userId === 'system-user-1',
+          granted_by: '11111111-1111-1111-1111-111111111111',
+          granted_at: new Date().toISOString(),
+        },
+      ],
+    };
+  }
+
+  const payload = await request<CompanyUserPermissionsApiResponseDTO>(
+    API_PATHS.companyUserPermissions(userId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
+  return payload.data;
+}
+
+export async function updateCompanyUserPermissions(
+  accessToken: string,
+  userId: string,
+  input: UpdateCompanyUserPermissionsInput,
+): Promise<CompanyUserPermissionsDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(140);
+    const current = await getCompanyUserPermissions(accessToken, userId);
+    const desired = new Set(input.permission_codes);
+    return {
+      ...current,
+      permissions: current.permissions.map((permission) => ({
+        ...permission,
+        is_active: desired.has(permission.code),
+        granted_at: desired.has(permission.code)
+          ? new Date().toISOString()
+          : permission.granted_at,
+      })),
+    };
+  }
+
+  const payload = await request<CompanyUserPermissionsApiResponseDTO>(
+    API_PATHS.companyUserPermissions(userId),
+    {
+      method: 'PATCH',
+      accessToken,
+      body: input,
     },
   );
   return payload.data;
@@ -531,7 +682,7 @@ export async function listClients(
     await delay(120);
     return {
       data: [...mockClients],
-      meta: { total: mockClients.length, page: 1, limit: 100, total_pages: 1 }
+      meta: { total: mockClients.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -551,7 +702,7 @@ export async function listPets(
     await delay(120);
     return {
       data: [...mockPets],
-      meta: { total: mockPets.length, page: 1, limit: 100, total_pages: 1 }
+      meta: { total: mockPets.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -571,7 +722,7 @@ export async function listServices(
     await delay(120);
     return {
       data: [...mockServices],
-      meta: { total: mockServices.length, page: 1, limit: 100, total_pages: 1 }
+      meta: { total: mockServices.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -965,7 +1116,7 @@ function mapLoginSession(payload: LoginApiResponseDTO['data']): LoginSession {
 }
 
 type RequestOptions = {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   accessToken: string;
   body?: unknown;
   queryParams?: ListQueryParams;
@@ -976,7 +1127,8 @@ function buildQueryString(params?: ListQueryParams): string {
   const entries: string[] = [];
   if (params.page != null) entries.push(`page=${params.page}`);
   if (params.limit != null) entries.push(`limit=${params.limit}`);
-  if (params.search) entries.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.search)
+    entries.push(`search=${encodeURIComponent(params.search)}`);
   return entries.length > 0 ? `?${entries.join('&')}` : '';
 }
 
