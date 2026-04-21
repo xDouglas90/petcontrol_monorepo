@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	pgxmock "github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/require"
@@ -598,5 +599,46 @@ func TestCompanyUserHandler_ListPermissionsRejectsNonAdmin(t *testing.T) {
 
 	require.Equal(t, http.StatusForbidden, res.Code)
 	require.Contains(t, res.Body.String(), "admin_required")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCompanyUserHandler_UpdatePermissionsRejectsUserOutsideTenant(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	companyUserService := service.NewCompanyUserService(queries)
+	permissionService := service.NewCompanyUserPermissionService(queries)
+	handlerUnderTest := NewCompanyUserHandler(companyUserService, permissionService)
+
+	companyID := domainHandlerUUID(t)
+	targetUserID := domainHandlerUUID(t)
+	adminUserID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: GetCompanyUser`).
+		WithArgs(companyID, targetUserID).
+		WillReturnError(pgx.ErrNoRows)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{UserID: uuidToString(adminUserID), Role: "admin"})
+		c.Next()
+	})
+	router.PATCH("/company-users/:user_id/permissions", handlerUnderTest.UpdatePermissions)
+
+	body, err := json.Marshal(map[string]any{
+		"permission_codes": []string{"plan_settings:edit"},
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPatch, "/company-users/"+uuidToString(targetUserID)+"/permissions", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusNotFound, res.Code)
+	require.Contains(t, res.Body.String(), "failed to load company user permissions")
 	require.NoError(t, mock.ExpectationsWereMet())
 }

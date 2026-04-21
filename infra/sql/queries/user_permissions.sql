@@ -51,7 +51,6 @@ FROM
 WHERE
     up.user_id = sqlc.arg('UserID')
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL
 ORDER BY
     p.code ASC
 LIMIT sqlc.arg('Limit')
@@ -74,7 +73,7 @@ WHERE
     up.user_id = sqlc.arg('UserID')
     AND up.permission_id = sqlc.arg('PermissionID')
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL;
+;
 
 -- name: ListUsersByPermissionID :many
 SELECT
