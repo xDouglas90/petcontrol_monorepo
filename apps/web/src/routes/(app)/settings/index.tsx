@@ -109,70 +109,74 @@ export function SettingsPage() {
     !canEditBusinessSettings;
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2rem] border border-stone-200 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] p-7 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-stone-400">
-              Configurações
-            </p>
-            <h2 className="mt-3 font-display text-3xl text-stone-950">
-              Central de ajustes
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-stone-600">
-              Esta área reúne os dados institucionais da empresa, as regras
-              operacionais do negócio e, para perfis `admin`, a gestão das
-              permissões do time vinculado ao tenant.
-            </p>
-          </div>
+    <div>
+      <section className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+        <div className="divide-y divide-stone-200">
+          <section className="bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] px-6 py-7 md:px-7">
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-stone-400">
+                  Configurações
+                </p>
+                <h2 className="mt-3 font-display text-3xl text-stone-950">
+                  Central de ajustes
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-stone-600">
+                  Esta área reúne os dados institucionais da empresa, as regras
+                  operacionais do negócio e, para perfis `admin`, a gestão das
+                  permissões do time vinculado ao tenant.
+                </p>
+              </div>
 
-          <div className="rounded-3xl border border-white/80 bg-white/70 p-3 text-stone-700 shadow-sm">
-            <Settings2 className="h-6 w-6" />
-          </div>
-        </div>
+              <div className="rounded-3xl border border-white/80 bg-white/70 p-3 text-stone-700 shadow-sm">
+                <Settings2 className="h-6 w-6" />
+              </div>
+            </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <SettingsHeadlineCard
-            title="Empresa"
-            description={
-              companyQuery.data.fantasy_name || companyQuery.data.name
-            }
-            icon={Building2}
+            <div className="mt-6 grid gap-3 md:grid-cols-3">
+              <SettingsHeadlineCard
+                title="Empresa"
+                description={
+                  companyQuery.data.fantasy_name || companyQuery.data.name
+                }
+                icon={Building2}
+              />
+              <SettingsHeadlineCard
+                title="Negócios"
+                description={`${systemConfigQuery.data.schedule_init_time} - ${systemConfigQuery.data.schedule_end_time}`}
+                icon={Clock3}
+              />
+              <SettingsHeadlineCard
+                title="Acesso"
+                description={
+                  canManagePermissions
+                    ? 'Edição completa e gestão de permissões'
+                    : isReadOnly
+                      ? 'Modo somente leitura'
+                      : `Edição parcial: ${editablePermissionCodes.length} permissões`
+                }
+                icon={ShieldCheck}
+              />
+            </div>
+          </section>
+
+          <CompanySettingsForm
+            initialData={companyQuery.data}
+            disabled={!canEditCompanySettings}
           />
-          <SettingsHeadlineCard
-            title="Negócios"
-            description={`${systemConfigQuery.data.schedule_init_time} - ${systemConfigQuery.data.schedule_end_time}`}
-            icon={Clock3}
+
+          <BusinessSettingsForm
+            initialData={systemConfigQuery.data}
+            disabled={!canEditBusinessSettings}
           />
-          <SettingsHeadlineCard
-            title="Acesso"
-            description={
-              canManagePermissions
-                ? 'Edição completa e gestão de permissões'
-                : isReadOnly
-                  ? 'Modo somente leitura'
-                  : `Edição parcial: ${editablePermissionCodes.length} permissões`
-            }
-            icon={ShieldCheck}
-          />
+
+          {canManagePermissions && (
+            <UserPermissionsManager
+              companyUsers={companyUsersQuery.data ?? []}
+            />
+          )}
         </div>
       </section>
-
-      <CompanySettingsForm
-        initialData={companyQuery.data}
-        disabled={!canEditCompanySettings}
-      />
-
-      <BusinessSettingsForm
-        initialData={systemConfigQuery.data}
-        disabled={!canEditBusinessSettings}
-      />
-
-      {canManagePermissions && (
-        <UserPermissionsManager
-          companyUsers={companyUsersQuery.data ?? []}
-        />
-      )}
     </div>
   );
 }
@@ -181,7 +185,13 @@ function CompanySettingsForm({
   initialData,
   disabled,
 }: {
-  initialData: { name: string; fantasy_name: string; logo_url?: string | null; cnpj: string; active_package: string };
+  initialData: {
+    name: string;
+    fantasy_name: string;
+    logo_url?: string | null;
+    cnpj: string;
+    active_package: string;
+  };
   disabled: boolean;
 }) {
   const [form, setForm] = useState<CompanyFormState>({
@@ -224,7 +234,9 @@ function CompanySettingsForm({
           <Field
             label="Nome fantasia"
             value={form.fantasy_name}
-            onChange={(value) => setForm((c) => ({ ...c, fantasy_name: value }))}
+            onChange={(value) =>
+              setForm((c) => ({ ...c, fantasy_name: value }))
+            }
             disabled={disabled || mutation.isPending}
           />
           <Field
@@ -259,7 +271,7 @@ function CompanySettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="rounded-2xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar empresa'}
           </button>
@@ -420,14 +432,18 @@ function BusinessSettingsForm({
             label="Mínimo de agendamentos por dia"
             type="number"
             value={form.min_schedules_per_day}
-            onChange={(v) => setForm((c) => ({ ...c, min_schedules_per_day: v }))}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, min_schedules_per_day: v }))
+            }
             disabled={disabled || mutation.isPending}
           />
           <Field
             label="Máximo de agendamentos por dia"
             type="number"
             value={form.max_schedules_per_day}
-            onChange={(v) => setForm((c) => ({ ...c, max_schedules_per_day: v }))}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, max_schedules_per_day: v }))
+            }
             disabled={disabled || mutation.isPending}
           />
           <Field
@@ -479,13 +495,17 @@ function BusinessSettingsForm({
           <ToggleField
             label="Notificações por WhatsApp"
             checked={form.whatsapp_notifications}
-            onChange={(v) => setForm((c) => ({ ...c, whatsapp_notifications: v }))}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, whatsapp_notifications: v }))
+            }
             disabled={disabled || mutation.isPending}
           />
           <ToggleField
             label="Conversa por WhatsApp"
             checked={form.whatsapp_conversation}
-            onChange={(v) => setForm((c) => ({ ...c, whatsapp_conversation: v }))}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, whatsapp_conversation: v }))
+            }
             disabled={disabled || mutation.isPending}
           />
         </div>
@@ -503,7 +523,7 @@ function BusinessSettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="rounded-2xl bg-amber-500 px-5 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-white"
+            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar negócio'}
           </button>
@@ -653,7 +673,7 @@ function UserPermissionsForm({
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+          className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
         >
           {mutation.isPending ? 'Salvando...' : 'Salvar permissões'}
         </button>
@@ -664,7 +684,7 @@ function UserPermissionsForm({
 
 function SettingsPageLoading() {
   return (
-    <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+    <section className="rounded-[2rem] bg-white/75 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
       <LoadingInline message="Carregando central de configurações..." />
     </section>
   );
@@ -706,7 +726,7 @@ function SettingsCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[1.9rem] border border-stone-200 bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+    <section className="px-6 py-7 md:px-7">
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-400">
           {eyebrow}
