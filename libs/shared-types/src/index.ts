@@ -142,6 +142,13 @@ export interface CurrentCompanyApiResponseDTO {
   data: CompanyDTO;
 }
 
+export interface UpdateCurrentCompanyInput {
+  name?: string;
+  fantasy_name?: string;
+  logo_url?: string | null;
+  upload_object_key?: string;
+}
+
 export interface CurrentUserDTO {
   user_id: UUID;
   company_id: UUID;
@@ -180,8 +187,8 @@ export type WeekDay = (typeof WEEK_DAYS)[number];
 export interface CompanySystemConfigDTO {
   company_id: UUID;
   schedule_init_time: string;
-  schedule_pause_init_time: string;
-  schedule_pause_end_time: string;
+  schedule_pause_init_time?: string | null;
+  schedule_pause_end_time?: string | null;
   schedule_end_time: string;
   min_schedules_per_day: number;
   max_schedules_per_day: number;
@@ -198,6 +205,24 @@ export interface CompanySystemConfigDTO {
 
 export interface CurrentCompanySystemConfigApiResponseDTO {
   data: CompanySystemConfigDTO;
+}
+
+export interface UpdateCurrentCompanySystemConfigInput {
+  schedule_init_time: string;
+  schedule_pause_init_time?: string | null;
+  schedule_pause_end_time?: string | null;
+  schedule_end_time: string;
+  min_schedules_per_day: number;
+  max_schedules_per_day: number;
+  schedule_days: WeekDay[];
+  dynamic_cages: boolean;
+  total_small_cages: number;
+  total_medium_cages: number;
+  total_large_cages: number;
+  total_giant_cages: number;
+  whatsapp_notifications: boolean;
+  whatsapp_conversation: boolean;
+  whatsapp_business_phone?: string | null;
 }
 
 export interface CompanyUserDTO {
@@ -217,6 +242,37 @@ export interface CompanyUserDTO {
 
 export interface CompanyUserListApiResponseDTO {
   data: CompanyUserDTO[];
+}
+
+export interface CompanyUserPermissionDTO {
+  id: UUID;
+  code: string;
+  description?: string | null;
+  default_roles: UserRole[];
+  is_active: boolean;
+  is_default_for_role: boolean;
+  granted_by?: UUID | null;
+  granted_at?: string | null;
+}
+
+export interface CompanyUserPermissionsDTO {
+  user_id: UUID;
+  company_id: UUID;
+  role: UserRole;
+  kind: UserKind;
+  is_owner: boolean;
+  is_active: boolean;
+  managed_by: UUID;
+  scope: string;
+  permissions: CompanyUserPermissionDTO[];
+}
+
+export interface CompanyUserPermissionsApiResponseDTO {
+  data: CompanyUserPermissionsDTO;
+}
+
+export interface UpdateCompanyUserPermissionsInput {
+  permission_codes: string[];
 }
 
 export interface AdminSystemChatMessageDTO {

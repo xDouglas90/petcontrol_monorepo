@@ -7,6 +7,7 @@ export const API_PATHS = {
   currentUser: '/users/me',
   currentCompanySystemConfig: '/company-system-configs/current',
   companyUsers: '/company-users',
+  companyUserPermissions: (userId: string) => `/company-users/${userId}/permissions`,
   adminSystemChatMessages: (userId: string) => `/chat/system/${userId}/messages`,
   adminSystemChatSocket: (userId: string) => `/chat/system/${userId}/ws`,
   schedules: '/schedules',
