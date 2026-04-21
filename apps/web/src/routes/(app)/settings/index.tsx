@@ -1,71 +1,931 @@
 import { Navigate, useParams } from '@tanstack/react-router';
+import type {
+  CompanyUserPermissionsDTO,
+  WeekDay,
+} from '@petcontrol/shared-types';
+import { WEEK_DAYS } from '@petcontrol/shared-types';
 import { buildCompanyRoute } from '@petcontrol/shared-constants';
-import { Settings, ShieldCheck } from 'lucide-react';
+import { cn } from '@petcontrol/ui/web';
+import {
+  Building2,
+  Clock3,
+  LoaderCircle,
+  Settings2,
+  ShieldCheck,
+  UsersRound,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 
-import { useCurrentUserQuery } from '@/lib/api/domain.queries';
+import {
+  useCompanyUserPermissionsQuery,
+  useCompanyUsersQuery,
+  useCurrentCompanyQuery,
+  useCurrentCompanySystemConfigQuery,
+  useCurrentUserQuery,
+  useUpdateCompanyUserPermissionsMutation,
+  useUpdateCurrentCompanyMutation,
+  useUpdateCurrentCompanySystemConfigMutation,
+} from '@/lib/api/domain.queries';
+
+const SETTINGS_PERMISSION_LABELS: Record<string, string> = {
+  'company_settings:edit': 'Configurações gerais da empresa',
+  'plan_settings:edit': 'Operação e regras de agenda',
+  'payment_settings:edit': 'Pagamentos e cobrança',
+  'notification_settings:edit': 'Notificações automáticas',
+  'integration_settings:edit': 'Integrações externas',
+  'security_settings:edit': 'Segurança e acesso',
+};
+
+type CompanyFormState = {
+  name: string;
+  fantasy_name: string;
+  logo_url: string;
+};
+
+type BusinessFormState = {
+  schedule_init_time: string;
+  schedule_pause_init_time: string;
+  schedule_pause_end_time: string;
+  schedule_end_time: string;
+  min_schedules_per_day: string;
+  max_schedules_per_day: string;
+  schedule_days: WeekDay[];
+  dynamic_cages: boolean;
+  total_small_cages: string;
+  total_medium_cages: string;
+  total_large_cages: string;
+  total_giant_cages: string;
+  whatsapp_notifications: boolean;
+  whatsapp_conversation: boolean;
+  whatsapp_business_phone: string;
+};
 
 export function SettingsPage() {
-  const currentUserQuery = useCurrentUserQuery();
   const params = useParams({ strict: false });
   const companySlug =
     typeof params.companySlug === 'string' ? params.companySlug : '';
 
-  if (currentUserQuery.isLoading || !currentUserQuery.data) {
+  const currentUserQuery = useCurrentUserQuery();
+  const companyQuery = useCurrentCompanyQuery();
+  const systemConfigQuery = useCurrentCompanySystemConfigQuery();
+  const companyUsersQuery = useCompanyUsersQuery();
+
+  const currentUser = currentUserQuery.data;
+  const settingsAccess = currentUser?.settings_access;
+  const canViewSettings =
+    settingsAccess?.can_view ?? currentUser?.role === 'admin';
+  const canManagePermissions =
+    settingsAccess?.can_manage_permissions ?? currentUser?.role === 'admin';
+  const editablePermissionCodes =
+    settingsAccess?.editable_permission_codes ?? [];
+  const canEditCompanySettings =
+    currentUser?.role === 'admin' ||
+    editablePermissionCodes.includes('company_settings:edit');
+  const canEditBusinessSettings = canEditCompanySettings;
+
+  if (
+    currentUserQuery.isLoading ||
+    companyQuery.isLoading ||
+    systemConfigQuery.isLoading ||
+    companyUsersQuery.isLoading
+  ) {
+    return <SettingsPageLoading />;
+  }
+
+  if (!currentUser || !companyQuery.data || !systemConfigQuery.data) {
+    return <SettingsPageLoading />;
+  }
+
+  if (!canViewSettings && companySlug) {
     return (
-      <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-        <p className="text-sm text-stone-500">Carregando contexto de configurações...</p>
-      </section>
+      <Navigate to={buildCompanyRoute(companySlug, 'dashboard')} replace />
     );
   }
 
-  const settingsAccess = currentUserQuery.data.settings_access;
-  const canViewSettings =
-    settingsAccess?.can_view ?? currentUserQuery.data.role === 'admin';
-  const canManagePermissions =
-    settingsAccess?.can_manage_permissions ?? currentUserQuery.data.role === 'admin';
-  const editablePermissionCodes = settingsAccess?.editable_permission_codes ?? [];
-  const isReadOnly = !canManagePermissions && editablePermissionCodes.length === 0;
-
-  if (!canViewSettings && companySlug) {
-    return <Navigate to={buildCompanyRoute(companySlug, 'dashboard')} replace />;
-  }
+  const isReadOnly =
+    !canManagePermissions &&
+    !canEditCompanySettings &&
+    !canEditBusinessSettings;
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-400">
-              Configuracoes
+      <section className="overflow-hidden rounded-[2rem] border border-stone-200 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] p-7 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-stone-400">
+              Configurações
             </p>
-            <h2 className="mt-3 font-display text-3xl text-stone-900">
-              Central de ajustes do tenant
+            <h2 className="mt-3 font-display text-3xl text-stone-950">
+              Central de ajustes
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
-              O acesso a esta area agora respeita as permissoes efetivas do
-              usuario autenticado. A tela completa entra na proxima fase, com
-              formularios reais para empresa, negocio e gestao de permissoes.
+            <p className="mt-3 text-sm leading-7 text-stone-600">
+              Esta área reúne os dados institucionais da empresa, as regras
+              operacionais do negócio e, para perfis `admin`, a gestão das
+              permissões do time vinculado ao tenant.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-stone-100 p-3 text-stone-600">
-            <Settings className="h-6 w-6" />
+          <div className="rounded-3xl border border-white/80 bg-white/70 p-3 text-stone-700 shadow-sm">
+            <Settings2 className="h-6 w-6" />
           </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <SettingsHeadlineCard
+            title="Empresa"
+            description={
+              companyQuery.data.fantasy_name || companyQuery.data.name
+            }
+            icon={Building2}
+          />
+          <SettingsHeadlineCard
+            title="Negócios"
+            description={`${systemConfigQuery.data.schedule_init_time} - ${systemConfigQuery.data.schedule_end_time}`}
+            icon={Clock3}
+          />
+          <SettingsHeadlineCard
+            title="Acesso"
+            description={
+              canManagePermissions
+                ? 'Edição completa e gestão de permissões'
+                : isReadOnly
+                  ? 'Modo somente leitura'
+                  : `Edição parcial: ${editablePermissionCodes.length} permissões`
+            }
+            icon={ShieldCheck}
+          />
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-dashed border-stone-300 bg-stone-50 p-6">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-5 w-5 text-emerald-600" />
-          <p className="text-sm font-medium text-stone-700">
-            {canManagePermissions
-              ? 'Seu perfil pode editar configuracoes e tambem gerenciar permissoes de usuarios.'
-              : isReadOnly
-                ? 'Seu perfil pode visualizar a area de configuracoes, mas ainda esta em modo somente leitura.'
-                : `Seu perfil tem edicao parcial nesta area: ${editablePermissionCodes.join(', ')}.`}
-          </p>
-        </div>
-      </section>
+      <CompanySettingsForm
+        initialData={companyQuery.data}
+        disabled={!canEditCompanySettings}
+      />
+
+      <BusinessSettingsForm
+        initialData={systemConfigQuery.data}
+        disabled={!canEditBusinessSettings}
+      />
+
+      {canManagePermissions && (
+        <UserPermissionsManager
+          companyUsers={companyUsersQuery.data ?? []}
+        />
+      )}
     </div>
   );
+}
+
+function CompanySettingsForm({
+  initialData,
+  disabled,
+}: {
+  initialData: { name: string; fantasy_name: string; logo_url?: string | null; cnpj: string; active_package: string };
+  disabled: boolean;
+}) {
+  const [form, setForm] = useState<CompanyFormState>({
+    name: initialData.name,
+    fantasy_name: initialData.fantasy_name,
+    logo_url: initialData.logo_url ?? '',
+  });
+
+  const mutation = useUpdateCurrentCompanyMutation();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await mutation.mutateAsync({
+      name: form.name.trim(),
+      fantasy_name: form.fantasy_name.trim(),
+      logo_url: form.logo_url.trim() || null,
+    });
+  };
+
+  const sectionMessage = mutation.isSuccess
+    ? 'Configurações da empresa atualizadas.'
+    : mutation.isError
+      ? mutation.error.message
+      : null;
+
+  return (
+    <SettingsCard
+      eyebrow="Empresa"
+      title="Configurações da empresa"
+      description="Dados institucionais do tenant usados no shell, na identificação interna e na comunicação visual."
+    >
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field
+            label="Nome jurídico"
+            value={form.name}
+            onChange={(value) => setForm((c) => ({ ...c, name: value }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Nome fantasia"
+            value={form.fantasy_name}
+            onChange={(value) => setForm((c) => ({ ...c, fantasy_name: value }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Logo URL"
+            value={form.logo_url}
+            onChange={(value) => setForm((c) => ({ ...c, logo_url: value }))}
+            placeholder="https://cdn.exemplo.com/logo.png"
+            disabled={disabled || mutation.isPending}
+          />
+          <ReadOnlyField
+            label="CNPJ"
+            value={initialData.cnpj}
+            helpText="Campo apenas informativo nesta fase."
+          />
+          <ReadOnlyField
+            label="Plano ativo"
+            value={initialData.active_package}
+            helpText="A configuração de plano será detalhada em um recorte próprio."
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionMessage
+            variant={mutation.isError ? 'error' : 'success'}
+            message={
+              disabled
+                ? 'Seu perfil pode visualizar os dados da empresa, mas não editar esta seção.'
+                : sectionMessage
+            }
+          />
+
+          <button
+            type="submit"
+            disabled={disabled || mutation.isPending}
+            className="rounded-2xl bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+          >
+            {mutation.isPending ? 'Salvando...' : 'Salvar empresa'}
+          </button>
+        </div>
+      </form>
+    </SettingsCard>
+  );
+}
+
+function BusinessSettingsForm({
+  initialData,
+  disabled,
+}: {
+  initialData: {
+    schedule_init_time: string;
+    schedule_pause_init_time?: string | null;
+    schedule_pause_end_time?: string | null;
+    schedule_end_time: string;
+    min_schedules_per_day: number;
+    max_schedules_per_day: number;
+    schedule_days: WeekDay[];
+    dynamic_cages: boolean;
+    total_small_cages: number;
+    total_medium_cages: number;
+    total_large_cages: number;
+    total_giant_cages: number;
+    whatsapp_notifications: boolean;
+    whatsapp_conversation: boolean;
+    whatsapp_business_phone?: string | null;
+  };
+  disabled: boolean;
+}) {
+  const [form, setForm] = useState<BusinessFormState>({
+    schedule_init_time: initialData.schedule_init_time,
+    schedule_pause_init_time: initialData.schedule_pause_init_time ?? '',
+    schedule_pause_end_time: initialData.schedule_pause_end_time ?? '',
+    schedule_end_time: initialData.schedule_end_time,
+    min_schedules_per_day: String(initialData.min_schedules_per_day),
+    max_schedules_per_day: String(initialData.max_schedules_per_day),
+    schedule_days: initialData.schedule_days,
+    dynamic_cages: initialData.dynamic_cages,
+    total_small_cages: String(initialData.total_small_cages),
+    total_medium_cages: String(initialData.total_medium_cages),
+    total_large_cages: String(initialData.total_large_cages),
+    total_giant_cages: String(initialData.total_giant_cages),
+    whatsapp_notifications: initialData.whatsapp_notifications,
+    whatsapp_conversation: initialData.whatsapp_conversation,
+    whatsapp_business_phone: initialData.whatsapp_business_phone ?? '',
+  });
+
+  const mutation = useUpdateCurrentCompanySystemConfigMutation();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await mutation.mutateAsync({
+      schedule_init_time: form.schedule_init_time,
+      schedule_pause_init_time: form.schedule_pause_init_time || null,
+      schedule_pause_end_time: form.schedule_pause_end_time || null,
+      schedule_end_time: form.schedule_end_time,
+      min_schedules_per_day: Number(form.min_schedules_per_day),
+      max_schedules_per_day: Number(form.max_schedules_per_day),
+      schedule_days: form.schedule_days,
+      dynamic_cages: form.dynamic_cages,
+      total_small_cages: Number(form.total_small_cages),
+      total_medium_cages: Number(form.total_medium_cages),
+      total_large_cages: Number(form.total_large_cages),
+      total_giant_cages: Number(form.total_giant_cages),
+      whatsapp_notifications: form.whatsapp_notifications,
+      whatsapp_conversation: form.whatsapp_conversation,
+      whatsapp_business_phone: form.whatsapp_business_phone || null,
+    });
+  };
+
+  const sectionMessage = mutation.isSuccess
+    ? 'Configurações de negócios atualizadas.'
+    : mutation.isError
+      ? mutation.error.message
+      : null;
+
+  return (
+    <SettingsCard
+      eyebrow="Negócios"
+      title="Configurações de negócios"
+      description="Regras operacionais, capacidade física e canais que dirigem a rotina diária do tenant."
+    >
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="grid gap-4 md:grid-cols-4">
+          <Field
+            label="Início do expediente"
+            type="time"
+            value={form.schedule_init_time}
+            onChange={(v) => setForm((c) => ({ ...c, schedule_init_time: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Início da pausa"
+            type="time"
+            value={form.schedule_pause_init_time}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, schedule_pause_init_time: v }))
+            }
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Fim da pausa"
+            type="time"
+            value={form.schedule_pause_end_time}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, schedule_pause_end_time: v }))
+            }
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Fim do expediente"
+            type="time"
+            value={form.schedule_end_time}
+            onChange={(v) => setForm((c) => ({ ...c, schedule_end_time: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-stone-800">
+            Dias de atendimento
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {WEEK_DAYS.map((day) => {
+              const active = form.schedule_days.includes(day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() =>
+                    setForm((c) => ({
+                      ...c,
+                      schedule_days: active
+                        ? c.schedule_days.filter((i) => i !== day)
+                        : [...c.schedule_days, day],
+                    }))
+                  }
+                  disabled={disabled || mutation.isPending}
+                  className={cn(
+                    'rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition',
+                    active
+                      ? 'border-stone-950 bg-stone-950 text-white'
+                      : 'border-stone-200 bg-white text-stone-500',
+                  )}
+                >
+                  {weekDayLabel(day)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Field
+            label="Mínimo de agendamentos por dia"
+            type="number"
+            value={form.min_schedules_per_day}
+            onChange={(v) => setForm((c) => ({ ...c, min_schedules_per_day: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Máximo de agendamentos por dia"
+            type="number"
+            value={form.max_schedules_per_day}
+            onChange={(v) => setForm((c) => ({ ...c, max_schedules_per_day: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="WhatsApp business"
+            value={form.whatsapp_business_phone}
+            onChange={(v) =>
+              setForm((c) => ({ ...c, whatsapp_business_phone: v }))
+            }
+            placeholder="+5511999990001"
+            disabled={disabled || mutation.isPending}
+          />
+          <ToggleField
+            label="Celas dinâmicas"
+            checked={form.dynamic_cages}
+            onChange={(v) => setForm((c) => ({ ...c, dynamic_cages: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Celas pequenas"
+            type="number"
+            value={form.total_small_cages}
+            onChange={(v) => setForm((c) => ({ ...c, total_small_cages: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Celas médias"
+            type="number"
+            value={form.total_medium_cages}
+            onChange={(v) => setForm((c) => ({ ...c, total_medium_cages: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Celas grandes"
+            type="number"
+            value={form.total_large_cages}
+            onChange={(v) => setForm((c) => ({ ...c, total_large_cages: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <Field
+            label="Celas gigantes"
+            type="number"
+            value={form.total_giant_cages}
+            onChange={(v) => setForm((c) => ({ ...c, total_giant_cages: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <ToggleField
+            label="Notificações por WhatsApp"
+            checked={form.whatsapp_notifications}
+            onChange={(v) => setForm((c) => ({ ...c, whatsapp_notifications: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+          <ToggleField
+            label="Conversa por WhatsApp"
+            checked={form.whatsapp_conversation}
+            onChange={(v) => setForm((c) => ({ ...c, whatsapp_conversation: v }))}
+            disabled={disabled || mutation.isPending}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionMessage
+            variant={mutation.isError ? 'error' : 'success'}
+            message={
+              disabled
+                ? 'Esta seção segue em modo somente leitura para o seu perfil.'
+                : sectionMessage
+            }
+          />
+
+          <button
+            type="submit"
+            disabled={disabled || mutation.isPending}
+            className="rounded-2xl bg-amber-500 px-5 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-white"
+          >
+            {mutation.isPending ? 'Salvando...' : 'Salvar negócio'}
+          </button>
+        </div>
+      </form>
+    </SettingsCard>
+  );
+}
+
+function UserPermissionsManager({
+  companyUsers,
+}: {
+  companyUsers: {
+    user_id: string;
+    full_name?: string | null;
+    short_name?: string | null;
+    role: string;
+    kind: string;
+  }[];
+}) {
+  const filteredUsers = useMemo(
+    () => companyUsers.filter((u) => u.role === 'admin' || u.role === 'system'),
+    [companyUsers],
+  );
+
+  const [selectedUserId, setSelectedUserId] = useState(() => {
+    const preferred = filteredUsers.find((u) => u.role === 'system');
+    return preferred?.user_id ?? (filteredUsers[0]?.user_id || '');
+  });
+
+  const selectedCompanyUser = useMemo(
+    () => filteredUsers.find((u) => u.user_id === selectedUserId),
+    [filteredUsers, selectedUserId],
+  );
+
+  const permissionsQuery = useCompanyUserPermissionsQuery(selectedUserId);
+
+  return (
+    <SettingsCard
+      eyebrow="Permissões"
+      title="Permissões por usuário"
+      description="Selecione um usuário do tenant e ajuste o conjunto de permissões gerenciáveis deste módulo."
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-stone-800">
+              Usuário do tenant
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 outline-none transition focus:border-stone-400"
+            >
+              {filteredUsers.map((u) => (
+                <option key={u.user_id} value={u.user_id}>
+                  {u.full_name || u.short_name || u.user_id}
+                </option>
+              ))}
+            </select>
+            {selectedCompanyUser ? (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+                <p className="font-semibold text-stone-800">
+                  {selectedCompanyUser.full_name ||
+                    selectedCompanyUser.short_name ||
+                    selectedCompanyUser.user_id}
+                </p>
+                <p className="mt-1 uppercase tracking-[0.18em] text-stone-400">
+                  {selectedCompanyUser.role} · {selectedCompanyUser.kind}
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5">
+            {permissionsQuery.isLoading ? (
+              <LoadingInline message="Carregando permissões do usuário..." />
+            ) : permissionsQuery.data ? (
+              <UserPermissionsForm
+                key={selectedUserId}
+                userId={selectedUserId}
+                initialPermissions={permissionsQuery.data}
+              />
+            ) : (
+              <p className="text-sm text-stone-500">
+                Selecione um usuário para visualizar as permissões gerenciáveis.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </SettingsCard>
+  );
+}
+
+function UserPermissionsForm({
+  userId,
+  initialPermissions,
+}: {
+  userId: string;
+  initialPermissions: CompanyUserPermissionsDTO;
+}) {
+  const [selectedPermissionCodes, setSelectedPermissionCodes] = useState<
+    string[]
+  >(() =>
+    initialPermissions.permissions
+      .filter((p) => p.is_active)
+      .map((p) => p.code),
+  );
+
+  const mutation = useUpdateCompanyUserPermissionsMutation(userId);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await mutation.mutateAsync({
+      permission_codes: selectedPermissionCodes,
+    });
+  };
+
+  const sectionMessage = mutation.isSuccess
+    ? 'Permissões do usuário atualizadas.'
+    : mutation.isError
+      ? mutation.error.message
+      : null;
+
+  return (
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <PermissionsChecklist
+        snapshot={initialPermissions}
+        selectedPermissionCodes={selectedPermissionCodes}
+        onToggle={(code) =>
+          setSelectedPermissionCodes((prev) =>
+            prev.includes(code)
+              ? prev.filter((c) => c !== code)
+              : [...prev, code],
+          )
+        }
+        disabled={mutation.isPending}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SectionMessage
+          variant={mutation.isError ? 'error' : 'success'}
+          message={sectionMessage}
+        />
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+        >
+          {mutation.isPending ? 'Salvando...' : 'Salvar permissões'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function SettingsPageLoading() {
+  return (
+    <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <LoadingInline message="Carregando central de configurações..." />
+    </section>
+  );
+}
+
+function SettingsHeadlineCard({
+  title,
+  description,
+  icon: Icon,
+}: {
+  title: string;
+  description: string;
+  icon: typeof Building2;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/80 bg-white/70 p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-2xl bg-stone-100 p-2 text-stone-700">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-stone-900">{title}</p>
+          <p className="text-sm text-stone-500">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsCard({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-[1.9rem] border border-stone-200 bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-400">
+          {eyebrow}
+        </p>
+        <h3 className="mt-3 font-display text-2xl text-stone-950">{title}</h3>
+        <p className="mt-2 max-w-3xl text-sm leading-7 text-stone-500">
+          {description}
+        </p>
+      </div>
+
+      {children}
+    </section>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  type = 'text',
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  type?: React.HTMLInputTypeAttribute;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-stone-800">
+        {label}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 outline-none transition focus:border-stone-400 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
+      />
+    </label>
+  );
+}
+
+function ReadOnlyField({
+  label,
+  value,
+  helpText,
+}: {
+  label: string;
+  value: string;
+  helpText?: string;
+}) {
+  return (
+    <div>
+      <span className="mb-2 block text-sm font-semibold text-stone-800">
+        {label}
+      </span>
+      <div className="rounded-2xl border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-600">
+        {value}
+      </div>
+      {helpText ? (
+        <p className="mt-2 text-xs text-stone-400">{helpText}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function ToggleField({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+      <span className="text-sm font-semibold text-stone-800">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        disabled={disabled}
+        className={cn(
+          'relative h-7 w-12 rounded-full transition',
+          checked ? 'bg-emerald-500' : 'bg-stone-300',
+          disabled ? 'cursor-not-allowed opacity-60' : '',
+        )}
+      >
+        <span
+          className={cn(
+            'absolute top-1 h-5 w-5 rounded-full bg-white transition',
+            checked ? 'left-6' : 'left-1',
+          )}
+        />
+      </button>
+    </label>
+  );
+}
+
+function SectionMessage({
+  message,
+  variant,
+}: {
+  message: string | null;
+  variant: 'success' | 'error';
+}) {
+  if (!message) {
+    return <div />;
+  }
+
+  return (
+    <p
+      className={cn(
+        'text-sm',
+        variant === 'error' ? 'text-rose-600' : 'text-emerald-600',
+      )}
+    >
+      {message}
+    </p>
+  );
+}
+
+function LoadingInline({ message }: { message: string }) {
+  return (
+    <div className="flex items-center gap-3 text-sm text-stone-500">
+      <LoaderCircle className="h-4 w-4 animate-spin" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+function PermissionsChecklist({
+  snapshot,
+  selectedPermissionCodes,
+  onToggle,
+  disabled,
+}: {
+  snapshot: CompanyUserPermissionsDTO;
+  selectedPermissionCodes: string[];
+  onToggle: (permissionCode: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-stone-700">
+        <UsersRound className="h-4 w-4" />
+        <p className="text-sm font-semibold">
+          Permissões gerenciáveis do módulo de configurações
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {snapshot.permissions.map((permission) => {
+          const isChecked = selectedPermissionCodes.includes(permission.code);
+          return (
+            <label
+              key={permission.id}
+              className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-4"
+            >
+              <input
+                type="checkbox"
+                checked={isChecked}
+                onChange={() => onToggle(permission.code)}
+                disabled={disabled}
+                className="mt-1 h-4 w-4 rounded border-stone-300 text-stone-950"
+              />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-stone-900">
+                    {SETTINGS_PERMISSION_LABELS[permission.code] ??
+                      permission.code}
+                  </p>
+                  {permission.is_default_for_role ? (
+                    <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                      padrão do papel
+                    </span>
+                  ) : null}
+                  {!permission.is_default_for_role ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                      customizado
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-sm text-stone-500">
+                  {permission.description ||
+                    SETTINGS_PERMISSION_LABELS[permission.code] ||
+                    permission.code}
+                </p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-stone-400">
+                  Default roles: {permission.default_roles.join(', ')}
+                </p>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function weekDayLabel(day: WeekDay) {
+  const labels: Record<WeekDay, string> = {
+    sunday: 'Dom',
+    monday: 'Seg',
+    tuesday: 'Ter',
+    wednesday: 'Qua',
+    thursday: 'Qui',
+    friday: 'Sex',
+    saturday: 'Sab',
+  };
+
+  return labels[day];
 }
