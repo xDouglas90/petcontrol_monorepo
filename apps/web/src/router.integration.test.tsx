@@ -14,6 +14,7 @@ const mockUseCurrentUserQuery = vi.fn();
 const mockUseCompanyUsersQuery = vi.fn();
 const mockUseAdminSystemChatMessagesQuery = vi.fn();
 const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
+const mockUsePeopleQuery = vi.fn();
 const mockUseClientsQuery = vi.fn();
 const mockUsePetsQuery = vi.fn();
 const mockUseServicesQuery = vi.fn();
@@ -32,6 +33,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useAdminSystemChatMessagesQuery: () => mockUseAdminSystemChatMessagesQuery(),
   useCreateAdminSystemChatMessageMutation: () =>
     mockUseCreateAdminSystemChatMessageMutation(),
+  usePeopleQuery: () => mockUsePeopleQuery(),
   useClientsQuery: () => mockUseClientsQuery(),
   usePetsQuery: () => mockUsePetsQuery(),
   useServicesQuery: () => mockUseServicesQuery(),
@@ -42,6 +44,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useDeleteScheduleMutation: () => mockDeleteScheduleMutation(),
   domainQueryKeys: {
     currentCompany: () => ['domain', 'company', 'current'] as const,
+    people: () => ['domain', 'people'] as const,
     clients: () => ['domain', 'clients'] as const,
     pets: () => ['domain', 'pets'] as const,
     services: () => ['domain', 'services'] as const,
@@ -88,6 +91,7 @@ describe('Router integration', () => {
     mockUseCompanyUsersQuery.mockReset();
     mockUseAdminSystemChatMessagesQuery.mockReset();
     mockUseCreateAdminSystemChatMessageMutation.mockReset();
+    mockUsePeopleQuery.mockReset();
     mockUseClientsQuery.mockReset();
     mockUsePetsQuery.mockReset();
     mockUseServicesQuery.mockReset();
@@ -204,6 +208,29 @@ describe('Router integration', () => {
       isError: false,
     });
     mockUseScheduleHistoriesQuery.mockReturnValue([]);
+    mockUsePeopleQuery.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'person-1',
+            company_id: 'company-1',
+            company_person_id: 'company-person-1',
+            kind: 'client',
+            full_name: 'Maria Silva',
+            short_name: 'Maria',
+            image_url: null,
+            cpf: '12345678901',
+            has_system_user: false,
+            is_active: true,
+            created_at: '2026-04-10T10:00:00Z',
+            updated_at: null,
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 100, total_pages: 1 },
+      },
+      isLoading: false,
+      isError: false,
+    });
     mockUseClientsQuery.mockReturnValue({
       data: {
         data: [
@@ -297,6 +324,7 @@ describe('Router integration', () => {
 
     const dashboardLink = screen.getByRole('link', { name: 'Dashboard' });
     const schedulesLink = screen.getByRole('link', { name: 'Agendamentos' });
+    const peopleLink = screen.getByRole('link', { name: 'Pessoas' });
     const clientsLink = screen.getByRole('link', { name: 'Clientes' });
     const petsLink = screen.getByRole('link', { name: 'Pets' });
     const settingsLink = screen.getByRole('link', { name: 'Configurações' });
@@ -307,6 +335,7 @@ describe('Router integration', () => {
     expect(schedulesLink.getAttribute('href')).toBe(
       '/petcontrol-dev/schedules',
     );
+    expect(peopleLink.getAttribute('href')).toBe('/petcontrol-dev/people');
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
     expect(settingsLink.getAttribute('href')).toBe('/petcontrol-dev/settings');

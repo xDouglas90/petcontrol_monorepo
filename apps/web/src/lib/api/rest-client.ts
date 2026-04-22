@@ -19,6 +19,7 @@ import type {
   CompleteUploadApiResponseDTO,
   CompleteUploadDTO,
   CompleteUploadInput,
+  CreatePersonInput,
   CreateAdminSystemChatMessageInput,
   CreateClientInput,
   CreatePetInput,
@@ -32,6 +33,11 @@ import type {
   LoginApiResponseDTO,
   LoginCredentials,
   LoginSession,
+  PersonDTO,
+  PersonApiResponseDTO,
+  PersonAddressInput,
+  PersonDetailDTO,
+  PersonListApiResponseDTO,
   ScheduleApiResponseDTO,
   ScheduleHistoryApiResponseDTO,
   ScheduleHistoryItemDTO,
@@ -44,6 +50,7 @@ import type {
   UpdateCompanyUserPermissionsInput,
   UpdateCurrentCompanyInput,
   UpdateCurrentCompanySystemConfigInput,
+  UpdatePersonInput,
   UpdatePetInput,
   UpdateScheduleInput,
   UpdateServiceInput,
@@ -107,6 +114,122 @@ let mockClients: ClientDTO[] = [
     is_active: true,
   },
 ];
+
+let mockPeople: PersonDTO[] = [
+  {
+    id: '77777777-7777-7777-7777-777777777777',
+    company_id: mockCompany.id,
+    company_person_id: '99999999-9999-9999-9999-999999999999',
+    kind: 'client',
+    full_name: 'Maria Silva',
+    short_name: 'Maria',
+    image_url: null,
+    cpf: '12345678901',
+    has_system_user: false,
+    is_active: true,
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: null,
+  },
+  {
+    id: 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    company_id: mockCompany.id,
+    company_person_id: 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
+    kind: 'supplier',
+    full_name: 'Rações Brasil LTDA',
+    short_name: 'Rações Brasil',
+    image_url: null,
+    cpf: null,
+    has_system_user: false,
+    is_active: true,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: null,
+  },
+];
+
+const mockPersonDetails: Record<string, PersonDetailDTO> = {
+  '77777777-7777-7777-7777-777777777777': {
+    ...mockPeople[0],
+    contact: {
+      email: 'maria@petcontrol.local',
+      phone: '(11) 3333-4444',
+      cellphone: '+5511999990001',
+      has_whatsapp: true,
+      instagram_user: '@maria.silva',
+      emergency_contact: 'Joao Silva',
+      emergency_phone: '+5511988887777',
+    },
+    gender_identity: 'woman_cisgender',
+    marital_status: 'single',
+    birth_date: '1992-06-15',
+    address: {
+      zip_code: '01234000',
+      street: 'Rua das Palmeiras',
+      number: '120',
+      complement: 'Apto 31',
+      district: 'Centro',
+      city: 'Sao Paulo',
+      state: 'SP',
+      country: 'Brasil',
+      label: 'Residencial',
+      is_main: true,
+    },
+    client_details: {
+      client_since: '2025-01-10',
+      notes: 'Cliente recorrente do banho e tosa.',
+    },
+    employee_details: null,
+    employee_documents: null,
+    employee_benefits: null,
+    linked_user: null,
+    guardian_pets: [],
+  },
+  'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1': {
+    ...mockPeople[1],
+    contact: {
+      email: 'contato@racoesbrasil.local',
+      phone: '(11) 4000-1234',
+      cellphone: '+5511977771111',
+      has_whatsapp: false,
+      instagram_user: null,
+      emergency_contact: null,
+      emergency_phone: null,
+    },
+    gender_identity: 'not_to_expose',
+    marital_status: 'single',
+    birth_date: '1988-03-10',
+    address: {
+      zip_code: '04567000',
+      street: 'Avenida Industrial',
+      number: '800',
+      complement: null,
+      district: 'Distrito Empresarial',
+      city: 'Sao Paulo',
+      state: 'SP',
+      country: 'Brasil',
+      label: 'Comercial',
+      is_main: true,
+    },
+    client_details: null,
+    employee_details: null,
+    employee_documents: null,
+    employee_benefits: null,
+    linked_user: null,
+    guardian_pets: [],
+  },
+};
+
+function toPersonAddressDTO(address?: PersonAddressInput | null) {
+  if (!address) {
+    return null;
+  }
+
+  return {
+    ...address,
+    complement: address.complement ?? null,
+    label: address.label ?? null,
+    is_main: true,
+  };
+}
 
 let mockPets: PetDTO[] = [
   {
@@ -716,6 +839,235 @@ export async function listClients(
   return payload;
 }
 
+export async function listPeople(
+  accessToken: string,
+  params?: ListQueryParams,
+): Promise<PersonListApiResponseDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    return {
+      data: [...mockPeople],
+      meta: { total: mockPeople.length, page: 1, limit: 100, total_pages: 1 },
+    };
+  }
+
+  const payload = await request<PersonListApiResponseDTO>(API_PATHS.people, {
+    method: 'GET',
+    accessToken,
+    queryParams: params,
+  });
+  return payload;
+}
+
+export async function getPerson(
+  accessToken: string,
+  personId: string,
+): Promise<PersonDetailDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(120);
+    const person = mockPersonDetails[personId];
+    if (!person) {
+      throw new ApiError('Pessoa nao encontrada', 404, null);
+    }
+    return person;
+  }
+
+  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
+    method: 'GET',
+    accessToken,
+  });
+  return payload.data;
+}
+
+export async function createPerson(
+  accessToken: string,
+  input: CreatePersonInput,
+): Promise<PersonDetailDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(150);
+    const now = new Date().toISOString();
+    const person: PersonDetailDTO = {
+      id: crypto.randomUUID(),
+      company_id: mockCompany.id,
+      company_person_id: crypto.randomUUID(),
+      kind: input.kind,
+      full_name: input.full_name,
+      short_name: input.short_name,
+      image_url: null,
+      cpf: input.cpf,
+      has_system_user: input.has_system_user ?? false,
+      is_active: input.is_active ?? true,
+      created_at: now,
+      updated_at: null,
+      gender_identity: input.gender_identity,
+      marital_status: input.marital_status,
+      birth_date: input.birth_date,
+      contact: {
+        email: input.email,
+        phone: input.phone ?? null,
+        cellphone: input.cellphone,
+        has_whatsapp: input.has_whatsapp,
+        instagram_user: null,
+        emergency_contact: null,
+        emergency_phone: null,
+      },
+      address: toPersonAddressDTO(input.address),
+      client_details:
+        input.kind === 'client'
+          ? {
+              client_since: input.client_since ?? null,
+              notes: input.notes ?? null,
+            }
+          : null,
+      employee_details: null,
+      employee_documents: null,
+      employee_benefits: null,
+      guardian_pets:
+        input.kind === 'guardian'
+          ? mockPets
+              .filter((pet) => input.pet_ids?.includes(pet.id))
+              .map((pet) => ({
+                pet_id: pet.id,
+                name: pet.name,
+                kind: pet.kind,
+                size: pet.size,
+                owner_name: pet.owner_name ?? 'Cliente sem nome',
+              }))
+          : [],
+      linked_user: input.has_system_user
+        ? {
+            user_id: crypto.randomUUID(),
+            email: input.email,
+            role: input.kind === 'client' ? 'common' : 'system',
+            kind:
+              input.kind === 'client'
+                ? 'client'
+                : input.kind === 'outsourced_employee'
+                  ? 'outsourced_employee'
+                  : 'employee',
+            is_active: true,
+            is_owner: false,
+            joined_at: now,
+          }
+        : null,
+    };
+
+    mockPeople = [person, ...mockPeople];
+    mockPersonDetails[person.id] = person;
+    return person;
+  }
+
+  const payload = await request<PersonApiResponseDTO>(API_PATHS.people, {
+    method: 'POST',
+    accessToken,
+    body: input,
+  });
+  return payload.data;
+}
+
+export async function updatePerson(
+  accessToken: string,
+  personId: string,
+  input: UpdatePersonInput,
+): Promise<PersonDetailDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(150);
+    const current = mockPersonDetails[personId];
+    if (!current) {
+      throw new ApiError('Pessoa nao encontrada', 404, null);
+    }
+
+    const updated: PersonDetailDTO = {
+      ...current,
+      full_name: input.full_name ?? current.full_name,
+      short_name: input.short_name ?? current.short_name,
+      cpf: input.cpf ?? current.cpf,
+      has_system_user: input.has_system_user ?? current.has_system_user,
+      is_active: input.is_active ?? current.is_active,
+      updated_at: new Date().toISOString(),
+      gender_identity: input.gender_identity ?? current.gender_identity,
+      marital_status: input.marital_status ?? current.marital_status,
+      birth_date: input.birth_date ?? current.birth_date,
+      contact: current.contact
+        ? {
+            ...current.contact,
+            email: input.email ?? current.contact.email,
+            phone: input.phone ?? current.contact.phone,
+            cellphone: input.cellphone ?? current.contact.cellphone,
+            has_whatsapp:
+              input.has_whatsapp ?? current.contact.has_whatsapp,
+          }
+        : null,
+      address:
+        input.address !== undefined
+          ? toPersonAddressDTO(input.address)
+          : current.address,
+      client_details:
+        current.kind === 'client'
+          ? {
+              client_since:
+                input.client_since ?? current.client_details?.client_since ?? null,
+              notes: input.notes ?? current.client_details?.notes ?? null,
+            }
+          : current.client_details,
+      linked_user:
+        input.has_system_user && !current.linked_user
+          ? {
+              user_id: crypto.randomUUID(),
+              email:
+                input.email ??
+                current.contact?.email ??
+                'usuario@petcontrol.local',
+              role: current.kind === 'client' ? 'common' : 'system',
+              kind:
+                current.kind === 'client'
+                  ? 'client'
+                  : current.kind === 'outsourced_employee'
+                    ? 'outsourced_employee'
+                    : 'employee',
+              is_active: true,
+              is_owner: false,
+              joined_at: new Date().toISOString(),
+            }
+          : current.linked_user,
+      guardian_pets:
+        current.kind === 'guardian' && input.pet_ids !== undefined
+          ? mockPets
+              .filter((pet) => input.pet_ids?.includes(pet.id))
+              .map((pet) => ({
+                pet_id: pet.id,
+                name: pet.name,
+                kind: pet.kind,
+                size: pet.size,
+                owner_name: pet.owner_name ?? 'Cliente sem nome',
+              }))
+          : current.guardian_pets,
+    };
+
+    mockPersonDetails[personId] = updated;
+    mockPeople = mockPeople.map((person) =>
+      person.id === personId
+        ? {
+            ...person,
+            full_name: updated.full_name,
+            short_name: updated.short_name,
+            cpf: updated.cpf,
+            is_active: updated.is_active,
+            updated_at: updated.updated_at,
+          }
+        : person,
+    );
+    return updated;
+  }
+
+  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
+    method: 'PUT',
+    accessToken,
+    body: input,
+  });
+  return payload.data;
+}
+
 export async function listPets(
   accessToken: string,
   params?: ListQueryParams,
@@ -1151,6 +1503,7 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.limit != null) entries.push(`limit=${params.limit}`);
   if (params.search)
     entries.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.kind) entries.push(`kind=${encodeURIComponent(params.kind)}`);
   return entries.length > 0 ? `?${entries.join('&')}` : '';
 }
 

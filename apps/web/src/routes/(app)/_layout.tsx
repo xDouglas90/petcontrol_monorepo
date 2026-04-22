@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   LogOut,
   PawPrint,
+  ContactRound,
   Sparkles,
   Users,
   X,
@@ -177,6 +178,9 @@ export function AppLayout() {
   const companyDisplayName = company.fantasy_name || company.name;
   const canViewSettings =
     currentUser?.settings_access?.can_view ?? currentUser?.role === 'admin';
+  const canViewPeople =
+    currentUser?.role === 'admin' || currentUser?.role === 'system';
+  const isPeopleRoute = location.pathname.endsWith('/people');
 
   if (
     urlSlug &&
@@ -301,6 +305,16 @@ export function AppLayout() {
               collapsedDesktop={isDesktopViewport && !sidebarOpen}
               onNavigate={handleSidebarLinkClick}
             />
+            {canViewPeople ? (
+              <SidebarLink
+                to={buildCompanyRoute(currentSlug, 'people')}
+                icon={ContactRound}
+                label="Pessoas"
+                expanded={isDesktopViewport ? sidebarOpen : true}
+                collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                onNavigate={handleSidebarLinkClick}
+              />
+            ) : null}
             <SidebarLink
               to={buildCompanyRoute(currentSlug, 'clients')}
               icon={Users}
@@ -383,7 +397,7 @@ export function AppLayout() {
           </main>
         </div>
 
-        {currentUser?.role === 'admin' ? (
+        {currentUser?.role === 'admin' && !isPeopleRoute ? (
           <AdminSupportChatAside className="hidden xl:flex" />
         ) : null}
       </div>

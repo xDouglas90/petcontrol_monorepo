@@ -8,13 +8,17 @@ import type {
   AdminSystemChatMessageDTO,
   CompanyUserDTO,
   CompanyUserPermissionsDTO,
-  CreateClientInput,
   CreateAdminSystemChatMessageInput,
+  CreateClientInput,
+  CreatePersonInput,
   CreatePetInput,
+  PersonDetailDTO,
+  PersonListApiResponseDTO,
   CreateScheduleInput,
   CreateServiceInput,
   ListQueryParams,
   UpdateClientInput,
+  UpdatePersonInput,
   UpdatePetInput,
   UpdateScheduleInput,
   UpdateServiceInput,
@@ -23,6 +27,7 @@ import type {
 import {
   createAdminSystemChatMessage,
   createClient,
+  createPerson,
   createPet,
   createSchedule,
   createService,
@@ -35,6 +40,8 @@ import {
   getCurrentCompany,
   getCurrentCompanySystemConfig,
   getCurrentUser,
+  getPerson,
+  listPeople,
   listAdminSystemChatMessages,
   listCompanyUsers,
   listClients,
@@ -45,6 +52,7 @@ import {
   updateCurrentCompany,
   updateCurrentCompanySystemConfig,
   updateClient,
+  updatePerson,
   updatePet,
   updateSchedule,
   updateService,
@@ -62,6 +70,9 @@ export const domainQueryKeys = {
   companyUsers: () => ['domain', 'company-users'] as const,
   companyUserPermissions: (userId: string) =>
     ['domain', 'company-users', userId, 'permissions'] as const,
+  people: (params?: ListQueryParams) =>
+    ['domain', 'people', params ?? EMPTY_PARAMS] as const,
+  person: (personId: string) => ['domain', 'people', personId] as const,
   adminSystemChatMessages: (userId: string) =>
     ['domain', 'chat', 'admin-system', userId, 'messages'] as const,
   clients: (params?: ListQueryParams) =>
@@ -75,6 +86,7 @@ export const domainQueryKeys = {
   scheduleHistory: (scheduleId: string) =>
     ['domain', 'schedules', scheduleId, 'history'] as const,
   allClients: () => ['domain', 'clients'] as const,
+  allPeople: () => ['domain', 'people'] as const,
   allPets: () => ['domain', 'pets'] as const,
   allServices: () => ['domain', 'services'] as const,
   allSchedules: () => ['domain', 'schedules'] as const,
@@ -305,6 +317,83 @@ export function useClientsQuery(params?: ListQueryParams) {
         throw new Error('Sessão não disponível');
       }
       return listClients(session.accessToken, params);
+    },
+  });
+}
+
+export function usePeopleQuery(params?: ListQueryParams) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<PersonListApiResponseDTO>({
+    queryKey: domainQueryKeys.people(params),
+    enabled: Boolean(session?.accessToken),
+    queryFn: async () => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return listPeople(session.accessToken, params);
+    },
+  });
+}
+
+export function usePersonQuery(personId?: string) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<PersonDetailDTO>({
+    queryKey: domainQueryKeys.person(personId ?? 'none'),
+    enabled: Boolean(session?.accessToken && personId),
+    queryFn: async () => {
+      if (!session?.accessToken || !personId) {
+        throw new Error('Sessao nao disponivel');
+      }
+      return getPerson(session.accessToken, personId);
+    },
+  });
+}
+
+export function useCreatePersonMutation() {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async (input: CreatePersonInput) => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return createPerson(session.accessToken, input);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPeople(),
+      });
+    },
+  });
+}
+
+export function useUpdatePersonMutation() {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async ({
+      personId,
+      input,
+    }: {
+      personId: string;
+      input: UpdatePersonInput;
+    }) => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return updatePerson(session.accessToken, personId, input);
+    },
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.allPeople(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.person(variables.personId),
+      });
     },
   });
 }

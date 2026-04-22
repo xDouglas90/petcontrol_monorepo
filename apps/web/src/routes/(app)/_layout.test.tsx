@@ -249,6 +249,38 @@ describe('AppLayout', () => {
     expect(screen.getByText('Upgrade para basic')).toBeTruthy();
   });
 
+  it('mantém o chat lateral para admin fora da rota /people', () => {
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/correct-slug/dashboard',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'dashboard-test',
+      href: '/correct-slug/dashboard',
+    } as unknown as ReturnType<typeof useLocation>);
+
+    render(<AppLayout />);
+
+    expect(screen.getByTestId('support-chat')).toBeTruthy();
+  });
+
+  it('oculta o chat lateral na rota /people', () => {
+    vi.mocked(useParams).mockReturnValue({ companySlug: 'correct-slug' });
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/correct-slug/people',
+      search: {},
+      hash: '',
+      state: {},
+      key: 'people-test',
+      href: '/correct-slug/people',
+    } as unknown as ReturnType<typeof useLocation>);
+
+    render(<AppLayout />);
+
+    expect(screen.queryByTestId('support-chat')).toBeNull();
+  });
+
   it('usa fallback visual quando tenant não possui logo e usuário não possui imagem', () => {
     mockUseCurrentCompanyQuery.mockReturnValue({
       isLoading: false,
