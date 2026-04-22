@@ -24,12 +24,21 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	require.NoError(t, err, "seed script should be idempotent: %s", string(output))
 
 	var (
-		clientCount          int
-		configCount          int
-		petCount             int
-		serviceCount         int
-		confirmedStatusCount int
-		dashboardSeedCount   int
+		clientCount                   int
+		configCount                   int
+		petCount                      int
+		serviceCount                  int
+		confirmedStatusCount          int
+		dashboardSeedCount            int
+		permissionCount               int
+		rootPermissionCount           int
+		adminPermissionCount          int
+		systemPermissionCount         int
+		systemSettingsCount           int
+		systemCompanyEditCount        int
+		settingsModuleCount           int
+		settingsModulePermissionCount int
+		starterCompanyModuleCount     int
 	)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
@@ -44,6 +53,144 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	`).Scan(&clientCount)
 	require.NoError(t, err)
 	require.Equal(t, 1, clientCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM permissions
+	`).Scan(&permissionCount)
+	require.NoError(t, err)
+	require.Equal(t, 120, permissionCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM modules
+		WHERE code IN ('CFG', 'UCR', 'CLI', 'SCH', 'SVC', 'PET', 'RPT', 'PRD', 'DLV', 'INV', 'PDC', 'PHO', 'CHT', 'NTF', 'FIN', 'SUP', 'EUA')
+		  AND deleted_at IS NULL
+	`).Scan(&settingsModuleCount)
+	require.NoError(t, err)
+	require.Equal(t, 17, settingsModuleCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM module_permissions mp
+		INNER JOIN modules m ON m.id = mp.module_id
+		INNER JOIN permissions p ON p.id = mp.permission_id
+		WHERE (m.code, p.code) IN (
+		  ('CFG', 'company_settings:edit'),
+		  ('CFG', 'plan_settings:edit'),
+		  ('UCR', 'users:view'),
+		  ('CLI', 'clients:view'),
+		  ('SCH', 'schedules:view'),
+		  ('SVC', 'services:view'),
+		  ('PET', 'pets:view'),
+		  ('RPT', 'reports:view'),
+		  ('PRD', 'products:view'),
+		  ('DLV', 'pickup_delivery:view'),
+		  ('INV', 'stock:view'),
+		  ('PDC', 'daycare:view'),
+		  ('PHO', 'hotel:view'),
+		  ('CHT', 'chat:view'),
+		  ('NTF', 'notifications:view'),
+		  ('FIN', 'finances:view'),
+		  ('SUP', 'suppliers:view'),
+		  ('EUA', 'external_access:view'),
+		  ('AUD', 'logs:view')
+		)
+	`).Scan(&settingsModulePermissionCount)
+	require.NoError(t, err)
+	require.Equal(t, 19, settingsModulePermissionCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM company_modules cm
+		INNER JOIN companies c ON c.id = cm.company_id
+		INNER JOIN modules m ON m.id = cm.module_id
+		WHERE c.slug = 'petcontrol-dev'
+		  AND cm.is_active = TRUE
+		  AND m.code IN ('CFG', 'UCR', 'CLI', 'SCH', 'SVC', 'CRM')
+	`).Scan(&starterCompanyModuleCount)
+	require.NoError(t, err)
+	require.Equal(t, 6, starterCompanyModuleCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM user_permissions up
+		INNER JOIN users u ON u.id = up.user_id
+		WHERE u.email = 'root@petcontrol.local'
+		  AND up.is_active = TRUE
+		  AND up.revoked_at IS NULL
+	`).Scan(&rootPermissionCount)
+	require.NoError(t, err)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM permissions p
+		WHERE 'root'::user_role_type = ANY(p.default_roles)
+	`).Scan(&permissionCount)
+	require.NoError(t, err)
+	require.Equal(t, permissionCount, rootPermissionCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM user_permissions up
+		INNER JOIN users u ON u.id = up.user_id
+		WHERE u.email = 'admin@petcontrol.local'
+		  AND up.is_active = TRUE
+		  AND up.revoked_at IS NULL
+	`).Scan(&adminPermissionCount)
+	require.NoError(t, err)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM permissions p
+		WHERE 'admin'::user_role_type = ANY(p.default_roles)
+	`).Scan(&permissionCount)
+	require.NoError(t, err)
+	require.Equal(t, permissionCount, adminPermissionCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM user_permissions up
+		INNER JOIN users u ON u.id = up.user_id
+		WHERE u.email = 'system@petcontrol.local'
+		  AND up.is_active = TRUE
+		  AND up.revoked_at IS NULL
+	`).Scan(&systemPermissionCount)
+	require.NoError(t, err)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM permissions p
+		WHERE 'system'::user_role_type = ANY(p.default_roles)
+	`).Scan(&permissionCount)
+	require.NoError(t, err)
+	require.Equal(t, permissionCount, systemPermissionCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM user_permissions up
+		INNER JOIN users u ON u.id = up.user_id
+		INNER JOIN permissions p ON p.id = up.permission_id
+		WHERE u.email = 'system@petcontrol.local'
+		  AND p.code = 'plan_settings:edit'
+		  AND up.is_active = TRUE
+		  AND up.revoked_at IS NULL
+	`).Scan(&systemSettingsCount)
+	require.NoError(t, err)
+	require.Equal(t, 1, systemSettingsCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(*)
+		FROM user_permissions up
+		INNER JOIN users u ON u.id = up.user_id
+		INNER JOIN permissions p ON p.id = up.permission_id
+		WHERE u.email = 'system@petcontrol.local'
+		  AND p.code = 'company_settings:edit'
+		  AND up.is_active = TRUE
+		  AND up.revoked_at IS NULL
+	`).Scan(&systemCompanyEditCount)
+	require.NoError(t, err)
+	require.Equal(t, 0, systemCompanyEditCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)

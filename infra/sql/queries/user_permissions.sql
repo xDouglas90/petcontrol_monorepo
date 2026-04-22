@@ -13,12 +13,27 @@ SELECT
 UPDATE
     user_permissions
 SET
+    is_active = FALSE,
     revoked_at = now(),
     revoked_by = sqlc.arg('RevokedBy')
 WHERE
     user_id = sqlc.arg('UserID')
     AND permission_id = sqlc.arg('PermissionID')
     AND revoked_at IS NULL;
+
+-- name: ReactivateUserPermission :execrows
+UPDATE
+    user_permissions
+SET
+    is_active = TRUE,
+    granted_by = sqlc.arg('GrantedBy'),
+    granted_at = now(),
+    revoked_by = NULL,
+    revoked_at = NULL
+WHERE
+    user_id = sqlc.arg('UserID')
+    AND permission_id = sqlc.arg('PermissionID')
+    AND revoked_at IS NOT NULL;
 
 -- name: ListPermissionsByUserID :many
 SELECT
@@ -36,7 +51,6 @@ FROM
 WHERE
     up.user_id = sqlc.arg('UserID')
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL
 ORDER BY
     p.code ASC
 LIMIT sqlc.arg('Limit')
@@ -59,7 +73,7 @@ WHERE
     up.user_id = sqlc.arg('UserID')
     AND up.permission_id = sqlc.arg('PermissionID')
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL;
+;
 
 -- name: ListUsersByPermissionID :many
 SELECT
@@ -83,4 +97,3 @@ ORDER BY
     u.email ASC
 LIMIT sqlc.arg('Limit')
 OFFSET sqlc.arg('Offset');
-

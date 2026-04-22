@@ -62,6 +62,60 @@ WHERE
 ORDER BY
     m.code ASC;
 
+-- name: ListTenantSettingsModulesByCompanyID :many
+SELECT
+    m.id,
+    m.code,
+    m."name",
+    m.description,
+    m.min_package,
+    m.is_active,
+    m.created_at,
+    m.updated_at,
+    m.deleted_at
+FROM
+    companies c
+    INNER JOIN company_modules cm ON cm.company_id = c.id
+    INNER JOIN modules m ON m.id = cm.module_id
+WHERE
+    c.id = sqlc.arg('CompanyID')
+    AND cm.is_active = TRUE
+    AND m.is_active = TRUE
+    AND m.deleted_at IS NULL
+    AND m.min_package != 'internal'
+    AND (
+        CASE c.active_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    ) >= (
+        CASE m.min_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    )
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            module_permissions mp
+        WHERE
+            mp.module_id = m.id
+    )
+ORDER BY
+    m.min_package ASC,
+    m.code ASC;
+
 -- name: UpdateModule :one
 UPDATE
     modules
@@ -85,4 +139,3 @@ SET
     is_active = FALSE
 WHERE
     id = sqlc.arg('ID');
-

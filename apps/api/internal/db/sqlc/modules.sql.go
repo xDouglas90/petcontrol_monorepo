@@ -205,6 +205,91 @@ func (q *Queries) ListModules(ctx context.Context) ([]Module, error) {
 	return items, nil
 }
 
+const listTenantSettingsModulesByCompanyID = `-- name: ListTenantSettingsModulesByCompanyID :many
+SELECT
+    m.id,
+    m.code,
+    m."name",
+    m.description,
+    m.min_package,
+    m.is_active,
+    m.created_at,
+    m.updated_at,
+    m.deleted_at
+FROM
+    companies c
+    INNER JOIN company_modules cm ON cm.company_id = c.id
+    INNER JOIN modules m ON m.id = cm.module_id
+WHERE
+    c.id = $1
+    AND cm.is_active = TRUE
+    AND m.is_active = TRUE
+    AND m.deleted_at IS NULL
+    AND m.min_package != 'internal'
+    AND (
+        CASE c.active_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    ) >= (
+        CASE m.min_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    )
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            module_permissions mp
+        WHERE
+            mp.module_id = m.id
+    )
+ORDER BY
+    m.min_package ASC,
+    m.code ASC
+`
+
+func (q *Queries) ListTenantSettingsModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error) {
+	rows, err := q.db.Query(ctx, listTenantSettingsModulesByCompanyID, companyid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Module
+	for rows.Next() {
+		var i Module
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.MinPackage,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateModule = `-- name: UpdateModule :one
 UPDATE
     modules

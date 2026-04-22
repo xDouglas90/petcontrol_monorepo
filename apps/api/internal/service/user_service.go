@@ -14,11 +14,12 @@ type UserService struct {
 }
 
 type CurrentUserProfile struct {
-	UserID    pgtype.UUID
-	PersonID  pgtype.UUID
-	FullName  *string
-	ShortName *string
-	ImageURL  *string
+	UserID         pgtype.UUID
+	PersonID       pgtype.UUID
+	FullName       *string
+	ShortName      *string
+	ImageURL       *string
+	SettingsAccess TenantSettingsAccess
 }
 
 func NewUserService(queries sqlc.Querier) *UserService {
@@ -37,9 +38,24 @@ func (s *UserService) ListCompanyUsers(ctx context.Context, companyID pgtype.UUI
 }
 
 func (s *UserService) GetCurrentUserProfile(ctx context.Context, userID pgtype.UUID) (CurrentUserProfile, error) {
+	activeSettingsPermissionCodes, err := ListActiveTenantSettingsPermissionCodes(ctx, s.queries, userID)
+	if err != nil {
+		return CurrentUserProfile{}, err
+	}
+
+	user, err := s.queries.GetUserByID(ctx, userID)
+	if err != nil {
+		return CurrentUserProfile{}, err
+	}
+
+	settingsAccess := ComputeTenantSettingsAccess(string(user.Role), activeSettingsPermissionCodes)
+
 	profile, err := s.queries.GetUserProfile(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return CurrentUserProfile{UserID: userID}, nil
+		return CurrentUserProfile{
+			UserID:         userID,
+			SettingsAccess: settingsAccess,
+		}, nil
 	}
 	if err != nil {
 		return CurrentUserProfile{}, err
@@ -48,8 +64,9 @@ func (s *UserService) GetCurrentUserProfile(ctx context.Context, userID pgtype.U
 	person, err := s.queries.GetPerson(ctx, profile.PersonID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return CurrentUserProfile{
-			UserID:   profile.UserID,
-			PersonID: profile.PersonID,
+			UserID:         profile.UserID,
+			PersonID:       profile.PersonID,
+			SettingsAccess: settingsAccess,
 		}, nil
 	}
 	if err != nil {
@@ -57,11 +74,12 @@ func (s *UserService) GetCurrentUserProfile(ctx context.Context, userID pgtype.U
 	}
 
 	return CurrentUserProfile{
-		UserID:    profile.UserID,
-		PersonID:  profile.PersonID,
-		FullName:  textValuePointer(person.FullName),
-		ShortName: textValuePointer(person.ShortName),
-		ImageURL:  textValuePointer(person.ImageUrl),
+		UserID:         profile.UserID,
+		PersonID:       profile.PersonID,
+		FullName:       textValuePointer(person.FullName),
+		ShortName:      textValuePointer(person.ShortName),
+		ImageURL:       textValuePointer(person.ImageUrl),
+		SettingsAccess: settingsAccess,
 	}, nil
 }
 

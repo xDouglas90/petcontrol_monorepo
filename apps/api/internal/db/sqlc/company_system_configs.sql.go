@@ -137,21 +137,22 @@ const updateCompanySystemConfig = `-- name: UpdateCompanySystemConfig :execrows
 UPDATE
     company_system_configs
 SET
-    schedule_init_time = COALESCE($1, schedule_init_time),
-    schedule_pause_init_time = COALESCE($2, schedule_pause_init_time),
-    schedule_pause_end_time = COALESCE($3, schedule_pause_end_time),
-    schedule_end_time = COALESCE($4, schedule_end_time),
-    min_schedules_per_day = COALESCE($5, min_schedules_per_day),
-    max_schedules_per_day = COALESCE($6, max_schedules_per_day),
-    schedule_days = COALESCE($7, schedule_days),
-    dynamic_cages = COALESCE($8, dynamic_cages),
-    total_small_cages = COALESCE($9, total_small_cages),
-    total_medium_cages = COALESCE($10, total_medium_cages),
-    total_large_cages = COALESCE($11, total_large_cages),
-    total_giant_cages = COALESCE($12, total_giant_cages),
-    whatsapp_notifications = COALESCE($13, whatsapp_notifications),
-    whatsapp_conversation = COALESCE($14, whatsapp_conversation),
-    whatsapp_business_phone = COALESCE($15, whatsapp_business_phone)
+    schedule_init_time = $1,
+    schedule_pause_init_time = $2,
+    schedule_pause_end_time = $3,
+    schedule_end_time = $4,
+    min_schedules_per_day = $5,
+    max_schedules_per_day = $6,
+    schedule_days = $7,
+    dynamic_cages = $8,
+    total_small_cages = $9,
+    total_medium_cages = $10,
+    total_large_cages = $11,
+    total_giant_cages = $12,
+    whatsapp_notifications = $13,
+    whatsapp_conversation = $14,
+    whatsapp_business_phone = $15,
+    updated_at = NOW()
 WHERE
     company_id = $16
 `
@@ -161,16 +162,16 @@ type UpdateCompanySystemConfigParams struct {
 	SchedulePauseInitTime pgtype.Time `db:"SchedulePauseInitTime" json:"SchedulePauseInitTime"`
 	SchedulePauseEndTime  pgtype.Time `db:"SchedulePauseEndTime" json:"SchedulePauseEndTime"`
 	ScheduleEndTime       pgtype.Time `db:"ScheduleEndTime" json:"ScheduleEndTime"`
-	MinSchedulesPerDay    pgtype.Int2 `db:"MinSchedulesPerDay" json:"MinSchedulesPerDay"`
-	MaxSchedulesPerDay    pgtype.Int2 `db:"MaxSchedulesPerDay" json:"MaxSchedulesPerDay"`
+	MinSchedulesPerDay    int16       `db:"MinSchedulesPerDay" json:"MinSchedulesPerDay"`
+	MaxSchedulesPerDay    int16       `db:"MaxSchedulesPerDay" json:"MaxSchedulesPerDay"`
 	ScheduleDays          []WeekDay   `db:"ScheduleDays" json:"ScheduleDays"`
-	DynamicCages          pgtype.Bool `db:"DynamicCages" json:"DynamicCages"`
-	TotalSmallCages       pgtype.Int2 `db:"TotalSmallCages" json:"TotalSmallCages"`
-	TotalMediumCages      pgtype.Int2 `db:"TotalMediumCages" json:"TotalMediumCages"`
-	TotalLargeCages       pgtype.Int2 `db:"TotalLargeCages" json:"TotalLargeCages"`
-	TotalGiantCages       pgtype.Int2 `db:"TotalGiantCages" json:"TotalGiantCages"`
-	WhatsappNotifications pgtype.Bool `db:"WhatsappNotifications" json:"WhatsappNotifications"`
-	WhatsappConversation  pgtype.Bool `db:"WhatsappConversation" json:"WhatsappConversation"`
+	DynamicCages          bool        `db:"DynamicCages" json:"DynamicCages"`
+	TotalSmallCages       int16       `db:"TotalSmallCages" json:"TotalSmallCages"`
+	TotalMediumCages      int16       `db:"TotalMediumCages" json:"TotalMediumCages"`
+	TotalLargeCages       int16       `db:"TotalLargeCages" json:"TotalLargeCages"`
+	TotalGiantCages       int16       `db:"TotalGiantCages" json:"TotalGiantCages"`
+	WhatsappNotifications bool        `db:"WhatsappNotifications" json:"WhatsappNotifications"`
+	WhatsappConversation  bool        `db:"WhatsappConversation" json:"WhatsappConversation"`
 	WhatsappBusinessPhone pgtype.Text `db:"WhatsappBusinessPhone" json:"WhatsappBusinessPhone"`
 	CompanyID             pgtype.UUID `db:"CompanyID" json:"CompanyID"`
 }

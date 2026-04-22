@@ -268,6 +268,12 @@ func TestAdminSystemChatHandler_CreateMessage_BroadcastsRealtimeEvent(t *testing
 	mock.ExpectQuery(`(?s)name: GetUserByID`).
 		WithArgs(currentUserID).
 		WillReturnRows(chatUserRow(currentUserID, "admin@petcontrol.local", sqlc.UserRoleTypeAdmin))
+	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
+		WithArgs(currentUserID, int32(0), int32(1000)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "created_at"}))
+	mock.ExpectQuery(`(?s)name: GetUserByID`).
+		WithArgs(currentUserID).
+		WillReturnRows(chatUserRow(currentUserID, "admin@petcontrol.local", sqlc.UserRoleTypeAdmin))
 	mock.ExpectQuery(`(?s)name: GetUserProfile`).
 		WithArgs(currentUserID).
 		WillReturnRows(pgxmock.NewRows([]string{"user_id", "person_id", "created_at"}).AddRow(currentUserID, personID, time.Now().Add(-time.Hour)))

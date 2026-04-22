@@ -12,6 +12,7 @@
     - [Users](#users)
     - [Plans](#plans)
   - [Permissões por módulo](#permissões-por-módulo)
+    - [Módulo de Configurações da Empresa](#módulo-de-configurações-da-empresa)
     - [Módulo de Usuários](#módulo-de-usuários)
     - [Módulo de Clientes](#módulo-de-clientes)
     - [Módulo de Pets](#módulo-de-pets)
@@ -57,6 +58,17 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 - Caso o tenant altere seu plano, todos os seus usuários (`company_users`) devem ter suas permissões alteradas na tabela `user_permissions` conforme seus tipos (`role`) e o tipo padrão das permissões (`default_role`), devendo-se enviar uma notificação de nível `info` no sistema para os usuários em questão.
 
 ## Permissões por módulo
+
+### Módulo de Configurações da Empresa
+
+| Description                          | Name                         | Default Roles               |
+| ------------------------------------ | ---------------------------- | --------------------------- |
+| Editar configurações gerais          | `company_settings:edit`      | ['root', 'admin']           |
+| Editar configurações de plano        | `plan_settings:edit`         | ['root', 'admin', 'system'] |
+| Editar configurações de pagamento    | `payment_settings:edit`      | ['root', 'admin']           |
+| Editar configurações de notificações | `notification_settings:edit` | ['root', 'admin']           |
+| Editar configurações de integração   | `integration_settings:edit`  | ['root', 'admin']           |
+| Editar configurações de segurança    | `security_settings:edit`     | ['root', 'admin']           |
 
 ### Módulo de Usuários
 

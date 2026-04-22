@@ -23,19 +23,56 @@ type CurrentUserResponseDoc struct {
 
 // CurrentUserDoc describes the authenticated user profile returned by `/users/me`.
 type CurrentUserDoc struct {
-	UserID    string  `json:"user_id" example:"11111111-1111-1111-1111-111111111111"`
-	CompanyID string  `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
-	PersonID  string  `json:"person_id" example:"33333333-3333-3333-3333-333333333333"`
-	Role      string  `json:"role" example:"admin"`
-	Kind      string  `json:"kind" example:"owner"`
-	FullName  *string `json:"full_name,omitempty" example:"Maria da Silva"`
-	ShortName *string `json:"short_name,omitempty" example:"Maria"`
-	ImageURL  *string `json:"image_url,omitempty" example:"https://cdn.example.com/users/maria.png"`
+	UserID         string                       `json:"user_id" example:"11111111-1111-1111-1111-111111111111"`
+	CompanyID      string                       `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
+	PersonID       string                       `json:"person_id" example:"33333333-3333-3333-3333-333333333333"`
+	Role           string                       `json:"role" example:"admin"`
+	Kind           string                       `json:"kind" example:"owner"`
+	FullName       *string                      `json:"full_name,omitempty" example:"Maria da Silva"`
+	ShortName      *string                      `json:"short_name,omitempty" example:"Maria"`
+	ImageURL       *string                      `json:"image_url,omitempty" example:"https://cdn.example.com/users/maria.png"`
+	SettingsAccess CurrentUserSettingsAccessDoc `json:"settings_access"`
+}
+
+// CurrentUserSettingsAccessDoc describes the effective settings access for the authenticated user.
+type CurrentUserSettingsAccessDoc struct {
+	CanView                 bool     `json:"can_view" example:"true"`
+	CanManagePermissions    bool     `json:"can_manage_permissions" example:"true"`
+	ActivePermissionCodes   []string `json:"active_permission_codes" example:"company_settings:edit,plan_settings:edit"`
+	EditablePermissionCodes []string `json:"editable_permission_codes" example:"company_settings:edit,plan_settings:edit"`
+}
+
+// CompanyUpdateRequestDoc documents the update payload for the current company.
+type CompanyUpdateRequestDoc struct {
+	Name           *string `json:"name,omitempty" example:"PetControl Matriz"`
+	FantasyName    *string `json:"fantasy_name,omitempty" example:"PetControl"`
+	FoundationDate *string `json:"foundation_date,omitempty" example:"2020-01-15"`
+	LogoURL        *string `json:"logo_url,omitempty" example:"https://cdn.example.com/companies/logo.png"`
+	UploadKey      *string `json:"upload_object_key,omitempty" example:"uploads/companies/logo_url/2026/04/company-logo.png"`
 }
 
 // CompanySystemConfigResponseDoc documents the current tenant system config payload.
 type CompanySystemConfigResponseDoc struct {
 	Data CompanySystemConfigDoc `json:"data"`
+}
+
+// CompanySystemConfigUpdateRequestDoc documents the update payload for tenant system config.
+type CompanySystemConfigUpdateRequestDoc struct {
+	ScheduleInitTime      string   `json:"schedule_init_time" example:"08:00"`
+	SchedulePauseInitTime *string  `json:"schedule_pause_init_time,omitempty" example:"12:00"`
+	SchedulePauseEndTime  *string  `json:"schedule_pause_end_time,omitempty" example:"13:00"`
+	ScheduleEndTime       string   `json:"schedule_end_time" example:"18:00"`
+	MinSchedulesPerDay    int16    `json:"min_schedules_per_day" example:"4"`
+	MaxSchedulesPerDay    int16    `json:"max_schedules_per_day" example:"18"`
+	ScheduleDays          []string `json:"schedule_days" example:"monday,tuesday,wednesday,thursday,friday,saturday"`
+	DynamicCages          bool     `json:"dynamic_cages" example:"false"`
+	TotalSmallCages       int16    `json:"total_small_cages" example:"8"`
+	TotalMediumCages      int16    `json:"total_medium_cages" example:"6"`
+	TotalLargeCages       int16    `json:"total_large_cages" example:"4"`
+	TotalGiantCages       int16    `json:"total_giant_cages" example:"2"`
+	WhatsappNotifications bool     `json:"whatsapp_notifications" example:"true"`
+	WhatsappConversation  bool     `json:"whatsapp_conversation" example:"true"`
+	WhatsappBusinessPhone *string  `json:"whatsapp_business_phone,omitempty" example:"+5511999990001"`
 }
 
 // CompanySystemConfigDoc describes the current tenant system configuration.
@@ -398,6 +435,51 @@ type CompanyUserDoc struct {
 	ImageURL  *string `json:"image_url,omitempty" example:"https://cdn.example.com/users/system.png"`
 	JoinedAt  string  `json:"joined_at" example:"2026-04-10T10:00:00Z"`
 	LeftAt    *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
+}
+
+// CompanyUserPermissionsUpdateRequestDoc documents company user permissions update payload.
+type CompanyUserPermissionsUpdateRequestDoc struct {
+	PermissionCodes []string `json:"permission_codes" example:"plan_settings:edit,notification_settings:edit"`
+}
+
+// CompanyUserPermissionsResponseDoc documents the company user permissions response envelope.
+type CompanyUserPermissionsResponseDoc struct {
+	Data CompanyUserPermissionsDoc `json:"data"`
+}
+
+// CompanyUserPermissionsDoc describes the manageable permissions snapshot for a tenant user.
+type CompanyUserPermissionsDoc struct {
+	UserID           string                          `json:"user_id" example:"22222222-2222-2222-2222-222222222222"`
+	CompanyID        string                          `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	ActivePackage    string                          `json:"active_package" example:"starter"`
+	Role             string                          `json:"role" example:"system"`
+	Kind             string                          `json:"kind" example:"employee"`
+	IsOwner          bool                            `json:"is_owner" example:"false"`
+	IsActive         bool                            `json:"is_active" example:"true"`
+	ManagedBy        string                          `json:"managed_by" example:"33333333-3333-3333-3333-333333333333"`
+	Scope            string                          `json:"scope" example:"tenant_settings"`
+	Permissions      []CompanyUserPermissionDoc      `json:"permissions"`
+	PermissionGroups []CompanyUserPermissionGroupDoc `json:"permission_groups"`
+}
+
+type CompanyUserPermissionGroupDoc struct {
+	ModuleCode        string                     `json:"module_code" example:"CFG"`
+	ModuleName        string                     `json:"module_name" example:"Configurações"`
+	ModuleDescription string                     `json:"module_description" example:"Configurações institucionais, plano, pagamentos, notificações, integrações e segurança do tenant."`
+	MinPackage        string                     `json:"min_package" example:"starter"`
+	Permissions       []CompanyUserPermissionDoc `json:"permissions"`
+}
+
+// CompanyUserPermissionDoc describes a single manageable permission for a tenant user.
+type CompanyUserPermissionDoc struct {
+	ID               string   `json:"id" example:"44444444-4444-4444-4444-444444444444"`
+	Code             string   `json:"code" example:"company_settings:edit"`
+	Description      *string  `json:"description,omitempty" example:"Editar configurações gerais"`
+	DefaultRoles     []string `json:"default_roles" example:"root,admin"`
+	IsActive         bool     `json:"is_active" example:"true"`
+	IsDefaultForRole bool     `json:"is_default_for_role" example:"false"`
+	GrantedBy        *string  `json:"granted_by,omitempty" example:"33333333-3333-3333-3333-333333333333"`
+	GrantedAt        *string  `json:"granted_at,omitempty" example:"2026-04-20T09:30:00Z"`
 }
 
 type AdminSystemChatMessageCreateRequestDoc struct {

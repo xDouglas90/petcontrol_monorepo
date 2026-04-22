@@ -234,18 +234,6 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Turno da manhã')).toBeTruthy();
     expect(screen.getByText('Finalizado')).toBeTruthy();
     expect(screen.getByText('1h 15min')).toBeTruthy();
-    expect(screen.getByText('Chat do sistema')).toBeTruthy();
-    expect(screen.getByText('Suporte ao administrador')).toBeTruthy();
-    expect(screen.getByRole('combobox', { name: 'Selecionar usuário system' })).toBeTruthy();
-    expect(screen.getAllByText('System').length).toBeGreaterThan(0);
-    expect(
-      screen.getByText('Tudo certo. O monitoramento do tenant já está ativo.'),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('textbox', {
-        name: 'Escrever mensagem para usuário system',
-      }),
-    ).toBeTruthy();
     const weekSelect = screen.getByRole('combobox', {
       name: 'Selecionar semana de performance',
     }) as HTMLSelectElement;
@@ -359,11 +347,11 @@ describe('DashboardPage', () => {
     expect(
       screen.getByText('Nenhum atendimento registrado para o turno atual.'),
     ).toBeTruthy();
+    expect(screen.getByText('Agendamentos em andamento')).toBeTruthy();
     expect(
-      screen.getByRole('option', {
-        name: 'Nenhum usuário vinculado',
+      screen.getByRole('combobox', {
+        name: 'Selecionar semana de performance',
       }),
     ).toBeTruthy();
-    expect(screen.getByText('Lista de usuários')).toBeTruthy();
   });
 });

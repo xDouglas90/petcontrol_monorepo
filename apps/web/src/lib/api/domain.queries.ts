@@ -1,7 +1,13 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type {
   AdminSystemChatMessageDTO,
   CompanyUserDTO,
+  CompanyUserPermissionsDTO,
   CreateClientInput,
   CreateAdminSystemChatMessageInput,
   CreatePetInput,
@@ -24,6 +30,7 @@ import {
   deletePet,
   deleteSchedule,
   deleteService,
+  getCompanyUserPermissions,
   getScheduleHistory,
   getCurrentCompany,
   getCurrentCompanySystemConfig,
@@ -34,6 +41,9 @@ import {
   listPets,
   listSchedules,
   listServices,
+  updateCompanyUserPermissions,
+  updateCurrentCompany,
+  updateCurrentCompanySystemConfig,
   updateClient,
   updatePet,
   updateSchedule,
@@ -50,6 +60,8 @@ export const domainQueryKeys = {
     ['domain', 'company', 'system-config', 'current'] as const,
   currentUser: () => ['domain', 'user', 'current'] as const,
   companyUsers: () => ['domain', 'company-users'] as const,
+  companyUserPermissions: (userId: string) =>
+    ['domain', 'company-users', userId, 'permissions'] as const,
   adminSystemChatMessages: (userId: string) =>
     ['domain', 'chat', 'admin-system', userId, 'messages'] as const,
   clients: (params?: ListQueryParams) =>
@@ -129,6 +141,21 @@ export function useCompanyUsersQuery() {
   });
 }
 
+export function useCompanyUserPermissionsQuery(userId?: string) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery<CompanyUserPermissionsDTO>({
+    queryKey: domainQueryKeys.companyUserPermissions(userId ?? 'none'),
+    enabled: Boolean(session?.accessToken && userId),
+    queryFn: async () => {
+      if (!session?.accessToken || !userId) {
+        throw new Error('Sessão não disponível');
+      }
+      return getCompanyUserPermissions(session.accessToken, userId);
+    },
+  });
+}
+
 export function useAdminSystemChatMessagesQuery(userId?: string) {
   const session = useAuthStore(selectSession);
 
@@ -162,6 +189,75 @@ export function useCreateAdminSystemChatMessageMutation(userId?: string) {
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.adminSystemChatMessages(userId),
       });
+    },
+  });
+}
+
+export function useUpdateCurrentCompanyMutation() {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async (input: Parameters<typeof updateCurrentCompany>[1]) => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return updateCurrentCompany(session.accessToken, input);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.currentCompany(),
+      });
+    },
+  });
+}
+
+export function useUpdateCurrentCompanySystemConfigMutation() {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async (
+      input: Parameters<typeof updateCurrentCompanySystemConfig>[1],
+    ) => {
+      if (!session?.accessToken) {
+        throw new Error('Sessão não disponível');
+      }
+      return updateCurrentCompanySystemConfig(session.accessToken, input);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.currentCompanySystemConfig(),
+      });
+    },
+  });
+}
+
+export function useUpdateCompanyUserPermissionsMutation(userId?: string) {
+  const queryClient = useQueryClient();
+  const session = useAuthStore(selectSession);
+
+  return useMutation({
+    mutationFn: async (
+      input: Parameters<typeof updateCompanyUserPermissions>[2],
+    ) => {
+      if (!session?.accessToken || !userId) {
+        throw new Error('Sessão não disponível');
+      }
+      return updateCompanyUserPermissions(session.accessToken, userId, input);
+    },
+    onSuccess: async () => {
+      if (!userId) {
+        return;
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: domainQueryKeys.companyUserPermissions(userId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: domainQueryKeys.currentUser(),
+        }),
+      ]);
     },
   });
 }

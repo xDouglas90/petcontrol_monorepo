@@ -37,6 +37,7 @@ const deleteUserPermission = `-- name: DeleteUserPermission :execrows
 UPDATE
     user_permissions
 SET
+    is_active = FALSE,
     revoked_at = now(),
     revoked_by = $1
 WHERE
@@ -76,7 +77,6 @@ WHERE
     up.user_id = $1
     AND up.permission_id = $2
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL
 `
 
 type GetUserPermissionParams struct {
@@ -146,7 +146,6 @@ FROM
 WHERE
     up.user_id = $1
     AND up.revoked_at IS NULL
-    AND p.deleted_at IS NULL
 ORDER BY
     p.code ASC
 LIMIT $3
@@ -269,4 +268,33 @@ func (q *Queries) ListUsersByPermissionID(ctx context.Context, arg ListUsersByPe
 		return nil, err
 	}
 	return items, nil
+}
+
+const reactivateUserPermission = `-- name: ReactivateUserPermission :execrows
+UPDATE
+    user_permissions
+SET
+    is_active = TRUE,
+    granted_by = $1,
+    granted_at = now(),
+    revoked_by = NULL,
+    revoked_at = NULL
+WHERE
+    user_id = $2
+    AND permission_id = $3
+    AND revoked_at IS NOT NULL
+`
+
+type ReactivateUserPermissionParams struct {
+	GrantedBy    pgtype.UUID `db:"GrantedBy" json:"GrantedBy"`
+	UserID       pgtype.UUID `db:"UserID" json:"UserID"`
+	PermissionID pgtype.UUID `db:"PermissionID" json:"PermissionID"`
+}
+
+func (q *Queries) ReactivateUserPermission(ctx context.Context, arg ReactivateUserPermissionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, reactivateUserPermission, arg.GrantedBy, arg.UserID, arg.PermissionID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
