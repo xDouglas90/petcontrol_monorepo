@@ -145,8 +145,7 @@ UPDATE
     people_addresses
 SET
     is_main = COALESCE($1, is_main),
-    label = COALESCE($2, label),
-    updated_at = now()
+    label = COALESCE($2, label)
 WHERE
     id = $3
 `

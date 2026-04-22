@@ -7,8 +7,7 @@ UPDATE
     people_addresses
 SET
     is_main = COALESCE(sqlc.narg('IsMain'), is_main),
-    label = COALESCE(sqlc.narg('Label'), label),
-    updated_at = now()
+    label = COALESCE(sqlc.narg('Label'), label)
 WHERE
     id = sqlc.arg('ID');
 
