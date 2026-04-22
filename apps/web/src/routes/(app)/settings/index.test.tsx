@@ -333,10 +333,10 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Fim da pausa'), {
       target: { value: '' },
     });
-    fireEvent.change(screen.getByLabelText('Mínimo de agendamentos por dia'), {
+    fireEvent.change(screen.getByLabelText('Mín. agendamentos/dia'), {
       target: { value: '6' },
     });
-    fireEvent.change(screen.getByLabelText('Máximo de agendamentos por dia'), {
+    fireEvent.change(screen.getByLabelText('Máx. agendamentos/dia'), {
       target: { value: '22' },
     });
     fireEvent.change(screen.getByLabelText('WhatsApp business'), {
