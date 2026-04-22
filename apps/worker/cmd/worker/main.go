@@ -11,6 +11,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/xdouglas90/petcontrol_monorepo/worker/internal/config"
+	"github.com/xdouglas90/petcontrol_monorepo/worker/internal/mail"
 	"github.com/xdouglas90/petcontrol_monorepo/worker/internal/processor"
 	"github.com/xdouglas90/petcontrol_monorepo/worker/internal/queue"
 	"github.com/xdouglas90/petcontrol_monorepo/worker/internal/scheduler"
@@ -32,8 +33,10 @@ func main() {
 	}
 
 	wa := whatsapp.NewClient(logger)
+	emailSender := mail.NewSMTPSender(logger, cfg)
 	notifProcessor := processor.NewNotificationsProcessor(logger, wa)
 	scheduleProcessor := processor.NewScheduleConfirmationProcessor(logger, wa)
+	peopleAccessProcessor := processor.NewPersonAccessCredentialsProcessor(logger, emailSender)
 	scheduler.New(logger).Start()
 	webhookServer := &http.Server{
 		Addr:    cfg.WebhookAddr,
@@ -51,6 +54,7 @@ func main() {
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(queue.TypeNotificationDummy, notifProcessor.HandleDummyNotification)
 	mux.HandleFunc(queue.TypeScheduleConfirmed, scheduleProcessor.HandleScheduleConfirmation)
+	mux.HandleFunc(queue.TypePersonAccessCredentials, peopleAccessProcessor.HandlePersonAccessCredentials)
 
 	server := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: cfg.RedisAddr},

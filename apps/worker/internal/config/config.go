@@ -14,6 +14,13 @@ type Config struct {
 	WorkerQueue         string
 	WorkerQueueType     string
 	Concurrency         int
+	SMTPHost            string
+	SMTPPort            string
+	SMTPUsername        string
+	SMTPPassword        string
+	SMTPFromEmail       string
+	SMTPFromName        string
+	AppBaseURL          string
 }
 
 func Load() (Config, error) {
@@ -24,6 +31,13 @@ func Load() (Config, error) {
 		WorkerQueue:         envWithDefault("WORKER_QUEUE", "notifications"),
 		WorkerQueueType:     envWithDefault("WORKER_QUEUE_TYPE", "notifications:dummy"),
 		Concurrency:         5,
+		SMTPHost:            envWithDefault("SMTP_HOST", "localhost"),
+		SMTPPort:            envWithDefault("SMTP_PORT", "1025"),
+		SMTPUsername:        os.Getenv("SMTP_USERNAME"),
+		SMTPPassword:        os.Getenv("SMTP_PASSWORD"),
+		SMTPFromEmail:       envWithDefault("SMTP_FROM_EMAIL", "no-reply@petcontrol.local"),
+		SMTPFromName:        envWithDefault("SMTP_FROM_NAME", "PetControl"),
+		AppBaseURL:          envWithDefault("APP_BASE_URL", "http://localhost:5173"),
 	}
 
 	if raw := envWithDefault("WORKER_CONCURRENCY", "5"); raw != "" {
