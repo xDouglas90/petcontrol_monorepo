@@ -34,6 +34,7 @@ WITH module_seed(code, name, description, min_package) AS (
     ('UCR', 'Usuários', 'Módulo de Usuários', 'starter'::module_package),
     ('SCH', 'Agendamentos', 'Módulo de Agendamentos', 'starter'::module_package),
     ('SVC', 'Serviços', 'Módulo de Serviços', 'starter'::module_package),
+    ('PPL', 'Pessoas', 'Módulo de Pessoas', 'starter'::module_package),
     ('SPM', 'Planos de Serviços', 'Módulo de Planos de Serviços', 'basic'::module_package),
     ('PET', 'Pets', 'Módulo de Pets', 'basic'::module_package),
     ('TNT', 'Empresas', 'Módulo de Empresas', 'internal'::module_package),
@@ -86,6 +87,9 @@ WITH permission_seed(code, description, default_roles) AS (
     ('users:restore', 'Restaurar usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
     ('users:block', 'Bloquear usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
     ('users:unblock', 'Desbloquear usuário', ARRAY['root'::user_role_type, 'internal'::user_role_type, 'admin'::user_role_type]::user_role_type[]),
+    ('people:create', 'Criar pessoa', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('people:view', 'Visualizar pessoa', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
+    ('people:update', 'Atualizar pessoa', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
     ('clients:create', 'Criar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
     ('clients:view', 'Visualizar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
     ('clients:update', 'Atualizar cliente', ARRAY['root'::user_role_type, 'admin'::user_role_type, 'system'::user_role_type]::user_role_type[]),
@@ -221,6 +225,9 @@ WITH module_permission_seed(module_code, permission_code) AS (
     ('UCR', 'users:restore'),
     ('UCR', 'users:block'),
     ('UCR', 'users:unblock'),
+    ('PPL', 'people:create'),
+    ('PPL', 'people:view'),
+    ('PPL', 'people:update'),
     ('CLI', 'clients:create'),
     ('CLI', 'clients:view'),
     ('CLI', 'clients:update'),
@@ -360,7 +367,7 @@ WHERE NOT EXISTS (
 WITH starter_plan AS (
   SELECT id FROM plans WHERE name = 'Starter Monthly' AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'CLI', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'CRM')
 )
 INSERT INTO plan_modules (plan_id, module_id, is_active)
 SELECT sp.id, sm.id, TRUE
@@ -461,7 +468,7 @@ ON CONFLICT (user_id) DO UPDATE SET
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), seeded_users AS (
-  SELECT id, email FROM users WHERE email IN ('root@petcontrol.local', 'admin@petcontrol.local', 'system@petcontrol.local')
+  SELECT id, email FROM users WHERE email IN ('admin@petcontrol.local', 'system@petcontrol.local')
 )
 INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
 SELECT
@@ -674,6 +681,31 @@ WHERE NOT EXISTS (
   SELECT 1 FROM people_identifications pi WHERE pi.person_id = sp.person_id
 );
 
+-- Link seeded user people to the tenant-wide people registry
+WITH dev_company AS (
+  SELECT id
+  FROM companies
+  WHERE slug = 'petcontrol-dev'
+  LIMIT 1
+), seeded_profiles AS (
+  SELECT up.person_id
+  FROM user_profiles up
+  INNER JOIN company_users cu ON cu.user_id = up.user_id
+  INNER JOIN users u ON u.id = up.user_id
+  INNER JOIN dev_company dc ON dc.id = cu.company_id
+  WHERE u.email IN ('admin@petcontrol.local', 'system@petcontrol.local')
+)
+INSERT INTO company_people (company_id, person_id)
+SELECT dc.id, sp.person_id
+FROM dev_company dc
+CROSS JOIN seeded_profiles sp
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM company_people cp
+  WHERE cp.company_id = dc.id
+    AND cp.person_id = sp.person_id
+);
+
 -- Persisted admin-system conversation for dashboard chat
 WITH dev_company AS (
   SELECT id
@@ -763,7 +795,7 @@ WHERE NOT EXISTS (
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'CLI', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'CRM')
 )
 INSERT INTO company_modules (company_id, module_id, is_active)
 SELECT dc.id, sm.id, TRUE
@@ -960,6 +992,25 @@ WHERE NOT EXISTS (
   FROM company_clients cc
   WHERE cc.company_id = dc.id
     AND cc.client_id = sc.id
+);
+
+WITH dev_company AS (
+  SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
+), seeded_person AS (
+  SELECT pi.person_id
+  FROM people_identifications pi
+  WHERE pi.cpf = '12345678901'
+  LIMIT 1
+)
+INSERT INTO company_people (company_id, person_id)
+SELECT dc.id, sp.person_id
+FROM dev_company dc
+CROSS JOIN seeded_person sp
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM company_people cp
+  WHERE cp.company_id = dc.id
+    AND cp.person_id = sp.person_id
 );
 
 WITH seeded_client AS (

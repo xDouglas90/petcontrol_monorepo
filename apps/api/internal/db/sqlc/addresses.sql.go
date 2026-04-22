@@ -11,6 +11,52 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createAddress = `-- name: CreateAddress :one
+INSERT INTO addresses(zip_code, street, number, complement, district, city, state, country)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING
+    id, zip_code, street, number, complement, district, city, state, country, created_at, updated_at
+`
+
+type CreateAddressParams struct {
+	ZipCode    string      `db:"ZipCode" json:"ZipCode"`
+	Street     string      `db:"Street" json:"Street"`
+	Number     string      `db:"Number" json:"Number"`
+	Complement pgtype.Text `db:"Complement" json:"Complement"`
+	District   string      `db:"District" json:"District"`
+	City       string      `db:"City" json:"City"`
+	State      string      `db:"State" json:"State"`
+	Country    string      `db:"Country" json:"Country"`
+}
+
+func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error) {
+	row := q.db.QueryRow(ctx, createAddress,
+		arg.ZipCode,
+		arg.Street,
+		arg.Number,
+		arg.Complement,
+		arg.District,
+		arg.City,
+		arg.State,
+		arg.Country,
+	)
+	var i Address
+	err := row.Scan(
+		&i.ID,
+		&i.ZipCode,
+		&i.Street,
+		&i.Number,
+		&i.Complement,
+		&i.District,
+		&i.City,
+		&i.State,
+		&i.Country,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getAddress = `-- name: GetAddress :one
 SELECT
     a.zip_code,

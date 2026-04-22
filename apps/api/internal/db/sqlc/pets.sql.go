@@ -15,7 +15,7 @@ const createPet = `-- name: CreatePet :one
 INSERT INTO pets(name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes)
     VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8)
 RETURNING
-    id, name, size, kind, temperament, image_url, birth_date, owner_id, guardian_id, is_active, notes, created_at, updated_at, deleted_at
+    id, name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes, created_at, updated_at, deleted_at
 `
 
 type CreatePetParams struct {
@@ -50,7 +50,6 @@ func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, erro
 		&i.ImageUrl,
 		&i.BirthDate,
 		&i.OwnerID,
-		&i.GuardianID,
 		&i.IsActive,
 		&i.Notes,
 		&i.CreatedAt,

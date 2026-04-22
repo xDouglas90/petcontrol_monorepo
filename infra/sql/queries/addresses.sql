@@ -2,6 +2,12 @@
 INSERT INTO addresses(zip_code, street, number, complement, district, city, state, country)
     VALUES (sqlc.arg('ZipCode'), sqlc.arg('Street'), sqlc.arg('Number'), sqlc.arg('Complement'), sqlc.arg('District'), sqlc.arg('City'), sqlc.arg('State'), sqlc.arg('Country'));
 
+-- name: CreateAddress :one
+INSERT INTO addresses(zip_code, street, number, complement, district, city, state, country)
+    VALUES (sqlc.arg('ZipCode'), sqlc.arg('Street'), sqlc.arg('Number'), sqlc.arg('Complement'), sqlc.arg('District'), sqlc.arg('City'), sqlc.arg('State'), sqlc.arg('Country'))
+RETURNING
+    id, zip_code, street, number, complement, district, city, state, country, created_at, updated_at;
+
 -- name: UpdateAddress :execrows
 UPDATE
     addresses
@@ -34,4 +40,3 @@ FROM
     addresses a
 WHERE
     a.id = sqlc.arg('ID');
-
