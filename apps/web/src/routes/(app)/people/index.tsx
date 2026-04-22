@@ -510,6 +510,7 @@ export function PeoplePage() {
     readSelectedKindFromLocation(),
   );
   const currentUserQuery = useCurrentUserQuery();
+  const currentUser = currentUserQuery.data;
   const peopleQuery = usePeopleQuery({
     ...params,
     ...(selectedKind !== 'all' ? { kind: selectedKind } : {}),
@@ -517,29 +518,48 @@ export function PeoplePage() {
   const petsQuery = usePetsQuery({ page: 1, limit: 200 });
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>('view');
-  const currentUser = currentUserQuery.data;
+
+  const editableKinds = useMemo(
+    () =>
+      currentUser?.role === 'system'
+        ? (['client', 'supplier'] as PersonKind[])
+        : ([
+            'client',
+            'employee',
+            'outsourced_employee',
+            'supplier',
+            'guardian',
+            'responsible',
+          ] as PersonKind[]),
+    [currentUser?.role],
+  );
+
+  const [form, setForm] = useState<PeopleFormState>(() =>
+    buildInitialForm(editableKinds[0] ?? 'client'),
+  );
+  const [showValidation, setShowValidation] = useState(false);
+
+  // Ouve evento customizado para abrir o formulário de criação
+  useEffect(() => {
+    function handleOpenCreateForm() {
+      setPanelMode('create');
+      setForm(buildInitialForm(editableKinds[0] ?? 'client'));
+      setShowValidation(false);
+    }
+    window.addEventListener('open-people-create-form', handleOpenCreateForm);
+    return () => {
+      window.removeEventListener(
+        'open-people-create-form',
+        handleOpenCreateForm,
+      );
+    };
+  }, [editableKinds]);
   const canAccessPeople =
     currentUser?.role === 'admin' || currentUser?.role === 'system';
   const createMutation = useCreatePersonMutation();
   const updateMutation = useUpdatePersonMutation();
   const pushToast = useToastStore((state) => state.pushToast);
 
-  const editableKinds =
-    currentUser?.role === 'system'
-      ? (['client', 'supplier'] as PersonKind[])
-      : ([
-          'client',
-          'employee',
-          'outsourced_employee',
-          'supplier',
-          'guardian',
-          'responsible',
-        ] as PersonKind[]);
-
-  const [form, setForm] = useState<PeopleFormState>(() =>
-    buildInitialForm(editableKinds[0] ?? 'client'),
-  );
-  const [showValidation, setShowValidation] = useState(false);
   const [accessProvisionFeedback, setAccessProvisionFeedback] = useState<{
     personId: string;
     email: string;
@@ -810,8 +830,8 @@ export function PeoplePage() {
                   Pessoas
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-6 text-stone-500">
-                  Base tenant-scoped de pessoas do sistema. Visualize, gerencie
-                  e evolua o cadastro de clientes, funcionários, fornecedores e
+                  Base de pessoas do sistema. Visualize, gerencie e evolua o
+                  cadastro de clientes, funcionários, fornecedores e
                   responsáveis em um único lugar.
                 </p>
               </div>
@@ -956,7 +976,7 @@ export function PeoplePage() {
                   </p>
                   <h2 className="mt-4 font-display text-3xl text-stone-950">
                     {panelMode === 'create'
-                      ? 'Cadastro no tenant'
+                      ? 'Formulário de cadastro'
                       : form.full_name || 'Atualizar cadastro'}
                   </h2>
                 </div>
@@ -969,13 +989,6 @@ export function PeoplePage() {
                   Cancelar
                 </button>
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-stone-500">
-                Nesta etapa, o painel já permite criação e edição de cliente,
-                funcionário, terceirizado, fornecedor, guardião e responsável. O
-                provisionamento automático de usuário de sistema entra no
-                próximo slice.
-              </p>
 
               <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
                 Campos com * são obrigatórios.
@@ -1997,12 +2010,6 @@ export function PeoplePage() {
                   </button>
                 ) : null}
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-stone-500">
-                Painel lateral conectado ao detalhe real da pessoa selecionada.
-                Para esta etapa, edição completa disponível apenas para cliente,
-                fornecedor, guardião e responsável.
-              </p>
 
               {!selectedPersonSupportsCurrentForm ? (
                 <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
