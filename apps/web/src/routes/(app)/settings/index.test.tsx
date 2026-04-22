@@ -103,6 +103,7 @@ describe('SettingsPage', () => {
       data: {
         user_id: 'system-user-1',
         company_id: 'company-1',
+        active_package: 'starter',
         role: 'system',
         kind: 'employee',
         is_owner: false,
@@ -119,6 +120,27 @@ describe('SettingsPage', () => {
             is_default_for_role: false,
             granted_by: null,
             granted_at: null,
+          },
+        ],
+        permission_groups: [
+          {
+            module_code: 'CFG',
+            module_name: 'Configurações',
+            module_description:
+              'Configurações institucionais, plano, pagamentos, notificações, integrações e segurança do tenant.',
+            min_package: 'starter',
+            permissions: [
+              {
+                id: 'permission-1',
+                code: 'company_settings:edit',
+                description: 'Editar configurações gerais',
+                default_roles: ['root', 'admin'],
+                is_active: false,
+                is_default_for_role: false,
+                granted_by: null,
+                granted_at: null,
+              },
+            ],
           },
         ],
       },
@@ -177,6 +199,8 @@ describe('SettingsPage', () => {
     expect(screen.getByText('Configurações da empresa')).toBeTruthy();
     expect(screen.getByText('Configurações de negócios')).toBeTruthy();
     expect(screen.getByText('Permissões por usuário')).toBeTruthy();
+    expect(screen.getByText('Central de ajustes')).toBeTruthy();
+    expect(screen.getAllByText('Configurações').length).toBeGreaterThan(0);
   });
 
   it('não renderiza a seção de permissões para system autorizado', () => {
@@ -369,6 +393,7 @@ describe('SettingsPage', () => {
       data: {
         user_id: 'system-user-1',
         company_id: 'company-1',
+        active_package: 'starter',
         role: 'system',
         kind: 'employee',
         is_owner: false,
@@ -395,6 +420,37 @@ describe('SettingsPage', () => {
             is_default_for_role: true,
             granted_by: 'admin-user-1',
             granted_at: new Date().toISOString(),
+          },
+        ],
+        permission_groups: [
+          {
+            module_code: 'CFG',
+            module_name: 'Configurações',
+            module_description:
+              'Configurações institucionais, plano, pagamentos, notificações, integrações e segurança do tenant.',
+            min_package: 'starter',
+            permissions: [
+              {
+                id: 'permission-1',
+                code: 'company_settings:edit',
+                description: 'Editar configurações gerais',
+                default_roles: ['root', 'admin'],
+                is_active: false,
+                is_default_for_role: false,
+                granted_by: null,
+                granted_at: null,
+              },
+              {
+                id: 'permission-2',
+                code: 'plan_settings:edit',
+                description: 'Editar configurações de plano',
+                default_roles: ['root', 'admin', 'system'],
+                is_active: true,
+                is_default_for_role: true,
+                granted_by: 'admin-user-1',
+                granted_at: new Date().toISOString(),
+              },
+            ],
           },
         ],
       },

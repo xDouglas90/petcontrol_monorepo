@@ -9,6 +9,7 @@ import type {
   CompanyDTO,
   CompanyUserDTO,
   CompanyUserListApiResponseDTO,
+  CompanyUserPermissionDTO,
   CompanyUserPermissionsApiResponseDTO,
   CompanyUserPermissionsDTO,
   CompanySystemConfigDTO,
@@ -541,35 +542,47 @@ export async function getCompanyUserPermissions(
 ): Promise<CompanyUserPermissionsDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
+    const permissions: CompanyUserPermissionDTO[] = [
+      {
+        id: crypto.randomUUID(),
+        code: 'company_settings:edit',
+        description: 'Editar configurações gerais',
+        default_roles: ['root', 'admin'],
+        is_active: false,
+        is_default_for_role: false,
+        granted_by: null,
+        granted_at: null,
+      },
+      {
+        id: crypto.randomUUID(),
+        code: 'plan_settings:edit',
+        description: 'Editar configurações de plano',
+        default_roles: ['root', 'admin', 'system'],
+        is_active: true,
+        is_default_for_role: userId === 'system-user-1',
+        granted_by: '11111111-1111-1111-1111-111111111111',
+        granted_at: new Date().toISOString(),
+      },
+    ];
     return {
       user_id: userId,
       company_id: mockCompany.id,
+      active_package: mockCompany.active_package,
       role: userId === 'system-user-1' ? 'system' : 'admin',
       kind: 'employee',
       is_owner: false,
       is_active: true,
       managed_by: '11111111-1111-1111-1111-111111111111',
       scope: 'tenant_settings',
-      permissions: [
+      permissions,
+      permission_groups: [
         {
-          id: crypto.randomUUID(),
-          code: 'company_settings:edit',
-          description: 'Editar configurações gerais',
-          default_roles: ['root', 'admin'],
-          is_active: false,
-          is_default_for_role: false,
-          granted_by: null,
-          granted_at: null,
-        },
-        {
-          id: crypto.randomUUID(),
-          code: 'plan_settings:edit',
-          description: 'Editar configurações de plano',
-          default_roles: ['root', 'admin', 'system'],
-          is_active: true,
-          is_default_for_role: userId === 'system-user-1',
-          granted_by: '11111111-1111-1111-1111-111111111111',
-          granted_at: new Date().toISOString(),
+          module_code: 'CFG',
+          module_name: 'Configurações',
+          module_description:
+            'Configurações institucionais, plano, pagamentos, notificações, integrações e segurança do tenant.',
+          min_package: 'starter',
+          permissions,
         },
       ],
     };
@@ -594,14 +607,23 @@ export async function updateCompanyUserPermissions(
     await delay(140);
     const current = await getCompanyUserPermissions(accessToken, userId);
     const desired = new Set(input.permission_codes);
+    const permissions = current.permissions.map((permission) => ({
+      ...permission,
+      is_active: desired.has(permission.code),
+      granted_at: desired.has(permission.code)
+        ? new Date().toISOString()
+        : permission.granted_at,
+    }));
+
     return {
       ...current,
-      permissions: current.permissions.map((permission) => ({
-        ...permission,
-        is_active: desired.has(permission.code),
-        granted_at: desired.has(permission.code)
-          ? new Date().toISOString()
-          : permission.granted_at,
+      permissions,
+      permission_groups: current.permission_groups.map((group) => ({
+        ...group,
+        permissions: group.permissions.map((permission) => {
+          const updated = permissions.find((item) => item.code === permission.code);
+          return updated ?? permission;
+        }),
       })),
     };
   }

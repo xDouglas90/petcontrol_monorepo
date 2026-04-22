@@ -1,5 +1,6 @@
 import { Navigate, useParams } from '@tanstack/react-router';
 import type {
+  CompanyUserPermissionDTO,
   CompanyUserPermissionsDTO,
   WeekDay,
 } from '@petcontrol/shared-types';
@@ -15,7 +16,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   useCompanyUserPermissionsQuery,
@@ -27,15 +28,7 @@ import {
   useUpdateCurrentCompanyMutation,
   useUpdateCurrentCompanySystemConfigMutation,
 } from '@/lib/api/domain.queries';
-
-const SETTINGS_PERMISSION_LABELS: Record<string, string> = {
-  'company_settings:edit': 'Configurações gerais da empresa',
-  'plan_settings:edit': 'Operação e regras de agenda',
-  'payment_settings:edit': 'Pagamentos e cobrança',
-  'notification_settings:edit': 'Notificações automáticas',
-  'integration_settings:edit': 'Integrações externas',
-  'security_settings:edit': 'Segurança e acesso',
-};
+import { useToastStore } from '@/stores/toast.store';
 
 type CompanyFormState = {
   name: string;
@@ -123,8 +116,8 @@ export function SettingsPage() {
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-stone-600">
                   Esta área reúne os dados institucionais da empresa, as regras
-                  operacionais do negócio e, para perfis `admin`, a gestão das
-                  permissões do time vinculado ao tenant.
+                  operacionais do negócio e, para perfis administradores, a
+                  gestão das permissões dos usuários.
                 </p>
               </div>
 
@@ -201,6 +194,7 @@ function CompanySettingsForm({
   });
 
   const mutation = useUpdateCurrentCompanyMutation();
+  const pushToast = useToastStore((state) => state.pushToast);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -211,17 +205,23 @@ function CompanySettingsForm({
     });
   };
 
-  const sectionMessage = mutation.isSuccess
-    ? 'Configurações da empresa atualizadas.'
-    : mutation.isError
-      ? mutation.error.message
-      : null;
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      pushToast('Configurações da empresa atualizadas.', 'success');
+    }
+  }, [mutation.isSuccess, pushToast]);
+
+  useEffect(() => {
+    if (mutation.isError) {
+      pushToast(mutation.error.message, 'error');
+    }
+  }, [mutation.error, mutation.isError, pushToast]);
 
   return (
     <SettingsCard
       eyebrow="Empresa"
       title="Configurações da empresa"
-      description="Dados institucionais do tenant usados no shell, na identificação interna e na comunicação visual."
+      description="Dados institucionais da empresa usados no shell, na identificação interna e na comunicação visual."
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="grid gap-4 md:grid-cols-2">
@@ -258,16 +258,7 @@ function CompanySettingsForm({
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionMessage
-            variant={mutation.isError ? 'error' : 'success'}
-            message={
-              disabled
-                ? 'Seu perfil pode visualizar os dados da empresa, mas não editar esta seção.'
-                : sectionMessage
-            }
-          />
-
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
@@ -323,6 +314,7 @@ function BusinessSettingsForm({
   });
 
   const mutation = useUpdateCurrentCompanySystemConfigMutation();
+  const pushToast = useToastStore((state) => state.pushToast);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -345,17 +337,23 @@ function BusinessSettingsForm({
     });
   };
 
-  const sectionMessage = mutation.isSuccess
-    ? 'Configurações de negócios atualizadas.'
-    : mutation.isError
-      ? mutation.error.message
-      : null;
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      pushToast('Configurações de negócios atualizadas.', 'success');
+    }
+  }, [mutation.isSuccess, pushToast]);
+
+  useEffect(() => {
+    if (mutation.isError) {
+      pushToast(mutation.error.message, 'error');
+    }
+  }, [mutation.error, mutation.isError, pushToast]);
 
   return (
     <SettingsCard
       eyebrow="Negócios"
       title="Configurações de negócios"
-      description="Regras operacionais, capacidade física e canais que dirigem a rotina diária do tenant."
+      description="Regras operacionais, capacidade física e canais que dirigem a rotina diária da empresa."
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="grid gap-4 md:grid-cols-4">
@@ -429,7 +427,7 @@ function BusinessSettingsForm({
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Field
-            label="Mínimo de agendamentos por dia"
+            label="Mín. agendamentos/dia"
             type="number"
             value={form.min_schedules_per_day}
             onChange={(v) =>
@@ -438,7 +436,7 @@ function BusinessSettingsForm({
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="Máximo de agendamentos por dia"
+            label="Máx. agendamentos/dia"
             type="number"
             value={form.max_schedules_per_day}
             onChange={(v) =>
@@ -447,7 +445,7 @@ function BusinessSettingsForm({
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="WhatsApp business"
+            label="WhatsApp Business"
             value={form.whatsapp_business_phone}
             onChange={(v) =>
               setForm((c) => ({ ...c, whatsapp_business_phone: v }))
@@ -456,34 +454,34 @@ function BusinessSettingsForm({
             disabled={disabled || mutation.isPending}
           />
           <ToggleField
-            label="Celas dinâmicas"
+            label="Gaiolas dinâmicas"
             checked={form.dynamic_cages}
             onChange={(v) => setForm((c) => ({ ...c, dynamic_cages: v }))}
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="Celas pequenas"
+            label="Gaiolas pequenas"
             type="number"
             value={form.total_small_cages}
             onChange={(v) => setForm((c) => ({ ...c, total_small_cages: v }))}
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="Celas médias"
+            label="Gaiolas médias"
             type="number"
             value={form.total_medium_cages}
             onChange={(v) => setForm((c) => ({ ...c, total_medium_cages: v }))}
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="Celas grandes"
+            label="Gaiolas grandes"
             type="number"
             value={form.total_large_cages}
             onChange={(v) => setForm((c) => ({ ...c, total_large_cages: v }))}
             disabled={disabled || mutation.isPending}
           />
           <Field
-            label="Celas gigantes"
+            label="Gaiolas gigantes"
             type="number"
             value={form.total_giant_cages}
             onChange={(v) => setForm((c) => ({ ...c, total_giant_cages: v }))}
@@ -510,16 +508,7 @@ function BusinessSettingsForm({
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionMessage
-            variant={mutation.isError ? 'error' : 'success'}
-            message={
-              disabled
-                ? 'Esta seção segue em modo somente leitura para o seu perfil.'
-                : sectionMessage
-            }
-          />
-
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
@@ -565,15 +554,19 @@ function UserPermissionsManager({
     <SettingsCard
       eyebrow="Permissões"
       title="Permissões por usuário"
-      description="Selecione um usuário do tenant e ajuste o conjunto de permissões gerenciáveis deste módulo."
+      description="Selecione um usuário e ajuste as permissões agrupadas por módulos disponíveis no plano atual da empresa."
     >
       <div className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
           <div className="space-y-3">
-            <label className="text-sm font-semibold text-stone-800">
-              Usuário do tenant
+            <label
+              htmlFor="tenant-user-select"
+              className="text-sm font-semibold text-stone-800"
+            >
+              Usuários
             </label>
             <select
+              id="tenant-user-select"
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
               className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 outline-none transition focus:border-stone-400"
@@ -628,13 +621,10 @@ function UserPermissionsForm({
 }) {
   const [selectedPermissionCodes, setSelectedPermissionCodes] = useState<
     string[]
-  >(() =>
-    initialPermissions.permissions
-      .filter((p) => p.is_active)
-      .map((p) => p.code),
-  );
+  >(() => getActivePermissionCodes(initialPermissions));
 
   const mutation = useUpdateCompanyUserPermissionsMutation(userId);
+  const pushToast = useToastStore((state) => state.pushToast);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -643,11 +633,17 @@ function UserPermissionsForm({
     });
   };
 
-  const sectionMessage = mutation.isSuccess
-    ? 'Permissões do usuário atualizadas.'
-    : mutation.isError
-      ? mutation.error.message
-      : null;
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      pushToast('Permissões do usuário atualizadas.', 'success');
+    }
+  }, [mutation.isSuccess, pushToast]);
+
+  useEffect(() => {
+    if (mutation.isError) {
+      pushToast(mutation.error.message, 'error');
+    }
+  }, [mutation.error, mutation.isError, pushToast]);
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -664,12 +660,7 @@ function UserPermissionsForm({
         disabled={mutation.isPending}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <SectionMessage
-          variant={mutation.isError ? 'error' : 'success'}
-          message={sectionMessage}
-        />
-
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="submit"
           disabled={mutation.isPending}
@@ -810,12 +801,12 @@ function ToggleField({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+    <label className="flex min-h-[50px] items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
       <span className="text-sm font-semibold text-stone-800">{label}</span>
       <button
         type="button"
         role="switch"
-        aria-checked={checked}
+        aria-checked={checked ? 'true' : 'false'}
         onClick={() => onChange(!checked)}
         disabled={disabled}
         className={cn(
@@ -832,29 +823,6 @@ function ToggleField({
         />
       </button>
     </label>
-  );
-}
-
-function SectionMessage({
-  message,
-  variant,
-}: {
-  message: string | null;
-  variant: 'success' | 'error';
-}) {
-  if (!message) {
-    return <div />;
-  }
-
-  return (
-    <p
-      className={cn(
-        'text-sm',
-        variant === 'error' ? 'text-rose-600' : 'text-emerald-600',
-      )}
-    >
-      {message}
-    </p>
   );
 }
 
@@ -883,57 +851,153 @@ function PermissionsChecklist({
       <div className="flex items-center gap-2 text-stone-700">
         <UsersRound className="h-4 w-4" />
         <p className="text-sm font-semibold">
-          Permissões gerenciáveis do módulo de configurações
+          Permissões gerenciáveis por módulo
         </p>
       </div>
 
       <div className="space-y-3">
-        {snapshot.permissions.map((permission) => {
-          const isChecked = selectedPermissionCodes.includes(permission.code);
-          return (
-            <label
-              key={permission.id}
-              className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-4"
-            >
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={() => onToggle(permission.code)}
-                disabled={disabled}
-                className="mt-1 h-4 w-4 rounded border-stone-300 text-stone-950"
-              />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-stone-900">
-                    {SETTINGS_PERMISSION_LABELS[permission.code] ??
-                      permission.code}
-                  </p>
-                  {permission.is_default_for_role ? (
-                    <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
-                      padrão do papel
-                    </span>
-                  ) : null}
-                  {!permission.is_default_for_role ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                      customizado
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-sm text-stone-500">
-                  {permission.description ||
-                    SETTINGS_PERMISSION_LABELS[permission.code] ||
-                    permission.code}
+        {getPermissionGroups(snapshot).map((group) => (
+          <section
+            key={group.module_code}
+            className="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white"
+          >
+            <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-stone-900">
+                  {group.module_name}
                 </p>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-stone-400">
-                  Default roles: {permission.default_roles.join(', ')}
-                </p>
+                <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  {group.module_code}
+                </span>
+                <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                  pacote {group.min_package}
+                </span>
               </div>
-            </label>
-          );
-        })}
+              <p className="mt-2 text-sm text-stone-500">
+                {group.module_description}
+              </p>
+            </div>
+
+            <div className="space-y-0.5 px-4 py-3">
+              {group.permissions.map((permission) => (
+                <PermissionChecklistItem
+                  key={permission.id}
+                  permission={permission}
+                  checked={selectedPermissionCodes.includes(permission.code)}
+                  onToggle={onToggle}
+                  disabled={disabled}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );
+}
+
+function PermissionChecklistItem({
+  permission,
+  checked,
+  onToggle,
+  disabled,
+}: {
+  permission: CompanyUserPermissionDTO;
+  checked: boolean;
+  onToggle: (permissionCode: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="flex items-start gap-3 rounded-2xl px-3 py-1 transition hover:bg-stone-50/80">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={() => onToggle(permission.code)}
+        disabled={disabled}
+        className="mt-1 h-4 w-4 rounded border-stone-300 text-stone-950"
+      />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-stone-900">
+            {formatPermissionLabel(permission.code)}
+          </p>
+          {permission.is_default_for_role ? (
+            <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+              padrão
+            </span>
+          ) : (
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+              customizado
+            </span>
+          )}
+        </div>
+      </div>
+    </label>
+  );
+}
+
+function getActivePermissionCodes(snapshot: CompanyUserPermissionsDTO) {
+  const source = getPermissionGroups(snapshot).flatMap(
+    (group) => group.permissions,
+  );
+
+  return source.filter((permission) => permission.is_active).map((p) => p.code);
+}
+
+function getPermissionGroups(snapshot: CompanyUserPermissionsDTO) {
+  if (snapshot.permission_groups.length > 0) {
+    return snapshot.permission_groups;
+  }
+
+  return [
+    {
+      module_code: 'LEGACY',
+      module_name: 'Permissões',
+      module_description: 'Permissões carregadas em formato legado.',
+      min_package: snapshot.active_package,
+      permissions: snapshot.permissions,
+    },
+  ];
+}
+
+function formatPermissionLabel(code: string) {
+  const permissionLabelMap: Record<string, string> = {
+    'company_settings:edit': 'Configurações gerais da empresa',
+    'plan_settings:edit': 'Operação e regras de agenda',
+    'payment_settings:edit': 'Pagamentos e cobrança',
+    'notification_settings:edit': 'Notificações automáticas',
+    'integration_settings:edit': 'Integrações externas',
+    'security_settings:edit': 'Segurança e acesso',
+  };
+
+  if (permissionLabelMap[code]) {
+    return permissionLabelMap[code];
+  }
+
+  const [resource, action] = code.split(':');
+  if (!resource || !action) {
+    return code;
+  }
+
+  const resourceLabel = resource
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+  const actionMap: Record<string, string> = {
+    create: 'Criar',
+    view: 'Visualizar',
+    update: 'Atualizar',
+    delete: 'Deletar',
+    restore: 'Restaurar',
+    deactivate: 'Desativar',
+    reactivate: 'Reativar',
+    edit: 'Editar',
+    block: 'Bloquear',
+    unblock: 'Desbloquear',
+  };
+
+  return `${actionMap[action] ?? action} ${resourceLabel}`;
 }
 
 function weekDayLabel(day: WeekDay) {
