@@ -8,6 +8,7 @@
   - [Índice](#índice)
   - [Tipos de módulos](#tipos-de-módulos)
     - [Configs](#configs)
+    - [People](#people)
     - [Users](#users)
     - [Schedules](#schedules)
     - [Services](#services)
@@ -39,6 +40,12 @@
 | Módulo  | Código | Descrição               | Pacote Mínimo |
 | ------- | ------ | ----------------------- | ------------- |
 | Configs | `CFG`  | Módulo de Configurações | starter       |
+
+### People
+
+| Módulo | Código | Descrição         | Pacote Mínimo |
+| ------ | ------ | ----------------- | ------------- |
+| People | `PPL`  | Módulo de Pessoas | starter       |
 
 ### Users
 
