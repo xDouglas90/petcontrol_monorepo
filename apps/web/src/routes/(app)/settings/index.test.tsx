@@ -339,7 +339,7 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Máx. agendamentos/dia'), {
       target: { value: '22' },
     });
-    fireEvent.change(screen.getByLabelText('WhatsApp business'), {
+    fireEvent.change(screen.getByLabelText('WhatsApp Business'), {
       target: { value: '' },
     });
 
