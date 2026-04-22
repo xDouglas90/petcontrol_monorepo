@@ -94,7 +94,24 @@ func (s *CompanyUserService) GetCompanyUser(ctx context.Context, companyID pgtyp
 }
 
 func (s *CompanyUserService) CreateCompanyUser(ctx context.Context, params sqlc.CreateCompanyUserParams) (sqlc.CompanyUser, error) {
-	return s.queries.CreateCompanyUser(ctx, params)
+	user, err := s.queries.GetUserByID(ctx, params.UserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return sqlc.CompanyUser{}, apperror.ErrNotFound
+	}
+	if err != nil {
+		return sqlc.CompanyUser{}, err
+	}
+
+	if user.Role == sqlc.UserRoleTypeRoot || user.Role == sqlc.UserRoleTypeInternal {
+		return sqlc.CompanyUser{}, apperror.ErrUnprocessableEntity
+	}
+
+	companyUser, err := s.queries.CreateCompanyUser(ctx, params)
+	if err != nil {
+		return sqlc.CompanyUser{}, mapClientDBError(err)
+	}
+
+	return companyUser, nil
 }
 
 func (s *CompanyUserService) DeactivateCompanyUser(ctx context.Context, companyID pgtype.UUID, userID pgtype.UUID) error {

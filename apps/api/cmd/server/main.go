@@ -62,6 +62,13 @@ func main() {
 	companyUserPermissionService := service.NewCompanyUserPermissionService(queries)
 	adminSystemChatService := service.NewAdminSystemChatService(queries)
 	internalChatHub := realtime.NewInternalChatHub()
+	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
+	defer func() {
+		if err := workerPublisher.Close(); err != nil {
+			log.Printf("close worker publisher: %v", err)
+		}
+	}()
+	peopleService := service.NewPeopleService(pool, queries, workerPublisher)
 	clientService := service.NewClientService(pool, queries)
 	petService := service.NewPetService(queries)
 	serviceService := service.NewServiceService(pool, queries)
@@ -69,12 +76,6 @@ func main() {
 	authService := service.NewAuthService(queries, cfg.JWTSecret, cfg.JWTTTL)
 	uploadStorage := gcs.NewService(cfg.Uploads, gcsClient, gcsClient)
 	uploadService := service.NewUploadService(uploadStorage)
-	workerPublisher := queue.NewAsynqPublisher(cfg.RedisAddr, cfg.WorkerQueue)
-	defer func() {
-		if err := workerPublisher.Close(); err != nil {
-			log.Printf("close worker publisher: %v", err)
-		}
-	}()
 	companyHandler := handler.NewCompanyHandler(companyService, uploadService)
 	companySystemConfigHandler := handler.NewCompanySystemConfigHandler(companySystemConfigService)
 	planHandler := handler.NewPlanHandler(planService)
@@ -82,6 +83,7 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 	companyUserHandler := handler.NewCompanyUserHandler(companyUserService, companyUserPermissionService)
 	adminSystemChatHandler := handler.NewAdminSystemChatHandler(adminSystemChatService, internalChatHub, cfg.CORSAllowedOrigins)
+	peopleHandler := handler.NewPeopleHandler(peopleService)
 	clientHandler := handler.NewClientHandler(clientService, uploadService)
 	petHandler := handler.NewPetHandler(petService, uploadService)
 	serviceHandler := handler.NewServiceHandler(serviceService)
@@ -127,6 +129,13 @@ func main() {
 	protected.GET("/modules/:code/access", middleware.RequireModule(queries, ""), moduleHandler.Access)
 	protected.POST("/uploads/intent", uploadHandler.CreateIntent)
 	protected.POST("/uploads/complete", uploadHandler.Complete)
+
+	people := protected.Group("/people")
+	people.Use(middleware.RequireModule(queries, "PPL"))
+	people.GET("", middleware.RequirePermission(queries, service.PermissionPeopleView), peopleHandler.List)
+	people.GET("/:id", middleware.RequirePermission(queries, service.PermissionPeopleView), peopleHandler.GetByID)
+	people.POST("", middleware.RequirePermission(queries, service.PermissionPeopleCreate), peopleHandler.Create)
+	people.PUT("/:id", middleware.RequirePermission(queries, service.PermissionPeopleUpdate), peopleHandler.Update)
 
 	clients := protected.Group("/clients")
 	clients.Use(middleware.RequireModule(queries, "CRM"))

@@ -252,6 +252,8 @@ func mapClientDBError(err error) error {
 		switch pgErr.Code {
 		case "23503":
 			return apperror.ErrUnprocessableEntity
+		case "23502", "23514", "22P02", "22001", "22007":
+			return apperror.ErrUnprocessableEntity
 		case "23505":
 			return apperror.ErrConflict
 		}

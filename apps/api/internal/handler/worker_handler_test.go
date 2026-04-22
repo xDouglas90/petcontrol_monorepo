@@ -21,6 +21,8 @@ type publisherStub struct {
 	captured         queue.DummyNotificationPayload
 	scheduleCalled   bool
 	scheduleCaptured queue.ScheduleConfirmationPayload
+	peopleCalled     bool
+	peopleCaptured   queue.PersonAccessCredentialsPayload
 }
 
 func (p *publisherStub) EnqueueDummyNotification(_ context.Context, payload queue.DummyNotificationPayload) error {
@@ -32,6 +34,12 @@ func (p *publisherStub) EnqueueDummyNotification(_ context.Context, payload queu
 func (p *publisherStub) EnqueueScheduleConfirmation(_ context.Context, payload queue.ScheduleConfirmationPayload) error {
 	p.scheduleCalled = true
 	p.scheduleCaptured = payload
+	return nil
+}
+
+func (p *publisherStub) EnqueuePersonAccessCredentials(_ context.Context, payload queue.PersonAccessCredentialsPayload) error {
+	p.peopleCalled = true
+	p.peopleCaptured = payload
 	return nil
 }
 
