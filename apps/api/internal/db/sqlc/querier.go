@@ -282,6 +282,8 @@ type Querier interface {
 	ListServiceTypes(ctx context.Context, arg ListServiceTypesParams) ([]ServiceType, error)
 	ListServicesByCompanyID(ctx context.Context, arg ListServicesByCompanyIDParams) ([]ListServicesByCompanyIDRow, error)
 	ListSubServicesByServiceID(ctx context.Context, arg ListSubServicesByServiceIDParams) ([]SubService, error)
+	ListTenantSettingsModulesByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]Module, error)
+	ListTenantSettingsPermissionsByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListTenantSettingsPermissionsByCompanyIDRow, error)
 	ListTranslationsByEntity(ctx context.Context, arg ListTranslationsByEntityParams) ([]Translation, error)
 	ListTranslationsByEntityAndLanguage(ctx context.Context, arg ListTranslationsByEntityAndLanguageParams) ([]Translation, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)

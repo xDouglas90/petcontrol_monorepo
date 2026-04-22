@@ -262,6 +262,104 @@ func (q *Queries) ListPermissionsByRole(ctx context.Context, arg ListPermissions
 	return items, nil
 }
 
+const listTenantSettingsPermissionsByCompanyID = `-- name: ListTenantSettingsPermissionsByCompanyID :many
+SELECT
+    m.id AS module_id,
+    m.code AS module_code,
+    m.name AS module_name,
+    m.description AS module_description,
+    m.min_package AS module_min_package,
+    p.id,
+    p.code,
+    p.description,
+    p.default_roles,
+    p.created_at,
+    p.updated_at
+FROM
+    companies c
+    INNER JOIN company_modules cm ON cm.company_id = c.id
+    INNER JOIN modules m ON m.id = cm.module_id
+    INNER JOIN module_permissions mp ON mp.module_id = m.id
+    INNER JOIN permissions p ON p.id = mp.permission_id
+WHERE
+    c.id = $1
+    AND cm.is_active = TRUE
+    AND m.is_active = TRUE
+    AND m.deleted_at IS NULL
+    AND m.min_package != 'internal'
+    AND (
+        CASE c.active_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    ) >= (
+        CASE m.min_package
+            WHEN 'trial' THEN 1
+            WHEN 'starter' THEN 1
+            WHEN 'basic' THEN 2
+            WHEN 'essential' THEN 3
+            WHEN 'premium' THEN 4
+            WHEN 'internal' THEN 5
+            ELSE 0
+        END
+    )
+ORDER BY
+    m.min_package ASC,
+    m.code ASC,
+    p.code ASC
+`
+
+type ListTenantSettingsPermissionsByCompanyIDRow struct {
+	ModuleID          pgtype.UUID        `db:"module_id" json:"module_id"`
+	ModuleCode        string             `db:"module_code" json:"module_code"`
+	ModuleName        string             `db:"module_name" json:"module_name"`
+	ModuleDescription string             `db:"module_description" json:"module_description"`
+	ModuleMinPackage  ModulePackage      `db:"module_min_package" json:"module_min_package"`
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	Code              string             `db:"code" json:"code"`
+	Description       pgtype.Text        `db:"description" json:"description"`
+	DefaultRoles      []UserRoleType     `db:"default_roles" json:"default_roles"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+func (q *Queries) ListTenantSettingsPermissionsByCompanyID(ctx context.Context, companyid pgtype.UUID) ([]ListTenantSettingsPermissionsByCompanyIDRow, error) {
+	rows, err := q.db.Query(ctx, listTenantSettingsPermissionsByCompanyID, companyid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTenantSettingsPermissionsByCompanyIDRow
+	for rows.Next() {
+		var i ListTenantSettingsPermissionsByCompanyIDRow
+		if err := rows.Scan(
+			&i.ModuleID,
+			&i.ModuleCode,
+			&i.ModuleName,
+			&i.ModuleDescription,
+			&i.ModuleMinPackage,
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DefaultRoles,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePermission = `-- name: UpdatePermission :execrows
 UPDATE
     permissions

@@ -82,6 +82,36 @@ func mustAttachModuleToCompany(t *testing.T, pool interface {
 	require.NoError(t, err)
 }
 
+func mustAttachPermissionToModule(t *testing.T, pool interface {
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+}, moduleID, permissionID pgtype.UUID,
+) {
+	t.Helper()
+
+	_, err := pool.Exec(context.Background(),
+		"INSERT INTO module_permissions(module_id, permission_id) VALUES ($1, $2)",
+		moduleID,
+		permissionID,
+	)
+	require.NoError(t, err)
+}
+
+func mustCreatePermission(t *testing.T, queries *sqlc.Queries, code, description string, defaultRoles []sqlc.UserRoleType) sqlc.Permission {
+	t.Helper()
+
+	rows, err := queries.InsertPermission(context.Background(), sqlc.InsertPermissionParams{
+		Code:         code,
+		Description:  pgtype.Text{String: description, Valid: true},
+		DefaultRoles: defaultRoles,
+	})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, rows)
+
+	permission, err := queries.GetPermissionByCode(context.Background(), code)
+	require.NoError(t, err)
+	return permission
+}
+
 func mustCreateActiveSubscription(t *testing.T, pool interface {
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 }, companyID, planID pgtype.UUID, price string,
@@ -276,6 +306,88 @@ func TestQueries_Modules_Integration_ActiveByCompany(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, activeModules, 1)
 	require.Equal(t, module.ID, activeModules[0].ID)
+}
+
+func TestQueries_TenantSettingsCatalog_IntegrationFiltersInternalMissingAndPremiumModules(t *testing.T) {
+	queries, _, pool := setupQueriesWithPool(t)
+
+	company := mustCreateCompany(t, queries, pool)
+
+	rows, err := queries.UpdateCompany(context.Background(), sqlc.UpdateCompanyParams{
+		Slug:           pgtype.Text{String: company.Slug, Valid: true},
+		Name:           pgtype.Text{String: company.Name, Valid: true},
+		FantasyName:    pgtype.Text{String: company.FantasyName, Valid: true},
+		CNPJ:           pgtype.Text{String: company.Cnpj, Valid: true},
+		FoundationDate: pgtype.Date{},
+		LogoURL:        pgtype.Text{},
+		ResponsibleID:  company.ResponsibleID,
+		ActivePackage:  sqlc.NullModulePackage{ModulePackage: sqlc.ModulePackageStarter, Valid: true},
+		IsActive:       pgtype.Bool{Bool: true, Valid: true},
+		ID:             company.ID,
+	})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, rows)
+
+	cfgModule, err := queries.CreateModule(context.Background(), sqlc.CreateModuleParams{
+		Code:        fmt.Sprintf("CFG%06d", time.Now().UnixNano()%1000000),
+		Name:        "Configurações",
+		Description: "Configurações do tenant",
+		MinPackage:  sqlc.ModulePackageStarter,
+		IsActive:    true,
+	})
+	require.NoError(t, err)
+	premiumModule, err := queries.CreateModule(context.Background(), sqlc.CreateModuleParams{
+		Code:        fmt.Sprintf("FIN%06d", time.Now().UnixNano()%1000000),
+		Name:        "Financeiro",
+		Description: "Financeiro premium",
+		MinPackage:  sqlc.ModulePackagePremium,
+		IsActive:    true,
+	})
+	require.NoError(t, err)
+	internalModule, err := queries.CreateModule(context.Background(), sqlc.CreateModuleParams{
+		Code:        fmt.Sprintf("AUD%06d", time.Now().UnixNano()%1000000),
+		Name:        "Logs",
+		Description: "Logs internos",
+		MinPackage:  sqlc.ModulePackageInternal,
+		IsActive:    true,
+	})
+	require.NoError(t, err)
+	orphanModule, err := queries.CreateModule(context.Background(), sqlc.CreateModuleParams{
+		Code:        fmt.Sprintf("EMP%06d", time.Now().UnixNano()%1000000),
+		Name:        "Sem Permissoes",
+		Description: "Modulo sem permissoes vinculadas",
+		MinPackage:  sqlc.ModulePackageStarter,
+		IsActive:    true,
+	})
+	require.NoError(t, err)
+
+	cfgPermission := mustCreatePermission(t, queries, fmt.Sprintf("company_settings:test:%d", time.Now().UnixNano()), "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
+	premiumPermission := mustCreatePermission(t, queries, fmt.Sprintf("finances:test:%d", time.Now().UnixNano()), "Visualizar financeiro", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
+	internalPermission := mustCreatePermission(t, queries, fmt.Sprintf("logs:test:%d", time.Now().UnixNano()), "Visualizar logs", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
+	unlinkedPermission := mustCreatePermission(t, queries, fmt.Sprintf("orphan:test:%d", time.Now().UnixNano()), "Permissão sem módulo", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
+
+	mustAttachPermissionToModule(t, pool, cfgModule.ID, cfgPermission.ID)
+	mustAttachPermissionToModule(t, pool, premiumModule.ID, premiumPermission.ID)
+	mustAttachPermissionToModule(t, pool, internalModule.ID, internalPermission.ID)
+	_ = unlinkedPermission
+
+	mustAttachModuleToCompany(t, pool, company.ID, cfgModule.ID)
+	mustAttachModuleToCompany(t, pool, company.ID, premiumModule.ID)
+	mustAttachModuleToCompany(t, pool, company.ID, internalModule.ID)
+	mustAttachModuleToCompany(t, pool, company.ID, orphanModule.ID)
+
+	modules, err := queries.ListTenantSettingsModulesByCompanyID(context.Background(), company.ID)
+	require.NoError(t, err)
+	require.Len(t, modules, 1)
+	require.Equal(t, cfgModule.ID, modules[0].ID)
+
+	permissions, err := queries.ListTenantSettingsPermissionsByCompanyID(context.Background(), company.ID)
+	require.NoError(t, err)
+	require.Len(t, permissions, 1)
+	require.Equal(t, cfgModule.ID, permissions[0].ModuleID)
+	require.Equal(t, cfgPermission.ID, permissions[0].ID)
+	require.NotEqual(t, premiumPermission.ID, permissions[0].ID)
+	require.NotEqual(t, internalPermission.ID, permissions[0].ID)
 }
 
 func mustCreateServiceType(t *testing.T, queries *sqlc.Queries) sqlc.ServiceType {

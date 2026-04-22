@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -78,9 +80,12 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 		return CompanyUserPermissionsSnapshot{}, err
 	}
 
-	manageableCodes := TenantSettingsManageablePermissionCodesByPackage(company.ActivePackage)
+	modules, err := s.queries.ListTenantSettingsModulesByCompanyID(ctx, companyID)
+	if err != nil {
+		return CompanyUserPermissionsSnapshot{}, err
+	}
 
-	catalog, err := s.queries.ListPermissionsByCodes(ctx, manageableCodes)
+	catalog, err := s.queries.ListTenantSettingsPermissionsByCompanyID(ctx, companyID)
 	if err != nil {
 		return CompanyUserPermissionsSnapshot{}, err
 	}
@@ -114,7 +119,7 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 		})
 	}
 
-	permissionGroups := buildCompanyUserPermissionGroups(company.ActivePackage, permissions)
+	permissionGroups := buildCompanyUserPermissionGroupsFromRows(modules, catalog, permissions)
 
 	return CompanyUserPermissionsSnapshot{
 		UserID:           userID,
@@ -130,7 +135,7 @@ func (s *CompanyUserPermissionService) ListTenantSettingsPermissions(ctx context
 }
 
 func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx context.Context, companyID pgtype.UUID, actorUserID pgtype.UUID, targetUserID pgtype.UUID, permissionCodes []string) (CompanyUserPermissionsSnapshot, error) {
-	company, err := s.queries.GetCompanyByID(ctx, companyID)
+	_, err := s.queries.GetCompanyByID(ctx, companyID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return CompanyUserPermissionsSnapshot{}, apperror.ErrNotFound
 	}
@@ -138,7 +143,7 @@ func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx conte
 		return CompanyUserPermissionsSnapshot{}, err
 	}
 
-	desiredCodes, err := normalizeManagedPermissionCodes(permissionCodes, company.ActivePackage)
+	desiredCodes, err := s.normalizeManagedPermissionCodes(ctx, companyID, permissionCodes)
 	if err != nil {
 		return CompanyUserPermissionsSnapshot{}, err
 	}
@@ -184,11 +189,15 @@ func (s *CompanyUserPermissionService) UpdateTenantSettingsPermissions(ctx conte
 	return s.ListTenantSettingsPermissions(ctx, companyID, targetUserID)
 }
 
-func normalizeManagedPermissionCodes(values []string, pkg sqlc.ModulePackage) (map[string]struct{}, error) {
-	allowedCodes := TenantSettingsManageablePermissionCodesByPackage(pkg)
-	allowed := make(map[string]struct{}, len(allowedCodes))
-	for _, code := range allowedCodes {
-		allowed[code] = struct{}{}
+func (s *CompanyUserPermissionService) normalizeManagedPermissionCodes(ctx context.Context, companyID pgtype.UUID, values []string) (map[string]struct{}, error) {
+	catalog, err := s.queries.ListTenantSettingsPermissionsByCompanyID(ctx, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	allowed := make(map[string]struct{}, len(catalog))
+	for _, permission := range catalog {
+		allowed[permission.Code] = struct{}{}
 	}
 
 	result := make(map[string]struct{}, len(values))
@@ -211,35 +220,45 @@ func roleInDefaultRoles(role sqlc.UserRoleType, defaultRoles []sqlc.UserRoleType
 	return false
 }
 
-func buildCompanyUserPermissionGroups(pkg sqlc.ModulePackage, permissions []CompanyUserPermissionItem) []CompanyUserPermissionGroup {
+func buildCompanyUserPermissionGroupsFromRows(modules []sqlc.Module, rows []sqlc.ListTenantSettingsPermissionsByCompanyIDRow, permissions []CompanyUserPermissionItem) []CompanyUserPermissionGroup {
 	byCode := make(map[string]CompanyUserPermissionItem, len(permissions))
 	for _, permission := range permissions {
 		byCode[permission.Code] = permission
 	}
 
-	groups := make([]CompanyUserPermissionGroup, 0)
-	for _, group := range TenantSettingsPermissionGroupsByPackage(pkg) {
-		items := make([]CompanyUserPermissionItem, 0)
-		for _, code := range group.PermissionCodes {
-			if permission, ok := byCode[code]; ok {
-				items = append(items, permission)
-			}
+	rowsByModule := make(map[string][]sqlc.ListTenantSettingsPermissionsByCompanyIDRow, len(rows))
+	for _, row := range rows {
+		rowsByModule[row.ModuleCode] = append(rowsByModule[row.ModuleCode], row)
+	}
+
+	groups := make([]CompanyUserPermissionGroup, 0, len(modules))
+	for _, module := range modules {
+		moduleRows := rowsByModule[module.Code]
+		if len(moduleRows) == 0 {
+			continue
 		}
-		for _, prefix := range group.PermissionPrefixes {
-			for _, permission := range permissions {
-				if len(permission.Code) >= len(prefix) && permission.Code[:len(prefix)] == prefix {
-					items = append(items, permission)
-				}
+
+		items := make([]CompanyUserPermissionItem, 0, len(moduleRows))
+		for _, row := range moduleRows {
+			permission, ok := byCode[row.Code]
+			if !ok {
+				continue
 			}
+			items = append(items, permission)
 		}
 		if len(items) == 0 {
 			continue
 		}
+
+		slices.SortFunc(items, func(a, b CompanyUserPermissionItem) int {
+			return strings.Compare(a.Code, b.Code)
+		})
+
 		groups = append(groups, CompanyUserPermissionGroup{
-			ModuleCode:        group.ModuleCode,
-			ModuleName:        group.ModuleName,
-			ModuleDescription: group.ModuleDescription,
-			MinPackage:        group.MinPackage,
+			ModuleCode:        module.Code,
+			ModuleName:        module.Name,
+			ModuleDescription: module.Description,
+			MinPackage:        module.MinPackage,
 			Permissions:       items,
 		})
 	}

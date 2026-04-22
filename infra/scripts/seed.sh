@@ -28,12 +28,47 @@ docker run --rm \
   postgres:18-alpine \
   psql "${db_url}" -v ON_ERROR_STOP=1 <<'SQL'
 -- Modules
+WITH module_seed(code, name, description, min_package) AS (
+  VALUES
+    ('CFG', 'Configs', 'Módulo de Configurações', 'starter'::module_package),
+    ('UCR', 'Users', 'Módulo de Usuários', 'starter'::module_package),
+    ('SCH', 'Schedules', 'Módulo de Agendamentos', 'starter'::module_package),
+    ('SVC', 'Services', 'Módulo de Serviços', 'starter'::module_package),
+    ('SPM', 'Services Plans', 'Módulo de Planos de Serviços', 'basic'::module_package),
+    ('PET', 'Pets', 'Módulo de Pets', 'basic'::module_package),
+    ('TNT', 'Companies', 'Módulo de Empresas', 'internal'::module_package),
+    ('DHB', 'Dashboard', 'Módulo de Dashboard/Estatísticas', 'basic'::module_package),
+    ('CLI', 'Clients', 'Módulo de Clientes', 'starter'::module_package),
+    ('RPT', 'Reports', 'Módulo de Relatórios', 'basic'::module_package),
+    ('CRP', 'Custom Reports', 'Módulo de Relatórios Personalizados', 'premium'::module_package),
+    ('PRD', 'Products', 'Módulo de Produtos', 'essential'::module_package),
+    ('GSM', 'Professionals Schedules', 'Módulo de Agendamentos por Profissionais', 'essential'::module_package),
+    ('DLV', 'Delivery Pets', 'Módulo de Tele-busca/Entrega de Pets', 'essential'::module_package),
+    ('PDC', 'Pet Day Care', 'Módulo de Creche de Pets', 'premium'::module_package),
+    ('PHO', 'Pet Hotel', 'Módulo de Hotel', 'premium'::module_package),
+    ('CHT', 'Chat', 'Módulo de Chat', 'premium'::module_package),
+    ('NTF', 'Notifications', 'Módulo de Notificações', 'premium'::module_package),
+    ('FIN', 'Financial', 'Módulo de Finanças', 'premium'::module_package),
+    ('INV', 'Inventory', 'Módulo de Estoque', 'essential'::module_package),
+    ('SUP', 'Suppliers', 'Módulo de Fornecedores', 'premium'::module_package),
+    ('EUA', 'External User Access', 'Módulo de Acesso de Usuários Externos', 'premium'::module_package),
+    ('AUD', 'Audit Logs', 'Módulo de Logs', 'internal'::module_package),
+    ('ATL', 'Authentication Logs', 'Módulo de Logs de Autenticação', 'internal'::module_package),
+    -- Transitional legacy code still used by current app routes/middleware.
+    ('CRM', 'Customer Management', 'Legacy customer management module', 'starter'::module_package)
+)
 INSERT INTO modules (code, name, description, min_package)
-VALUES
-  ('SCH', 'Scheduling', 'Core scheduling module', 'starter'),
-  ('CRM', 'Customer Management', 'Customers and relationship management', 'starter'),
-  ('FIN', 'Finance', 'Cashflow and finance controls', 'basic')
-ON CONFLICT (code) DO NOTHING;
+SELECT
+  ms.code,
+  ms.name,
+  ms.description,
+  ms.min_package
+FROM module_seed ms
+ON CONFLICT (code) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  min_package = EXCLUDED.min_package,
+  updated_at = NOW();
 
 -- Permissions catalog based on docs/conventions/permissions.md
 WITH permission_seed(code, description, default_roles) AS (
@@ -170,6 +205,137 @@ ON CONFLICT (code) DO UPDATE SET
   default_roles = EXCLUDED.default_roles,
   updated_at = NOW();
 
+-- Module permissions required by tenant settings and module-driven access
+WITH module_permission_seed(module_code, permission_code) AS (
+  VALUES
+    ('CFG', 'company_settings:edit'),
+    ('CFG', 'plan_settings:edit'),
+    ('CFG', 'payment_settings:edit'),
+    ('CFG', 'notification_settings:edit'),
+    ('CFG', 'integration_settings:edit'),
+    ('CFG', 'security_settings:edit'),
+    ('UCR', 'users:create'),
+    ('UCR', 'users:view'),
+    ('UCR', 'users:update'),
+    ('UCR', 'users:delete'),
+    ('UCR', 'users:restore'),
+    ('UCR', 'users:block'),
+    ('UCR', 'users:unblock'),
+    ('CLI', 'clients:create'),
+    ('CLI', 'clients:view'),
+    ('CLI', 'clients:update'),
+    ('CLI', 'clients:delete'),
+    ('CLI', 'clients:restore'),
+    ('CLI', 'clients:deactivate'),
+    ('CLI', 'clients:reactivate'),
+    ('PET', 'pets:create'),
+    ('PET', 'pets:view'),
+    ('PET', 'pets:update'),
+    ('PET', 'pets:delete'),
+    ('PET', 'pets:deactivate'),
+    ('PET', 'pets:reactivate'),
+    ('SCH', 'schedules:create'),
+    ('SCH', 'schedules:view'),
+    ('SCH', 'schedules:update'),
+    ('SCH', 'schedules:delete'),
+    ('SCH', 'schedules:deactivate'),
+    ('SCH', 'schedules:reactivate'),
+    ('SVC', 'services:create'),
+    ('SVC', 'services:view'),
+    ('SVC', 'services:update'),
+    ('SVC', 'services:delete'),
+    ('SVC', 'services:deactivate'),
+    ('SVC', 'services:reactivate'),
+    ('RPT', 'reports:create'),
+    ('RPT', 'reports:view'),
+    ('RPT', 'reports:update'),
+    ('RPT', 'reports:delete'),
+    ('RPT', 'reports:restore'),
+    ('RPT', 'reports:deactivate'),
+    ('RPT', 'reports:reactivate'),
+    ('PRD', 'products:create'),
+    ('PRD', 'products:view'),
+    ('PRD', 'products:update'),
+    ('PRD', 'products:delete'),
+    ('PRD', 'products:deactivate'),
+    ('PRD', 'products:reactivate'),
+    ('DLV', 'pickup_delivery:create'),
+    ('DLV', 'pickup_delivery:view'),
+    ('DLV', 'pickup_delivery:update'),
+    ('DLV', 'pickup_delivery:delete'),
+    ('DLV', 'pickup_delivery:restore'),
+    ('DLV', 'pickup_delivery:deactivate'),
+    ('DLV', 'pickup_delivery:reactivate'),
+    ('INV', 'stock:create'),
+    ('INV', 'stock:view'),
+    ('INV', 'stock:update'),
+    ('INV', 'stock:delete'),
+    ('INV', 'stock:deactivate'),
+    ('INV', 'stock:reactivate'),
+    ('PDC', 'daycare:create'),
+    ('PDC', 'daycare:view'),
+    ('PDC', 'daycare:update'),
+    ('PDC', 'daycare:delete'),
+    ('PDC', 'daycare:restore'),
+    ('PDC', 'daycare:deactivate'),
+    ('PDC', 'daycare:reactivate'),
+    ('PHO', 'hotel:create'),
+    ('PHO', 'hotel:view'),
+    ('PHO', 'hotel:update'),
+    ('PHO', 'hotel:delete'),
+    ('PHO', 'hotel:restore'),
+    ('PHO', 'hotel:deactivate'),
+    ('PHO', 'hotel:reactivate'),
+    ('CHT', 'chat:create'),
+    ('CHT', 'chat:view'),
+    ('CHT', 'chat:update'),
+    ('CHT', 'chat:delete'),
+    ('CHT', 'chat:restore'),
+    ('CHT', 'chat:deactivate'),
+    ('CHT', 'chat:reactivate'),
+    ('NTF', 'notifications:create'),
+    ('NTF', 'notifications:view'),
+    ('NTF', 'notifications:update'),
+    ('NTF', 'notifications:delete'),
+    ('NTF', 'notifications:restore'),
+    ('NTF', 'notifications:deactivate'),
+    ('NTF', 'notifications:reactivate'),
+    ('FIN', 'finances:create'),
+    ('FIN', 'finances:view'),
+    ('FIN', 'finances:update'),
+    ('FIN', 'finances:delete'),
+    ('FIN', 'finances:restore'),
+    ('FIN', 'finances:deactivate'),
+    ('FIN', 'finances:reactivate'),
+    ('SUP', 'suppliers:create'),
+    ('SUP', 'suppliers:view'),
+    ('SUP', 'suppliers:update'),
+    ('SUP', 'suppliers:delete'),
+    ('SUP', 'suppliers:restore'),
+    ('SUP', 'suppliers:deactivate'),
+    ('SUP', 'suppliers:reactivate'),
+    ('EUA', 'external_access:create'),
+    ('EUA', 'external_access:view'),
+    ('EUA', 'external_access:update'),
+    ('EUA', 'external_access:delete'),
+    ('EUA', 'external_access:deactivate'),
+    ('EUA', 'external_access:reactivate'),
+    ('AUD', 'logs:view')
+), resolved_module_permissions AS (
+  SELECT
+    m.id AS module_id,
+    p.id AS permission_id
+  FROM module_permission_seed mps
+  INNER JOIN modules m ON m.code = mps.module_code AND m.deleted_at IS NULL
+  INNER JOIN permissions p ON p.code = mps.permission_code
+)
+INSERT INTO module_permissions (module_id, permission_id)
+SELECT
+  rmp.module_id,
+  rmp.permission_id
+FROM resolved_module_permissions rmp
+ON CONFLICT (module_id, permission_id) DO NOTHING;
+
 -- Plan types
 INSERT INTO plan_types (name, description)
 SELECT 'Monthly', 'Default monthly billing cycle'
@@ -194,7 +360,7 @@ WHERE NOT EXISTS (
 WITH starter_plan AS (
   SELECT id FROM plans WHERE name = 'Starter Monthly' AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('SCH', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'CLI', 'CRM')
 )
 INSERT INTO plan_modules (plan_id, module_id, is_active)
 SELECT sp.id, sm.id, TRUE
@@ -597,7 +763,7 @@ WHERE NOT EXISTS (
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('SCH', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'CLI', 'CRM')
 )
 INSERT INTO company_modules (company_id, module_id, is_active)
 SELECT dc.id, sm.id, TRUE

@@ -210,6 +210,14 @@ Status atual:
 
 ## Fase 3 - Refactor da Seção `Permissões` no Web
 
+Status atual:
+
+- A seção `Permissões` do `/settings` passou a consumir `permission_groups`.
+- A UI agora renderiza permissões agrupadas por módulo, com nome, descrição e pacote mínimo do grupo.
+- O fluxo de seleção de usuário e save foi preservado.
+- A resposta plana `permissions` continua sendo usada apenas como fallback de compatibilidade.
+- O modo mock e os testes do Web foram atualizados para o novo contrato.
+
 ### 3.1 Ações
 
 - Substituir a lista atual de permissões de configurações por uma UI modular.
@@ -219,11 +227,24 @@ Status atual:
 
 ### 3.2 Checks
 
-- [ ] A UI mostra permissões agrupadas por módulo.
-- [ ] O `admin` só vê módulos disponíveis no plano do tenant.
-- [ ] O `system` não vê a seção `Permissões`.
+- [x] A UI mostra permissões agrupadas por módulo.
+- [x] O `admin` só vê módulos disponíveis no plano do tenant.
+- [x] O `system` não vê a seção `Permissões`.
 
 ## Fase 4 - Robustez e Testes
+
+Status atual:
+
+- a cobertura de backend já passou a validar:
+  - agrupamento por módulo;
+  - rejeição de permissões fora do plano/pacote do tenant;
+  - isolamento por tenant;
+  - estabilidade do contrato agrupado no endpoint;
+- a cobertura de frontend já valida:
+  - renderização modular da seção `Permissões`;
+  - submit por usuário;
+  - visibilidade condicional da seção para `admin`;
+- o endurecimento adicional de catálogo, queries DB-driven e filtros por pacote foi aprofundado no plano derivado [0008_3-DB-DRIVEN-TENANT-SETTINGS-PERMISSIONS-PLAN.md](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/docs/plans/0008_3-DB-DRIVEN-TENANT-SETTINGS-PERMISSIONS-PLAN.md:1), que passou a detalhar a evolução da implementação além deste plano.
 
 ### 4.1 Ações
 
@@ -240,8 +261,8 @@ Status atual:
 
 ### 4.2 Checks
 
-- [ ] Há testes cobrindo módulos por plano.
-- [ ] Há testes cobrindo edição de permissões agrupadas.
+- [x] Há testes cobrindo módulos por plano.
+- [x] Há testes cobrindo edição de permissões agrupadas.
 
 ## Riscos e Cuidados
 
