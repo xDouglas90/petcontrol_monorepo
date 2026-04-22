@@ -41,6 +41,7 @@ export interface ListQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  kind?: string;
 }
 
 export interface AuthAccessClaims {
@@ -98,7 +99,7 @@ export const MODULE_PACKAGES = [
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
 
-export const MODULE_CODES = ['SCH', 'CRM', 'FIN'] as const;
+export const MODULE_CODES = ['PPL', 'SCH', 'CRM', 'FIN'] as const;
 
 export type ModuleCode = (typeof MODULE_CODES)[number];
 
@@ -125,6 +126,17 @@ export const MARITAL_STATUSES = [
 ] as const;
 
 export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
+
+export const PERSON_KINDS = [
+  'client',
+  'employee',
+  'outsourced_employee',
+  'supplier',
+  'guardian',
+  'responsible',
+] as const;
+
+export type PersonKind = (typeof PERSON_KINDS)[number];
 
 export interface CompanyDTO {
   id: UUID;
@@ -435,6 +447,198 @@ export interface ClientListApiResponseDTO extends PaginatedResponse<ClientDTO> {
 
 export interface ClientApiResponseDTO {
   data: ClientDTO;
+}
+
+export interface PersonDTO {
+  id: UUID;
+  company_id: UUID;
+  company_person_id: UUID;
+  kind: PersonKind;
+  full_name?: string | null;
+  short_name?: string | null;
+  image_url?: string | null;
+  cpf?: string | null;
+  has_system_user: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface PersonListApiResponseDTO extends PaginatedResponse<PersonDTO> {}
+
+export interface PersonContactDTO {
+  email: string;
+  phone?: string | null;
+  cellphone: string;
+  has_whatsapp: boolean;
+  instagram_user?: string | null;
+  emergency_contact?: string | null;
+  emergency_phone?: string | null;
+}
+
+export interface PersonAddressDTO {
+  zip_code: string;
+  street: string;
+  number: string;
+  complement?: string | null;
+  district: string;
+  city: string;
+  state: string;
+  country: string;
+  label?: string | null;
+  is_main: boolean;
+}
+
+export interface PersonClientDetailsDTO {
+  client_since?: string | null;
+  notes?: string | null;
+}
+
+export interface PersonAddressInput {
+  zip_code: string;
+  street: string;
+  number: string;
+  complement?: string;
+  district: string;
+  city: string;
+  state: string;
+  country: string;
+  label?: string;
+}
+
+export interface PersonEmploymentInput {
+  role: string;
+  admission_date: string;
+  resignation_date?: string;
+  salary: string;
+}
+
+export interface PersonEmployeeDocumentsInput {
+  rg: string;
+  issuing_body: string;
+  issuing_date: string;
+  ctps: string;
+  ctps_series: string;
+  ctps_state: string;
+  pis: string;
+  graduation: string;
+}
+
+export interface PersonEmployeeBenefitsInput {
+  meal_ticket: boolean;
+  meal_ticket_value: string;
+  transport_voucher: boolean;
+  transport_voucher_qty: number;
+  transport_voucher_value: string;
+  valid_from: string;
+  valid_until?: string;
+}
+
+export interface CreatePersonInput {
+  kind: PersonKind;
+  full_name: string;
+  short_name: string;
+  gender_identity: GenderIdentity;
+  marital_status: MaritalStatus;
+  birth_date: string;
+  cpf: string;
+  email: string;
+  phone?: string;
+  cellphone: string;
+  has_whatsapp: boolean;
+  has_system_user?: boolean;
+  is_active?: boolean;
+  address?: PersonAddressInput;
+  client_since?: string;
+  notes?: string;
+  employment?: PersonEmploymentInput;
+  employee_documents?: PersonEmployeeDocumentsInput;
+  employee_benefits?: PersonEmployeeBenefitsInput;
+  pet_ids?: UUID[];
+}
+
+export interface UpdatePersonInput {
+  full_name?: string;
+  short_name?: string;
+  gender_identity?: GenderIdentity;
+  marital_status?: MaritalStatus;
+  birth_date?: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+  cellphone?: string;
+  has_whatsapp?: boolean;
+  has_system_user?: boolean;
+  is_active?: boolean;
+  address?: PersonAddressInput;
+  client_since?: string;
+  notes?: string;
+  employment?: PersonEmploymentInput;
+  employee_documents?: PersonEmployeeDocumentsInput;
+  employee_benefits?: PersonEmployeeBenefitsInput;
+  pet_ids?: UUID[];
+}
+
+export interface PersonEmployeeDetailsDTO {
+  company_employee_id: UUID;
+  role?: string | null;
+  admission_date?: string | null;
+  resignation_date?: string | null;
+  salary?: string | null;
+}
+
+export interface PersonEmployeeDocumentsDTO {
+  rg: string;
+  issuing_body: string;
+  ctps: string;
+  pis: string;
+  graduation: string;
+}
+
+export interface PersonEmployeeBenefitsDTO {
+  meal_ticket: boolean;
+  meal_ticket_value: string;
+  transport_voucher: boolean;
+  transport_voucher_qty: number;
+  transport_voucher_value: string;
+  valid_from: string;
+  valid_until?: string | null;
+}
+
+export interface PersonLinkedUserDTO {
+  user_id: UUID;
+  email: string;
+  role: UserRole;
+  kind: UserKind;
+  is_active: boolean;
+  is_owner: boolean;
+  joined_at: string;
+}
+
+export interface PersonGuardianPetDTO {
+  pet_id: UUID;
+  name: string;
+  kind: PetKind;
+  size: PetSize;
+  owner_name: string;
+}
+
+export interface PersonDetailDTO extends PersonDTO {
+  gender_identity?: GenderIdentity | null;
+  marital_status?: MaritalStatus | null;
+  birth_date?: string | null;
+  contact?: PersonContactDTO | null;
+  address?: PersonAddressDTO | null;
+  client_details?: PersonClientDetailsDTO | null;
+  employee_details?: PersonEmployeeDetailsDTO | null;
+  employee_documents?: PersonEmployeeDocumentsDTO | null;
+  employee_benefits?: PersonEmployeeBenefitsDTO | null;
+  linked_user?: PersonLinkedUserDTO | null;
+  guardian_pets?: PersonGuardianPetDTO[] | null;
+}
+
+export interface PersonApiResponseDTO {
+  data: PersonDetailDTO;
 }
 
 export const PET_SIZES = ['small', 'medium', 'large', 'giant'] as const;

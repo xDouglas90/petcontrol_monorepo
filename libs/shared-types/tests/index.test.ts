@@ -21,7 +21,7 @@ import {
 
 describe("shared-types domain contracts", () => {
   it("exports module codes for the current seeded domain set", () => {
-    expect(MODULE_CODES).toEqual(["SCH", "CRM", "FIN"]);
+    expect(MODULE_CODES).toEqual(["PPL", "SCH", "CRM", "FIN"]);
   });
 
   it("exports user roles and company user kinds aligned with the database schema", () => {

@@ -12,6 +12,8 @@ export const API_PATHS = {
   adminSystemChatSocket: (userId: string) => `/chat/system/${userId}/ws`,
   schedules: '/schedules',
   scheduleHistory: (scheduleId: string) => `/schedules/${scheduleId}/history`,
+  people: '/people',
+  peopleById: (personId: string) => `/people/${personId}`,
   clients: '/clients',
   pets: '/pets',
   services: '/services',
@@ -21,6 +23,7 @@ export const API_PATHS = {
 } as const;
 
 export const MODULE_CODES = {
+  people: 'PPL',
   scheduling: 'SCH',
   crm: 'CRM',
   finance: 'FIN',

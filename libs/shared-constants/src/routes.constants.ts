@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   login: "/login",
   dashboard: "/$companySlug/dashboard",
   schedules: "/$companySlug/schedules",
+  people: "/$companySlug/people",
   clients: "/$companySlug/clients",
   pets: "/$companySlug/pets",
   services: "/$companySlug/services",
@@ -13,6 +14,7 @@ export const APP_ROUTE_SEGMENTS = {
   login: "login",
   dashboard: "dashboard",
   schedules: "schedules",
+  people: "people",
   clients: "clients",
   pets: "pets",
   services: "services",
@@ -24,6 +26,7 @@ export const COMPANY_ROUTE_PARAM = "companySlug" as const;
 export const COMPANY_ROUTE_PATTERNS = {
   dashboard: "/$companySlug/dashboard",
   schedules: "/$companySlug/schedules",
+  people: "/$companySlug/people",
   clients: "/$companySlug/clients",
   pets: "/$companySlug/pets",
   services: "/$companySlug/services",
