@@ -78,8 +78,6 @@ DROP TABLE IF EXISTS company_addresses;
 
 DROP TABLE IF EXISTS company_finances;
 
-DROP TABLE IF EXISTS company_people_addresses;
-
 DROP TABLE IF EXISTS company_employee_costs;
 
 DROP TABLE IF EXISTS employee_benefits;
@@ -199,4 +197,3 @@ DROP TYPE IF EXISTS notification_level;
 
 -- FINALIZAÇÃO
 DROP EXTENSION IF EXISTS "uuid-ossp";
-

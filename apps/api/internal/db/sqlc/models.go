@@ -1161,15 +1161,6 @@ type CompanyModule struct {
 	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
-type CompanyPeopleAddress struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`
-	PersonID  pgtype.UUID        `db:"person_id" json:"person_id"`
-	AddressID pgtype.UUID        `db:"address_id" json:"address_id"`
-	IsMain    bool               `db:"is_main" json:"is_main"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-}
-
 type CompanyPerson struct {
 	ID        pgtype.UUID        `db:"id" json:"id"`
 	CompanyID pgtype.UUID        `db:"company_id" json:"company_id"`

@@ -792,17 +792,6 @@ CREATE TABLE company_employee_costs(
   updated_at timestamptz
 );
 
--- Endereços de pessoas no contexto de uma empresa
-CREATE TABLE company_people_addresses(
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  person_id uuid NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-  address_id uuid NOT NULL REFERENCES addresses(id) ON DELETE CASCADE,
-  is_main boolean NOT NULL DEFAULT FALSE,
-  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (company_id, person_id, address_id)
-);
-
 -- Dados bancários de empresas
 CREATE TABLE company_finances(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
