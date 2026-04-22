@@ -130,7 +130,7 @@ Agrupamento recomendado no Web:
   - horários de funcionamento;
   - pausa operacional;
   - dias de atendimento;
-  - limites mínimo e máximo de agendamentos por dia.
+  - limites mínimo e Máx. agendamentos/dia.
 - `Capacidade`
   - `dynamic_cages`;
   - totais por porte de baia/gaiola.
