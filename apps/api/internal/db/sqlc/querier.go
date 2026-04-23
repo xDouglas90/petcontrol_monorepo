@@ -178,7 +178,7 @@ type Querier interface {
 	InsertEmployeeBenefits(ctx context.Context, arg InsertEmployeeBenefitsParams) (int64, error)
 	InsertEmployeeDocuments(ctx context.Context, arg InsertEmployeeDocumentsParams) (int64, error)
 	InsertEployment(ctx context.Context, arg InsertEploymentParams) (int64, error)
-	InsertFinance(ctx context.Context, arg InsertFinanceParams) (int64, error)
+	InsertFinance(ctx context.Context, arg InsertFinanceParams) (Finance, error)
 	InsertLanguage(ctx context.Context, arg InsertLanguageParams) (int64, error)
 	InsertLoginHistory(ctx context.Context, arg InsertLoginHistoryParams) error
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) (Notification, error)

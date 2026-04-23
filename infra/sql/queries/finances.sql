@@ -1,6 +1,7 @@
--- name: InsertFinance :execrows
+-- name: InsertFinance :one
 INSERT INTO finances(bank_name, bank_code, bank_branch, bank_account, bank_account_digit, bank_account_type, has_pix, pix_key, pix_key_type)
-    VALUES (sqlc.arg('BankName'), sqlc.arg('BankCode'), sqlc.arg('BankBranch'), sqlc.arg('BankAccount'), sqlc.arg('BankAccountDigit'), sqlc.arg('BankAccountType'), sqlc.narg('HasPix'), sqlc.arg('PixKey'), sqlc.arg('PixKeyType'));
+    VALUES (sqlc.arg('BankName'), sqlc.arg('BankCode'), sqlc.arg('BankBranch'), sqlc.arg('BankAccount'), sqlc.arg('BankAccountDigit'), sqlc.arg('BankAccountType'), sqlc.narg('HasPix'), sqlc.arg('PixKey'), sqlc.arg('PixKeyType'))
+RETURNING id, bank_name, bank_code, bank_branch, bank_account, bank_account_digit, bank_account_type, has_pix, pix_key, pix_key_type, created_at, updated_at;
 
 -- name: UpdateFinance :execrows
 UPDATE
@@ -41,4 +42,3 @@ WHERE
 -- name: DeleteFinance :execrows
 DELETE FROM finances
 WHERE id = sqlc.arg('ID');
-

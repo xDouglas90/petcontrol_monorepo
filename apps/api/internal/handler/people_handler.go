@@ -57,6 +57,18 @@ type personEmployeeBenefitsRequest struct {
 	ValidUntil            string `json:"valid_until"`
 }
 
+type personFinanceRequest struct {
+	BankName         string `json:"bank_name"`
+	BankCode         string `json:"bank_code"`
+	BankBranch       string `json:"bank_branch"`
+	BankAccount      string `json:"bank_account"`
+	BankAccountDigit string `json:"bank_account_digit"`
+	BankAccountType  string `json:"bank_account_type"`
+	HasPix           bool   `json:"has_pix"`
+	PixKey           string `json:"pix_key"`
+	PixKeyType       string `json:"pix_key_type"`
+}
+
 type createPersonRequest struct {
 	Kind             string                          `json:"kind"`
 	FullName         string                          `json:"full_name"`
@@ -76,6 +88,7 @@ type createPersonRequest struct {
 	Notes            string                          `json:"notes"`
 	PetIDs           []string                        `json:"pet_ids"`
 	Employment       *personEmploymentRequest        `json:"employment"`
+	Finance          *personFinanceRequest           `json:"finance"`
 	EmployeeDocs     *personEmployeeDocumentsRequest `json:"employee_documents"`
 	EmployeeBenefits *personEmployeeBenefitsRequest  `json:"employee_benefits"`
 }
@@ -98,6 +111,7 @@ type updatePersonRequest struct {
 	Notes            *string                         `json:"notes"`
 	PetIDs           []string                        `json:"pet_ids"`
 	Employment       *personEmploymentRequest        `json:"employment"`
+	Finance          *personFinanceRequest           `json:"finance"`
 	EmployeeDocs     *personEmployeeDocumentsRequest `json:"employee_documents"`
 	EmployeeBenefits *personEmployeeBenefitsRequest  `json:"employee_benefits"`
 }
@@ -282,6 +296,12 @@ func (h *PeopleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	finance, err := mapFinanceRequest(req.Finance)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_finance", "invalid finance payload")
+		return
+	}
+
 	employeeDocs, err := mapEmployeeDocumentsRequest(req.EmployeeDocs)
 	if err != nil {
 		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_employee_documents", "invalid employee documents payload")
@@ -322,6 +342,7 @@ func (h *PeopleHandler) Create(c *gin.Context) {
 		Notes:            stringToOptionalTrimmed(req.Notes),
 		PetIDs:           petIDs,
 		Employment:       employment,
+		Finance:          finance,
 		EmployeeDocs:     employeeDocs,
 		EmployeeBenefits: employeeBenefits,
 	})
@@ -346,7 +367,7 @@ func (h *PeopleHandler) Create(c *gin.Context) {
 // @Failure 404 {object} APIErrorResponseDoc
 // @Failure 422 {object} APIErrorResponseDoc
 // @Failure 500 {object} APIErrorResponseDoc
-// @Router /people/{id} [put]
+// @Router /people/{id} [patch]
 func (h *PeopleHandler) Update(c *gin.Context) {
 	companyID, ok := middleware.GetCompanyID(c)
 	if !ok {
@@ -416,6 +437,12 @@ func (h *PeopleHandler) Update(c *gin.Context) {
 		return
 	}
 
+	finance, err := mapFinanceRequest(req.Finance)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_finance", "invalid finance payload")
+		return
+	}
+
 	employeeDocs, err := mapEmployeeDocumentsRequest(req.EmployeeDocs)
 	if err != nil {
 		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_employee_documents", "invalid employee documents payload")
@@ -457,6 +484,7 @@ func (h *PeopleHandler) Update(c *gin.Context) {
 		PetIDs:           petIDs,
 		HasPetIDs:        req.PetIDs != nil,
 		Employment:       employment,
+		Finance:          finance,
 		EmployeeDocs:     employeeDocs,
 		EmployeeBenefits: employeeBenefits,
 	})
@@ -481,6 +509,64 @@ func filterPeopleByRole(items []service.PeopleListItem, role string) []service.P
 	}
 
 	return filtered
+}
+
+func mapFinanceRequest(req *personFinanceRequest) (*service.PersonFinanceInput, error) {
+	if req == nil {
+		return nil, nil
+	}
+
+	bankAccountType, err := parseBankAccountKind(req.BankAccountType)
+	if err != nil {
+		return nil, err
+	}
+
+	pixKeyType, err := parseOptionalPixKeyKind(stringToOptionalTrimmed(req.PixKeyType))
+	if err != nil {
+		return nil, err
+	}
+
+	return &service.PersonFinanceInput{
+		BankName:         strings.TrimSpace(req.BankName),
+		BankCode:         stringToOptionalTrimmed(req.BankCode),
+		BankBranch:       strings.TrimSpace(req.BankBranch),
+		BankAccount:      strings.TrimSpace(req.BankAccount),
+		BankAccountDigit: strings.TrimSpace(req.BankAccountDigit),
+		BankAccountType:  bankAccountType,
+		HasPix:           req.HasPix,
+		PixKey:           stringToOptionalTrimmed(req.PixKey),
+		PixKeyType:       pixKeyType,
+	}, nil
+}
+
+func parseBankAccountKind(raw string) (sqlc.BankAccountKind, error) {
+	value := sqlc.BankAccountKind(strings.TrimSpace(raw))
+	switch value {
+	case sqlc.BankAccountKindChecking,
+		sqlc.BankAccountKindSavings,
+		sqlc.BankAccountKindSalary:
+		return value, nil
+	default:
+		return "", apperror.ErrUnprocessableEntity
+	}
+}
+
+func parseOptionalPixKeyKind(raw *string) (*sqlc.PixKeyKind, error) {
+	if raw == nil {
+		return nil, nil
+	}
+
+	value := sqlc.PixKeyKind(strings.TrimSpace(*raw))
+	switch value {
+	case sqlc.PixKeyKindCpf,
+		sqlc.PixKeyKindCnpj,
+		sqlc.PixKeyKindEmail,
+		sqlc.PixKeyKindPhone,
+		sqlc.PixKeyKindRandom:
+		return &value, nil
+	default:
+		return nil, apperror.ErrUnprocessableEntity
+	}
 }
 
 func filterPeopleByKind(items []service.PeopleListItem, kind *sqlc.PersonKind) []service.PeopleListItem {

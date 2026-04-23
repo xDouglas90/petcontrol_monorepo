@@ -135,7 +135,7 @@ func main() {
 	people.GET("", middleware.RequirePermission(queries, service.PermissionPeopleView), peopleHandler.List)
 	people.GET("/:id", middleware.RequirePermission(queries, service.PermissionPeopleView), peopleHandler.GetByID)
 	people.POST("", middleware.RequirePermission(queries, service.PermissionPeopleCreate), peopleHandler.Create)
-	people.PUT("/:id", middleware.RequirePermission(queries, service.PermissionPeopleUpdate), peopleHandler.Update)
+	people.PATCH("/:id", middleware.RequirePermission(queries, service.PermissionPeopleUpdate), peopleHandler.Update)
 
 	clients := protected.Group("/clients")
 	clients.Use(middleware.RequireModule(queries, "CRM"))

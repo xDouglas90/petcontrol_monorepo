@@ -34,6 +34,7 @@ type PeopleListItem struct {
 	Kind            sqlc.PersonKind
 	FullName        *string
 	ShortName       *string
+	Email           *string
 	ImageURL        *string
 	CPF             *string
 	HasSystemUser   bool
@@ -47,6 +48,7 @@ type PeopleDetail struct {
 	Identification    *sqlc.GetPersonIdentificationsRow
 	Contact           *sqlc.GetPersonContactsRow
 	Address           *AddressDetail
+	Finance           *sqlc.ListPersonFinancesRow
 	ClientDetails     *ClientDetails
 	EmployeeDetails   *EmployeeDetails
 	EmployeeDocuments *sqlc.GetEmployeeDocumentsRow
@@ -119,6 +121,18 @@ type PersonEmployeeBenefitsInput struct {
 	ValidUntil            *pgtype.Date
 }
 
+type PersonFinanceInput struct {
+	BankName         string
+	BankCode         *string
+	BankBranch       string
+	BankAccount      string
+	BankAccountDigit string
+	BankAccountType  sqlc.BankAccountKind
+	HasPix           bool
+	PixKey           *string
+	PixKeyType       *sqlc.PixKeyKind
+}
+
 type PersonAddressInput struct {
 	ZipCode    string
 	Street     string
@@ -152,6 +166,7 @@ type CreatePersonInput struct {
 	ClientSince      *pgtype.Date
 	Notes            *string
 	Employment       *PersonEmploymentInput
+	Finance          *PersonFinanceInput
 	EmployeeDocs     *PersonEmployeeDocumentsInput
 	EmployeeBenefits *PersonEmployeeBenefitsInput
 	PetIDs           []pgtype.UUID
@@ -178,6 +193,7 @@ type UpdatePersonInput struct {
 	ClientSince      *pgtype.Date
 	Notes            *string
 	Employment       *PersonEmploymentInput
+	Finance          *PersonFinanceInput
 	EmployeeDocs     *PersonEmployeeDocumentsInput
 	EmployeeBenefits *PersonEmployeeBenefitsInput
 	PetIDs           []pgtype.UUID
@@ -212,6 +228,7 @@ func (s *PeopleService) ListPeopleByCompanyID(ctx context.Context, companyID pgt
 			Kind:            item.PersonKind,
 			FullName:        textValuePointer(item.IdentificationsFullName),
 			ShortName:       textValuePointer(item.IdentificationsShortName),
+			Email:           textValuePointer(item.ContactsEmail),
 			ImageURL:        textValuePointer(item.IdentificationsImageUrl),
 			CPF:             textValuePointer(item.IdentificationsCpf),
 			HasSystemUser:   item.PersonHasSystemUser,
@@ -419,6 +436,27 @@ func (s *PeopleService) GetPersonDetailByID(ctx context.Context, companyID pgtyp
 		break
 	}
 
+	finances, err := s.queries.ListPersonFinances(ctx, sqlc.ListPersonFinancesParams{
+		PersonID: personID,
+		Offset:   0,
+		Limit:    10,
+	})
+	if err != nil {
+		return PeopleDetail{}, err
+	}
+	for _, finance := range finances {
+		if !finance.IsPrimary {
+			continue
+		}
+		copy := finance
+		detail.Finance = &copy
+		break
+	}
+	if detail.Finance == nil && len(finances) > 0 {
+		copy := finances[0]
+		detail.Finance = &copy
+	}
+
 	clients, err := s.queries.ListCompanyClients(ctx, sqlc.ListCompanyClientsParams{
 		CompanyID: companyID,
 		Offset:    0,
@@ -537,6 +575,9 @@ func (s *PeopleService) GetPersonDetailByID(ctx context.Context, companyID pgtyp
 
 func (s *PeopleService) CreatePerson(ctx context.Context, input CreatePersonInput) (PeopleDetail, error) {
 	if err := validateHasSystemUserRequest(input.ActorRole, input.Kind, input.HasSystemUser); err != nil {
+		return PeopleDetail{}, err
+	}
+	if err := validateFinanceRequest(input.Kind, input.Finance != nil); err != nil {
 		return PeopleDetail{}, err
 	}
 
@@ -678,6 +719,9 @@ func (s *PeopleService) CreatePerson(ctx context.Context, input CreatePersonInpu
 func (s *PeopleService) UpdatePerson(ctx context.Context, input UpdatePersonInput) (PeopleDetail, error) {
 	current, err := s.GetPersonDetailByID(ctx, input.CompanyID, input.PersonID)
 	if err != nil {
+		return PeopleDetail{}, err
+	}
+	if err := validateFinanceRequest(current.Kind, input.Finance != nil); err != nil {
 		return PeopleDetail{}, err
 	}
 
@@ -867,6 +911,18 @@ func validateHasSystemUserUpdate(actorRole sqlc.UserRoleType, current PeopleDeta
 	}
 
 	return validateHasSystemUserRequest(actorRole, current.Kind, *requested)
+}
+
+func validateFinanceRequest(kind sqlc.PersonKind, hasFinance bool) error {
+	if !hasFinance {
+		return nil
+	}
+
+	if kind == sqlc.PersonKindEmployee || kind == sqlc.PersonKindOutsourcedEmployee {
+		return nil
+	}
+
+	return apperror.ErrUnprocessableEntity
 }
 
 func resolveProvisionedUserRole(actorRole sqlc.UserRoleType, kind sqlc.PersonKind) (sqlc.UserRoleType, sqlc.UserKind, error) {
@@ -1220,6 +1276,31 @@ func (s *PeopleService) createEmployeeData(ctx context.Context, queries *sqlc.Qu
 		}
 	}
 
+	if input.Finance != nil {
+		finance, financeErr := queries.InsertFinance(ctx, sqlc.InsertFinanceParams{
+			BankName:         input.Finance.BankName,
+			BankCode:         optionalText(input.Finance.BankCode),
+			BankBranch:       input.Finance.BankBranch,
+			BankAccount:      input.Finance.BankAccount,
+			BankAccountDigit: input.Finance.BankAccountDigit,
+			BankAccountType:  input.Finance.BankAccountType,
+			HasPix:           pgtype.Bool{Bool: input.Finance.HasPix, Valid: true},
+			PixKey:           optionalText(input.Finance.PixKey),
+			PixKeyType:       optionalPixKeyKind(input.Finance.PixKeyType),
+		})
+		if financeErr != nil {
+			return mapClientDBError(financeErr)
+		}
+
+		if _, financeErr = queries.InsertPersonFinance(ctx, sqlc.InsertPersonFinanceParams{
+			PersonID:  personID,
+			FinanceID: finance.ID,
+			IsPrimary: pgtype.Bool{Bool: true, Valid: true},
+		}); financeErr != nil {
+			return mapClientDBError(financeErr)
+		}
+	}
+
 	return nil
 }
 
@@ -1238,8 +1319,6 @@ func (s *PeopleService) updateEmployeeData(ctx context.Context, queries *sqlc.Qu
 		}
 
 		employee.CompanyEmployeeID = inserted.ID
-		employee.CompanyID = inserted.CompanyID
-		employee.PersonID = inserted.PersonID
 		employee.EmploymentID = pgtype.UUID{}
 	} else if err != nil {
 		return mapClientDBError(err)
@@ -1353,6 +1432,47 @@ func (s *PeopleService) updateEmployeeData(ctx context.Context, queries *sqlc.Qu
 				TransportVoucherValue: input.EmployeeBenefits.TransportVoucherValue,
 				ValidFrom:             input.EmployeeBenefits.ValidFrom,
 				ValidUntil:            optionalDate(input.EmployeeBenefits.ValidUntil),
+			})
+		}
+		if err != nil {
+			return mapClientDBError(err)
+		}
+	}
+
+	if input.Finance != nil {
+		if current.Finance != nil {
+			_, err = queries.UpdateFinance(ctx, sqlc.UpdateFinanceParams{
+				BankName:         toText(input.Finance.BankName),
+				BankCode:         optionalText(input.Finance.BankCode),
+				BankBranch:       toText(input.Finance.BankBranch),
+				BankAccount:      toText(input.Finance.BankAccount),
+				BankAccountDigit: toText(input.Finance.BankAccountDigit),
+				BankAccountType:  sqlc.NullBankAccountKind{BankAccountKind: input.Finance.BankAccountType, Valid: true},
+				HasPix:           pgtype.Bool{Bool: input.Finance.HasPix, Valid: true},
+				PixKey:           optionalText(input.Finance.PixKey),
+				PixKeyType:       optionalPixKeyKind(input.Finance.PixKeyType),
+				ID:               current.Finance.FinanceID,
+			})
+		} else {
+			finance, insertErr := queries.InsertFinance(ctx, sqlc.InsertFinanceParams{
+				BankName:         input.Finance.BankName,
+				BankCode:         optionalText(input.Finance.BankCode),
+				BankBranch:       input.Finance.BankBranch,
+				BankAccount:      input.Finance.BankAccount,
+				BankAccountDigit: input.Finance.BankAccountDigit,
+				BankAccountType:  input.Finance.BankAccountType,
+				HasPix:           pgtype.Bool{Bool: input.Finance.HasPix, Valid: true},
+				PixKey:           optionalText(input.Finance.PixKey),
+				PixKeyType:       optionalPixKeyKind(input.Finance.PixKeyType),
+			})
+			if insertErr != nil {
+				return mapClientDBError(insertErr)
+			}
+
+			_, err = queries.InsertPersonFinance(ctx, sqlc.InsertPersonFinanceParams{
+				PersonID:  personID,
+				FinanceID: finance.ID,
+				IsPrimary: pgtype.Bool{Bool: true, Valid: true},
 			})
 		}
 		if err != nil {

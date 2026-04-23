@@ -184,6 +184,7 @@ func mapPeople(items []service.PeopleListItem) []map[string]any {
 			"kind":              string(item.Kind),
 			"full_name":         item.FullName,
 			"short_name":        item.ShortName,
+			"email":             item.Email,
 			"image_url":         item.ImageURL,
 			"cpf":               item.CPF,
 			"has_system_user":   item.HasSystemUser,
@@ -211,6 +212,7 @@ func mapPersonDetail(item service.PeopleDetail) map[string]any {
 		"updated_at":         nullableTimestamptz(item.UpdatedAt),
 		"contact":            nil,
 		"address":            nil,
+		"finance":            nil,
 		"client_details":     nil,
 		"employee_details":   nil,
 		"employee_documents": nil,
@@ -259,6 +261,21 @@ func mapPersonDetail(item service.PeopleDetail) map[string]any {
 		result["client_details"] = map[string]any{
 			"client_since": nullableDate(item.ClientDetails.ClientSince),
 			"notes":        nullableText(item.ClientDetails.Notes),
+		}
+	}
+
+	if item.Finance != nil {
+		result["finance"] = map[string]any{
+			"bank_name":          item.Finance.BankName,
+			"bank_code":          nullableText(item.Finance.BankCode),
+			"bank_branch":        item.Finance.BankBranch,
+			"bank_account":       item.Finance.BankAccount,
+			"bank_account_digit": item.Finance.BankAccountDigit,
+			"bank_account_type":  string(item.Finance.BankAccountType),
+			"has_pix":            item.Finance.HasPix,
+			"pix_key":            nullableText(item.Finance.PixKey),
+			"pix_key_type":       nullablePixKeyKind(item.Finance.PixKeyType),
+			"is_primary":         item.Finance.IsPrimary,
 		}
 	}
 
@@ -336,4 +353,12 @@ func formatDate(value pgtype.Date) string {
 		return ""
 	}
 	return value.Time.Format("2006-01-02")
+}
+
+func nullablePixKeyKind(value sqlc.NullPixKeyKind) *string {
+	if !value.Valid {
+		return nil
+	}
+	formatted := string(value.PixKeyKind)
+	return &formatted
 }
