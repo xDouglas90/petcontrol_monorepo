@@ -437,9 +437,7 @@ function normalizeFinanceInput(
     bank_account_type: form.finance.bank_account_type,
     has_pix: form.finance.has_pix,
     pix_key: form.finance.pix_key?.trim() || undefined,
-    pix_key_type: form.finance.has_pix
-      ? form.finance.pix_key_type
-      : undefined,
+    pix_key_type: form.finance.has_pix ? form.finance.pix_key_type : undefined,
   };
 }
 
@@ -541,10 +539,7 @@ function validatePeopleForm(form: PeopleFormState): FormValidationErrors {
       if (!hasTrimmedValue(form.finance.bank_account_digit)) {
         financeErrors.push('Informe o dígito da conta.');
       }
-      if (
-        form.finance.has_pix &&
-        !hasTrimmedValue(form.finance.pix_key)
-      ) {
+      if (form.finance.has_pix && !hasTrimmedValue(form.finance.pix_key)) {
         financeErrors.push('Informe a chave PIX.');
       }
       if (financeErrors.length > 0) {
@@ -1008,17 +1003,40 @@ export function PeoplePage() {
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h2 className="font-display text-xl text-stone-900">
-                          {person.full_name ?? 'Pessoa sem identificação'}
-                        </h2>
-                        <p className="mt-1 text-sm text-stone-500">
-                          {person.short_name ?? 'Sem nome curto'} ·{' '}
-                          {resolveKindLabel(person.kind)}
-                        </p>
-                        <p className="mt-2 text-sm text-stone-400">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-2">
+                          <h2 className="font-display text-xl text-stone-900">
+                            {person.full_name ?? 'Pessoa sem identificação'}
+                          </h2>
+                          <p className="text-sm text-stone-500">
+                            {resolveKindLabel(person.kind)}
+                          </p>
+                        </div>
+                        <p className="mt-2 text-sm text-stone-400 md:hidden">
                           {person.email ?? 'Email não informado'}
                         </p>
+                        <div className="mt-2 flex flex-col gap-1 text-xs text-stone-400 md:flex-row md:flex-wrap md:items-center md:gap-2">
+                          <span>{person.email ?? 'Email não informado'}</span>
+                          {person.cpf ? (
+                            <>
+                              <span className="hidden text-stone-300 md:inline">
+                                ·
+                              </span>
+                              <span>CPF {person.cpf}</span>
+                            </>
+                          ) : null}
+                          <span className="hidden text-stone-300 md:inline">
+                            ·
+                          </span>
+                          <span>
+                            Acesso{' '}
+                            {wasRecentlyProvisioned
+                              ? 'Usuário provisionado agora'
+                              : person.has_system_user
+                                ? 'Usuário de sistema'
+                                : 'Sem acesso'}
+                          </span>
+                        </div>
                         {wasRecentlyProvisioned ? (
                           <p className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
                             Credenciais provisionadas
@@ -1034,27 +1052,6 @@ export function PeoplePage() {
                         }`}
                       >
                         {person.is_active ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 text-xs text-stone-400">
-                      {person.cpf ? (
-                        <span className="flex items-center gap-1.5">
-                          <span className="font-semibold text-stone-300">
-                            CPF
-                          </span>{' '}
-                          {person.cpf}
-                        </span>
-                      ) : null}
-                      <span className="flex items-center gap-1.5">
-                        <span className="font-semibold text-stone-300">
-                          Acesso
-                        </span>{' '}
-                        {wasRecentlyProvisioned
-                          ? 'Usuário provisionado agora'
-                          : person.has_system_user
-                            ? 'Usuário de sistema'
-                            : 'Sem acesso'}
                       </span>
                     </div>
                   </button>
@@ -1925,7 +1922,11 @@ export function PeoplePage() {
 
                       {form.finance_enabled ? (
                         <>
-                          <Field label="Banco" htmlFor="person-finance-bank-name" required>
+                          <Field
+                            label="Banco"
+                            htmlFor="person-finance-bank-name"
+                            required
+                          >
                             <input
                               aria-label="Banco"
                               id="person-finance-bank-name"
@@ -1942,7 +1943,10 @@ export function PeoplePage() {
                               }
                             />
                           </Field>
-                          <Field label="Código do banco" htmlFor="person-finance-bank-code">
+                          <Field
+                            label="Código do banco"
+                            htmlFor="person-finance-bank-code"
+                          >
                             <input
                               aria-label="Código do banco"
                               id="person-finance-bank-code"
@@ -1959,7 +1963,11 @@ export function PeoplePage() {
                               }
                             />
                           </Field>
-                          <Field label="Agência" htmlFor="person-finance-bank-branch" required>
+                          <Field
+                            label="Agência"
+                            htmlFor="person-finance-bank-branch"
+                            required
+                          >
                             <input
                               aria-label="Agência"
                               id="person-finance-bank-branch"
@@ -1976,7 +1984,11 @@ export function PeoplePage() {
                               }
                             />
                           </Field>
-                          <Field label="Conta" htmlFor="person-finance-bank-account" required>
+                          <Field
+                            label="Conta"
+                            htmlFor="person-finance-bank-account"
+                            required
+                          >
                             <input
                               aria-label="Conta"
                               id="person-finance-bank-account"
@@ -1993,7 +2005,11 @@ export function PeoplePage() {
                               }
                             />
                           </Field>
-                          <Field label="Dígito" htmlFor="person-finance-bank-account-digit" required>
+                          <Field
+                            label="Dígito"
+                            htmlFor="person-finance-bank-account-digit"
+                            required
+                          >
                             <input
                               aria-label="Dígito"
                               id="person-finance-bank-account-digit"
@@ -2010,7 +2026,10 @@ export function PeoplePage() {
                               }
                             />
                           </Field>
-                          <Field label="Tipo de conta" htmlFor="person-finance-bank-account-type">
+                          <Field
+                            label="Tipo de conta"
+                            htmlFor="person-finance-bank-account-type"
+                          >
                             <select
                               aria-label="Tipo de conta"
                               id="person-finance-bank-account-type"
@@ -2021,8 +2040,8 @@ export function PeoplePage() {
                                   ...current,
                                   finance: {
                                     ...current.finance,
-                                    bank_account_type:
-                                      event.target.value as BankAccountKind,
+                                    bank_account_type: event.target
+                                      .value as BankAccountKind,
                                   },
                                 }))
                               }
@@ -2049,7 +2068,11 @@ export function PeoplePage() {
                           />
                           {form.finance.has_pix ? (
                             <>
-                              <Field label="Chave PIX" htmlFor="person-finance-pix-key" required>
+                              <Field
+                                label="Chave PIX"
+                                htmlFor="person-finance-pix-key"
+                                required
+                              >
                                 <input
                                   aria-label="Chave PIX"
                                   id="person-finance-pix-key"
@@ -2066,7 +2089,10 @@ export function PeoplePage() {
                                   }
                                 />
                               </Field>
-                              <Field label="Tipo de chave PIX" htmlFor="person-finance-pix-key-type">
+                              <Field
+                                label="Tipo de chave PIX"
+                                htmlFor="person-finance-pix-key-type"
+                              >
                                 <select
                                   aria-label="Tipo de chave PIX"
                                   id="person-finance-pix-key-type"
@@ -2077,14 +2103,17 @@ export function PeoplePage() {
                                       ...current,
                                       finance: {
                                         ...current.finance,
-                                        pix_key_type:
-                                          event.target.value as PixKeyKind,
+                                        pix_key_type: event.target
+                                          .value as PixKeyKind,
                                       },
                                     }))
                                   }
                                 >
                                   {PIX_KEY_TYPE_OPTIONS.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
                                       {option.label}
                                     </option>
                                   ))}
@@ -2516,7 +2545,9 @@ export function PeoplePage() {
                       />
                       <SummaryRow
                         label="Código"
-                        value={personDetail.finance.bank_code ?? 'Não informado'}
+                        value={
+                          personDetail.finance.bank_code ?? 'Não informado'
+                        }
                       />
                       <SummaryRow
                         label="Agência"
