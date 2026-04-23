@@ -161,6 +161,157 @@ type ClientDoc struct {
 	LeftAt         *string `json:"left_at,omitempty" example:"2026-04-11T11:00:00Z"`
 }
 
+// PersonAddressRequestDoc documents the person address block used by people endpoints.
+type PersonAddressRequestDoc struct {
+	ZipCode    string `json:"zip_code" example:"01310930"`
+	Street     string `json:"street" example:"Avenida Paulista"`
+	Number     string `json:"number" example:"1000"`
+	Complement string `json:"complement,omitempty" example:"Conjunto 51"`
+	District   string `json:"district" example:"Bela Vista"`
+	City       string `json:"city" example:"São Paulo"`
+	State      string `json:"state" example:"SP"`
+	Country    string `json:"country" example:"Brasil"`
+	Label      string `json:"label,omitempty" example:"Principal"`
+}
+
+// PersonEmploymentRequestDoc documents the employment block used by people endpoints.
+type PersonEmploymentRequestDoc struct {
+	Role            string `json:"role" example:"Banhista"`
+	AdmissionDate   string `json:"admission_date" example:"2026-01-10"`
+	ResignationDate string `json:"resignation_date,omitempty" example:"2026-12-31"`
+	Salary          string `json:"salary" example:"2500.75"`
+}
+
+// PersonFinanceRequestDoc documents the finance block used by people endpoints.
+type PersonFinanceRequestDoc struct {
+	BankName         string `json:"bank_name" example:"Banco Pet"`
+	BankCode         string `json:"bank_code,omitempty" example:"001"`
+	BankBranch       string `json:"bank_branch" example:"1234"`
+	BankAccount      string `json:"bank_account" example:"56789"`
+	BankAccountDigit string `json:"bank_account_digit" example:"0"`
+	BankAccountType  string `json:"bank_account_type" example:"checking"`
+	HasPix           bool   `json:"has_pix" example:"true"`
+	PixKey           string `json:"pix_key,omitempty" example:"maria@petcontrol.local"`
+	PixKeyType       string `json:"pix_key_type,omitempty" example:"email"`
+}
+
+// PersonEmployeeDocumentsRequestDoc documents the employee documents block used by people endpoints.
+type PersonEmployeeDocumentsRequestDoc struct {
+	RG          string `json:"rg" example:"123456789"`
+	IssuingBody string `json:"issuing_body" example:"SSP"`
+	IssuingDate string `json:"issuing_date" example:"2010-01-10"`
+	CTPS        string `json:"ctps" example:"123456"`
+	CTPSSeries  string `json:"ctps_series" example:"001"`
+	CTPSState   string `json:"ctps_state" example:"SP"`
+	PIS         string `json:"pis" example:"12345678901"`
+	Graduation  string `json:"graduation" example:"college_complete"`
+}
+
+// PersonEmployeeBenefitsRequestDoc documents the employee benefits block used by people endpoints.
+type PersonEmployeeBenefitsRequestDoc struct {
+	MealTicket            bool   `json:"meal_ticket" example:"true"`
+	MealTicketValue       string `json:"meal_ticket_value" example:"350.00"`
+	TransportVoucher      bool   `json:"transport_voucher" example:"true"`
+	TransportVoucherQty   int16  `json:"transport_voucher_qty" example:"2"`
+	TransportVoucherValue string `json:"transport_voucher_value" example:"220.50"`
+	ValidFrom             string `json:"valid_from" example:"2026-01-10"`
+	ValidUntil            string `json:"valid_until,omitempty" example:"2026-12-31"`
+}
+
+// PersonCreateRequestDoc documents people creation payload for Swagger.
+type PersonCreateRequestDoc struct {
+	Kind             string                             `json:"kind" example:"client"`
+	FullName         string                             `json:"full_name" example:"Maria Silva"`
+	ShortName        string                             `json:"short_name" example:"Maria"`
+	GenderIdentity   string                             `json:"gender_identity" example:"woman_cisgender"`
+	MaritalStatus    string                             `json:"marital_status" example:"single"`
+	BirthDate        string                             `json:"birth_date" example:"1992-06-15"`
+	CPF              string                             `json:"cpf" example:"12345678901"`
+	Email            string                             `json:"email" example:"maria@petcontrol.local"`
+	Phone            string                             `json:"phone,omitempty" example:"+551130000000"`
+	Cellphone        string                             `json:"cellphone" example:"+5511999990001"`
+	HasWhatsapp      bool                               `json:"has_whatsapp" example:"true"`
+	HasSystemUser    bool                               `json:"has_system_user" example:"false"`
+	IsActive         bool                               `json:"is_active" example:"true"`
+	Address          *PersonAddressRequestDoc           `json:"address,omitempty"`
+	ClientSince      string                             `json:"client_since,omitempty" example:"2026-04-01"`
+	Notes            string                             `json:"notes,omitempty" example:"Cliente recorrente"`
+	PetIDs           []string                           `json:"pet_ids,omitempty" example:"11111111-1111-1111-1111-111111111111"`
+	Employment       *PersonEmploymentRequestDoc        `json:"employment,omitempty"`
+	Finance          *PersonFinanceRequestDoc           `json:"finance,omitempty"`
+	EmployeeDocs     *PersonEmployeeDocumentsRequestDoc `json:"employee_documents,omitempty"`
+	EmployeeBenefits *PersonEmployeeBenefitsRequestDoc  `json:"employee_benefits,omitempty"`
+}
+
+// PersonUpdateRequestDoc documents people update payload for Swagger.
+type PersonUpdateRequestDoc struct {
+	FullName         *string                            `json:"full_name,omitempty" example:"Maria Souza"`
+	ShortName        *string                            `json:"short_name,omitempty" example:"Mari"`
+	GenderIdentity   *string                            `json:"gender_identity,omitempty" example:"woman_cisgender"`
+	MaritalStatus    *string                            `json:"marital_status,omitempty" example:"married"`
+	BirthDate        *string                            `json:"birth_date,omitempty" example:"1992-06-15"`
+	CPF              *string                            `json:"cpf,omitempty" example:"12345678901"`
+	Email            *string                            `json:"email,omitempty" example:"maria@petcontrol.local"`
+	Phone            *string                            `json:"phone,omitempty" example:"+551130000000"`
+	Cellphone        *string                            `json:"cellphone,omitempty" example:"+5511999990001"`
+	HasWhatsapp      *bool                              `json:"has_whatsapp,omitempty" example:"true"`
+	HasSystemUser    *bool                              `json:"has_system_user,omitempty" example:"true"`
+	IsActive         *bool                              `json:"is_active,omitempty" example:"true"`
+	Address          *PersonAddressRequestDoc           `json:"address,omitempty"`
+	ClientSince      *string                            `json:"client_since,omitempty" example:"2026-04-01"`
+	Notes            *string                            `json:"notes,omitempty" example:"Cliente VIP"`
+	PetIDs           []string                           `json:"pet_ids,omitempty" example:"11111111-1111-1111-1111-111111111111"`
+	Employment       *PersonEmploymentRequestDoc        `json:"employment,omitempty"`
+	Finance          *PersonFinanceRequestDoc           `json:"finance,omitempty"`
+	EmployeeDocs     *PersonEmployeeDocumentsRequestDoc `json:"employee_documents,omitempty"`
+	EmployeeBenefits *PersonEmployeeBenefitsRequestDoc  `json:"employee_benefits,omitempty"`
+}
+
+// PeopleListResponseDoc documents the paginated people list response.
+type PeopleListResponseDoc struct {
+	Data []PersonListItemDoc `json:"data"`
+	Meta any                 `json:"meta"`
+}
+
+// PersonItemResponseDoc documents a single people detail response envelope.
+type PersonItemResponseDoc struct {
+	Data PersonDetailDoc `json:"data"`
+}
+
+// PersonListItemDoc describes the summary payload returned by people listings.
+type PersonListItemDoc struct {
+	ID              string  `json:"id" example:"11111111-1111-1111-1111-111111111111"`
+	CompanyID       string  `json:"company_id" example:"22222222-2222-2222-2222-222222222222"`
+	CompanyPersonID string  `json:"company_person_id" example:"33333333-3333-3333-3333-333333333333"`
+	Kind            string  `json:"kind" example:"client"`
+	FullName        *string `json:"full_name,omitempty" example:"Maria Silva"`
+	ShortName       *string `json:"short_name,omitempty" example:"Maria"`
+	Email           *string `json:"email,omitempty" example:"maria@petcontrol.local"`
+	ImageURL        *string `json:"image_url,omitempty" example:"https://cdn.example.com/people/maria.png"`
+	CPF             *string `json:"cpf,omitempty" example:"12345678901"`
+	HasSystemUser   bool    `json:"has_system_user" example:"false"`
+	IsActive        bool    `json:"is_active" example:"true"`
+	CreatedAt       string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt       *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+}
+
+// PersonDetailDoc describes the detailed payload returned by people endpoints.
+type PersonDetailDoc struct {
+	PersonListItemDoc
+	GenderIdentity    *string          `json:"gender_identity,omitempty" example:"woman_cisgender"`
+	MaritalStatus     *string          `json:"marital_status,omitempty" example:"single"`
+	BirthDate         *string          `json:"birth_date,omitempty" example:"1992-06-15"`
+	Contact           map[string]any   `json:"contact,omitempty"`
+	Address           map[string]any   `json:"address,omitempty"`
+	Finance           map[string]any   `json:"finance,omitempty"`
+	ClientDetails     map[string]any   `json:"client_details,omitempty"`
+	EmployeeDetails   map[string]any   `json:"employee_details,omitempty"`
+	EmployeeDocuments map[string]any   `json:"employee_documents,omitempty"`
+	EmployeeBenefits  map[string]any   `json:"employee_benefits,omitempty"`
+	LinkedUser        map[string]any   `json:"linked_user,omitempty"`
+	GuardianPets      []map[string]any `json:"guardian_pets"`
+}
+
 // PetCreateRequestDoc documents pet creation payload for Swagger.
 type PetCreateRequestDoc struct {
 	OwnerID     string `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`

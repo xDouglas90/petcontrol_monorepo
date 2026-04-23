@@ -126,7 +126,7 @@ func NewPeopleHandler(service *service.PeopleService) *PeopleHandler {
 // @Tags people
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} map[string]any
+// @Success 200 {object} PeopleListResponseDoc
 // @Failure 403 {object} APIErrorResponseDoc
 // @Failure 500 {object} APIErrorResponseDoc
 // @Router /people [get]
@@ -175,7 +175,7 @@ func (h *PeopleHandler) List(c *gin.Context) {
 // @Security BearerAuth
 // @Produce json
 // @Param id path string true "Person ID"
-// @Success 200 {object} map[string]any
+// @Success 200 {object} PersonItemResponseDoc
 // @Failure 403 {object} APIErrorResponseDoc
 // @Failure 404 {object} APIErrorResponseDoc
 // @Failure 422 {object} APIErrorResponseDoc
@@ -227,7 +227,8 @@ func (h *PeopleHandler) GetByID(c *gin.Context) {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 201 {object} map[string]any
+// @Param payload body PersonCreateRequestDoc true "Create person payload"
+// @Success 201 {object} PersonItemResponseDoc
 // @Failure 403 {object} APIErrorResponseDoc
 // @Failure 409 {object} APIErrorResponseDoc
 // @Failure 422 {object} APIErrorResponseDoc
@@ -362,7 +363,8 @@ func (h *PeopleHandler) Create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Person ID"
-// @Success 200 {object} map[string]any
+// @Param payload body PersonUpdateRequestDoc true "Update person payload"
+// @Success 200 {object} PersonItemResponseDoc
 // @Failure 403 {object} APIErrorResponseDoc
 // @Failure 404 {object} APIErrorResponseDoc
 // @Failure 422 {object} APIErrorResponseDoc

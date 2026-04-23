@@ -1117,3 +1117,83 @@ func TestPeopleRoutes_AllowAccessWhenModuleAndPermissionExist(t *testing.T) {
 	require.Contains(t, res.Body.String(), "\"ok\":true")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestPeopleHandler_CreateBlocksSystemFromEmployeeKinds(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	for _, personKind := range []string{"employee", "outsourced_employee"} {
+		t.Run(personKind, func(t *testing.T) {
+			handlerUnderTest := NewPeopleHandler(service.NewPeopleService(nil, nil, nil))
+			companyID := domainHandlerUUID(t)
+			userID := domainHandlerUUID(t)
+
+			router := gin.New()
+			router.Use(func(c *gin.Context) {
+				c.Set("company_id", companyID)
+				c.Set("auth_claims", appjwt.Claims{
+					UserID:    uuidToString(userID),
+					CompanyID: uuidToString(companyID),
+					Role:      "system",
+					Kind:      "employee",
+				})
+				c.Next()
+			})
+			router.POST("/people", handlerUnderTest.Create)
+
+			body, err := json.Marshal(map[string]any{"kind": personKind})
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/people", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			require.Equal(t, http.StatusForbidden, res.Code)
+			require.Contains(t, res.Body.String(), "people_access_required")
+		})
+	}
+}
+
+func TestPeopleHandler_CreateBlocksSystemUserForUnsupportedAccessProvision(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	handlerUnderTest := NewPeopleHandler(service.NewPeopleService(nil, nil, nil))
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "system",
+			Kind:      "employee",
+		})
+		c.Next()
+	})
+	router.POST("/people", handlerUnderTest.Create)
+
+	body, err := json.Marshal(map[string]any{
+		"kind":            "supplier",
+		"full_name":       "Fornecedor XPTO",
+		"short_name":      "XPTO",
+		"gender_identity": "not_to_expose",
+		"marital_status":  "single",
+		"birth_date":      "1990-10-10",
+		"cpf":             "12345678901",
+		"email":           "fornecedor@xpto.local",
+		"cellphone":       "+5511999990001",
+		"has_whatsapp":    true,
+		"has_system_user": true,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/people", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.Contains(t, res.Body.String(), "create_person_failed")
+}

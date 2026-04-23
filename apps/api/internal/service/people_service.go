@@ -707,8 +707,8 @@ func (s *PeopleService) CreatePerson(ctx context.Context, input CreatePersonInpu
 	}
 	committed = true
 
-	if accessPayload != nil && s.publisher != nil {
-		if err := s.publisher.EnqueuePersonAccessCredentials(ctx, *accessPayload); err != nil {
+	if accessPayload != nil {
+		if err := s.enqueuePersonAccessCredentials(ctx, *accessPayload); err != nil {
 			return PeopleDetail{}, err
 		}
 	}
@@ -846,8 +846,8 @@ func (s *PeopleService) UpdatePerson(ctx context.Context, input UpdatePersonInpu
 	}
 	committed = true
 
-	if accessPayload != nil && s.publisher != nil {
-		if err := s.publisher.EnqueuePersonAccessCredentials(ctx, *accessPayload); err != nil {
+	if accessPayload != nil {
+		if err := s.enqueuePersonAccessCredentials(ctx, *accessPayload); err != nil {
 			return PeopleDetail{}, err
 		}
 	}
@@ -863,6 +863,38 @@ type provisionSystemUserInput struct {
 	Kind        sqlc.PersonKind
 	Email       string
 	FullName    string
+}
+
+func (s *PeopleService) enqueuePersonAccessCredentials(ctx context.Context, payload queue.PersonAccessCredentialsPayload) error {
+	if s.publisher == nil {
+		return nil
+	}
+
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		if err := s.publisher.EnqueuePersonAccessCredentials(ctx, payload); err == nil {
+			return nil
+		} else {
+			lastErr = err
+		}
+
+		if attempt == 3 {
+			break
+		}
+
+		timer := time.NewTimer(time.Duration(attempt) * 100 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			if lastErr != nil {
+				return lastErr
+			}
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
+
+	return lastErr
 }
 
 func (d PeopleDetail) ContactEmail() string {

@@ -621,8 +621,8 @@ Impactos colaterais esperados:
 - [x] Implementar criação e seleção de contato principal em `people_contacts`.
 - [x] Implementar criação de endereço principal em `addresses`.
 - [x] Implementar vínculo de endereço principal em `people_addresses` como fonte de verdade do módulo.
-- [ ] Remover `company_people_addresses` do escopo desta PR e registrar sua redundância técnica na modelagem atual.
-- [ ] Avaliar remoção efetiva de `company_people_addresses` do schema e das queries geradas, desde que não exista uso externo bloqueante.
+- [x] Remover `company_people_addresses` do escopo desta PR e registrar sua redundância técnica na modelagem atual.
+- [x] Avaliar remoção efetiva de `company_people_addresses` do schema e das queries geradas, desde que não exista uso externo bloqueante.
 - [x] Implementar criação de dados financeiros em `finances` apenas para:
   - `employee`
   - `outsourced_employee`
@@ -658,27 +658,27 @@ Impactos colaterais esperados:
 - [x] Garantir fallback seguro entre ambiente local e ambientes reais.
 - [x] Documentar as envs necessárias para integração com MailHog.
 - [x] Garantir rollback transacional se qualquer etapa crítica falhar antes da conclusão.
-- [ ] Tratar falhas de email como pós-processamento assíncrono confiável, com mecanismo de retry ou compensação.
+- [x] Tratar falhas de email como pós-processamento assíncrono confiável, com mecanismo de retry ou compensação.
 - [x] Garantir que a leitura de detalhe retorne dados suficientes para preencher painel de visualização e edição.
 - [x] Garantir que a edição atualize apenas blocos permitidos para o tipo da pessoa.
 - [x] Garantir que a edição não permita migrar a pessoa para um `person_kind` incompatível sem regra explícita.
 - [x] Adicionar testes de serviço/handler para listagem tenant-scoped.
 - [x] Adicionar testes de serviço/handler para filtros por tipo.
-- [ ] Adicionar testes para criação de `client` sem usuário.
-- [ ] Adicionar testes para criação de `client` com usuário `common` por usuário autenticado `system`.
-- [ ] Adicionar testes para criação de `employee` com usuário `system`.
-- [ ] Adicionar testes para criação de `outsourced_employee` com usuário `system`.
-- [ ] Adicionar testes para bloqueio de `system` tentando criar `employee`.
-- [ ] Adicionar testes para bloqueio de `system` tentando criar `outsourced_employee`.
-- [ ] Adicionar testes para bloqueio de `system` tentando criar usuário para tipo não permitido.
-- [ ] Adicionar testes para criação de vínculos:
+- [x] Adicionar testes para criação de `client` sem usuário.
+- [x] Adicionar testes para criação de `client` com usuário `common` por usuário autenticado `system`.
+- [x] Adicionar testes para criação de `employee` com usuário `system`.
+- [x] Adicionar testes para criação de `outsourced_employee` com usuário `system`.
+- [x] Adicionar testes para bloqueio de `system` tentando criar `employee`.
+- [x] Adicionar testes para bloqueio de `system` tentando criar `outsourced_employee`.
+- [x] Adicionar testes para bloqueio de `system` tentando criar usuário para tipo não permitido.
+- [x] Adicionar testes para criação de vínculos:
   - `company_people`
   - `company_clients`
   - `company_employees`
   - `user_profiles`
-- [ ] Adicionar cobertura de teste local automatizado usando MailHog para criação de usuário e recebimento do email.
+- [x] Adicionar cobertura de teste local automatizado usando MailHog para criação de usuário e recebimento do email.
 - [x] Manter também um fluxo simples de validação manual pela UI do MailHog para desenvolvimento.
-- [ ] Adicionar testes de rollback transacional.
+- [x] Adicionar testes de rollback transacional.
 - [x] Atualizar documentação da API ou swagger do domínio, se fizer parte do padrão atual.
 
 - [x] Adicionar ou atualizar infraestrutura local para subir `MailHog`.
@@ -757,10 +757,10 @@ Impactos colaterais esperados:
 - [x] Adicionar testes garantindo ausência do chat em `/people`.
 - [x] Adicionar testes do filtro por `person_kind`.
 - [x] Adicionar testes do fluxo de seleção de pessoa e abertura do painel.
-- [ ] Adicionar testes do fluxo de criação para `admin`.
+- [x] Adicionar testes do fluxo de criação para `admin`.
 - [x] Adicionar testes do fluxo de criação restrito para `system`.
 - [x] Adicionar testes condicionais do campo `has_system_user`.
-- [ ] Adicionar testes de sucesso e erro das mutations.
+- [x] Adicionar testes de sucesso e erro das mutations.
 
 ## Decisões Fechadas para Implementação
 

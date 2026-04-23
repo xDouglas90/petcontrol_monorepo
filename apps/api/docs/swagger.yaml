@@ -681,6 +681,392 @@ definitions:
           $ref: '#/definitions/handler.ModuleDoc'
         type: array
     type: object
+  handler.PeopleListResponseDoc:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handler.PersonListItemDoc'
+        type: array
+      meta: {}
+    type: object
+  handler.PersonAddressRequestDoc:
+    properties:
+      city:
+        example: São Paulo
+        type: string
+      complement:
+        example: Conjunto 51
+        type: string
+      country:
+        example: Brasil
+        type: string
+      district:
+        example: Bela Vista
+        type: string
+      label:
+        example: Principal
+        type: string
+      number:
+        example: "1000"
+        type: string
+      state:
+        example: SP
+        type: string
+      street:
+        example: Avenida Paulista
+        type: string
+      zip_code:
+        example: "01310930"
+        type: string
+    type: object
+  handler.PersonCreateRequestDoc:
+    properties:
+      address:
+        $ref: '#/definitions/handler.PersonAddressRequestDoc'
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      cellphone:
+        example: "+5511999990001"
+        type: string
+      client_since:
+        example: "2026-04-01"
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      email:
+        example: maria@petcontrol.local
+        type: string
+      employee_benefits:
+        $ref: '#/definitions/handler.PersonEmployeeBenefitsRequestDoc'
+      employee_documents:
+        $ref: '#/definitions/handler.PersonEmployeeDocumentsRequestDoc'
+      employment:
+        $ref: '#/definitions/handler.PersonEmploymentRequestDoc'
+      finance:
+        $ref: '#/definitions/handler.PersonFinanceRequestDoc'
+      full_name:
+        example: Maria Silva
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      has_system_user:
+        example: false
+        type: boolean
+      has_whatsapp:
+        example: true
+        type: boolean
+      is_active:
+        example: true
+        type: boolean
+      kind:
+        example: client
+        type: string
+      marital_status:
+        example: single
+        type: string
+      notes:
+        example: Cliente recorrente
+        type: string
+      pet_ids:
+        example:
+        - 11111111-1111-1111-1111-111111111111
+        items:
+          type: string
+        type: array
+      phone:
+        example: "+551130000000"
+        type: string
+      short_name:
+        example: Maria
+        type: string
+    type: object
+  handler.PersonDetailDoc:
+    properties:
+      address:
+        additionalProperties: {}
+        type: object
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      client_details:
+        additionalProperties: {}
+        type: object
+      company_id:
+        example: 22222222-2222-2222-2222-222222222222
+        type: string
+      company_person_id:
+        example: 33333333-3333-3333-3333-333333333333
+        type: string
+      contact:
+        additionalProperties: {}
+        type: object
+      cpf:
+        example: "12345678901"
+        type: string
+      created_at:
+        example: "2026-04-10T10:00:00Z"
+        type: string
+      email:
+        example: maria@petcontrol.local
+        type: string
+      employee_benefits:
+        additionalProperties: {}
+        type: object
+      employee_details:
+        additionalProperties: {}
+        type: object
+      employee_documents:
+        additionalProperties: {}
+        type: object
+      finance:
+        additionalProperties: {}
+        type: object
+      full_name:
+        example: Maria Silva
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      guardian_pets:
+        items:
+          additionalProperties: {}
+          type: object
+        type: array
+      has_system_user:
+        example: false
+        type: boolean
+      id:
+        example: 11111111-1111-1111-1111-111111111111
+        type: string
+      image_url:
+        example: https://cdn.example.com/people/maria.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      kind:
+        example: client
+        type: string
+      linked_user:
+        additionalProperties: {}
+        type: object
+      marital_status:
+        example: single
+        type: string
+      short_name:
+        example: Maria
+        type: string
+      updated_at:
+        example: "2026-04-10T11:00:00Z"
+        type: string
+    type: object
+  handler.PersonEmployeeBenefitsRequestDoc:
+    properties:
+      meal_ticket:
+        example: true
+        type: boolean
+      meal_ticket_value:
+        example: "350.00"
+        type: string
+      transport_voucher:
+        example: true
+        type: boolean
+      transport_voucher_qty:
+        example: 2
+        type: integer
+      transport_voucher_value:
+        example: "220.50"
+        type: string
+      valid_from:
+        example: "2026-01-10"
+        type: string
+      valid_until:
+        example: "2026-12-31"
+        type: string
+    type: object
+  handler.PersonEmployeeDocumentsRequestDoc:
+    properties:
+      ctps:
+        example: "123456"
+        type: string
+      ctps_series:
+        example: "001"
+        type: string
+      ctps_state:
+        example: SP
+        type: string
+      graduation:
+        example: college_complete
+        type: string
+      issuing_body:
+        example: SSP
+        type: string
+      issuing_date:
+        example: "2010-01-10"
+        type: string
+      pis:
+        example: "12345678901"
+        type: string
+      rg:
+        example: "123456789"
+        type: string
+    type: object
+  handler.PersonEmploymentRequestDoc:
+    properties:
+      admission_date:
+        example: "2026-01-10"
+        type: string
+      resignation_date:
+        example: "2026-12-31"
+        type: string
+      role:
+        example: Banhista
+        type: string
+      salary:
+        example: "2500.75"
+        type: string
+    type: object
+  handler.PersonFinanceRequestDoc:
+    properties:
+      bank_account:
+        example: "56789"
+        type: string
+      bank_account_digit:
+        example: "0"
+        type: string
+      bank_account_type:
+        example: checking
+        type: string
+      bank_branch:
+        example: "1234"
+        type: string
+      bank_code:
+        example: "001"
+        type: string
+      bank_name:
+        example: Banco Pet
+        type: string
+      has_pix:
+        example: true
+        type: boolean
+      pix_key:
+        example: maria@petcontrol.local
+        type: string
+      pix_key_type:
+        example: email
+        type: string
+    type: object
+  handler.PersonItemResponseDoc:
+    properties:
+      data:
+        $ref: '#/definitions/handler.PersonDetailDoc'
+    type: object
+  handler.PersonListItemDoc:
+    properties:
+      company_id:
+        example: 22222222-2222-2222-2222-222222222222
+        type: string
+      company_person_id:
+        example: 33333333-3333-3333-3333-333333333333
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      created_at:
+        example: "2026-04-10T10:00:00Z"
+        type: string
+      email:
+        example: maria@petcontrol.local
+        type: string
+      full_name:
+        example: Maria Silva
+        type: string
+      has_system_user:
+        example: false
+        type: boolean
+      id:
+        example: 11111111-1111-1111-1111-111111111111
+        type: string
+      image_url:
+        example: https://cdn.example.com/people/maria.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      kind:
+        example: client
+        type: string
+      short_name:
+        example: Maria
+        type: string
+      updated_at:
+        example: "2026-04-10T11:00:00Z"
+        type: string
+    type: object
+  handler.PersonUpdateRequestDoc:
+    properties:
+      address:
+        $ref: '#/definitions/handler.PersonAddressRequestDoc'
+      birth_date:
+        example: "1992-06-15"
+        type: string
+      cellphone:
+        example: "+5511999990001"
+        type: string
+      client_since:
+        example: "2026-04-01"
+        type: string
+      cpf:
+        example: "12345678901"
+        type: string
+      email:
+        example: maria@petcontrol.local
+        type: string
+      employee_benefits:
+        $ref: '#/definitions/handler.PersonEmployeeBenefitsRequestDoc'
+      employee_documents:
+        $ref: '#/definitions/handler.PersonEmployeeDocumentsRequestDoc'
+      employment:
+        $ref: '#/definitions/handler.PersonEmploymentRequestDoc'
+      finance:
+        $ref: '#/definitions/handler.PersonFinanceRequestDoc'
+      full_name:
+        example: Maria Souza
+        type: string
+      gender_identity:
+        example: woman_cisgender
+        type: string
+      has_system_user:
+        example: true
+        type: boolean
+      has_whatsapp:
+        example: true
+        type: boolean
+      is_active:
+        example: true
+        type: boolean
+      marital_status:
+        example: married
+        type: string
+      notes:
+        example: Cliente VIP
+        type: string
+      pet_ids:
+        example:
+        - 11111111-1111-1111-1111-111111111111
+        items:
+          type: string
+        type: array
+      phone:
+        example: "+551130000000"
+        type: string
+      short_name:
+        example: Mari
+        type: string
+    type: object
   handler.PetCreateRequestDoc:
     properties:
       birth_date:
@@ -1765,6 +2151,150 @@ paths:
       summary: List active modules
       tags:
       - modules
+  /people:
+    get:
+      description: Returns tenant-scoped people linked to the authenticated company.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PeopleListResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: List people
+      tags:
+      - people
+    post:
+      consumes:
+      - application/json
+      description: Creates a tenant-scoped person for supported kinds.
+      parameters:
+      - description: Create person payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PersonCreateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.PersonItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Create person
+      tags:
+      - people
+  /people/{id}:
+    get:
+      description: Returns tenant-scoped detail for one person linked to the authenticated
+        company.
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PersonItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Get person by ID
+      tags:
+      - people
+    patch:
+      consumes:
+      - application/json
+      description: Updates a tenant-scoped person for supported kinds.
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update person payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PersonUpdateRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.PersonItemResponseDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+      security:
+      - BearerAuth: []
+      summary: Update person
+      tags:
+      - people
   /pets:
     get:
       description: Returns pets from the authenticated tenant.

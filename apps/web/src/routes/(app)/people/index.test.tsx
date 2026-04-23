@@ -172,7 +172,7 @@ describe('PeoplePage', () => {
     cleanup();
   });
 
-  it('renderiza lista e abre o painel de detalhe da pessoa selecionada', async () => {
+  function mockAdminCurrentUser() {
     mockUseCurrentUserQuery.mockReturnValue({
       data: {
         user_id: 'user-1',
@@ -188,6 +188,49 @@ describe('PeoplePage', () => {
       isLoading: false,
       isError: false,
     });
+  }
+
+  function fillRequiredCreateFields() {
+    fireEvent.change(screen.getByLabelText('Nome completo'), {
+      target: { value: 'Nova Pessoa' },
+    });
+    fireEvent.change(screen.getByLabelText('Nome curto'), {
+      target: { value: 'Nova' },
+    });
+    fireEvent.change(screen.getByLabelText('Nascimento'), {
+      target: { value: '1992-06-15' },
+    });
+    fireEvent.change(screen.getByLabelText('CPF'), {
+      target: { value: '12345678909' },
+    });
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'nova.pessoa@petcontrol.local' },
+    });
+    fireEvent.change(screen.getByLabelText('Celular'), {
+      target: { value: '+5511999990009' },
+    });
+    fireEvent.change(screen.getByLabelText('CEP'), {
+      target: { value: '01310930' },
+    });
+    fireEvent.change(screen.getByLabelText('Logradouro'), {
+      target: { value: 'Av. Paulista' },
+    });
+    fireEvent.change(screen.getByLabelText('Número'), {
+      target: { value: '1000' },
+    });
+    fireEvent.change(screen.getByLabelText('Bairro'), {
+      target: { value: 'Bela Vista' },
+    });
+    fireEvent.change(screen.getByLabelText('Cidade'), {
+      target: { value: 'São Paulo' },
+    });
+    fireEvent.change(screen.getByLabelText('UF'), {
+      target: { value: 'SP' },
+    });
+  }
+
+  it('renderiza lista e abre o painel de detalhe da pessoa selecionada', async () => {
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -196,26 +239,12 @@ describe('PeoplePage', () => {
     });
 
     expect(screen.getAllByText('Maria Silva').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('maria@petcontrol.local').length).toBe(2);
+    expect(screen.getAllByText('maria@petcontrol.local').length).toBe(3);
     expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
   });
 
   it('aplica filtro por tipo de pessoa na listagem', async () => {
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -233,28 +262,14 @@ describe('PeoplePage', () => {
         kind: 'supplier',
       });
     });
-    expect(screen.getByText('XPTO · Fornecedor')).toBeTruthy();
+    expect(screen.getByText('Fornecedor XPTO')).toBeTruthy();
+    expect(screen.getByText('Fornecedor')).toBeTruthy();
     expect(window.location.search).toContain('kind=supplier');
   });
 
   it('inicializa o filtro por tipo a partir da URL', async () => {
     window.history.replaceState({}, '', '/petcontrol-dev/people?kind=supplier');
-
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -279,21 +294,7 @@ describe('PeoplePage', () => {
       '/petcontrol-dev/people?search=fornecedor',
     );
 
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -313,21 +314,7 @@ describe('PeoplePage', () => {
   });
 
   it('atualiza a URL e a query quando a busca muda', async () => {
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -374,21 +361,7 @@ describe('PeoplePage', () => {
       isError: false,
     });
 
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -418,21 +391,7 @@ describe('PeoplePage', () => {
       isError: false,
     });
 
-    mockUseCurrentUserQuery.mockReturnValue({
-      data: {
-        user_id: 'user-1',
-        company_id: 'company-1',
-        person_id: 'person-admin',
-        role: 'admin',
-        kind: 'owner',
-        full_name: 'Maria',
-        short_name: 'Maria',
-        image_url: null,
-      },
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-    });
+    mockAdminCurrentUser();
 
     render(<PeoplePage />);
 
@@ -478,5 +437,95 @@ describe('PeoplePage', () => {
     await waitFor(() => {
       expect(screen.queryByText('Criar usuário de sistema')).toBeNull();
     });
+  });
+
+  it('executa o fluxo de criação para admin com sucesso', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ id: 'person-created' });
+    mockUseCreatePersonMutation.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    });
+    mockAdminCurrentUser();
+
+    render(<PeoplePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inserir pessoa' }));
+    fillRequiredCreateFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Criar pessoa' }));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'client',
+          full_name: 'Nova Pessoa',
+          short_name: 'Nova',
+          cpf: '12345678909',
+          email: 'nova.pessoa@petcontrol.local',
+          cellphone: '+5511999990009',
+        }),
+      );
+    });
+    expect(mockPushToast).toHaveBeenCalledWith(
+      'Pessoa criada com sucesso.',
+      'success',
+    );
+  });
+
+  it('mostra erro quando a mutation de criação falha', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('Falha do backend'));
+    mockUseCreatePersonMutation.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    });
+    mockAdminCurrentUser();
+
+    render(<PeoplePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inserir pessoa' }));
+    fillRequiredCreateFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Criar pessoa' }));
+
+    await waitFor(() => {
+      expect(mockPushToast).toHaveBeenCalledWith(
+        'Falha do backend',
+        'error',
+      );
+    });
+  });
+
+  it('salva alterações de edição com feedback de sucesso', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ id: 'person-1' });
+    mockUseUpdatePersonMutation.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    });
+    mockAdminCurrentUser();
+
+    render(<PeoplePage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.change(screen.getByLabelText('Nome completo'), {
+      target: { value: 'Maria Souza' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          personId: 'person-1',
+          input: expect.objectContaining({
+            full_name: 'Maria Souza',
+          }),
+        }),
+      );
+    });
+    expect(mockPushToast).toHaveBeenCalledWith(
+      'Pessoa atualizada com sucesso.',
+      'success',
+    );
   });
 });
