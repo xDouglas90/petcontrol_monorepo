@@ -355,6 +355,10 @@ func TestCompanyUserHandler_CreateAndDeactivate(t *testing.T) {
 	userID := domainHandlerUUID(t)
 	createdID := domainHandlerUUID(t)
 	joinedAt := time.Now().UTC()
+	mock.ExpectQuery(`(?s)name: GetUserByID`).WithArgs(userID).WillReturnRows(
+		pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(userID, "owner@petcontrol.local", true, time.Now(), sqlc.UserRoleTypeAdmin, true, time.Now(), nil, nil),
+	)
 	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, sqlc.UserKindOwner, true, pgtype.Bool{Bool: true, Valid: true}).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).WithArgs(companyID, userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, joinedAt, nil, nil))
 	mock.ExpectExec(`(?s)name: DeactivateCompanyUser`).WithArgs(companyID, userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
@@ -795,7 +799,7 @@ func TestPeopleHandler_ListFiltersByKind(t *testing.T) {
 			"company_person_id", "company_id", "person_id", "company_person_created_at",
 			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
 			"person_created_at", "person_updated_at", "identifications_full_name",
-			"identifications_short_name", "identifications_gender_identity",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
 			"identifications_marital_status", "identifications_image_url",
 			"identifications_birth_date", "identifications_cpf",
 			"identifications_created_at", "identifications_updated_at",
@@ -803,14 +807,14 @@ func TestPeopleHandler_ListFiltersByKind(t *testing.T) {
 			AddRow(
 				domainHandlerUUID(t), companyID, clientPersonID, now,
 				clientPersonID, sqlc.PersonKindClient, true, false,
-				now, now, "Ana Lima", "Ana",
+				now, now, "Ana Lima", "Ana", "ana@petcontrol.local",
 				nil, nil, nil, nil, "12345678901",
 				now, now,
 			).
 			AddRow(
 				domainHandlerUUID(t), companyID, supplierPersonID, now.Add(-time.Minute),
 				supplierPersonID, sqlc.PersonKindSupplier, true, false,
-				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO",
+				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO", "fornecedor@xpto.local",
 				nil, nil, nil, nil, "12345678902",
 				now.Add(-time.Minute), now.Add(-time.Minute),
 			))
@@ -865,7 +869,7 @@ func TestPeopleHandler_ListFiltersBySearch(t *testing.T) {
 			"company_person_id", "company_id", "person_id", "company_person_created_at",
 			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
 			"person_created_at", "person_updated_at", "identifications_full_name",
-			"identifications_short_name", "identifications_gender_identity",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
 			"identifications_marital_status", "identifications_image_url",
 			"identifications_birth_date", "identifications_cpf",
 			"identifications_created_at", "identifications_updated_at",
@@ -873,14 +877,14 @@ func TestPeopleHandler_ListFiltersBySearch(t *testing.T) {
 			AddRow(
 				domainHandlerUUID(t), companyID, clientPersonID, now,
 				clientPersonID, sqlc.PersonKindClient, true, false,
-				now, now, "Ana Lima", "Ana",
+				now, now, "Ana Lima", "Ana", "ana@petcontrol.local",
 				nil, nil, nil, nil, "12345678901",
 				now, now,
 			).
 			AddRow(
 				domainHandlerUUID(t), companyID, supplierPersonID, now.Add(-time.Minute),
 				supplierPersonID, sqlc.PersonKindSupplier, true, false,
-				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO",
+				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO", "fornecedor@xpto.local",
 				nil, nil, nil, nil, "12345678902",
 				now.Add(-time.Minute), now.Add(-time.Minute),
 			))
@@ -935,7 +939,7 @@ func TestPeopleHandler_ListPaginatesAfterFilteringAndReturnsTotal(t *testing.T) 
 			"company_person_id", "company_id", "person_id", "company_person_created_at",
 			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
 			"person_created_at", "person_updated_at", "identifications_full_name",
-			"identifications_short_name", "identifications_gender_identity",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
 			"identifications_marital_status", "identifications_image_url",
 			"identifications_birth_date", "identifications_cpf",
 			"identifications_created_at", "identifications_updated_at",
@@ -943,14 +947,14 @@ func TestPeopleHandler_ListPaginatesAfterFilteringAndReturnsTotal(t *testing.T) 
 			AddRow(
 				domainHandlerUUID(t), companyID, supplierPersonID, now,
 				supplierPersonID, sqlc.PersonKindSupplier, true, false,
-				now, now, "Bruno Supplier", "Bruno",
+				now, now, "Bruno Supplier", "Bruno", "bruno.supplier@petcontrol.local",
 				nil, nil, nil, nil, "12345678902",
 				now, now,
 			).
 			AddRow(
 				domainHandlerUUID(t), companyID, clientPersonID, now.Add(-time.Minute),
 				clientPersonID, sqlc.PersonKindClient, true, false,
-				now.Add(-time.Minute), now.Add(-time.Minute), "Ana Lima", "Ana",
+				now.Add(-time.Minute), now.Add(-time.Minute), "Ana Lima", "Ana", "ana@petcontrol.local",
 				nil, nil, nil, nil, "12345678901",
 				now.Add(-time.Minute), now.Add(-time.Minute),
 			))

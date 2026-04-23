@@ -32,8 +32,8 @@ func TestPetService_CreatePet(t *testing.T) {
 
 	mock.ExpectQuery(`(?s)name: CreatePet`).
 		WithArgs("Thor", sqlc.PetSizeMedium, sqlc.PetKindDog, sqlc.PetTemperamentPlayful, pgxmock.AnyArg(), pgxmock.AnyArg(), ownerID, pgxmock.AnyArg()).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "name", "size", "kind", "temperament", "image_url", "birth_date", "owner_id", "guardian_id", "is_active", "notes", "created_at", "updated_at", "deleted_at"}).
-			AddRow(petID.String(), "Thor", sqlc.PetSizeMedium, sqlc.PetKindDog, sqlc.PetTemperamentPlayful, nil, time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), ownerID.String(), nil, true, "Gosta de brincar", now, nil, nil))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "name", "size", "kind", "temperament", "image_url", "birth_date", "owner_id", "is_active", "notes", "created_at", "updated_at", "deleted_at"}).
+			AddRow(petID.String(), "Thor", sqlc.PetSizeMedium, sqlc.PetKindDog, sqlc.PetTemperamentPlayful, nil, time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), ownerID.String(), true, "Gosta de brincar", now, nil, nil))
 
 	mock.ExpectQuery(`(?s)name: GetPetByIDAndCompanyID`).
 		WithArgs(companyID, petID).

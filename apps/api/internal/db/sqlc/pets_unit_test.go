@@ -31,8 +31,8 @@ func TestQueries_Pets_Unit(t *testing.T) {
 
 		mock.ExpectQuery(`(?s)INSERT INTO pets`).
 			WithArgs(arg.Name, arg.Size, arg.Kind, arg.Temperament, arg.ImageUrl, arg.BirthDate, arg.OwnerID, arg.Notes).
-			WillReturnRows(pgxmock.NewRows([]string{"id", "name", "size", "kind", "temperament", "image_url", "birth_date", "owner_id", "guardian_id", "is_active", "notes", "created_at", "updated_at", "deleted_at"}).
-				AddRow(uuidValue(), arg.Name, arg.Size, arg.Kind, arg.Temperament, pgtype.Text{}, arg.BirthDate, arg.OwnerID, pgtype.UUID{}, true, pgtype.Text{}, time.Now(), pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+			WillReturnRows(pgxmock.NewRows([]string{"id", "name", "size", "kind", "temperament", "image_url", "birth_date", "owner_id", "is_active", "notes", "created_at", "updated_at", "deleted_at"}).
+				AddRow(uuidValue(), arg.Name, arg.Size, arg.Kind, arg.Temperament, pgtype.Text{}, arg.BirthDate, arg.OwnerID, true, pgtype.Text{}, time.Now(), pgtype.Timestamptz{}, pgtype.Timestamptz{}))
 
 		res, err := queries.CreatePet(ctx, arg)
 		require.NoError(t, err)

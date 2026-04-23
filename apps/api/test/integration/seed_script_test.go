@@ -59,7 +59,7 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 		FROM permissions
 	`).Scan(&permissionCount)
 	require.NoError(t, err)
-	require.Equal(t, 120, permissionCount)
+	require.Equal(t, 123, permissionCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)
