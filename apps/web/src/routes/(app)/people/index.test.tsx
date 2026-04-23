@@ -60,6 +60,7 @@ describe('PeoplePage', () => {
             short_name: 'Maria',
             image_url: null,
             cpf: '12345678901',
+            email: 'maria@petcontrol.local',
             has_system_user: false,
             is_active: true,
             created_at: '2026-04-10T10:00:00Z',
@@ -74,6 +75,7 @@ describe('PeoplePage', () => {
             short_name: 'XPTO',
             image_url: null,
             cpf: null,
+            email: 'fornecedor@xpto.local',
             has_system_user: false,
             is_active: true,
             created_at: '2026-04-11T10:00:00Z',
@@ -194,7 +196,7 @@ describe('PeoplePage', () => {
     });
 
     expect(screen.getAllByText('Maria Silva').length).toBeGreaterThan(0);
-    expect(screen.getByText('maria@petcontrol.local')).toBeTruthy();
+    expect(screen.getAllByText('maria@petcontrol.local').length).toBe(2);
     expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
   });
 

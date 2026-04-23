@@ -1061,7 +1061,7 @@ export async function updatePerson(
   }
 
   const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
-    method: 'PUT',
+    method: 'PATCH',
     accessToken,
     body: input,
   });

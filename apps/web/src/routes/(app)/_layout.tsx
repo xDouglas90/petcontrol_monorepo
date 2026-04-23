@@ -181,7 +181,7 @@ export function AppLayout() {
     currentUser?.settings_access?.can_view ?? currentUser?.role === 'admin';
   const canViewPeople =
     currentUser?.role === 'admin' || currentUser?.role === 'system';
-  const isPeopleRoute = location.pathname.endsWith('/people');
+  const isDashboardRoute = location.pathname.endsWith('/dashboard');
 
   if (
     urlSlug &&
@@ -430,7 +430,7 @@ export function AppLayout() {
           </main>
         </div>
 
-        {currentUser?.role === 'admin' && !isPeopleRoute ? (
+        {currentUser?.role === 'admin' && isDashboardRoute ? (
           <AdminSupportChatAside className="hidden xl:flex" />
         ) : null}
       </div>

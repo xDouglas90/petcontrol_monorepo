@@ -456,6 +456,7 @@ export interface PersonDTO {
   kind: PersonKind;
   full_name?: string | null;
   short_name?: string | null;
+  email?: string | null;
   image_url?: string | null;
   cpf?: string | null;
   has_system_user: boolean;
@@ -534,6 +535,32 @@ export interface PersonEmployeeBenefitsInput {
   valid_until?: string;
 }
 
+export const BANK_ACCOUNT_KINDS = ['checking', 'savings', 'salary'] as const;
+
+export type BankAccountKind = (typeof BANK_ACCOUNT_KINDS)[number];
+
+export const PIX_KEY_KINDS = [
+  'cpf',
+  'cnpj',
+  'email',
+  'phone',
+  'random',
+] as const;
+
+export type PixKeyKind = (typeof PIX_KEY_KINDS)[number];
+
+export interface PersonFinanceInput {
+  bank_name: string;
+  bank_code?: string;
+  bank_branch: string;
+  bank_account: string;
+  bank_account_digit: string;
+  bank_account_type: BankAccountKind;
+  has_pix: boolean;
+  pix_key?: string;
+  pix_key_type?: PixKeyKind;
+}
+
 export interface CreatePersonInput {
   kind: PersonKind;
   full_name: string;
@@ -552,6 +579,7 @@ export interface CreatePersonInput {
   client_since?: string;
   notes?: string;
   employment?: PersonEmploymentInput;
+  finance?: PersonFinanceInput;
   employee_documents?: PersonEmployeeDocumentsInput;
   employee_benefits?: PersonEmployeeBenefitsInput;
   pet_ids?: UUID[];
@@ -574,6 +602,7 @@ export interface UpdatePersonInput {
   client_since?: string;
   notes?: string;
   employment?: PersonEmploymentInput;
+  finance?: PersonFinanceInput;
   employee_documents?: PersonEmployeeDocumentsInput;
   employee_benefits?: PersonEmployeeBenefitsInput;
   pet_ids?: UUID[];
@@ -605,6 +634,19 @@ export interface PersonEmployeeBenefitsDTO {
   valid_until?: string | null;
 }
 
+export interface PersonFinanceDTO {
+  bank_name: string;
+  bank_code?: string | null;
+  bank_branch: string;
+  bank_account: string;
+  bank_account_digit: string;
+  bank_account_type: BankAccountKind;
+  has_pix: boolean;
+  pix_key?: string | null;
+  pix_key_type?: PixKeyKind | null;
+  is_primary: boolean;
+}
+
 export interface PersonLinkedUserDTO {
   user_id: UUID;
   email: string;
@@ -629,6 +671,7 @@ export interface PersonDetailDTO extends PersonDTO {
   birth_date?: string | null;
   contact?: PersonContactDTO | null;
   address?: PersonAddressDTO | null;
+  finance?: PersonFinanceDTO | null;
   client_details?: PersonClientDetailsDTO | null;
   employee_details?: PersonEmployeeDetailsDTO | null;
   employee_documents?: PersonEmployeeDocumentsDTO | null;

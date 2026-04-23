@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, useParams } from '@tanstack/react-router';
 import { buildCompanyRoute, DEFAULT_PAGE } from '@petcontrol/shared-constants';
 import type {
+  BankAccountKind,
   CreatePersonInput,
   GenderIdentity,
   MaritalStatus,
   PetDTO,
+  PixKeyKind,
   PersonAddressInput,
   PersonDetailDTO,
+  PersonFinanceInput,
   PersonKind,
 } from '@petcontrol/shared-types';
 
@@ -92,10 +95,14 @@ type PersonEmployeeBenefitsInput = {
   valid_until?: string;
 };
 
+type PersonFinanceFormInput = PersonFinanceInput;
+
 type PeopleFormState = CreatePersonInput & {
   address_enabled: boolean;
   address: PersonAddressInput;
   employment: PersonEmploymentInput;
+  finance_enabled: boolean;
+  finance: PersonFinanceFormInput;
   employee_documents: PersonEmployeeDocumentsInput;
   employee_benefits_enabled: boolean;
   employee_benefits: PersonEmployeeBenefitsInput;
@@ -108,6 +115,7 @@ type FormSectionKey =
   | 'address'
   | 'client'
   | 'employment'
+  | 'finance'
   | 'employee_documents'
   | 'employee_benefits';
 
@@ -153,6 +161,35 @@ const initialEmployeeBenefits: PersonEmployeeBenefitsInput = {
   valid_until: '',
 };
 
+const BANK_ACCOUNT_TYPE_OPTIONS: Array<{
+  value: BankAccountKind;
+  label: string;
+}> = [
+  { value: 'checking', label: 'Conta corrente' },
+  { value: 'savings', label: 'Conta poupança' },
+  { value: 'salary', label: 'Conta salário' },
+];
+
+const PIX_KEY_TYPE_OPTIONS: Array<{ value: PixKeyKind; label: string }> = [
+  { value: 'cpf', label: 'CPF' },
+  { value: 'cnpj', label: 'CNPJ' },
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Telefone' },
+  { value: 'random', label: 'Chave aleatória' },
+];
+
+const initialFinance: PersonFinanceFormInput = {
+  bank_name: '',
+  bank_code: '',
+  bank_branch: '',
+  bank_account: '',
+  bank_account_digit: '',
+  bank_account_type: 'checking',
+  has_pix: false,
+  pix_key: '',
+  pix_key_type: 'cpf',
+};
+
 function buildInitialForm(kind: PersonKind): PeopleFormState {
   return {
     kind,
@@ -173,6 +210,8 @@ function buildInitialForm(kind: PersonKind): PeopleFormState {
     client_since: '',
     notes: '',
     employment: { ...initialEmployment },
+    finance_enabled: false,
+    finance: { ...initialFinance },
     employee_documents: { ...initialEmployeeDocuments },
     employee_benefits_enabled: false,
     employee_benefits: { ...initialEmployeeBenefits },
@@ -214,6 +253,18 @@ function buildFormFromDetail(detail: PersonDetailDTO): PeopleFormState {
       admission_date: detail.employee_details?.admission_date ?? '',
       resignation_date: detail.employee_details?.resignation_date ?? '',
       salary: detail.employee_details?.salary ?? '',
+    },
+    finance_enabled: Boolean(detail.finance),
+    finance: {
+      bank_name: detail.finance?.bank_name ?? '',
+      bank_code: detail.finance?.bank_code ?? '',
+      bank_branch: detail.finance?.bank_branch ?? '',
+      bank_account: detail.finance?.bank_account ?? '',
+      bank_account_digit: detail.finance?.bank_account_digit ?? '',
+      bank_account_type: detail.finance?.bank_account_type ?? 'checking',
+      has_pix: detail.finance?.has_pix ?? false,
+      pix_key: detail.finance?.pix_key ?? '',
+      pix_key_type: detail.finance?.pix_key_type ?? 'cpf',
     },
     employee_documents: {
       rg: detail.employee_documents?.rg ?? '',
@@ -368,6 +419,30 @@ function normalizeAddressInput(
   };
 }
 
+function normalizeFinanceInput(
+  form: PeopleFormState,
+): PersonFinanceInput | undefined {
+  const supportsFinance =
+    form.kind === 'employee' || form.kind === 'outsourced_employee';
+  if (!supportsFinance || !form.finance_enabled) {
+    return undefined;
+  }
+
+  return {
+    bank_name: form.finance.bank_name.trim(),
+    bank_code: form.finance.bank_code?.trim() || undefined,
+    bank_branch: form.finance.bank_branch.trim(),
+    bank_account: form.finance.bank_account.trim(),
+    bank_account_digit: form.finance.bank_account_digit.trim(),
+    bank_account_type: form.finance.bank_account_type,
+    has_pix: form.finance.has_pix,
+    pix_key: form.finance.pix_key?.trim() || undefined,
+    pix_key_type: form.finance.has_pix
+      ? form.finance.pix_key_type
+      : undefined,
+  };
+}
+
 function hasTrimmedValue(value: string | undefined | null) {
   return String(value ?? '').trim().length > 0;
 }
@@ -450,6 +525,31 @@ function validatePeopleForm(form: PeopleFormState): FormValidationErrors {
     }
     if (employmentErrors.length > 0) {
       errors.employment = employmentErrors;
+    }
+
+    if (form.finance_enabled) {
+      const financeErrors: string[] = [];
+      if (!hasTrimmedValue(form.finance.bank_name)) {
+        financeErrors.push('Informe o banco.');
+      }
+      if (!hasTrimmedValue(form.finance.bank_branch)) {
+        financeErrors.push('Informe a agência.');
+      }
+      if (!hasTrimmedValue(form.finance.bank_account)) {
+        financeErrors.push('Informe a conta.');
+      }
+      if (!hasTrimmedValue(form.finance.bank_account_digit)) {
+        financeErrors.push('Informe o dígito da conta.');
+      }
+      if (
+        form.finance.has_pix &&
+        !hasTrimmedValue(form.finance.pix_key)
+      ) {
+        financeErrors.push('Informe a chave PIX.');
+      }
+      if (financeErrors.length > 0) {
+        errors.finance = financeErrors;
+      }
     }
 
     const employeeDocumentErrors: string[] = [];
@@ -568,10 +668,6 @@ export function PeoplePage() {
     Record<string, string>
   >({});
 
-  const personQuery = usePersonQuery(
-    panelMode === 'create' ? undefined : (selectedPersonId ?? undefined),
-  );
-
   const filteredPeople = useMemo(() => {
     const items = peopleQuery.data?.data ?? [];
 
@@ -600,6 +696,23 @@ export function PeoplePage() {
     });
   }, [currentUser?.role, peopleQuery.data?.data, search]);
 
+  const activeSelectedPersonId = useMemo(() => {
+    if (panelMode === 'create') {
+      return null;
+    }
+
+    if (
+      selectedPersonId &&
+      filteredPeople.some((person) => person.id === selectedPersonId)
+    ) {
+      return selectedPersonId;
+    }
+
+    return filteredPeople[0]?.id ?? null;
+  }, [filteredPeople, panelMode, selectedPersonId]);
+
+  const personQuery = usePersonQuery(activeSelectedPersonId ?? undefined);
+
   useEffect(() => {
     syncSelectedKindToLocation(selectedKind);
   }, [selectedKind]);
@@ -613,7 +726,8 @@ export function PeoplePage() {
   }, [page]);
 
   const selectedPerson =
-    filteredPeople.find((person) => person.id === selectedPersonId) ?? null;
+    filteredPeople.find((person) => person.id === activeSelectedPersonId) ??
+    null;
   const personDetail = personQuery.data ?? null;
   const selectedPersonSupportsCurrentForm = selectedPerson
     ? editableKinds.includes(selectedPerson.kind)
@@ -625,24 +739,6 @@ export function PeoplePage() {
       (form.kind === 'employee' || form.kind === 'outsourced_employee')) ||
     (currentUser?.role === 'system' && form.kind === 'client');
   const guardianPets = petsQuery.data?.data ?? [];
-
-  const [prevFilteredPeople, setPrevFilteredPeople] = useState(filteredPeople);
-  if (filteredPeople !== prevFilteredPeople) {
-    setPrevFilteredPeople(filteredPeople);
-    if (
-      !selectedPersonId &&
-      filteredPeople.length > 0 &&
-      panelMode !== 'create'
-    ) {
-      setSelectedPersonId(filteredPeople[0].id);
-    } else if (
-      selectedPersonId &&
-      !filteredPeople.some((person) => person.id === selectedPersonId)
-    ) {
-      setSelectedPersonId(filteredPeople[0]?.id ?? null);
-      if (panelMode !== 'view') setPanelMode('view');
-    }
-  }
 
   if (
     currentUserQuery.isSuccess &&
@@ -666,13 +762,14 @@ export function PeoplePage() {
 
     try {
       const address = normalizeAddressInput(form);
+      const finance = normalizeFinanceInput(form);
       const requestedSystemUser =
         canManageSystemUser &&
         form.has_system_user &&
         (panelMode === 'create' || !personDetail?.has_system_user);
       const feedbackEmail = form.email.trim();
 
-      if (panelMode === 'edit' && selectedPersonId) {
+      if (panelMode === 'edit' && activeSelectedPersonId) {
         const input = {
           full_name: form.full_name.trim(),
           short_name: form.short_name.trim(),
@@ -700,6 +797,7 @@ export function PeoplePage() {
             form.kind === 'employee' || form.kind === 'outsourced_employee'
               ? form.employment
               : undefined,
+          finance,
           employee_documents:
             form.kind === 'employee' || form.kind === 'outsourced_employee'
               ? form.employee_documents
@@ -712,7 +810,7 @@ export function PeoplePage() {
         };
 
         const updated = await updateMutation.mutateAsync({
-          personId: selectedPersonId,
+          personId: activeSelectedPersonId,
           input,
         });
         setSelectedPersonId(updated.id);
@@ -757,6 +855,7 @@ export function PeoplePage() {
           form.kind === 'employee' || form.kind === 'outsourced_employee'
             ? form.employment
             : undefined,
+        finance,
         employee_documents:
           form.kind === 'employee' || form.kind === 'outsourced_employee'
             ? form.employee_documents
@@ -888,7 +987,8 @@ export function PeoplePage() {
 
               {filteredPeople.map((person) => {
                 const isSelected =
-                  panelMode !== 'create' && selectedPersonId === person.id;
+                  panelMode !== 'create' &&
+                  activeSelectedPersonId === person.id;
                 const wasRecentlyProvisioned = Boolean(
                   recentlyProvisionedPeople[person.id],
                 );
@@ -915,6 +1015,9 @@ export function PeoplePage() {
                         <p className="mt-1 text-sm text-stone-500">
                           {person.short_name ?? 'Sem nome curto'} ·{' '}
                           {resolveKindLabel(person.kind)}
+                        </p>
+                        <p className="mt-2 text-sm text-stone-400">
+                          {person.email ?? 'Email não informado'}
                         </p>
                         {wasRecentlyProvisioned ? (
                           <p className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
@@ -1804,6 +1907,196 @@ export function PeoplePage() {
                     </DetailSection>
 
                     <DetailSection
+                      title="Financeiro"
+                      errorMessages={
+                        showValidation ? validationErrors.finance : undefined
+                      }
+                    >
+                      <ToggleRow
+                        label="Cadastrar conta bancária"
+                        checked={form.finance_enabled}
+                        onChange={(checked) =>
+                          setForm((current: PeopleFormState) => ({
+                            ...current,
+                            finance_enabled: checked,
+                          }))
+                        }
+                      />
+
+                      {form.finance_enabled ? (
+                        <>
+                          <Field label="Banco" htmlFor="person-finance-bank-name" required>
+                            <input
+                              aria-label="Banco"
+                              id="person-finance-bank-name"
+                              className={fieldClassName}
+                              value={form.finance.bank_name}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_name: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </Field>
+                          <Field label="Código do banco" htmlFor="person-finance-bank-code">
+                            <input
+                              aria-label="Código do banco"
+                              id="person-finance-bank-code"
+                              className={fieldClassName}
+                              value={form.finance.bank_code ?? ''}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_code: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </Field>
+                          <Field label="Agência" htmlFor="person-finance-bank-branch" required>
+                            <input
+                              aria-label="Agência"
+                              id="person-finance-bank-branch"
+                              className={fieldClassName}
+                              value={form.finance.bank_branch}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_branch: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </Field>
+                          <Field label="Conta" htmlFor="person-finance-bank-account" required>
+                            <input
+                              aria-label="Conta"
+                              id="person-finance-bank-account"
+                              className={fieldClassName}
+                              value={form.finance.bank_account}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_account: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </Field>
+                          <Field label="Dígito" htmlFor="person-finance-bank-account-digit" required>
+                            <input
+                              aria-label="Dígito"
+                              id="person-finance-bank-account-digit"
+                              className={fieldClassName}
+                              value={form.finance.bank_account_digit}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_account_digit: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </Field>
+                          <Field label="Tipo de conta" htmlFor="person-finance-bank-account-type">
+                            <select
+                              aria-label="Tipo de conta"
+                              id="person-finance-bank-account-type"
+                              className={fieldClassName}
+                              value={form.finance.bank_account_type}
+                              onChange={(event) =>
+                                setForm((current: PeopleFormState) => ({
+                                  ...current,
+                                  finance: {
+                                    ...current.finance,
+                                    bank_account_type:
+                                      event.target.value as BankAccountKind,
+                                  },
+                                }))
+                              }
+                            >
+                              {BANK_ACCOUNT_TYPE_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                          <ToggleRow
+                            label="Possui PIX"
+                            checked={form.finance.has_pix}
+                            onChange={(checked) =>
+                              setForm((current: PeopleFormState) => ({
+                                ...current,
+                                finance: {
+                                  ...current.finance,
+                                  has_pix: checked,
+                                },
+                              }))
+                            }
+                          />
+                          {form.finance.has_pix ? (
+                            <>
+                              <Field label="Chave PIX" htmlFor="person-finance-pix-key" required>
+                                <input
+                                  aria-label="Chave PIX"
+                                  id="person-finance-pix-key"
+                                  className={fieldClassName}
+                                  value={form.finance.pix_key ?? ''}
+                                  onChange={(event) =>
+                                    setForm((current: PeopleFormState) => ({
+                                      ...current,
+                                      finance: {
+                                        ...current.finance,
+                                        pix_key: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                              </Field>
+                              <Field label="Tipo de chave PIX" htmlFor="person-finance-pix-key-type">
+                                <select
+                                  aria-label="Tipo de chave PIX"
+                                  id="person-finance-pix-key-type"
+                                  className={fieldClassName}
+                                  value={form.finance.pix_key_type ?? 'cpf'}
+                                  onChange={(event) =>
+                                    setForm((current: PeopleFormState) => ({
+                                      ...current,
+                                      finance: {
+                                        ...current.finance,
+                                        pix_key_type:
+                                          event.target.value as PixKeyKind,
+                                      },
+                                    }))
+                                  }
+                                >
+                                  {PIX_KEY_TYPE_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            </>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </DetailSection>
+
+                    <DetailSection
                       title="Benefícios"
                       errorMessages={
                         showValidation
@@ -2215,6 +2508,41 @@ export function PeoplePage() {
                     </DetailSection>
                   ) : null}
 
+                  {personDetail.finance ? (
+                    <DetailSection title="Financeiro">
+                      <SummaryRow
+                        label="Banco"
+                        value={personDetail.finance.bank_name}
+                      />
+                      <SummaryRow
+                        label="Código"
+                        value={personDetail.finance.bank_code ?? 'Não informado'}
+                      />
+                      <SummaryRow
+                        label="Agência"
+                        value={personDetail.finance.bank_branch}
+                      />
+                      <SummaryRow
+                        label="Conta"
+                        value={`${personDetail.finance.bank_account}-${personDetail.finance.bank_account_digit}`}
+                      />
+                      <SummaryRow
+                        label="Tipo de conta"
+                        value={resolveBankAccountTypeLabel(
+                          personDetail.finance.bank_account_type,
+                        )}
+                      />
+                      <SummaryRow
+                        label="PIX"
+                        value={
+                          personDetail.finance.has_pix
+                            ? `${resolvePixKeyTypeLabel(personDetail.finance.pix_key_type)}: ${personDetail.finance.pix_key ?? 'Não informado'}`
+                            : 'Não'
+                        }
+                      />
+                    </DetailSection>
+                  ) : null}
+
                   {personDetail.employee_documents ? (
                     <DetailSection title="Documentos do funcionário">
                       <SummaryRow
@@ -2416,6 +2744,36 @@ function resolveKindLabel(kind: PersonKind) {
       return 'Responsável';
     default:
       return kind;
+  }
+}
+
+function resolveBankAccountTypeLabel(kind: BankAccountKind) {
+  switch (kind) {
+    case 'checking':
+      return 'Conta corrente';
+    case 'savings':
+      return 'Conta poupança';
+    case 'salary':
+      return 'Conta salário';
+    default:
+      return kind;
+  }
+}
+
+function resolvePixKeyTypeLabel(kind?: PixKeyKind | null) {
+  switch (kind) {
+    case 'cpf':
+      return 'CPF';
+    case 'cnpj':
+      return 'CNPJ';
+    case 'email':
+      return 'Email';
+    case 'phone':
+      return 'Telefone';
+    case 'random':
+      return 'Chave aleatória';
+    default:
+      return 'Tipo não informado';
   }
 }
 
