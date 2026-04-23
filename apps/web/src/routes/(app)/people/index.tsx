@@ -1022,7 +1022,7 @@ export function PeoplePage() {
                               <span className="hidden text-stone-300 md:inline">
                                 ·
                               </span>
-                              <span>CPF {person.cpf}</span>
+                              <span>CPF {maskCpf(person.cpf)}</span>
                             </>
                           ) : null}
                           <span className="hidden text-stone-300 md:inline">
@@ -2381,7 +2381,7 @@ export function PeoplePage() {
                     />
                     <SummaryRow
                       label="CPF"
-                      value={personDetail.cpf ?? 'Não informado'}
+                      value={maskCpf(personDetail.cpf)}
                     />
                     <SummaryRow
                       label="Usuário do sistema"
@@ -2806,6 +2806,23 @@ function resolvePixKeyTypeLabel(kind?: PixKeyKind | null) {
     default:
       return 'Tipo não informado';
   }
+}
+
+function maskCpf(cpf?: string | null) {
+  const digits = String(cpf ?? '').replace(/\D/g, '');
+  if (digits.length === 0) {
+    return 'Não informado';
+  }
+
+  if (digits.length <= 4) {
+    return digits;
+  }
+
+  const visiblePrefix = digits.slice(0, 3);
+  const visibleSuffix = digits.slice(-2);
+  const maskedMiddle = '*'.repeat(Math.max(digits.length - 5, 0));
+
+  return `${visiblePrefix}${maskedMiddle}${visibleSuffix}`;
 }
 
 function resolvePetKindLabel(kind: PetDTO['kind']) {
