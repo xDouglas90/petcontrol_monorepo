@@ -508,7 +508,7 @@ Hoje o impacto conhecido da tabela é:
 6. Corrigir referências quebradas após regeneração.
    - ajustar imports e usos do `Querier` onde esses métodos apareçam;
    - substituir por queries baseadas em `people_addresses`, se alguma leitura ainda for necessária;
-   - remover testes ou fixtures que dependedam da tabela excluída.
+   - remover testes ou fixtures que dependam da tabela excluída.
 
 7. Atualizar documentação estrutural.
    - remover `COMPANY_PEOPLE_ADDRESSES` do diagrama ER;
@@ -549,24 +549,24 @@ Impactos colaterais esperados:
 
 ## Critérios de Aceite
 
-- [ ] Existe rota autenticada `/:companySlug/people`.
-- [ ] O menu lateral exibe `Pessoas`.
-- [ ] A tela lista pessoas vinculadas ao tenant.
-- [ ] A listagem possui filtro por `person_kind`.
-- [ ] O chat lateral não aparece em `/people`.
-- [ ] O painel direito mostra os dados da pessoa selecionada.
-- [ ] O painel direito também suporta o fluxo de criação.
-- [ ] O formulário muda conforme o `person_kind`.
-- [ ] `admin` pode criar e editar todos os tipos suportados.
-- [ ] `system` só pode visualizar, criar e editar `client` e `supplier`.
-- [ ] `system` só pode criar usuário para `client`.
-- [ ] `employee` e `outsourced_employee` suportam pergunta explícita de `has_system_user`.
-- [ ] Quando houver criação de usuário, o backend cria `users`, `user_auth` e `user_profiles`.
-- [ ] O email do novo usuário vem de `people_contacts.email`.
-- [ ] As permissões iniciais do novo usuário são derivadas do tenant/plano do cadastrante.
-- [ ] O ambiente local possui MailHog configurado para receber os emails disparados pelo backend.
-- [ ] O fluxo de criação de usuário pode ser validado localmente pela interface do MailHog.
-- [ ] A implementação é coberta por testes mínimos de backend e frontend.
+- [x] Existe rota autenticada `/:companySlug/people`.
+- [x] O menu lateral exibe `Pessoas`.
+- [x] A tela lista pessoas vinculadas ao tenant.
+- [x] A listagem possui filtro por `person_kind`.
+- [x] O chat lateral não aparece em `/people`.
+- [x] O painel direito mostra os dados da pessoa selecionada.
+- [x] O painel direito também suporta o fluxo de criação.
+- [x] O formulário muda conforme o `person_kind`.
+- [x] `admin` pode criar e editar todos os tipos suportados.
+- [x] `system` só pode visualizar, criar e editar `client` e `supplier`.
+- [x] `system` só pode criar usuário para `client`.
+- [x] `employee` e `outsourced_employee` suportam pergunta explícita de `has_system_user`.
+- [x] Quando houver criação de usuário, o backend cria `users`, `user_auth` e `user_profiles`.
+- [x] O email do novo usuário vem de `people_contacts.email`.
+- [x] As permissões iniciais do novo usuário são derivadas do tenant/plano do cadastrante.
+- [x] O ambiente local possui MailHog configurado para receber os emails disparados pelo backend.
+- [x] O fluxo de criação de usuário pode ser validado localmente pela interface do MailHog.
+- [x] A implementação é coberta por testes mínimos de backend e frontend.
 
 ## Sequência Recomendada de Execução
 
@@ -583,14 +583,14 @@ Impactos colaterais esperados:
 
 ## Backend
 
-- [ ] Usar `People` como módulo próprio com permissões dedicadas:
+- [x] Usar `People` como módulo próprio com permissões dedicadas:
   - `people:view`
   - `people:create`
   - `people:update`
-- [ ] Refletir o módulo `People` no catálogo de módulos, permissões e planos.
-- [ ] Garantir que a autorização final do recurso também valide restrições por `person_kind`, não apenas por permissão genérica.
-- [ ] Definir contrato DTO de listagem de pessoas tenant-scoped com filtros por `person_kind`.
-- [ ] Definir contrato DTO de detalhe de pessoa com agregação de:
+- [x] Refletir o módulo `People` no catálogo de módulos, permissões e planos.
+- [x] Garantir que a autorização final do recurso também valide restrições por `person_kind`, não apenas por permissão genérica.
+- [x] Definir contrato DTO de listagem de pessoas tenant-scoped com filtros por `person_kind`.
+- [x] Definir contrato DTO de detalhe de pessoa com agregação de:
   - `people`
   - `people_identifications`
   - `people_contacts`
@@ -598,72 +598,72 @@ Impactos colaterais esperados:
   - finanças
   - vínculos específicos do tipo
   - resumo de usuário vinculado
-- [ ] Definir contrato DTO de criação de pessoa com seleção explícita de `person_kind`.
-- [ ] Definir contrato DTO de edição de pessoa com payload coerente por tipo.
-- [ ] Criar ou adaptar endpoint `GET /people` tenant-scoped.
-- [ ] Criar ou adaptar endpoint `GET /people/:personId` tenant-scoped.
-- [ ] Criar endpoint `POST /people` como escrita agregada transacional.
-- [ ] Criar endpoint `PATCH /people/:personId` como atualização agregada transacional.
-- [ ] Garantir que o list endpoint parta de `company_people`, evitando vazamento cross-tenant.
-- [ ] Implementar filtro por `person_kind` na listagem.
-- [ ] Implementar ordenação estável da listagem, preferencialmente por nome.
-- [ ] Validar que `system` só possa criar/editar:
+- [x] Definir contrato DTO de criação de pessoa com seleção explícita de `person_kind`.
+- [x] Definir contrato DTO de edição de pessoa com payload coerente por tipo.
+- [x] Criar ou adaptar endpoint `GET /people` tenant-scoped.
+- [x] Criar ou adaptar endpoint `GET /people/:personId` tenant-scoped.
+- [x] Criar endpoint `POST /people` como escrita agregada transacional.
+- [x] Criar endpoint `PATCH /people/:personId` como atualização agregada transacional.
+- [x] Garantir que o list endpoint parta de `company_people`, evitando vazamento cross-tenant.
+- [x] Implementar filtro por `person_kind` na listagem.
+- [x] Implementar ordenação estável da listagem, preferencialmente por nome.
+- [x] Validar que `system` só possa criar/editar:
   - `client`
   - `supplier`
-- [ ] Validar que `system` não possa criar/editar:
+- [x] Validar que `system` não possa criar/editar:
   - `employee`
   - `outsourced_employee`
   - `guardian`
   - `responsible`
-- [ ] Validar que `admin` possa criar/editar todos os tipos suportados.
-- [ ] Implementar fluxo de criação base em `people`.
-- [ ] Implementar criação de `people_identifications`.
-- [ ] Implementar criação e seleção de contato principal em `people_contacts`.
-- [ ] Implementar criação de endereço principal em `addresses`.
-- [ ] Implementar vínculo de endereço principal em `people_addresses` como fonte de verdade do módulo.
+- [x] Validar que `admin` possa criar/editar todos os tipos suportados.
+- [x] Implementar fluxo de criação base em `people`.
+- [x] Implementar criação de `people_identifications`.
+- [x] Implementar criação e seleção de contato principal em `people_contacts`.
+- [x] Implementar criação de endereço principal em `addresses`.
+- [x] Implementar vínculo de endereço principal em `people_addresses` como fonte de verdade do módulo.
 - [ ] Remover `company_people_addresses` do escopo desta PR e registrar sua redundância técnica na modelagem atual.
 - [ ] Avaliar remoção efetiva de `company_people_addresses` do schema e das queries geradas, desde que não exista uso externo bloqueante.
-- [ ] Implementar criação de dados financeiros em `finances` apenas para:
+- [x] Implementar criação de dados financeiros em `finances` apenas para:
   - `employee`
   - `outsourced_employee`
-- [ ] Implementar vínculo financeiro em `people_finances` apenas para tipos de funcionário na primeira versão.
-- [ ] Implementar criação obrigatória de `company_people` para todo tipo suportado.
-- [ ] Implementar criação de `clients` para `person_kind = client`.
-- [ ] Implementar criação de `company_clients` após criação do cliente.
-- [ ] Implementar criação de `company_employees` para:
+- [x] Implementar vínculo financeiro em `people_finances` apenas para tipos de funcionário na primeira versão.
+- [x] Implementar criação obrigatória de `company_people` para todo tipo suportado.
+- [x] Implementar criação de `clients` para `person_kind = client`.
+- [x] Implementar criação de `company_clients` após criação do cliente.
+- [x] Implementar criação de `company_employees` para:
   - `employee`
   - `outsourced_employee`
-- [ ] Implementar criação de `employments` para tipos de funcionário.
-- [ ] Implementar criação opcional de `employee_benefits` quando informado.
-- [ ] Implementar `employee_documents` quando a pessoa criada for do tipo:
+- [x] Implementar criação de `employments` para tipos de funcionário.
+- [x] Implementar criação opcional de `employee_benefits` quando informado.
+- [x] Implementar `employee_documents` quando a pessoa criada for do tipo:
   - `employee`
   - `outsourced_employee`
-- [ ] Validar `has_system_user` apenas para combinações permitidas.
-- [ ] Permitir `has_system_user` para `employee` e `outsourced_employee` quando o usuário autenticado puder criar esses tipos.
-- [ ] Permitir `has_system_user` para `client` apenas quando o usuário autenticado for `system`, conforme regra informada.
-- [ ] Impedir `has_system_user` para `supplier`, `guardian` e `responsible` nesta PR.
-- [ ] Antes de criar `users`, validar unicidade/consistência de `people_contacts.email`.
-- [ ] Criar `users` com `role = system` para:
+- [x] Validar `has_system_user` apenas para combinações permitidas.
+- [x] Permitir `has_system_user` para `employee` e `outsourced_employee` quando o usuário autenticado puder criar esses tipos.
+- [x] Permitir `has_system_user` para `client` apenas quando o usuário autenticado for `system`, conforme regra informada.
+- [x] Impedir `has_system_user` para `supplier`, `guardian` e `responsible` nesta PR.
+- [x] Antes de criar `users`, validar unicidade/consistência de `people_contacts.email`.
+- [x] Criar `users` com `role = system` para:
   - `employee`
   - `outsourced_employee`
-- [ ] Criar `users` com `role = common` para `client` quando esse fluxo estiver habilitado.
-- [ ] Criar `user_auth` com senha gerada automaticamente no backend.
-- [ ] Marcar comportamento de primeiro acesso, como `must_change_password`, se já fizer parte do fluxo existente.
-- [ ] Criar vínculo em `user_profiles`.
-- [ ] Aplicar bootstrap de `user_permissions` usando o plano ativo do tenant e as permissões padrão esperadas para os módulos liberados.
-- [ ] Garantir que o usuário recém-criado não receba permissões fora do plano ativo do tenant.
-- [ ] Disparar envio de email com link do sistema e credenciais de forma assíncrona após sucesso do cadastro.
-- [ ] Adicionar suporte de configuração SMTP por ambiente para permitir uso de MailHog localmente.
-- [ ] Garantir que o serviço de envio de email aceite host/porta/remetente configuráveis por env.
-- [ ] Garantir fallback seguro entre ambiente local e ambientes reais.
-- [ ] Documentar as envs necessárias para integração com MailHog.
-- [ ] Garantir rollback transacional se qualquer etapa crítica falhar antes da conclusão.
+- [x] Criar `users` com `role = common` para `client` quando esse fluxo estiver habilitado.
+- [x] Criar `user_auth` com senha gerada automaticamente no backend.
+- [x] Marcar comportamento de primeiro acesso, como `must_change_password`, se já fizer parte do fluxo existente.
+- [x] Criar vínculo em `user_profiles`.
+- [x] Aplicar bootstrap de `user_permissions` usando o plano ativo do tenant e as permissões padrão esperadas para os módulos liberados.
+- [x] Garantir que o usuário recém-criado não receba permissões fora do plano ativo do tenant.
+- [x] Disparar envio de email com link do sistema e credenciais de forma assíncrona após sucesso do cadastro.
+- [x] Adicionar suporte de configuração SMTP por ambiente para permitir uso de MailHog localmente.
+- [x] Garantir que o serviço de envio de email aceite host/porta/remetente configuráveis por env.
+- [x] Garantir fallback seguro entre ambiente local e ambientes reais.
+- [x] Documentar as envs necessárias para integração com MailHog.
+- [x] Garantir rollback transacional se qualquer etapa crítica falhar antes da conclusão.
 - [ ] Tratar falhas de email como pós-processamento assíncrono confiável, com mecanismo de retry ou compensação.
-- [ ] Garantir que a leitura de detalhe retorne dados suficientes para preencher painel de visualização e edição.
-- [ ] Garantir que a edição atualize apenas blocos permitidos para o tipo da pessoa.
-- [ ] Garantir que a edição não permita migrar a pessoa para um `person_kind` incompatível sem regra explícita.
-- [ ] Adicionar testes de serviço/handler para listagem tenant-scoped.
-- [ ] Adicionar testes de serviço/handler para filtros por tipo.
+- [x] Garantir que a leitura de detalhe retorne dados suficientes para preencher painel de visualização e edição.
+- [x] Garantir que a edição atualize apenas blocos permitidos para o tipo da pessoa.
+- [x] Garantir que a edição não permita migrar a pessoa para um `person_kind` incompatível sem regra explícita.
+- [x] Adicionar testes de serviço/handler para listagem tenant-scoped.
+- [x] Adicionar testes de serviço/handler para filtros por tipo.
 - [ ] Adicionar testes para criação de `client` sem usuário.
 - [ ] Adicionar testes para criação de `client` com usuário `common` por usuário autenticado `system`.
 - [ ] Adicionar testes para criação de `employee` com usuário `system`.
@@ -677,89 +677,89 @@ Impactos colaterais esperados:
   - `company_employees`
   - `user_profiles`
 - [ ] Adicionar cobertura de teste local automatizado usando MailHog para criação de usuário e recebimento do email.
-- [ ] Manter também um fluxo simples de validação manual pela UI do MailHog para desenvolvimento.
+- [x] Manter também um fluxo simples de validação manual pela UI do MailHog para desenvolvimento.
 - [ ] Adicionar testes de rollback transacional.
-- [ ] Atualizar documentação da API ou swagger do domínio, se fizer parte do padrão atual.
+- [x] Atualizar documentação da API ou swagger do domínio, se fizer parte do padrão atual.
 
-- [ ] Adicionar ou atualizar infraestrutura local para subir `MailHog`.
-- [ ] Se o projeto usar `docker compose`, incluir o serviço `mailhog` na composição local.
-- [ ] Expor no ambiente local a URL da UI do MailHog para conferência das mensagens.
+- [x] Adicionar ou atualizar infraestrutura local para subir `MailHog`.
+- [x] Se o projeto usar `docker compose`, incluir o serviço `mailhog` na composição local.
+- [x] Expor no ambiente local a URL da UI do MailHog para conferência das mensagens.
 
 ## Web
 
-- [ ] Adicionar a rota `/:companySlug/people` no router autenticado.
-- [ ] Criar a página [apps/web/src/routes/(app)/people/index.tsx](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/apps/web/src/routes/(app)/people/index.tsx:1).
-- [ ] Adicionar `Pessoas` ao menu lateral do `AppLayout`.
-- [ ] Ajustar o `AppLayout` para não renderizar o chat lateral em `/people`.
-- [ ] Preservar o chat apenas no `dashboard`, conforme diretriz do produto.
-- [ ] Garantir que a área direita da tela `/people` fique reservada ao painel do módulo.
-- [ ] Definir query key e hooks de React Query para:
+- [x] Adicionar a rota `/:companySlug/people` no router autenticado.
+- [x] Criar a página [apps/web/src/routes/(app)/people/index.tsx](/home/trapdev/go/src/github.com/xdouglas90/petcontrol_monorepo/apps/web/src/routes/(app)/people/index.tsx:1).
+- [x] Adicionar `Pessoas` ao menu lateral do `AppLayout`.
+- [x] Ajustar o `AppLayout` para não renderizar o chat lateral em `/people`.
+- [x] Preservar o chat apenas no `dashboard`, conforme diretriz do produto.
+- [x] Garantir que a área direita da tela `/people` fique reservada ao painel do módulo.
+- [x] Definir query key e hooks de React Query para:
   - listagem de pessoas
   - detalhe da pessoa
   - criação
   - edição
-- [ ] Criar camada de client HTTP para os endpoints de `people`.
-- [ ] Definir tipos TS do payload de listagem, detalhe, criação e edição.
-- [ ] Implementar estado base da página com:
+- [x] Criar camada de client HTTP para os endpoints de `people`.
+- [x] Definir tipos TS do payload de listagem, detalhe, criação e edição.
+- [x] Implementar estado base da página com:
   - lista à esquerda
   - painel à direita
   - estado vazio quando nada estiver selecionado
-- [ ] Implementar filtro por `person_kind`.
-- [ ] Implementar persistência do filtro em search params ou estado equivalente.
-- [ ] Implementar loading state da listagem.
-- [ ] Implementar empty state da listagem.
-- [ ] Implementar error state da listagem.
-- [ ] Exibir na lista pelo menos:
+- [x] Implementar filtro por `person_kind`.
+- [x] Implementar persistência do filtro em search params ou estado equivalente.
+- [x] Implementar loading state da listagem.
+- [x] Implementar empty state da listagem.
+- [x] Implementar error state da listagem.
+- [x] Exibir na lista pelo menos:
   - nome
   - tipo
   - email principal
   - indicador de usuário do sistema
   - status
-- [ ] Implementar ação `Inserir pessoa`.
-- [ ] Ao iniciar criação, abrir painel direito no modo create.
-- [ ] Implementar seletor inicial de `person_kind`.
-- [ ] Para usuário `admin`, exibir todos os tipos permitidos no seletor.
-- [ ] Para usuário `system`, exibir apenas:
+- [x] Implementar ação `Inserir pessoa`.
+- [x] Ao iniciar criação, abrir painel direito no modo create.
+- [x] Implementar seletor inicial de `person_kind`.
+- [x] Para usuário `admin`, exibir todos os tipos permitidos no seletor.
+- [x] Para usuário `system`, exibir apenas:
   - `client`
   - `supplier`
-- [ ] Implementar formulário base compartilhado para:
+- [x] Implementar formulário base compartilhado para:
   - identificação
   - contato principal
   - endereço principal
   - finanças, quando aplicável
-- [ ] Implementar variação de formulário para `client`.
-- [ ] Implementar variação de formulário para `employee`.
-- [ ] Implementar variação de formulário para `outsourced_employee`.
-- [ ] Implementar variação de formulário para `supplier`.
-- [ ] Implementar variação de formulário para `guardian`.
-- [ ] Implementar variação de formulário para `responsible`.
-- [ ] Exibir o campo `has_system_user` apenas quando o tipo e o papel autenticado permitirem.
-- [ ] Se `person_kind = employee`, exibir pergunta sobre criação de usuário.
-- [ ] Se `person_kind = outsourced_employee`, exibir pergunta sobre criação de usuário.
-- [ ] Se `person_kind = client` e o usuário autenticado for `system`, exibir pergunta sobre criação de usuário.
-- [ ] Não exibir pergunta de usuário do sistema para:
+- [x] Implementar variação de formulário para `client`.
+- [x] Implementar variação de formulário para `employee`.
+- [x] Implementar variação de formulário para `outsourced_employee`.
+- [x] Implementar variação de formulário para `supplier`.
+- [x] Implementar variação de formulário para `guardian`.
+- [x] Implementar variação de formulário para `responsible`.
+- [x] Exibir o campo `has_system_user` apenas quando o tipo e o papel autenticado permitirem.
+- [x] Se `person_kind = employee`, exibir pergunta sobre criação de usuário.
+- [x] Se `person_kind = outsourced_employee`, exibir pergunta sobre criação de usuário.
+- [x] Se `person_kind = client` e o usuário autenticado for `system`, exibir pergunta sobre criação de usuário.
+- [x] Não exibir pergunta de usuário do sistema para:
   - `supplier`
   - `guardian`
   - `responsible`
-- [ ] Implementar submit de criação com payload agregado.
-- [ ] Após criação com sucesso, invalidar cache da listagem.
-- [ ] Após criação com sucesso, abrir no painel o detalhe da pessoa criada.
-- [ ] Implementar carregamento do detalhe ao selecionar pessoa na lista.
-- [ ] Renderizar modo readonly quando o usuário puder ver, mas não puder editar determinado registro.
-- [ ] Implementar modo de edição no painel direito.
-- [ ] Implementar submit de edição com atualização otimista ou invalidação simples, conforme padrão do projeto.
-- [ ] Exibir feedback de sucesso de criação e edição.
-- [ ] Exibir feedback de erro com mensagens utilizáveis.
-- [ ] Garantir responsividade da composição `lista + painel`.
-- [ ] Garantir usabilidade mobile sem depender do chat.
-- [ ] Adicionar testes da rota `/people`.
-- [ ] Adicionar testes do menu contendo `Pessoas`.
-- [ ] Adicionar testes garantindo ausência do chat em `/people`.
-- [ ] Adicionar testes do filtro por `person_kind`.
-- [ ] Adicionar testes do fluxo de seleção de pessoa e abertura do painel.
+- [x] Implementar submit de criação com payload agregado.
+- [x] Após criação com sucesso, invalidar cache da listagem.
+- [x] Após criação com sucesso, abrir no painel o detalhe da pessoa criada.
+- [x] Implementar carregamento do detalhe ao selecionar pessoa na lista.
+- [x] Renderizar modo readonly quando o usuário puder ver, mas não puder editar determinado registro.
+- [x] Implementar modo de edição no painel direito.
+- [x] Implementar submit de edição com atualização otimista ou invalidação simples, conforme padrão do projeto.
+- [x] Exibir feedback de sucesso de criação e edição.
+- [x] Exibir feedback de erro com mensagens utilizáveis.
+- [x] Garantir responsividade da composição `lista + painel`.
+- [x] Garantir usabilidade mobile sem depender do chat.
+- [x] Adicionar testes da rota `/people`.
+- [x] Adicionar testes do menu contendo `Pessoas`.
+- [x] Adicionar testes garantindo ausência do chat em `/people`.
+- [x] Adicionar testes do filtro por `person_kind`.
+- [x] Adicionar testes do fluxo de seleção de pessoa e abertura do painel.
 - [ ] Adicionar testes do fluxo de criação para `admin`.
-- [ ] Adicionar testes do fluxo de criação restrito para `system`.
-- [ ] Adicionar testes condicionais do campo `has_system_user`.
+- [x] Adicionar testes do fluxo de criação restrito para `system`.
+- [x] Adicionar testes condicionais do campo `has_system_user`.
 - [ ] Adicionar testes de sucesso e erro das mutations.
 
 ## Decisões Fechadas para Implementação
