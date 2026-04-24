@@ -1341,8 +1341,8 @@ export function PeoplePage() {
                         {panelMode === 'edit' && personDetail?.has_system_user
                           ? 'Esta pessoa já possui usuário vinculado. A desativação desse vínculo fica para um fluxo administrativo específico.'
                           : currentUser?.role === 'system'
-                            ? 'Ao finalizar o cadastro, a pessoa também receberá um usuário com papel common e credenciais enviadas por email.'
-                            : 'Ao finalizar o cadastro, a pessoa também receberá um usuário com papel system e credenciais enviadas por email.'}
+                            ? 'Ao finalizar o cadastro, a pessoa também receberá um usuário simples de sistema e credenciais enviadas por email.'
+                            : 'Ao finalizar o cadastro, a pessoa também receberá um usuário de sistema e credenciais enviadas por email.'}
                       </p>
                     </div>
                   ) : null}
@@ -2379,10 +2379,7 @@ export function PeoplePage() {
                       label="Nome curto"
                       value={personDetail.short_name ?? 'Não informado'}
                     />
-                    <SummaryRow
-                      label="CPF"
-                      value={maskCpf(personDetail.cpf)}
-                    />
+                    <SummaryRow label="CPF" value={maskCpf(personDetail.cpf)} />
                     <SummaryRow
                       label="Usuário do sistema"
                       value={personDetail.has_system_user ? 'Sim' : 'Não'}
