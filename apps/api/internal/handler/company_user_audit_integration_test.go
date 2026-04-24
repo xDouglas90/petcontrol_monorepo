@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/handler"
@@ -83,23 +81,4 @@ func setupCompanyUserRouterForTenant(queries sqlc.Querier, tenant integrationTen
 	router.DELETE("/api/v1/company-users/:user_id", middleware.RequireCompanyOwner(queries), companyUserHandler.Deactivate)
 
 	return router
-}
-
-func mustInsertCompanyUserMembership(
-	t *testing.T,
-	ctx context.Context,
-	pool *pgxpool.Pool,
-	companyID pgtype.UUID,
-	userID pgtype.UUID,
-	kind string,
-	isOwner bool,
-	isActive bool,
-) {
-	t.Helper()
-
-	_, err := pool.Exec(ctx, `
-		INSERT INTO company_users (company_id, user_id, kind, is_owner, is_active)
-		VALUES ($1, $2, $3, $4, $5)
-	`, companyID, userID, kind, isOwner, isActive)
-	require.NoError(t, err)
 }

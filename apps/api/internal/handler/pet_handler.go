@@ -21,6 +21,7 @@ type PetHandler struct {
 type createPetRequest struct {
 	OwnerID     string `json:"owner_id"`
 	Name        string `json:"name"`
+	Race        string `json:"race"`
 	Size        string `json:"size"`
 	Kind        string `json:"kind"`
 	Temperament string `json:"temperament"`
@@ -188,6 +189,7 @@ func (h *PetHandler) Create(c *gin.Context) {
 		CompanyID:   companyID,
 		OwnerID:     ownerID,
 		Name:        strings.TrimSpace(req.Name),
+		Race:        strings.TrimSpace(req.Race),
 		Size:        size,
 		Kind:        kind,
 		Temperament: temperament,

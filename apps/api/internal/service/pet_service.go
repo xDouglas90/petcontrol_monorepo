@@ -20,6 +20,7 @@ type CreatePetInput struct {
 	CompanyID   pgtype.UUID
 	OwnerID     pgtype.UUID
 	Name        string
+	Race        string
 	Size        sqlc.PetSize
 	Kind        sqlc.PetKind
 	Temperament sqlc.PetTemperament
@@ -71,14 +72,22 @@ func (s *PetService) CreatePet(ctx context.Context, input CreatePetInput) (sqlc.
 	}
 
 	created, err := s.queries.CreatePet(ctx, sqlc.CreatePetParams{
-		Name:        input.Name,
-		Size:        input.Size,
-		Kind:        input.Kind,
-		Temperament: input.Temperament,
-		ImageUrl:    input.ImageURL,
-		BirthDate:   input.BirthDate,
-		OwnerID:     input.OwnerID,
-		Notes:       input.Notes,
+		Name:           input.Name,
+		Race:           input.Race,
+		Color:          "",
+		Sex:            "M",
+		Size:           input.Size,
+		Kind:           input.Kind,
+		Temperament:    input.Temperament,
+		ImageUrl:       input.ImageURL,
+		BirthDate:      input.BirthDate,
+		OwnerID:        input.OwnerID,
+		IsActive:       pgtype.Bool{Bool: true, Valid: true},
+		IsDeceased:     pgtype.Bool{Bool: false, Valid: true},
+		IsVaccinated:   pgtype.Bool{Bool: false, Valid: true},
+		IsNeutered:     pgtype.Bool{Bool: false, Valid: true},
+		IsMicrochipped: pgtype.Bool{Bool: false, Valid: true},
+		Notes:          input.Notes,
 	})
 	if err != nil {
 		return sqlc.GetPetByIDAndCompanyIDRow{}, mapPetDBError(err)

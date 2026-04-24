@@ -28,8 +28,25 @@ const listGuardianPetsByCompanyID = `-- name: ListGuardianPetsByCompanyID :many
 SELECT
     pg.pet_id,
     p.name,
-    p.kind,
+    p.race,
+    p.color,
+    p.sex,
     p.size,
+    p.kind,
+    p.temperament,
+    p.image_url,
+    p.birth_date,
+    p.is_active,
+    p.is_deceased,
+    p.is_vaccinated,
+    p.is_neutered,
+    p.is_microchipped,
+    p.microchip_number,
+    p.microchip_expiration_date,
+    p.notes,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at,
     pi.full_name AS owner_name
 FROM
     pet_guardians pg
@@ -54,11 +71,28 @@ type ListGuardianPetsByCompanyIDParams struct {
 }
 
 type ListGuardianPetsByCompanyIDRow struct {
-	PetID     pgtype.UUID `db:"pet_id" json:"pet_id"`
-	Name      string      `db:"name" json:"name"`
-	Kind      PetKind     `db:"kind" json:"kind"`
-	Size      PetSize     `db:"size" json:"size"`
-	OwnerName string      `db:"owner_name" json:"owner_name"`
+	PetID                   pgtype.UUID        `db:"pet_id" json:"pet_id"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	OwnerName               string             `db:"owner_name" json:"owner_name"`
 }
 
 func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuardianPetsByCompanyIDParams) ([]ListGuardianPetsByCompanyIDRow, error) {
@@ -73,8 +107,25 @@ func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuard
 		if err := rows.Scan(
 			&i.PetID,
 			&i.Name,
-			&i.Kind,
+			&i.Race,
+			&i.Color,
+			&i.Sex,
 			&i.Size,
+			&i.Kind,
+			&i.Temperament,
+			&i.ImageUrl,
+			&i.BirthDate,
+			&i.IsActive,
+			&i.IsDeceased,
+			&i.IsVaccinated,
+			&i.IsNeutered,
+			&i.IsMicrochipped,
+			&i.MicrochipNumber,
+			&i.MicrochipExpirationDate,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 			&i.OwnerName,
 		); err != nil {
 			return nil, err
@@ -90,8 +141,9 @@ func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuard
 const upsertPetGuardian = `-- name: UpsertPetGuardian :execrows
 INSERT INTO pet_guardians(pet_id, guardian_id)
     VALUES ($1, $2)
-ON CONFLICT (pet_id) DO UPDATE SET
-    guardian_id = EXCLUDED.guardian_id
+ON CONFLICT (pet_id)
+    DO UPDATE SET
+        guardian_id = EXCLUDED.guardian_id
 `
 
 type UpsertPetGuardianParams struct {

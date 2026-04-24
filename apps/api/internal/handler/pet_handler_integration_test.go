@@ -321,13 +321,21 @@ type handlerUploadResolver interface {
 func mustCreatePetRecord(t *testing.T, ctx context.Context, queries *sqlc.Queries, ownerID pgtype.UUID, name string) pgtype.UUID {
 	t.Helper()
 	pet, err := queries.CreatePet(ctx, sqlc.CreatePetParams{
-		Name:        name,
-		Size:        sqlc.PetSizeMedium,
-		Kind:        sqlc.PetKindDog,
-		Temperament: sqlc.PetTemperamentPlayful,
-		BirthDate:   pgtype.Date{Time: time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), Valid: true},
-		OwnerID:     ownerID,
-		Notes:       pgtype.Text{String: "Criado no teste", Valid: true},
+		Name:           name,
+		Race:           "SRD",
+		Color:          "Preto",
+		Sex:            "M",
+		Size:           sqlc.PetSizeMedium,
+		Kind:           sqlc.PetKindDog,
+		Temperament:    sqlc.PetTemperamentPlayful,
+		BirthDate:      pgtype.Date{Time: time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), Valid: true},
+		OwnerID:        ownerID,
+		IsActive:       pgtype.Bool{Bool: true, Valid: true},
+		IsDeceased:     pgtype.Bool{Bool: false, Valid: true},
+		IsVaccinated:   pgtype.Bool{Bool: false, Valid: true},
+		IsNeutered:     pgtype.Bool{Bool: false, Valid: true},
+		IsMicrochipped: pgtype.Bool{Bool: false, Valid: true},
+		Notes:          pgtype.Text{String: "Criado no teste", Valid: true},
 	})
 	require.NoError(t, err)
 	return pet.ID

@@ -19,12 +19,11 @@ CREATE TYPE user_role_type AS ENUM(
 );
 
 -- Tipos de usuário no contexto de negócio(quem é na empresa)
-CREATE TYPE user_kind AS ENUM(
-  'owner', -- Proprietário/Sócio da empresa
-  'employee', -- Funcionário da empresa cliente
-  'client', -- Cliente final atendido pela empresa
-  'supplier', -- Fornecedor da empresa cliente
-  'outsourced_employee' -- Funcionário terceirizado(ex: free lancers, prestadores de serviço)
+CREATE TYPE user_kind AS ENUM( 'owner', -- Proprietário/Sócio da empresa
+'employee', -- Funcionário da empresa cliente
+'client', -- Cliente final atendido pela empresa
+'supplier', -- Fornecedor da empresa cliente
+'outsourced_employee' -- Funcionário terceirizado(ex: free lancers, prestadores de serviço)
 );
 
 -- Pacotes de módulos disponíveis nos planos
@@ -38,17 +37,16 @@ CREATE TYPE module_package AS ENUM(
 );
 
 -- Ações possíveis registradas em logs de auditoria
-CREATE TYPE log_action AS ENUM(
-  'create',
-  'update',
-  'delete',
-  'restore',
-  'login',
-  'logout',
-  'view',
-  'export',
-  'deactivate',
-  'reactivate'
+CREATE TYPE log_action AS ENUM( 'create',
+'update',
+'delete',
+'restore',
+'login',
+'logout',
+'view',
+'export',
+'deactivate',
+'reactivate'
 );
 
 -- Identidades de gênero
@@ -65,12 +63,11 @@ CREATE TYPE gender_identity AS ENUM(
 );
 
 -- Estado civil
-CREATE TYPE marital_status AS ENUM(
-  'single',
-  'married',
-  'divorced',
-  'widowed',
-  'separated'
+CREATE TYPE marital_status AS ENUM( 'single',
+'married',
+'divorced',
+'widowed',
+'separated'
 );
 
 -- Porte dos pets
@@ -82,12 +79,11 @@ CREATE TYPE pet_size AS ENUM(
 );
 
 -- Temperamento dos pets
-CREATE TYPE pet_temperament AS ENUM(
-  'calm',
-  'nervous',
-  'aggressive',
-  'playful',
-  'loving'
+CREATE TYPE pet_temperament AS ENUM( 'calm',
+'nervous',
+'aggressive',
+'playful',
+'loving'
 );
 
 -- Tipos de pets
@@ -103,9 +99,8 @@ CREATE TYPE pet_kind AS ENUM(
 );
 
 -- Tipos de funcionário
-CREATE TYPE employee_kind AS ENUM(
-  'internal',
-  'outsourced'
+CREATE TYPE employee_kind AS ENUM( 'internal',
+'outsourced'
 );
 
 -- Tipos de chave Pix
@@ -118,14 +113,13 @@ CREATE TYPE pix_key_kind AS ENUM(
 );
 
 -- Dias da semana
-CREATE TYPE week_day AS ENUM(
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday'
+CREATE TYPE week_day AS ENUM( 'sunday',
+'monday',
+'tuesday',
+'wednesday',
+'thursday',
+'friday',
+'saturday'
 );
 
 -- Níveis de escolaridade
@@ -147,13 +141,12 @@ CREATE TYPE graduation_level AS ENUM(
 );
 
 -- Tipos de pessoa no sistema
-CREATE TYPE person_kind AS ENUM(
-  'client',
-  'employee',
-  'outsourced_employee',
-  'supplier',
-  'guardian',
-  'responsible'
+CREATE TYPE person_kind AS ENUM( 'client',
+'employee',
+'outsourced_employee',
+'supplier',
+'guardian',
+'responsible'
 );
 
 -- Tipos de conta bancária
@@ -164,14 +157,13 @@ CREATE TYPE bank_account_kind AS ENUM(
 );
 
 -- Métodos de pagamento
-CREATE TYPE payment_method AS ENUM(
-  'credit_card',
-  'debit_card',
-  'pix',
-  'cash',
-  'check',
-  'bank_slip',
-  'transfer'
+CREATE TYPE payment_method AS ENUM( 'credit_card',
+'debit_card',
+'pix',
+'cash',
+'check',
+'bank_slip',
+'transfer'
 );
 
 -- Status dos agendamentos
@@ -185,10 +177,9 @@ CREATE TYPE schedule_status AS ENUM(
 );
 
 -- Tipos de produto
-CREATE TYPE product_kind AS ENUM(
-  'service',
-  'customer',
-  'internal_usage'
+CREATE TYPE product_kind AS ENUM( 'service',
+'customer',
+'internal_usage'
 );
 
 -- Resultado de tentativa de login
@@ -204,13 +195,12 @@ CREATE TYPE login_result AS ENUM(
 );
 
 -- Razão de logout
-CREATE TYPE logout_reason AS ENUM(
-  'user_initiated',
-  'session_expired',
-  'forced_by_admin',
-  'password_changed',
-  'account_deactivated',
-  'suspicious_activity'
+CREATE TYPE logout_reason AS ENUM( 'user_initiated',
+'session_expired',
+'forced_by_admin',
+'password_changed',
+'account_deactivated',
+'suspicious_activity'
 );
 
 CREATE TYPE notification_level AS ENUM(
@@ -556,30 +546,30 @@ CREATE INDEX idx_company_users_company ON company_users(company_id);
 CREATE INDEX idx_company_users_user ON company_users(user_id);
 
 CREATE OR REPLACE FUNCTION enforce_company_user_role_policy()
-RETURNS trigger AS $$
+  RETURNS TRIGGER
+  AS $$
 DECLARE
   target_role user_role_type;
 BEGIN
   SELECT
-    u.role
-  INTO target_role
-  FROM users u
-  WHERE u.id = NEW.user_id;
-
+    u.role INTO target_role
+  FROM
+    users u
+  WHERE
+    u.id = NEW.user_id;
   IF target_role IN ('root', 'internal') THEN
     RAISE EXCEPTION 'users with role % cannot be linked to tenants', target_role
-      USING ERRCODE = '23514',
-            CONSTRAINT = 'chk_company_users_no_root_internal';
+      USING ERRCODE = '23514', CONSTRAINT = 'chk_company_users_no_root_internal';
   END IF;
-
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_company_users_no_root_internal
-BEFORE INSERT OR UPDATE OF user_id ON company_users
-FOR EACH ROW
-EXECUTE FUNCTION enforce_company_user_role_policy();
+  BEFORE INSERT OR UPDATE OF user_id ON company_users
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_company_user_role_policy();
 
 -- Configurações de sistema por empresa
 CREATE TABLE company_system_configs(
@@ -875,6 +865,9 @@ CREATE INDEX idx_company_clients_company ON company_clients(company_id);
 CREATE TABLE pets(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name varchar(100) NOT NULL,
+  race varchar(50) NOT NULL,
+  color varchar(50) NOT NULL,
+  sex varchar(1) NOT NULL CHECK (sex IN ('M', 'F')),
   size pet_size NOT NULL,
   kind pet_kind NOT NULL,
   temperament pet_temperament NOT NULL,
@@ -882,6 +875,12 @@ CREATE TABLE pets(
   birth_date date,
   owner_id uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   is_active boolean NOT NULL DEFAULT TRUE,
+  is_deceased boolean NOT NULL DEFAULT FALSE,
+  is_vaccinated boolean NOT NULL DEFAULT FALSE,
+  is_neutered boolean NOT NULL DEFAULT FALSE,
+  is_microchipped boolean NOT NULL DEFAULT FALSE,
+  microchip_number varchar(50),
+  microchip_expiration_date date,
   notes varchar(500),
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamptz,
@@ -1355,3 +1354,4 @@ CREATE TABLE translations(
 );
 
 CREATE INDEX idx_translations_entity ON translations(entity_table, entity_id);
+

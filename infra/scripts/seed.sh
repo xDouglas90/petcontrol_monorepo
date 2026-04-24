@@ -1023,6 +1023,9 @@ WITH seeded_client AS (
 )
 INSERT INTO pets (
   name,
+  race,
+  color,
+  sex,
   size,
   kind,
   temperament,
@@ -1033,6 +1036,9 @@ INSERT INTO pets (
 )
 SELECT
   'Thor',
+  'SRD',
+  'Preto e Branco',
+  'M',
   'medium',
   'dog',
   'playful',
