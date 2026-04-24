@@ -58,6 +58,10 @@ vi.mock('@/lib/api/domain.queries', () => ({
   },
 }));
 
+vi.mock('@/components/admin-support-chat-aside', () => ({
+  AdminSupportChatAside: () => <div data-testid="support-chat">Chat</div>,
+}));
+
 describe('Router integration', () => {
   beforeEach(() => {
     localStorage.clear();
