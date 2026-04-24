@@ -107,7 +107,7 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 		INNER JOIN modules m ON m.id = cm.module_id
 		WHERE c.slug = 'petcontrol-dev'
 		  AND cm.is_active = TRUE
-		  AND m.code IN ('CFG', 'UCR', 'CLI', 'SCH', 'SVC', 'CRM')
+		  AND m.code IN ('CFG', 'UCR', 'CLI', 'SCH', 'SVC', 'PET')
 	`).Scan(&starterCompanyModuleCount)
 	require.NoError(t, err)
 	require.Equal(t, 6, starterCompanyModuleCount)

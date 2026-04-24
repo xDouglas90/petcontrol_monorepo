@@ -44,8 +44,8 @@ Após executar o seed, o ambiente local cria dois usuários prontos para login:
 Implementado nesta etapa:
 
 - API com autenticação JWT, multi-tenant por `company_id`, auditoria, correlation id e módulo real de `schedules`.
-- API com módulo base de `clients` protegido por `CRM`, incluindo CRUD tenant-aware e auditoria das mutações.
-- API com módulo base de `pets` protegido por `CRM`, incluindo ownership validado por tenant, soft delete e payload com `owner_name`.
+- API com módulo base de `clients` protegido por `CLI`, incluindo CRUD tenant-aware e auditoria das mutações.
+- API com módulo base de `pets` protegido por `PET`, incluindo ownership validado por tenant, soft delete e payload com `owner_name`.
 - API com módulo base de `services` protegido por `SCH`, incluindo catálogo por tenant, resolução de `service_types` e auditoria das mutações.
 - `schedules` enriquecido com `client_name`, `pet_name`, `service_ids` e `service_titles`, além de persistência real em `schedule_services`.
 - Worker com evento real `schedules:confirmed` (além do dummy legado), payload versionado em `v2` e callback HTTP de WhatsApp (`/webhook/whatsapp`).
@@ -480,9 +480,9 @@ api.Use(middleware.Tenant())
     sch.PUT("/:id", scheduleHandler.Update)
     sch.DELETE("/:id", scheduleHandler.SoftDelete)
 
-    // Clientes — requer módulo CRM
+    // Clientes — requer módulo CLI
     clients := api.Group("/clients")
-    clients.Use(middleware.RequireModule(queries, "CRM"))
+    clients.Use(middleware.RequireModule(queries, "CLI"))
     clients.GET("", clientHandler.List)
     clients.POST("", clientHandler.Create)
     // ...
@@ -1190,15 +1190,15 @@ func TestCreateSchedule(t *testing.T) {
 
 ---
 
-### ADR-006: Módulo `pets` sob a guarda do `CRM` (Customer Relationship Management)
+### ADR-006: Módulo `pets` sob a guarda do `PET`
 
-**Contexto:** O projeto possui módulos de faturamento e agendamento (`SCH`) e gestão de clientes (`CRM`). O recurso `pets` semanticamente pode ter relação forte com `schedules` (pois atendimentos são feitos aos pets), o que gerou a dúvida se deveria estar isolado ou sob a guarda de `SCH`.
+**Contexto:** O projeto possui módulos dedicados no catálogo (`CLI`, `PET`, `SCH`, `SVC` etc.). O recurso `pets` semanticamente se relaciona com `schedules`, mas é um domínio cadastral próprio com autorização por módulo específico.
 
-**Decisão:** O módulo `pets` está formalmente registrado e protegido no código pelo módulo `CRM`, sendo tratado arquiteturalmente como uma extensão estrutural do cadastro de clientes.
+**Decisão:** O módulo `pets` está formalmente registrado e protegido no código pelo módulo `PET`, mantendo separação explícita no controle de acesso por módulo.
 
-**Justificativa:** Em Petshops e Clínicas Veterinárias, um "Pet" é uma entidade dependente de um "Cliente" (tutor). Assim como os dados cadastrais, endereço e histórico de contatos do tutor ficam no CRM, os dados do pet (raça, peso, alergias, espécie) são informacionais e cadastrais, compondo a "Ficha do Cliente". Um pet pode existir no sistema mesmo que nunca mais faça um atendimento (ex: óbito, adoção), e a posse dos dados é ligada ao relacionamento com o consumidor.
+**Justificativa:** Em Petshops e Clínicas Veterinárias, um "Pet" é uma entidade dependente de um "Cliente" (tutor), porém possui ciclo de vida e permissões próprias. A guarda por `PET` elimina acoplamento legado e mantém o catálogo modular coerente com `modules`, `plan_modules` e `company_modules`.
 
-**Consequências:** Todas as rotas base de `/pets` utilizarão `RequireModule(..., "CRM")`. Se, num cenário futuro, o domínio de `schedules` precisar acessar dados de `pets` para regras de conflito de agenda rígidas, o contexto de `SCH` deverá apenas consultar (read-only) os dados cadastrais vindos de `CRM`, ou invocar regras de domínio cruzadas, mantendo a mutação de ficha exclusividade do `CRM`.
+**Consequências:** Todas as rotas base de `/pets` utilizarão `RequireModule(..., "PET")`. O módulo `SCH` continua consumindo dados de pets quando necessário, mas sem herdar a guarda de autorização do cadastro de pets.
 
 ### ADR-007: `libs/ui` com camada core agnóstica de plataforma
 

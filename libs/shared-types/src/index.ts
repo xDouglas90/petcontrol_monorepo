@@ -104,7 +104,17 @@ export const MODULE_PACKAGES = [
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
 
-export const MODULE_CODES = ['PPL', 'SCH', 'CRM', 'FIN'] as const;
+export const MODULE_CODES = [
+  'CFG',
+  'UCR',
+  'PPL',
+  'CLI',
+  'PET',
+  'SCH',
+  'SVC',
+  'RPT',
+  'FIN',
+] as const;
 
 export type ModuleCode = (typeof MODULE_CODES)[number];
 

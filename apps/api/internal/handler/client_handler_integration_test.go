@@ -328,7 +328,7 @@ func setupClientRouterForTenantWithUploadResolver(pool *pgxpool.Pool, queries *s
 	router.Use(middleware.Audit(queries, nil))
 
 	clients := router.Group("/api/v1/clients")
-	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.Use(middleware.RequireModule(queries, "CLI"))
 	clients.GET("", clientHandler.List)
 	clients.POST("", clientHandler.Create)
 	clients.GET("/:id", clientHandler.GetByID)
@@ -343,7 +343,19 @@ func mustCreateClientModule(t *testing.T, ctx context.Context, pool *pgxpool.Poo
 	var id pgtype.UUID
 	err := pool.QueryRow(ctx, `
 		INSERT INTO modules (code, name, description, min_package, is_active)
-		VALUES ('CRM', 'Customer Management', 'CRM module', 'starter', TRUE)
+		VALUES ('CLI', 'Clients', 'Clients module', 'starter', TRUE)
+		RETURNING id
+	`).Scan(&id)
+	require.NoError(t, err)
+	return id
+}
+
+func mustCreatePetModule(t *testing.T, ctx context.Context, pool *pgxpool.Pool) pgtype.UUID {
+	t.Helper()
+	var id pgtype.UUID
+	err := pool.QueryRow(ctx, `
+		INSERT INTO modules (code, name, description, min_package, is_active)
+		VALUES ('PET', 'Pets', 'Pets module', 'starter', TRUE)
 		RETURNING id
 	`).Scan(&id)
 	require.NoError(t, err)

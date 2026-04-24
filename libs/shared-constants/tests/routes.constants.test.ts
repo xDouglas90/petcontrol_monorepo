@@ -84,8 +84,11 @@ describe("domain constants", () => {
 
   it("exports stable module codes used across the monorepo", () => {
     expect(MODULE_CODES.people).toBe("PPL");
+    expect(MODULE_CODES.clients).toBe("CLI");
+    expect(MODULE_CODES.pets).toBe("PET");
     expect(MODULE_CODES.scheduling).toBe("SCH");
-    expect(MODULE_CODES.crm).toBe("CRM");
+    expect(MODULE_CODES.services).toBe("SVC");
+    expect(MODULE_CODES.reports).toBe("RPT");
     expect(MODULE_CODES.finance).toBe("FIN");
   });
 });

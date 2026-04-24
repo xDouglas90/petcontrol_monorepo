@@ -36,9 +36,9 @@ WITH module_seed(code, name, description, min_package) AS (
     ('SVC', 'Serviços', 'Módulo de Serviços', 'starter'::module_package),
     ('PPL', 'Pessoas', 'Módulo de Pessoas', 'starter'::module_package),
     ('SPM', 'Planos de Serviços', 'Módulo de Planos de Serviços', 'basic'::module_package),
-    ('PET', 'Pets', 'Módulo de Pets', 'basic'::module_package),
+    ('PET', 'Pets', 'Módulo de Pets', 'starter'::module_package),
     ('TNT', 'Empresas', 'Módulo de Empresas', 'internal'::module_package),
-    ('DHB', 'Dashboard', 'Módulo de Dashboard/Estatísticas', 'basic'::module_package),
+    ('DHB', 'Dashboard', 'Módulo de Dashboard/Estatísticas', 'starter'::module_package),
     ('CLI', 'Clientes', 'Módulo de Clientes', 'starter'::module_package),
     ('RPT', 'Relatórios', 'Módulo de Relatórios', 'basic'::module_package),
     ('CRP', 'Relatórios Personalizados', 'Módulo de Relatórios Personalizados', 'premium'::module_package),
@@ -54,9 +54,7 @@ WITH module_seed(code, name, description, min_package) AS (
     ('SUP', 'Fornecedores', 'Módulo de Fornecedores', 'premium'::module_package),
     ('EUA', 'Acesso de Usuários Externos', 'Módulo de Acesso de Usuários Externos', 'premium'::module_package),
     ('AUD', 'Logs de Auditoria', 'Módulo de Logs', 'internal'::module_package),
-    ('ATL', 'Logs de Autenticação', 'Módulo de Logs de Autenticação', 'internal'::module_package),
-    -- Transitional legacy code still used by current app routes/middleware.
-    ('CRM', 'Gestão de Clientes', 'Módulo de Gestão de Clientes legado', 'starter'::module_package)
+    ('ATL', 'Logs de Autenticação', 'Módulo de Logs de Autenticação', 'internal'::module_package)
 )
 INSERT INTO modules (code, name, description, min_package)
 SELECT
@@ -367,7 +365,7 @@ WHERE NOT EXISTS (
 WITH starter_plan AS (
   SELECT id FROM plans WHERE name = 'Starter Monthly' AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'PET')
 )
 INSERT INTO plan_modules (plan_id, module_id, is_active)
 SELECT sp.id, sm.id, TRUE
@@ -795,7 +793,7 @@ WHERE NOT EXISTS (
 WITH dev_company AS (
   SELECT id FROM companies WHERE slug = 'petcontrol-dev' LIMIT 1
 ), starter_modules AS (
-  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'CRM')
+  SELECT id FROM modules WHERE code IN ('CFG', 'UCR', 'SCH', 'SVC', 'PPL', 'CLI', 'PET')
 )
 INSERT INTO company_modules (company_id, module_id, is_active)
 SELECT dc.id, sm.id, TRUE

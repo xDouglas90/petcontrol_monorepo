@@ -25,8 +25,11 @@ export const API_PATHS = {
 
 export const MODULE_CODES = {
   people: 'PPL',
+  clients: 'CLI',
+  pets: 'PET',
   scheduling: 'SCH',
-  crm: 'CRM',
+  services: 'SVC',
+  reports: 'RPT',
   finance: 'FIN',
 } as const;
 

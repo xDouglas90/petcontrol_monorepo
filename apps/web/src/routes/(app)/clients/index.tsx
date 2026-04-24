@@ -94,7 +94,7 @@ export function ClientsPage() {
     <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
         <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
-          CRM
+          CLI
         </p>
         <h2 className="mt-2 font-display text-3xl text-white">Clientes</h2>
         <p className="mt-2 text-sm text-slate-300">

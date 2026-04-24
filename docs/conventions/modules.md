@@ -75,7 +75,7 @@
 
 | Módulo | Código | Descrição      | Pacote Mínimo |
 | ------ | ------ | -------------- | ------------- |
-| Pets   | `PET`  | Módulo de Pets | basic         |
+| Pets   | `PET`  | Módulo de Pets | starter       |
 
 ### Companies
 
@@ -87,7 +87,7 @@
 
 | Módulo    | Código | Descrição                        | Pacote Mínimo |
 | --------- | ------ | -------------------------------- | ------------- |
-| Dashboard | `DHB`  | Módulo de Dashboard/Estatísticas | basic         |
+| Dashboard | `DHB`  | Módulo de Dashboard/Estatísticas | starter       |
 
 ### Clients
 

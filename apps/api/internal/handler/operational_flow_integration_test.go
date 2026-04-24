@@ -25,9 +25,11 @@ func TestOperationalFlow_ClientPetServiceScheduleAndDeactivationImpact(t *testin
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "operational-flow")
-	crmModuleID := mustCreateClientModule(t, ctx, pool)
+	clientsModuleID := mustCreateClientModule(t, ctx, pool)
+	petsModuleID := mustCreatePetModule(t, ctx, pool)
 	scheduleModuleID := mustCreateScheduleModule(t, ctx, pool)
-	mustAttachClientModule(t, ctx, pool, tenant.companyID, crmModuleID)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, clientsModuleID)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, petsModuleID)
 	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, scheduleModuleID)
 
 	router := setupOperationalFlowRouterForTenant(pool, queries, tenant)
@@ -153,7 +155,7 @@ func setupOperationalFlowRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queri
 	router.Use(middleware.Audit(queries, nil))
 
 	clients := router.Group("/api/v1/clients")
-	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.Use(middleware.RequireModule(queries, "CLI"))
 	clients.GET("", clientHandler.List)
 	clients.POST("", clientHandler.Create)
 	clients.GET("/:id", clientHandler.GetByID)
@@ -161,7 +163,7 @@ func setupOperationalFlowRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queri
 	clients.DELETE("/:id", clientHandler.Delete)
 
 	pets := router.Group("/api/v1/pets")
-	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.Use(middleware.RequireModule(queries, "PET"))
 	pets.GET("", petHandler.List)
 	pets.POST("", petHandler.Create)
 	pets.GET("/:id", petHandler.GetByID)

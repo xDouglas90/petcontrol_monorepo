@@ -138,7 +138,7 @@ func main() {
 	people.PATCH("/:id", middleware.RequirePermission(queries, service.PermissionPeopleUpdate), peopleHandler.Update)
 
 	clients := protected.Group("/clients")
-	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.Use(middleware.RequireModule(queries, "CLI"))
 	clients.GET("", clientHandler.List)
 	clients.POST("", clientHandler.Create)
 	clients.GET("/:id", clientHandler.GetByID)
@@ -146,7 +146,7 @@ func main() {
 	clients.DELETE("/:id", clientHandler.Delete)
 
 	pets := protected.Group("/pets")
-	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.Use(middleware.RequireModule(queries, "PET"))
 	pets.GET("", petHandler.List)
 	pets.POST("", petHandler.Create)
 	pets.GET("/:id", petHandler.GetByID)
