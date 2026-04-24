@@ -370,34 +370,34 @@ Frontend:
 
 ## 15. Checklist de Implementação
 
-- [ ] Definir se `pet_guardians` suportará um ou múltiplos guardiões nesta PR.
-- [ ] Atualizar schema/migration de `pet_guardians` caso a decisão seja suporte múltiplo.
-- [ ] Expandir queries SQLC de `pets` para filtros estruturados.
-- [ ] Expandir queries SQLC de detalhe do pet com tutor e guardião(ões).
-- [ ] Expandir `shared-types` para refletir todos os campos relevantes de `pets`.
-- [ ] Atualizar Swagger/docs de `pets`.
-- [ ] Evoluir `PetService` para criação e edição completas.
-- [ ] Evoluir `PetHandler` para aceitar e validar os novos campos.
-- [ ] Implementar resolução de fallback de imagem por `kind`.
-- [ ] Garantir validação tenant-scoped de tutor.
-- [ ] Garantir validação tenant-scoped de guardião(ões).
-- [ ] Evoluir o list endpoint para aceitar filtros por `size`, `temperament`, `kind`, `race` e `is_active`.
-- [ ] Reestruturar a tela `/:companySlug/pets` para padrão `lista + aside`.
-- [ ] Adicionar filtros visuais persistentes na tela.
-- [ ] Atualizar a composição visual de cada item da lista.
-- [ ] Implementar detalhe do pet no aside.
-- [ ] Exibir dados do tutor no aside.
-- [ ] Exibir dados do guardião ou lista de guardiões no aside.
-- [ ] Migrar criação e edição para o aside direito.
-- [ ] Adicionar seleção inicial obrigatória do tutor.
-- [ ] Adicionar toggle/check de inserção de guardião.
-- [ ] Adicionar select tenant-scoped de pessoas para guardião.
-- [ ] Adicionar preview de imagem no formulário.
-- [ ] Integrar upload de imagem com o fluxo de GCS já existente.
-- [ ] Aplicar fallback visual usando `GCS_PUBLIC_URL/assets/images/{kind}-default-image.png`.
-- [ ] Adicionar botão `+` no menu lateral para abrir o fluxo de criação de pet.
-- [ ] Adicionar testes de backend para filtros, detalhe e mutações.
-- [ ] Adicionar testes de frontend para rota, filtros, aside e formulário.
+- [x] Definir se `pet_guardians` suportará um ou múltiplos guardiões nesta PR.
+- [x] Atualizar schema/migration de `pet_guardians` caso a decisão seja suporte múltiplo.
+- [x] Expandir queries SQLC de `pets` para filtros estruturados.
+- [x] Expandir queries SQLC de detalhe do pet com tutor e guardião(ões).
+- [x] Expandir `shared-types` para refletir todos os campos relevantes de `pets`.
+- [x] Atualizar Swagger/docs de `pets`.
+- [x] Evoluir `PetService` para criação e edição completas.
+- [x] Evoluir `PetHandler` para aceitar e validar os novos campos.
+- [x] Implementar resolução de fallback de imagem por `kind`.
+- [x] Garantir validação tenant-scoped de tutor.
+- [x] Garantir validação tenant-scoped de guardião(ões).
+- [x] Evoluir o list endpoint para aceitar filtros por `size`, `temperament`, `kind`, `race` e `is_active`.
+- [x] Reestruturar a tela `/:companySlug/pets` para padrão `lista + aside`.
+- [x] Adicionar filtros visuais persistentes na tela.
+- [x] Atualizar a composição visual de cada item da lista.
+- [x] Implementar detalhe do pet no aside.
+- [x] Exibir dados do tutor no aside.
+- [x] Exibir dados do guardião ou lista de guardiões no aside.
+- [x] Migrar criação e edição para o aside direito.
+- [x] Adicionar seleção inicial obrigatória do tutor.
+- [x] Adicionar toggle/check de inserção de guardião.
+- [x] Adicionar select tenant-scoped de pessoas para guardião.
+- [x] Adicionar preview de imagem no formulário.
+- [x] Integrar upload de imagem com o fluxo de GCS já existente.
+- [x] Aplicar fallback visual usando `GCS_PUBLIC_URL/assets/images/{kind}-default-image.png`.
+- [x] Adicionar botão `+` no menu lateral para abrir o fluxo de criação de pet.
+- [x] Adicionar testes de backend para filtros, detalhe e mutações.
+- [x] Adicionar testes de frontend para rota, filtros, aside e formulário.
 
 ## 16. Sequência Recomendada
 
