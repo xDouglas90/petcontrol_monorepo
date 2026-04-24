@@ -1,6 +1,7 @@
 import {
   Activity,
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   MessageSquareText,
   ShieldCheck,
@@ -131,7 +132,13 @@ export function AdminSupportChatAside({
       }`}
     >
       <div className="flex min-h-full w-full flex-col divide-y divide-stone-100">
-        <div className="flex items-center justify-between border-b border-stone-100 px-5 py-5">
+        <div
+          className={`border-b border-stone-100 ${
+            chatExpanded
+              ? 'flex items-center justify-between px-5 py-5'
+              : 'flex justify-center px-3 py-5'
+          }`}
+        >
           {chatExpanded ? (
             <div className="min-w-0">
               <p className="truncate font-display text-xl text-stone-900">
@@ -141,11 +148,7 @@ export function AdminSupportChatAside({
                 suporte admin
               </p>
             </div>
-          ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-sky-600 shadow-sm">
-              <MessageSquareText className="h-5 w-5" />
-            </div>
-          )}
+          ) : null}
 
           <button
             type="button"
@@ -153,11 +156,11 @@ export function AdminSupportChatAside({
             title={chatExpanded ? 'Recolher chat' : 'Expandir chat'}
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
           >
-            <ChevronRight
-              className={`h-4 w-4 transition-transform duration-300 ${
-                chatExpanded ? 'rotate-180' : 'rotate-0'
-              }`}
-            />
+            {chatExpanded ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </button>
         </div>
 

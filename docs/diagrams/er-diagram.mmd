@@ -1,6 +1,5 @@
 erDiagram
   ADDRESSES ||--o{ COMPANY_ADDRESSES : address_id_to_id
-  ADDRESSES ||--o{ COMPANY_PEOPLE_ADDRESSES : address_id_to_id
   ADDRESSES ||--o{ PEOPLE_ADDRESSES : address_id_to_id
   CLIENTS ||--o{ CLIENT_PLANS : client_id_to_id
   CLIENTS ||--o{ CLIENT_SERVICE_PLANS : client_id_to_id
@@ -17,7 +16,6 @@ erDiagram
   COMPANIES ||--o{ COMPANY_FINANCES : company_id_to_id
   COMPANIES ||--o{ COMPANY_MODULES : company_id_to_id
   COMPANIES ||--o{ COMPANY_PEOPLE : company_id_to_id
-  COMPANIES ||--o{ COMPANY_PEOPLE_ADDRESSES : company_id_to_id
   COMPANIES ||--o{ COMPANY_PRODUCTS : company_id_to_id
   COMPANIES ||--o{ COMPANY_SERVICE_PLANS : company_id_to_id
   COMPANIES ||--o{ COMPANY_SERVICES : company_id_to_id
@@ -42,7 +40,6 @@ erDiagram
   PEOPLE ||--o{ COMPANIES : responsible_id_to_id
   PEOPLE ||--o{ COMPANY_EMPLOYEES : person_id_to_id
   PEOPLE ||--o{ COMPANY_PEOPLE : person_id_to_id
-  PEOPLE ||--o{ COMPANY_PEOPLE_ADDRESSES : person_id_to_id
   PEOPLE ||--o{ EMPLOYEE_DOCUMENTS : person_id_to_id
   PEOPLE ||--o{ PEOPLE_ADDRESSES : person_id_to_id
   PEOPLE ||--o{ PEOPLE_CONTACTS : person_id_to_id
@@ -274,15 +271,6 @@ erDiagram
     uuid ID PK
     uuid PERSON_ID FK
     timestamptz UPDATED_AT
-  }
-
-  COMPANY_PEOPLE_ADDRESSES {
-    uuid ADDRESS_ID FK
-    uuid COMPANY_ID FK
-    timestamptz CREATED_AT
-    uuid ID PK
-    boolean IS_MAIN
-    uuid PERSON_ID FK
   }
 
   COMPANY_PRODUCTS {

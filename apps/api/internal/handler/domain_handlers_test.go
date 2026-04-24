@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	appjwt "github.com/xdouglas90/petcontrol_monorepo/internal/jwt"
+	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/service"
 )
 
@@ -354,6 +355,10 @@ func TestCompanyUserHandler_CreateAndDeactivate(t *testing.T) {
 	userID := domainHandlerUUID(t)
 	createdID := domainHandlerUUID(t)
 	joinedAt := time.Now().UTC()
+	mock.ExpectQuery(`(?s)name: GetUserByID`).WithArgs(userID).WillReturnRows(
+		pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(userID, "owner@petcontrol.local", true, time.Now(), sqlc.UserRoleTypeAdmin, true, time.Now(), nil, nil),
+	)
 	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, sqlc.UserKindOwner, true, pgtype.Bool{Bool: true, Valid: true}).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyUser`).WithArgs(companyID, userID).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, joinedAt, nil, nil))
 	mock.ExpectExec(`(?s)name: DeactivateCompanyUser`).WithArgs(companyID, userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
@@ -771,4 +776,424 @@ func TestCompanyUserHandler_UpdatePermissionsRejectsPermissionOutsideCompanyPack
 	require.Contains(t, res.Body.String(), "update_company_user_permissions_failed")
 	require.Contains(t, res.Body.String(), "failed to update company user permissions")
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleHandler_ListFiltersByKind(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewPeopleService(nil, queries, nil)
+	handlerUnderTest := NewPeopleHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+	clientPersonID := domainHandlerUUID(t)
+	supplierPersonID := domainHandlerUUID(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`(?s)name: ListCompanyPeople`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{
+			"company_person_id", "company_id", "person_id", "company_person_created_at",
+			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
+			"person_created_at", "person_updated_at", "identifications_full_name",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
+			"identifications_marital_status", "identifications_image_url",
+			"identifications_birth_date", "identifications_cpf",
+			"identifications_created_at", "identifications_updated_at",
+		}).
+			AddRow(
+				domainHandlerUUID(t), companyID, clientPersonID, now,
+				clientPersonID, sqlc.PersonKindClient, true, false,
+				now, now, "Ana Lima", "Ana", "ana@petcontrol.local",
+				nil, nil, nil, nil, "12345678901",
+				now, now,
+			).
+			AddRow(
+				domainHandlerUUID(t), companyID, supplierPersonID, now.Add(-time.Minute),
+				supplierPersonID, sqlc.PersonKindSupplier, true, false,
+				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO", "fornecedor@xpto.local",
+				nil, nil, nil, nil, "12345678902",
+				now.Add(-time.Minute), now.Add(-time.Minute),
+			))
+	mock.ExpectQuery(`(?s)name: ListCompanyClients`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "is_active", "joined_at", "left_at", "client_name", "client_short_name", "client_cpf", "client_image_url"}))
+	mock.ExpectQuery(`(?s)name: ListCompanyUsersByCompanyID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+	router.GET("/people", handlerUnderTest.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/people?kind=supplier", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "Fornecedor XPTO")
+	require.NotContains(t, res.Body.String(), "Ana Lima")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleHandler_ListFiltersBySearch(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewPeopleService(nil, queries, nil)
+	handlerUnderTest := NewPeopleHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+	clientPersonID := domainHandlerUUID(t)
+	supplierPersonID := domainHandlerUUID(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`(?s)name: ListCompanyPeople`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{
+			"company_person_id", "company_id", "person_id", "company_person_created_at",
+			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
+			"person_created_at", "person_updated_at", "identifications_full_name",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
+			"identifications_marital_status", "identifications_image_url",
+			"identifications_birth_date", "identifications_cpf",
+			"identifications_created_at", "identifications_updated_at",
+		}).
+			AddRow(
+				domainHandlerUUID(t), companyID, clientPersonID, now,
+				clientPersonID, sqlc.PersonKindClient, true, false,
+				now, now, "Ana Lima", "Ana", "ana@petcontrol.local",
+				nil, nil, nil, nil, "12345678901",
+				now, now,
+			).
+			AddRow(
+				domainHandlerUUID(t), companyID, supplierPersonID, now.Add(-time.Minute),
+				supplierPersonID, sqlc.PersonKindSupplier, true, false,
+				now.Add(-time.Minute), now.Add(-time.Minute), "Fornecedor XPTO", "XPTO", "fornecedor@xpto.local",
+				nil, nil, nil, nil, "12345678902",
+				now.Add(-time.Minute), now.Add(-time.Minute),
+			))
+	mock.ExpectQuery(`(?s)name: ListCompanyClients`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "is_active", "joined_at", "left_at", "client_name", "client_short_name", "client_cpf", "client_image_url"}))
+	mock.ExpectQuery(`(?s)name: ListCompanyUsersByCompanyID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+	router.GET("/people", handlerUnderTest.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/people?search=xpto", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "Fornecedor XPTO")
+	require.NotContains(t, res.Body.String(), "Ana Lima")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleHandler_ListPaginatesAfterFilteringAndReturnsTotal(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewPeopleService(nil, queries, nil)
+	handlerUnderTest := NewPeopleHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+	clientPersonID := domainHandlerUUID(t)
+	supplierPersonID := domainHandlerUUID(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`(?s)name: ListCompanyPeople`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{
+			"company_person_id", "company_id", "person_id", "company_person_created_at",
+			"person_id_2", "person_kind", "person_is_active", "person_has_system_user",
+			"person_created_at", "person_updated_at", "identifications_full_name",
+			"identifications_short_name", "contacts_email", "identifications_gender_identity",
+			"identifications_marital_status", "identifications_image_url",
+			"identifications_birth_date", "identifications_cpf",
+			"identifications_created_at", "identifications_updated_at",
+		}).
+			AddRow(
+				domainHandlerUUID(t), companyID, supplierPersonID, now,
+				supplierPersonID, sqlc.PersonKindSupplier, true, false,
+				now, now, "Bruno Supplier", "Bruno", "bruno.supplier@petcontrol.local",
+				nil, nil, nil, nil, "12345678902",
+				now, now,
+			).
+			AddRow(
+				domainHandlerUUID(t), companyID, clientPersonID, now.Add(-time.Minute),
+				clientPersonID, sqlc.PersonKindClient, true, false,
+				now.Add(-time.Minute), now.Add(-time.Minute), "Ana Lima", "Ana", "ana@petcontrol.local",
+				nil, nil, nil, nil, "12345678901",
+				now.Add(-time.Minute), now.Add(-time.Minute),
+			))
+	mock.ExpectQuery(`(?s)name: ListCompanyClients`).
+		WithArgs(companyID, int32(0), int32(2147483647)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "client_id", "is_active", "joined_at", "left_at", "client_name", "client_short_name", "client_cpf", "client_image_url"}))
+	mock.ExpectQuery(`(?s)name: ListCompanyUsersByCompanyID`).
+		WithArgs(companyID).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+	router.GET("/people", handlerUnderTest.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/people?page=2&limit=1", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "\"total\":2")
+	require.Contains(t, res.Body.String(), "\"page\":2")
+	require.Contains(t, res.Body.String(), "\"limit\":1")
+	require.Contains(t, res.Body.String(), "Bruno Supplier")
+	require.NotContains(t, res.Body.String(), "Ana Lima")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleRoutes_DenyAccessWhenModuleUnavailable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: HasActiveCompanyModuleByCode`).
+		WithArgs(companyID, "PPL").
+		WillReturnRows(pgxmock.NewRows([]string{"has_access"}).AddRow(false))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+
+	people := router.Group("/people")
+	people.Use(middleware.RequireModule(queries, "PPL"))
+	people.GET("", middleware.RequirePermission(queries, service.PermissionPeopleView), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/people", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "module_not_available")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleRoutes_DenyAccessWhenPermissionMissing(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: HasActiveCompanyModuleByCode`).
+		WithArgs(companyID, "PPL").
+		WillReturnRows(pgxmock.NewRows([]string{"has_access"}).AddRow(true))
+	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
+		WithArgs(userID, int32(0), int32(1000)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+
+	people := router.Group("/people")
+	people.Use(middleware.RequireModule(queries, "PPL"))
+	people.GET("", middleware.RequirePermission(queries, service.PermissionPeopleView), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/people", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "permission_required")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleRoutes_AllowAccessWhenModuleAndPermissionExist(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	mock.ExpectQuery(`(?s)name: HasActiveCompanyModuleByCode`).
+		WithArgs(companyID, "PPL").
+		WillReturnRows(pgxmock.NewRows([]string{"has_access"}).AddRow(true))
+	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
+		WithArgs(userID, int32(0), int32(1000)).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
+			AddRow(domainHandlerUUID(t), service.PermissionPeopleView, pgtype.Text{String: "Visualizar pessoas", Valid: true}, []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin}, domainHandlerUUID(t), pgtype.Timestamptz{Time: time.Now(), Valid: true}, pgtype.UUID{}, pgtype.Timestamptz{}))
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "admin",
+			Kind:      "owner",
+		})
+		c.Next()
+	})
+
+	people := router.Group("/people")
+	people.Use(middleware.RequireModule(queries, "PPL"))
+	people.GET("", middleware.RequirePermission(queries, service.PermissionPeopleView), func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/people", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "\"ok\":true")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPeopleHandler_CreateBlocksSystemFromEmployeeKinds(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	for _, personKind := range []string{"employee", "outsourced_employee"} {
+		t.Run(personKind, func(t *testing.T) {
+			handlerUnderTest := NewPeopleHandler(service.NewPeopleService(nil, nil, nil))
+			companyID := domainHandlerUUID(t)
+			userID := domainHandlerUUID(t)
+
+			router := gin.New()
+			router.Use(func(c *gin.Context) {
+				c.Set("company_id", companyID)
+				c.Set("auth_claims", appjwt.Claims{
+					UserID:    uuidToString(userID),
+					CompanyID: uuidToString(companyID),
+					Role:      "system",
+					Kind:      "employee",
+				})
+				c.Next()
+			})
+			router.POST("/people", handlerUnderTest.Create)
+
+			body, err := json.Marshal(map[string]any{"kind": personKind})
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/people", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			require.Equal(t, http.StatusForbidden, res.Code)
+			require.Contains(t, res.Body.String(), "people_access_required")
+		})
+	}
+}
+
+func TestPeopleHandler_CreateBlocksSystemUserForUnsupportedAccessProvision(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	handlerUnderTest := NewPeopleHandler(service.NewPeopleService(nil, nil, nil))
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "system",
+			Kind:      "employee",
+		})
+		c.Next()
+	})
+	router.POST("/people", handlerUnderTest.Create)
+
+	body, err := json.Marshal(map[string]any{
+		"kind":            "supplier",
+		"full_name":       "Fornecedor XPTO",
+		"short_name":      "XPTO",
+		"gender_identity": "not_to_expose",
+		"marital_status":  "single",
+		"birth_date":      "1990-10-10",
+		"cpf":             "12345678901",
+		"email":           "fornecedor@xpto.local",
+		"cellphone":       "+5511999990001",
+		"has_whatsapp":    true,
+		"has_system_user": true,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/people", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	require.Contains(t, res.Body.String(), "create_person_failed")
 }

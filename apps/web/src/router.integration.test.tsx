@@ -14,6 +14,8 @@ const mockUseCurrentUserQuery = vi.fn();
 const mockUseCompanyUsersQuery = vi.fn();
 const mockUseAdminSystemChatMessagesQuery = vi.fn();
 const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
+const mockUsePeopleQuery = vi.fn();
+const mockUsePersonQuery = vi.fn();
 const mockUseClientsQuery = vi.fn();
 const mockUsePetsQuery = vi.fn();
 const mockUseServicesQuery = vi.fn();
@@ -22,6 +24,8 @@ const mockUseScheduleHistoriesQuery = vi.fn();
 const mockCreateScheduleMutation = vi.fn();
 const mockUpdateScheduleMutation = vi.fn();
 const mockDeleteScheduleMutation = vi.fn();
+const mockUseCreatePersonMutation = vi.fn();
+const mockUseUpdatePersonMutation = vi.fn();
 
 vi.mock('@/lib/api/domain.queries', () => ({
   useCurrentCompanyQuery: () => mockUseCurrentCompanyQuery(),
@@ -32,6 +36,8 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useAdminSystemChatMessagesQuery: () => mockUseAdminSystemChatMessagesQuery(),
   useCreateAdminSystemChatMessageMutation: () =>
     mockUseCreateAdminSystemChatMessageMutation(),
+  usePeopleQuery: () => mockUsePeopleQuery(),
+  usePersonQuery: () => mockUsePersonQuery(),
   useClientsQuery: () => mockUseClientsQuery(),
   usePetsQuery: () => mockUsePetsQuery(),
   useServicesQuery: () => mockUseServicesQuery(),
@@ -40,8 +46,11 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useCreateScheduleMutation: () => mockCreateScheduleMutation(),
   useUpdateScheduleMutation: () => mockUpdateScheduleMutation(),
   useDeleteScheduleMutation: () => mockDeleteScheduleMutation(),
+  useCreatePersonMutation: () => mockUseCreatePersonMutation(),
+  useUpdatePersonMutation: () => mockUseUpdatePersonMutation(),
   domainQueryKeys: {
     currentCompany: () => ['domain', 'company', 'current'] as const,
+    people: () => ['domain', 'people'] as const,
     clients: () => ['domain', 'clients'] as const,
     pets: () => ['domain', 'pets'] as const,
     services: () => ['domain', 'services'] as const,
@@ -88,6 +97,8 @@ describe('Router integration', () => {
     mockUseCompanyUsersQuery.mockReset();
     mockUseAdminSystemChatMessagesQuery.mockReset();
     mockUseCreateAdminSystemChatMessageMutation.mockReset();
+    mockUsePeopleQuery.mockReset();
+    mockUsePersonQuery.mockReset();
     mockUseClientsQuery.mockReset();
     mockUsePetsQuery.mockReset();
     mockUseServicesQuery.mockReset();
@@ -96,6 +107,8 @@ describe('Router integration', () => {
     mockCreateScheduleMutation.mockReset();
     mockUpdateScheduleMutation.mockReset();
     mockDeleteScheduleMutation.mockReset();
+    mockUseCreatePersonMutation.mockReset();
+    mockUseUpdatePersonMutation.mockReset();
 
     useAuthStore.setState({
       session: {
@@ -204,6 +217,75 @@ describe('Router integration', () => {
       isError: false,
     });
     mockUseScheduleHistoriesQuery.mockReturnValue([]);
+    mockUsePeopleQuery.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'person-1',
+            company_id: 'company-1',
+            company_person_id: 'company-person-1',
+            kind: 'client',
+            full_name: 'Maria Silva',
+            short_name: 'Maria',
+            image_url: null,
+            cpf: '12345678901',
+            has_system_user: false,
+            is_active: true,
+            created_at: '2026-04-10T10:00:00Z',
+            updated_at: null,
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 100, total_pages: 1 },
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUsePersonQuery.mockReturnValue({
+      data: {
+        id: 'person-1',
+        company_id: 'company-1',
+        company_person_id: 'company-person-1',
+        kind: 'client',
+        full_name: 'Maria Silva',
+        short_name: 'Maria',
+        image_url: null,
+        cpf: '12345678901',
+        has_system_user: false,
+        is_active: true,
+        created_at: '2026-04-10T10:00:00Z',
+        updated_at: null,
+        gender_identity: 'woman_cisgender',
+        marital_status: 'single',
+        birth_date: '1992-06-15',
+        contact: {
+          email: 'maria@petcontrol.local',
+          phone: null,
+          cellphone: '+5511999990001',
+          has_whatsapp: true,
+          instagram_user: null,
+          emergency_contact: null,
+          emergency_phone: null,
+        },
+        address: null,
+        finance: null,
+        client_details: null,
+        employee_details: null,
+        employee_documents: null,
+        employee_benefits: null,
+        linked_user: null,
+        guardian_pets: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
+    mockUseCreatePersonMutation.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    mockUseUpdatePersonMutation.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
     mockUseClientsQuery.mockReturnValue({
       data: {
         data: [
@@ -297,6 +379,7 @@ describe('Router integration', () => {
 
     const dashboardLink = screen.getByRole('link', { name: 'Dashboard' });
     const schedulesLink = screen.getByRole('link', { name: 'Agendamentos' });
+    const peopleLink = screen.getByRole('link', { name: 'Pessoas' });
     const clientsLink = screen.getByRole('link', { name: 'Clientes' });
     const petsLink = screen.getByRole('link', { name: 'Pets' });
     const settingsLink = screen.getByRole('link', { name: 'Configurações' });
@@ -307,6 +390,7 @@ describe('Router integration', () => {
     expect(schedulesLink.getAttribute('href')).toBe(
       '/petcontrol-dev/schedules',
     );
+    expect(peopleLink.getAttribute('href')).toBe('/petcontrol-dev/people');
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
     expect(settingsLink.getAttribute('href')).toBe('/petcontrol-dev/settings');
@@ -332,4 +416,23 @@ describe('Router integration', () => {
     expect(screen.getAllByText(/PetControl Dev/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Agendamentos do tenant/i)).toBeTruthy();
   }, 10000);
+
+  it('renderiza a rota /:companySlug/people com o módulo de pessoas ativo', async () => {
+    // @ts-expect-error - Navegação raw é suficiente para o teste de integração do router
+    await router.navigate({ to: '/petcontrol-dev/people' });
+
+    render(
+      <QueryClientProvider client={queryClientForWeb()}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/petcontrol-dev/people');
+    });
+
+    expect(screen.getByRole('heading', { name: 'Pessoas' })).toBeTruthy();
+    expect(screen.getAllByText('Maria Silva').length).toBeGreaterThan(0);
+    expect(screen.getByText('Seleção atual')).toBeTruthy();
+  });
 });

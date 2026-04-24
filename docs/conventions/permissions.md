@@ -13,6 +13,7 @@
     - [Plans](#plans)
   - [Permissões por módulo](#permissões-por-módulo)
     - [Módulo de Configurações da Empresa](#módulo-de-configurações-da-empresa)
+    - [Módulo de Pessoas](#módulo-de-pessoas)
     - [Módulo de Usuários](#módulo-de-usuários)
     - [Módulo de Clientes](#módulo-de-clientes)
     - [Módulo de Pets](#módulo-de-pets)
@@ -61,14 +62,26 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 
 ### Módulo de Configurações da Empresa
 
-| Description                          | Name                         | Default Roles               |
-| ------------------------------------ | ---------------------------- | --------------------------- |
-| Editar configurações gerais          | `company_settings:edit`      | ['root', 'admin']           |
-| Editar configurações de plano        | `plan_settings:edit`         | ['root', 'admin', 'system'] |
-| Editar configurações de pagamento    | `payment_settings:edit`      | ['root', 'admin']           |
-| Editar configurações de notificações | `notification_settings:edit` | ['root', 'admin']           |
-| Editar configurações de integração   | `integration_settings:edit`  | ['root', 'admin']           |
-| Editar configurações de segurança    | `security_settings:edit`     | ['root', 'admin']           |
+| Description                          | Name                         | Default Roles     |
+| ------------------------------------ | ---------------------------- | ----------------- |
+| Editar configurações gerais          | `company_settings:edit`      | ['root', 'admin'] |
+| Editar configurações de plano        | `plan_settings:edit`         | ['root', 'admin'] |
+| Editar configurações de pagamento    | `payment_settings:edit`      | ['root', 'admin'] |
+| Editar configurações de notificações | `notification_settings:edit` | ['root', 'admin'] |
+| Editar configurações de integração   | `integration_settings:edit`  | ['root', 'admin'] |
+| Editar configurações de segurança    | `security_settings:edit`     | ['root', 'admin'] |
+
+### Módulo de Pessoas
+
+| Description       | Name                | Default Roles               |
+| ----------------- | ------------------- | --------------------------- |
+| Criar pessoa      | `people:create`     | ['root', 'admin', 'system'] |
+| Visualizar pessoa | `people:view`       | ['root', 'admin', 'system'] |
+| Atualizar pessoa  | `people:update`     | ['root', 'admin', 'system'] |
+| Deletar pessoa    | `people:delete`     | ['root', 'admin', 'system'] |
+| Restaurar pessoa  | `people:restore`    | ['root', 'admin', 'system'] |
+| Desativar pessoa  | `people:deactivate` | ['root', 'admin', 'system'] |
+| Reativar pessoa   | `people:reactivate` | ['root', 'admin', 'system'] |
 
 ### Módulo de Usuários
 

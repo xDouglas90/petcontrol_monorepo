@@ -1025,6 +1025,230 @@ const docTemplate = `{
                 }
             }
         },
+        "/people": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns tenant-scoped people linked to the authenticated company.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "List people",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PeopleListResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a tenant-scoped person for supported kinds.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Create person",
+                "parameters": [
+                    {
+                        "description": "Create person payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PersonCreateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PersonItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
+        "/people/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns tenant-scoped detail for one person linked to the authenticated company.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Get person by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PersonItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a tenant-scoped person for supported kinds.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Update person",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update person payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PersonUpdateRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PersonItemResponseDoc"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    }
+                }
+            }
+        },
         "/pets": {
             "get": {
                 "security": [
@@ -2947,6 +3171,538 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.ModuleDoc"
                     }
+                }
+            }
+        },
+        "handler.PeopleListResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PersonListItemDoc"
+                    }
+                },
+                "meta": {}
+            }
+        },
+        "handler.PersonAddressRequestDoc": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "complement": {
+                    "type": "string",
+                    "example": "Conjunto 51"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "Brasil"
+                },
+                "district": {
+                    "type": "string",
+                    "example": "Bela Vista"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "Principal"
+                },
+                "number": {
+                    "type": "string",
+                    "example": "1000"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "SP"
+                },
+                "street": {
+                    "type": "string",
+                    "example": "Avenida Paulista"
+                },
+                "zip_code": {
+                    "type": "string",
+                    "example": "01310930"
+                }
+            }
+        },
+        "handler.PersonCreateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/handler.PersonAddressRequestDoc"
+                },
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "client_since": {
+                    "type": "string",
+                    "example": "2026-04-01"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@petcontrol.local"
+                },
+                "employee_benefits": {
+                    "$ref": "#/definitions/handler.PersonEmployeeBenefitsRequestDoc"
+                },
+                "employee_documents": {
+                    "$ref": "#/definitions/handler.PersonEmployeeDocumentsRequestDoc"
+                },
+                "employment": {
+                    "$ref": "#/definitions/handler.PersonEmploymentRequestDoc"
+                },
+                "finance": {
+                    "$ref": "#/definitions/handler.PersonFinanceRequestDoc"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "has_system_user": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "client"
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "single"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Cliente recorrente"
+                },
+                "pet_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "11111111-1111-1111-1111-111111111111"
+                    ]
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+551130000000"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                }
+            }
+        },
+        "handler.PersonDetailDoc": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "client_details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "company_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "company_person_id": {
+                    "type": "string",
+                    "example": "33333333-3333-3333-3333-333333333333"
+                },
+                "contact": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@petcontrol.local"
+                },
+                "employee_benefits": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "employee_details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "employee_documents": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "finance": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "guardian_pets": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    }
+                },
+                "has_system_user": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/people/maria.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "client"
+                },
+                "linked_user": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "single"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PersonEmployeeBenefitsRequestDoc": {
+            "type": "object",
+            "properties": {
+                "meal_ticket": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "meal_ticket_value": {
+                    "type": "string",
+                    "example": "350.00"
+                },
+                "transport_voucher": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "transport_voucher_qty": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "transport_voucher_value": {
+                    "type": "string",
+                    "example": "220.50"
+                },
+                "valid_from": {
+                    "type": "string",
+                    "example": "2026-01-10"
+                },
+                "valid_until": {
+                    "type": "string",
+                    "example": "2026-12-31"
+                }
+            }
+        },
+        "handler.PersonEmployeeDocumentsRequestDoc": {
+            "type": "object",
+            "properties": {
+                "ctps": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "ctps_series": {
+                    "type": "string",
+                    "example": "001"
+                },
+                "ctps_state": {
+                    "type": "string",
+                    "example": "SP"
+                },
+                "graduation": {
+                    "type": "string",
+                    "example": "college_complete"
+                },
+                "issuing_body": {
+                    "type": "string",
+                    "example": "SSP"
+                },
+                "issuing_date": {
+                    "type": "string",
+                    "example": "2010-01-10"
+                },
+                "pis": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "rg": {
+                    "type": "string",
+                    "example": "123456789"
+                }
+            }
+        },
+        "handler.PersonEmploymentRequestDoc": {
+            "type": "object",
+            "properties": {
+                "admission_date": {
+                    "type": "string",
+                    "example": "2026-01-10"
+                },
+                "resignation_date": {
+                    "type": "string",
+                    "example": "2026-12-31"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "Banhista"
+                },
+                "salary": {
+                    "type": "string",
+                    "example": "2500.75"
+                }
+            }
+        },
+        "handler.PersonFinanceRequestDoc": {
+            "type": "object",
+            "properties": {
+                "bank_account": {
+                    "type": "string",
+                    "example": "56789"
+                },
+                "bank_account_digit": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "bank_account_type": {
+                    "type": "string",
+                    "example": "checking"
+                },
+                "bank_branch": {
+                    "type": "string",
+                    "example": "1234"
+                },
+                "bank_code": {
+                    "type": "string",
+                    "example": "001"
+                },
+                "bank_name": {
+                    "type": "string",
+                    "example": "Banco Pet"
+                },
+                "has_pix": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "pix_key": {
+                    "type": "string",
+                    "example": "maria@petcontrol.local"
+                },
+                "pix_key_type": {
+                    "type": "string",
+                    "example": "email"
+                }
+            }
+        },
+        "handler.PersonItemResponseDoc": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.PersonDetailDoc"
+                }
+            }
+        },
+        "handler.PersonListItemDoc": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "string",
+                    "example": "22222222-2222-2222-2222-222222222222"
+                },
+                "company_person_id": {
+                    "type": "string",
+                    "example": "33333333-3333-3333-3333-333333333333"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-04-10T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@petcontrol.local"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "has_system_user": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "id": {
+                    "type": "string",
+                    "example": "11111111-1111-1111-1111-111111111111"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/people/maria.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "client"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PersonUpdateRequestDoc": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/handler.PersonAddressRequestDoc"
+                },
+                "birth_date": {
+                    "type": "string",
+                    "example": "1992-06-15"
+                },
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "client_since": {
+                    "type": "string",
+                    "example": "2026-04-01"
+                },
+                "cpf": {
+                    "type": "string",
+                    "example": "12345678901"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@petcontrol.local"
+                },
+                "employee_benefits": {
+                    "$ref": "#/definitions/handler.PersonEmployeeBenefitsRequestDoc"
+                },
+                "employee_documents": {
+                    "$ref": "#/definitions/handler.PersonEmployeeDocumentsRequestDoc"
+                },
+                "employment": {
+                    "$ref": "#/definitions/handler.PersonEmploymentRequestDoc"
+                },
+                "finance": {
+                    "$ref": "#/definitions/handler.PersonFinanceRequestDoc"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Souza"
+                },
+                "gender_identity": {
+                    "type": "string",
+                    "example": "woman_cisgender"
+                },
+                "has_system_user": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "marital_status": {
+                    "type": "string",
+                    "example": "married"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Cliente VIP"
+                },
+                "pet_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "11111111-1111-1111-1111-111111111111"
+                    ]
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+551130000000"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Mari"
                 }
             }
         },

@@ -31,6 +31,7 @@ Inclui os módulos:
 
 - Dashboard
 - Clientes
+- Pessoas
 - Pets
 - Agendamentos
 - Serviços

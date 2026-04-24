@@ -25,9 +25,11 @@ import {
   LayoutGrid,
   LogOut,
   PawPrint,
+  ContactRound,
   Sparkles,
   Users,
   X,
+  Plus,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -177,6 +179,9 @@ export function AppLayout() {
   const companyDisplayName = company.fantasy_name || company.name;
   const canViewSettings =
     currentUser?.settings_access?.can_view ?? currentUser?.role === 'admin';
+  const canViewPeople =
+    currentUser?.role === 'admin' || currentUser?.role === 'system';
+  const isDashboardRoute = location.pathname.endsWith('/dashboard');
 
   if (
     urlSlug &&
@@ -228,7 +233,7 @@ export function AppLayout() {
       <div className="mx-auto flex min-h-screen max-w-[1920px]">
         <aside
           className={cn(
-            'flex-col bg-white border-r border-stone-100 transition-all duration-300',
+            'flex flex-col overflow-hidden bg-white border-r border-stone-100 transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:max-h-screen',
             isDesktopViewport
               ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[5rem]')
               : cn(
@@ -282,80 +287,122 @@ export function AppLayout() {
             </button>
           </div>
 
-          <div className="h-4" />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <div className="h-4" />
 
-          <nav className="mt-7 space-y-1 px-4 pb-4">
-            <SidebarLink
-              to={buildCompanyRoute(currentSlug, 'dashboard')}
-              icon={LayoutGrid}
-              label="Dashboard"
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              collapsedDesktop={isDesktopViewport && !sidebarOpen}
-              onNavigate={handleSidebarLinkClick}
-            />
-            <SidebarLink
-              to={buildCompanyRoute(currentSlug, 'schedules')}
-              icon={CalendarRange}
-              label="Agendamentos"
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              collapsedDesktop={isDesktopViewport && !sidebarOpen}
-              onNavigate={handleSidebarLinkClick}
-            />
-            <SidebarLink
-              to={buildCompanyRoute(currentSlug, 'clients')}
-              icon={Users}
-              label="Clientes"
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              collapsedDesktop={isDesktopViewport && !sidebarOpen}
-              onNavigate={handleSidebarLinkClick}
-            />
-            <SidebarLink
-              to={buildCompanyRoute(currentSlug, 'pets')}
-              icon={PawPrint}
-              label="Pets"
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              collapsedDesktop={isDesktopViewport && !sidebarOpen}
-              onNavigate={handleSidebarLinkClick}
-            />
-          </nav>
+              <nav className="mt-7 space-y-1 px-4 pb-4">
+                <SidebarLink
+                  to={buildCompanyRoute(currentSlug, 'dashboard')}
+                  icon={LayoutGrid}
+                  label="Dashboard"
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
+                <SidebarLink
+                  to={buildCompanyRoute(currentSlug, 'schedules')}
+                  icon={CalendarRange}
+                  label="Agendamentos"
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
+                {canViewPeople ? (
+                  <SidebarLink
+                    to={buildCompanyRoute(currentSlug, 'people')}
+                    icon={ContactRound}
+                    label={
+                      <span className="flex w-full items-center">
+                        <span className="flex-grow truncate">Pessoas</span>
+                        <button
+                          aria-label="Adicionar pessoa"
+                          type="button"
+                          title="Adicionar pessoa"
+                          className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            navigate({
+                              to: buildCompanyRoute(currentSlug, 'people'),
+                              search: {},
+                              hash: '',
+                              replace: false,
+                            });
+                            setTimeout(() => {
+                              const event = new CustomEvent(
+                                'open-people-create-form',
+                              );
+                              window.dispatchEvent(event);
+                            }, 50);
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </span>
+                    }
+                    expanded={isDesktopViewport ? sidebarOpen : true}
+                    collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                    onNavigate={handleSidebarLinkClick}
+                  />
+                ) : null}
+                <SidebarLink
+                  to={buildCompanyRoute(currentSlug, 'clients')}
+                  icon={Users}
+                  label="Clientes"
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
+                <SidebarLink
+                  to={buildCompanyRoute(currentSlug, 'pets')}
+                  icon={PawPrint}
+                  label="Pets"
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
+              </nav>
 
-          <div className="px-4">
-            <UpgradeCard
-              activePackage={company.active_package}
-              expanded={isDesktopViewport ? sidebarOpen : true}
-              suggestedPlan={suggestedPlan}
-            />
-          </div>
+              <div className="px-4 pb-4">
+                <UpgradeCard
+                  activePackage={company.active_package}
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  suggestedPlan={suggestedPlan}
+                />
+              </div>
+            </div>
 
-          <div className="mt-auto space-y-2 border-t border-stone-100 px-4 py-4">
-            {canViewSettings ? (
-              <SidebarLink
-                to={`/${normalizeCompanySlug(currentSlug)}/settings`}
-                icon={Cog}
-                label="Configurações"
-                expanded={isDesktopViewport ? sidebarOpen : true}
-                collapsedDesktop={isDesktopViewport && !sidebarOpen}
-                onNavigate={handleSidebarLinkClick}
-              />
-            ) : null}
+            <div className="mt-auto w-full space-y-2 border-t border-stone-100 bg-white px-4 py-4">
+              {canViewSettings ? (
+                <SidebarLink
+                  to={`/${normalizeCompanySlug(currentSlug)}/settings`}
+                  icon={Cog}
+                  label="Configurações"
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
+              ) : null}
 
-            <button
-              type="button"
-              onClick={() => {
-                clearSession();
-              }}
-              className={cn(
-                'flex w-full items-center rounded-2xl text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-900',
-                isDesktopViewport && !sidebarOpen
-                  ? 'justify-center px-0 py-3'
-                  : 'gap-3 px-4 py-3',
-              )}
-            >
-              <LogOut className="h-4 w-4" />
-              <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
-                Sair
-              </SidebarLabel>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearSession();
+                }}
+                className={cn(
+                  'flex w-full items-center rounded-2xl text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-900',
+                  isDesktopViewport && !sidebarOpen
+                    ? 'justify-center px-0 py-3'
+                    : 'gap-3 px-4 py-3',
+                )}
+              >
+                <LogOut className="h-4 w-4" />
+                <SidebarLabel expanded={isDesktopViewport ? sidebarOpen : true}>
+                  Sair
+                </SidebarLabel>
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -383,7 +430,7 @@ export function AppLayout() {
           </main>
         </div>
 
-        {currentUser?.role === 'admin' ? (
+        {currentUser?.role === 'admin' && isDashboardRoute ? (
           <AdminSupportChatAside className="hidden xl:flex" />
         ) : null}
       </div>
@@ -401,7 +448,7 @@ function SidebarLink({
 }: {
   to: string;
   icon: typeof LayoutGrid;
-  label: string;
+  label: ReactNode;
   expanded: boolean;
   collapsedDesktop?: boolean;
   onNavigate?: () => void;

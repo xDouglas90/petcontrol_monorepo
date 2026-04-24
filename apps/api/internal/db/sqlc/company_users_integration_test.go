@@ -1,8 +1,10 @@
 package sqlc_test
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
@@ -69,5 +71,41 @@ func TestQueries_CompanyUsers_Integration(t *testing.T) {
 		// Should not be active anymore
 		activeList, _ := queries.ListCompanyUsersByCompanyID(ctx, company.ID)
 		require.Empty(t, activeList)
+	})
+
+	t.Run("RejectsRootAndInternalRoles", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			role sqlc.UserRoleType
+		}{
+			{name: "root", role: sqlc.UserRoleTypeRoot},
+			{name: "internal", role: sqlc.UserRoleTypeInternal},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				user, err := queries.InsertUser(ctx, sqlc.InsertUserParams{
+					Email:           uniqueEmail("company-user-" + tc.name),
+					EmailVerified:   true,
+					EmailVerifiedAt: pgtype.Timestamptz{},
+					Role:            tc.role,
+					IsActive:        true,
+				})
+				require.NoError(t, err)
+
+				_, err = queries.CreateCompanyUser(ctx, sqlc.CreateCompanyUserParams{
+					CompanyID: company.ID,
+					UserID:    user.ID,
+					Kind:      sqlc.UserKindEmployee,
+					IsActive:  pgtype.Bool{Bool: true, Valid: true},
+				})
+				require.Error(t, err)
+
+				var pgErr *pgconn.PgError
+				require.True(t, errors.As(err, &pgErr))
+				require.Equal(t, "23514", pgErr.Code)
+				require.Equal(t, "chk_company_users_no_root_internal", pgErr.ConstraintName)
+			})
+		}
 	})
 }

@@ -41,6 +41,7 @@ SELECT
     p.updated_at AS person_updated_at,
     pi.full_name AS identifications_full_name,
     PI.short_name AS identifications_short_name,
+    pc.email AS contacts_email,
     pi.gender_identity AS identifications_gender_identity,
     pi.marital_status AS identifications_marital_status,
     pi.image_url AS identifications_image_url,
@@ -52,6 +53,7 @@ FROM
     company_people cp
     JOIN people p ON cp.person_id = p.id
     LEFT JOIN people_identifications pi ON p.id = pi.person_id
+    LEFT JOIN people_contacts pc ON p.id = pc.person_id AND pc.is_primary = TRUE
 WHERE
     cp.company_id = $1
     AND cp.person_id = $2
@@ -75,6 +77,7 @@ type GetCompanyPersonRow struct {
 	PersonUpdatedAt               pgtype.Timestamptz `db:"person_updated_at" json:"person_updated_at"`
 	IdentificationsFullName       pgtype.Text        `db:"identifications_full_name" json:"identifications_full_name"`
 	IdentificationsShortName      pgtype.Text        `db:"identifications_short_name" json:"identifications_short_name"`
+	ContactsEmail                 pgtype.Text        `db:"contacts_email" json:"contacts_email"`
 	IdentificationsGenderIdentity NullGenderIdentity `db:"identifications_gender_identity" json:"identifications_gender_identity"`
 	IdentificationsMaritalStatus  NullMaritalStatus  `db:"identifications_marital_status" json:"identifications_marital_status"`
 	IdentificationsImageUrl       pgtype.Text        `db:"identifications_image_url" json:"identifications_image_url"`
@@ -100,6 +103,7 @@ func (q *Queries) GetCompanyPerson(ctx context.Context, arg GetCompanyPersonPara
 		&i.PersonUpdatedAt,
 		&i.IdentificationsFullName,
 		&i.IdentificationsShortName,
+		&i.ContactsEmail,
 		&i.IdentificationsGenderIdentity,
 		&i.IdentificationsMaritalStatus,
 		&i.IdentificationsImageUrl,
@@ -143,6 +147,7 @@ SELECT
     p.updated_at AS person_updated_at,
     pi.full_name AS identifications_full_name,
     PI.short_name AS identifications_short_name,
+    pc.email AS contacts_email,
     pi.gender_identity AS identifications_gender_identity,
     pi.marital_status AS identifications_marital_status,
     pi.image_url AS identifications_image_url,
@@ -154,6 +159,7 @@ FROM
     company_people cp
     JOIN people p ON cp.person_id = p.id
     LEFT JOIN people_identifications pi ON p.id = pi.person_id
+    LEFT JOIN people_contacts pc ON p.id = pc.person_id AND pc.is_primary = TRUE
 WHERE
     cp.company_id = $1
 ORDER BY
@@ -181,6 +187,7 @@ type ListCompanyPeopleRow struct {
 	PersonUpdatedAt               pgtype.Timestamptz `db:"person_updated_at" json:"person_updated_at"`
 	IdentificationsFullName       pgtype.Text        `db:"identifications_full_name" json:"identifications_full_name"`
 	IdentificationsShortName      pgtype.Text        `db:"identifications_short_name" json:"identifications_short_name"`
+	ContactsEmail                 pgtype.Text        `db:"contacts_email" json:"contacts_email"`
 	IdentificationsGenderIdentity NullGenderIdentity `db:"identifications_gender_identity" json:"identifications_gender_identity"`
 	IdentificationsMaritalStatus  NullMaritalStatus  `db:"identifications_marital_status" json:"identifications_marital_status"`
 	IdentificationsImageUrl       pgtype.Text        `db:"identifications_image_url" json:"identifications_image_url"`
@@ -212,6 +219,7 @@ func (q *Queries) ListCompanyPeople(ctx context.Context, arg ListCompanyPeoplePa
 			&i.PersonUpdatedAt,
 			&i.IdentificationsFullName,
 			&i.IdentificationsShortName,
+			&i.ContactsEmail,
 			&i.IdentificationsGenderIdentity,
 			&i.IdentificationsMaritalStatus,
 			&i.IdentificationsImageUrl,

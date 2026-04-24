@@ -16,6 +16,7 @@ SELECT
     p.updated_at AS person_updated_at,
     pi.full_name AS identifications_full_name,
     PI.short_name AS identifications_short_name,
+    pc.email AS contacts_email,
     pi.gender_identity AS identifications_gender_identity,
     pi.marital_status AS identifications_marital_status,
     pi.image_url AS identifications_image_url,
@@ -27,6 +28,7 @@ FROM
     company_people cp
     JOIN people p ON cp.person_id = p.id
     LEFT JOIN people_identifications pi ON p.id = pi.person_id
+    LEFT JOIN people_contacts pc ON p.id = pc.person_id AND pc.is_primary = TRUE
 WHERE
     cp.company_id = sqlc.arg('CompanyID')
     AND cp.person_id = sqlc.arg('PersonID');
@@ -45,6 +47,7 @@ SELECT
     p.updated_at AS person_updated_at,
     pi.full_name AS identifications_full_name,
     PI.short_name AS identifications_short_name,
+    pc.email AS contacts_email,
     pi.gender_identity AS identifications_gender_identity,
     pi.marital_status AS identifications_marital_status,
     pi.image_url AS identifications_image_url,
@@ -56,6 +59,7 @@ FROM
     company_people cp
     JOIN people p ON cp.person_id = p.id
     LEFT JOIN people_identifications pi ON p.id = pi.person_id
+    LEFT JOIN people_contacts pc ON p.id = pc.person_id AND pc.is_primary = TRUE
 WHERE
     cp.company_id = sqlc.arg('CompanyID')
 ORDER BY
@@ -67,4 +71,3 @@ OFFSET sqlc.arg('Offset');
 DELETE FROM company_people
 WHERE company_id = sqlc.arg('CompanyID')
     AND person_id = sqlc.arg('PersonID');
-

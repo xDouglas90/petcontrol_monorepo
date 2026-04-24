@@ -18,14 +18,17 @@ describe('shared-constants', () => {
     expect(APP_ROUTES.login).toBe('/login');
     expect(APP_ROUTES.dashboard).toBe('/$companySlug/dashboard');
     expect(APP_ROUTES.schedules).toBe('/$companySlug/schedules');
+    expect(APP_ROUTES.people).toBe('/$companySlug/people');
 
     expect(APP_ROUTE_SEGMENTS.login).toBe('login');
     expect(APP_ROUTE_SEGMENTS.dashboard).toBe('dashboard');
     expect(APP_ROUTE_SEGMENTS.schedules).toBe('schedules');
+    expect(APP_ROUTE_SEGMENTS.people).toBe('people');
 
     expect(COMPANY_ROUTE_PARAM).toBe('companySlug');
     expect(COMPANY_ROUTE_PATTERNS.dashboard).toBe('/$companySlug/dashboard');
     expect(COMPANY_ROUTE_PATTERNS.schedules).toBe('/$companySlug/schedules');
+    expect(COMPANY_ROUTE_PATTERNS.people).toBe('/$companySlug/people');
     expect(buildCompanyRoute('company-x', 'dashboard')).toBe(
       '/company-x/dashboard',
     );

@@ -63,6 +63,8 @@ DROP TABLE IF EXISTS service_types;
 -- SEÇÃO 8: CLIENTES E PETS
 DROP TABLE IF EXISTS client_plans;
 
+DROP TABLE IF EXISTS pet_guardians;
+
 DROP TABLE IF EXISTS pets;
 
 DROP TABLE IF EXISTS company_clients;
@@ -77,8 +79,6 @@ ALTER TABLE IF EXISTS companies
 DROP TABLE IF EXISTS company_addresses;
 
 DROP TABLE IF EXISTS company_finances;
-
-DROP TABLE IF EXISTS company_people_addresses;
 
 DROP TABLE IF EXISTS company_employee_costs;
 
@@ -111,7 +111,11 @@ DROP TABLE IF EXISTS people;
 -- SEÇÃO 5: EMPRESAS (MULTI-TENANT CORE)
 DROP TABLE IF EXISTS company_system_configs;
 
+DROP TRIGGER IF EXISTS trg_company_users_no_root_internal ON company_users;
+
 DROP TABLE IF EXISTS company_users;
+
+DROP FUNCTION IF EXISTS enforce_company_user_role_policy();
 
 DROP TABLE IF EXISTS company_modules;
 
@@ -199,4 +203,3 @@ DROP TYPE IF EXISTS notification_level;
 
 -- FINALIZAÇÃO
 DROP EXTENSION IF EXISTS "uuid-ossp";
-

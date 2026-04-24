@@ -91,6 +91,10 @@ func TestCompanyUserService_CreateAndDeactivate(t *testing.T) {
 	userID := newDomainUUID(t)
 	createdID := newDomainUUID(t)
 
+	mock.ExpectQuery(`(?s)name: GetUserByID`).WithArgs(userID).WillReturnRows(
+		pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow(userID, "owner@petcontrol.local", true, time.Now(), sqlc.UserRoleTypeAdmin, true, time.Now(), nil, nil),
+	)
 	mock.ExpectQuery(`(?s)name: CreateCompanyUser`).WithArgs(companyID, userID, sqlc.UserKindOwner, true, pgtype.Bool{Bool: true, Valid: true}).WillReturnRows(pgxmock.NewRows([]string{"id", "company_id", "user_id", "kind", "is_owner", "is_active", "created_at", "updated_at", "deleted_at"}).AddRow(createdID, companyID, userID, sqlc.UserKindOwner, true, true, time.Now(), nil, nil))
 	created, err := serviceUnderTest.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{CompanyID: companyID, UserID: userID, Kind: sqlc.UserKindOwner, IsOwner: true, IsActive: pgtype.Bool{Bool: true, Valid: true}})
 	require.NoError(t, err)
@@ -98,6 +102,46 @@ func TestCompanyUserService_CreateAndDeactivate(t *testing.T) {
 
 	mock.ExpectExec(`(?s)name: DeactivateCompanyUser`).WithArgs(companyID, userID).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	require.NoError(t, serviceUnderTest.DeactivateCompanyUser(context.Background(), companyID, userID))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCompanyUserService_CreateCompanyUser_RejectsRootAndInternalRoles(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	require.NoError(t, err)
+	defer mock.Close()
+
+	queries := sqlc.New(mock)
+	serviceUnderTest := NewCompanyUserService(queries)
+
+	testCases := []struct {
+		name string
+		role sqlc.UserRoleType
+	}{
+		{name: "root role", role: sqlc.UserRoleTypeRoot},
+		{name: "internal role", role: sqlc.UserRoleTypeInternal},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			companyID := newDomainUUID(t)
+			userID := newDomainUUID(t)
+
+			mock.ExpectQuery(`(?s)name: GetUserByID`).WithArgs(userID).WillReturnRows(
+				pgxmock.NewRows([]string{"id", "email", "email_verified", "email_verified_at", "role", "is_active", "created_at", "updated_at", "deleted_at"}).
+					AddRow(userID, "blocked@petcontrol.local", true, time.Now(), tc.role, true, time.Now(), nil, nil),
+			)
+
+			_, err := serviceUnderTest.CreateCompanyUser(context.Background(), sqlc.CreateCompanyUserParams{
+				CompanyID: companyID,
+				UserID:    userID,
+				Kind:      sqlc.UserKindEmployee,
+				IsOwner:   false,
+				IsActive:  pgtype.Bool{Bool: true, Valid: true},
+			})
+			require.ErrorIs(t, err, apperror.ErrUnprocessableEntity)
+		})
+	}
+
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

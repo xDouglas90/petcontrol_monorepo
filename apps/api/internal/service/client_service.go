@@ -246,11 +246,20 @@ func optionalMaritalStatus(value *sqlc.MaritalStatus) sqlc.NullMaritalStatus {
 	return sqlc.NullMaritalStatus{MaritalStatus: *value, Valid: true}
 }
 
+func optionalPixKeyKind(value *sqlc.PixKeyKind) sqlc.NullPixKeyKind {
+	if value == nil {
+		return sqlc.NullPixKeyKind{}
+	}
+	return sqlc.NullPixKeyKind{PixKeyKind: *value, Valid: true}
+}
+
 func mapClientDBError(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
 		case "23503":
+			return apperror.ErrUnprocessableEntity
+		case "23502", "23514", "22P02", "22001", "22007":
 			return apperror.ErrUnprocessableEntity
 		case "23505":
 			return apperror.ErrConflict

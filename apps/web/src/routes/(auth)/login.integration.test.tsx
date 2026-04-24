@@ -13,6 +13,7 @@ const mockUseCurrentUserQuery = vi.fn();
 const mockUseCompanyUsersQuery = vi.fn();
 const mockUseAdminSystemChatMessagesQuery = vi.fn();
 const mockUseCreateAdminSystemChatMessageMutation = vi.fn();
+const mockUsePeopleQuery = vi.fn();
 const mockUseSchedulesQuery = vi.fn();
 const mockUseScheduleHistoriesQuery = vi.fn();
 
@@ -25,10 +26,12 @@ vi.mock('@/lib/api/domain.queries', () => ({
   useAdminSystemChatMessagesQuery: () => mockUseAdminSystemChatMessagesQuery(),
   useCreateAdminSystemChatMessageMutation: () =>
     mockUseCreateAdminSystemChatMessageMutation(),
+  usePeopleQuery: () => mockUsePeopleQuery(),
   useSchedulesQuery: () => mockUseSchedulesQuery(),
   useScheduleHistoriesQuery: () => mockUseScheduleHistoriesQuery(),
   domainQueryKeys: {
     currentCompany: () => ['domain', 'company', 'current'] as const,
+    people: () => ['domain', 'people'] as const,
     schedules: () => ['domain', 'schedules'] as const,
   },
 }));
@@ -44,6 +47,7 @@ describe('Login flow integration', () => {
     mockUseCompanyUsersQuery.mockReset();
     mockUseAdminSystemChatMessagesQuery.mockReset();
     mockUseCreateAdminSystemChatMessageMutation.mockReset();
+    mockUsePeopleQuery.mockReset();
     mockUseSchedulesQuery.mockReset();
     mockUseScheduleHistoriesQuery.mockReset();
 

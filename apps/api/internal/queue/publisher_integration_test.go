@@ -114,3 +114,54 @@ func TestAsynqPublisher_EnqueueScheduleConfirmation(t *testing.T) {
 		t.Fatal("timeout waiting for task consumption")
 	}
 }
+
+func TestAsynqPublisher_EnqueuePersonAccessCredentials(t *testing.T) {
+	redisServer := mustStartMiniRedis(t)
+
+	processed := make(chan PersonAccessCredentialsPayload, 1)
+	mux := asynq.NewServeMux()
+	mux.HandleFunc(TypePersonAccessCredentials, func(_ context.Context, task *asynq.Task) error {
+		var payload PersonAccessCredentialsPayload
+		if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+			return err
+		}
+		processed <- payload
+		return nil
+	})
+
+	server := asynq.NewServer(
+		asynq.RedisClientOpt{Addr: redisServer.Addr()},
+		asynq.Config{Concurrency: 1, Queues: map[string]int{"notifications": 1}},
+	)
+	go func() {
+		_ = server.Run(mux)
+	}()
+	t.Cleanup(server.Shutdown)
+
+	publisher := NewAsynqPublisher(redisServer.Addr(), "notifications")
+	t.Cleanup(func() {
+		require.NoError(t, publisher.Close())
+	})
+
+	err := publisher.EnqueuePersonAccessCredentials(context.Background(), PersonAccessCredentialsPayload{
+		Version:           1,
+		CompanyID:         "11111111-1111-1111-1111-111111111111",
+		PersonID:          "22222222-2222-2222-2222-222222222222",
+		UserID:            "33333333-3333-3333-3333-333333333333",
+		RecipientName:     "Maria",
+		RecipientEmail:    "maria@petcontrol.local",
+		TemporaryPassword: "senha-temp",
+		Role:              "system",
+		OccurredAt:        time.Now().UTC(),
+	})
+	require.NoError(t, err)
+
+	select {
+	case payload := <-processed:
+		require.Equal(t, "maria@petcontrol.local", payload.RecipientEmail)
+		require.Equal(t, "33333333-3333-3333-3333-333333333333", payload.UserID)
+		require.Equal(t, 1, payload.Version)
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for task consumption")
+	}
+}

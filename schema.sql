@@ -555,6 +555,32 @@ CREATE INDEX idx_company_users_company ON company_users(company_id);
 
 CREATE INDEX idx_company_users_user ON company_users(user_id);
 
+CREATE OR REPLACE FUNCTION enforce_company_user_role_policy()
+RETURNS trigger AS $$
+DECLARE
+  target_role user_role_type;
+BEGIN
+  SELECT
+    u.role
+  INTO target_role
+  FROM users u
+  WHERE u.id = NEW.user_id;
+
+  IF target_role IN ('root', 'internal') THEN
+    RAISE EXCEPTION 'users with role % cannot be linked to tenants', target_role
+      USING ERRCODE = '23514',
+            CONSTRAINT = 'chk_company_users_no_root_internal';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_company_users_no_root_internal
+BEFORE INSERT OR UPDATE OF user_id ON company_users
+FOR EACH ROW
+EXECUTE FUNCTION enforce_company_user_role_policy();
+
 -- Configurações de sistema por empresa
 CREATE TABLE company_system_configs(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -792,17 +818,6 @@ CREATE TABLE company_employee_costs(
   updated_at timestamptz
 );
 
--- Endereços de pessoas no contexto de uma empresa
-CREATE TABLE company_people_addresses(
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  person_id uuid NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-  address_id uuid NOT NULL REFERENCES addresses(id) ON DELETE CASCADE,
-  is_main boolean NOT NULL DEFAULT FALSE,
-  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (company_id, person_id, address_id)
-);
-
 -- Dados bancários de empresas
 CREATE TABLE company_finances(
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -866,7 +881,6 @@ CREATE TABLE pets(
   image_url varchar(500),
   birth_date date,
   owner_id uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  guardian_id uuid REFERENCES people(id) ON DELETE SET NULL,
   is_active boolean NOT NULL DEFAULT TRUE,
   notes varchar(500),
   created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -875,6 +889,14 @@ CREATE TABLE pets(
 );
 
 CREATE INDEX idx_pets_owner ON pets(owner_id);
+
+CREATE TABLE pet_guardians(
+  pet_id uuid PRIMARY KEY REFERENCES pets(id) ON DELETE CASCADE,
+  guardian_id uuid NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_pet_guardians_guardian ON pet_guardians(guardian_id);
 
 CREATE INDEX idx_pets_active ON pets(is_active)
 WHERE

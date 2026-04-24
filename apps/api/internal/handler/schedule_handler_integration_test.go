@@ -348,6 +348,10 @@ func (p *schedulePublisherStub) EnqueueScheduleConfirmation(_ context.Context, p
 	return nil
 }
 
+func (p *schedulePublisherStub) EnqueuePersonAccessCredentials(context.Context, queue.PersonAccessCredentialsPayload) error {
+	return nil
+}
+
 func (p *schedulePublisherStub) Close() error {
 	return nil
 }

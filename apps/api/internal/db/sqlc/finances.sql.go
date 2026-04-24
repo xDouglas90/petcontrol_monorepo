@@ -64,9 +64,10 @@ func (q *Queries) GetFinance(ctx context.Context, id pgtype.UUID) (Finance, erro
 	return i, err
 }
 
-const insertFinance = `-- name: InsertFinance :execrows
+const insertFinance = `-- name: InsertFinance :one
 INSERT INTO finances(bank_name, bank_code, bank_branch, bank_account, bank_account_digit, bank_account_type, has_pix, pix_key, pix_key_type)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, bank_name, bank_code, bank_branch, bank_account, bank_account_digit, bank_account_type, has_pix, pix_key, pix_key_type, created_at, updated_at
 `
 
 type InsertFinanceParams struct {
@@ -81,8 +82,8 @@ type InsertFinanceParams struct {
 	PixKeyType       NullPixKeyKind  `db:"PixKeyType" json:"PixKeyType"`
 }
 
-func (q *Queries) InsertFinance(ctx context.Context, arg InsertFinanceParams) (int64, error) {
-	result, err := q.db.Exec(ctx, insertFinance,
+func (q *Queries) InsertFinance(ctx context.Context, arg InsertFinanceParams) (Finance, error) {
+	row := q.db.QueryRow(ctx, insertFinance,
 		arg.BankName,
 		arg.BankCode,
 		arg.BankBranch,
@@ -93,10 +94,22 @@ func (q *Queries) InsertFinance(ctx context.Context, arg InsertFinanceParams) (i
 		arg.PixKey,
 		arg.PixKeyType,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	var i Finance
+	err := row.Scan(
+		&i.ID,
+		&i.BankName,
+		&i.BankCode,
+		&i.BankBranch,
+		&i.BankAccount,
+		&i.BankAccountDigit,
+		&i.BankAccountType,
+		&i.HasPix,
+		&i.PixKey,
+		&i.PixKeyType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateFinance = `-- name: UpdateFinance :execrows

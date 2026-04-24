@@ -17,6 +17,7 @@ import { AppLayout } from '@/routes/(app)/_layout';
 import { ClientsPage } from '@/routes/(app)/clients';
 import { DashboardPage } from '@/routes/(app)/dashboard';
 import { PetsPage } from '@/routes/(app)/pets';
+import { PeoplePage } from '@/routes/(app)/people';
 import { SchedulesPage } from '@/routes/(app)/schedules';
 import { SettingsPage } from '@/routes/(app)/settings';
 import { ServicesPage } from '@/routes/(app)/services';
@@ -78,6 +79,12 @@ const clientsRoute = createRoute({
   component: ClientsPage,
 });
 
+const peopleRoute = createRoute({
+  getParentRoute: () => companyRoute,
+  path: APP_ROUTE_SEGMENTS.people,
+  component: PeoplePage,
+});
+
 const petsRoute = createRoute({
   getParentRoute: () => companyRoute,
   path: APP_ROUTE_SEGMENTS.pets,
@@ -102,6 +109,7 @@ const routeTree = rootRoute.addChildren([
   companyRoute.addChildren([
     dashboardRoute,
     schedulesRoute,
+    peopleRoute,
     clientsRoute,
     petsRoute,
     servicesRoute,
