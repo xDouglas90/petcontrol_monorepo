@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,7 +54,29 @@ func parseOptionalTrimmed(raw *string) *string {
 		return nil
 	}
 	value := strings.TrimSpace(*raw)
+	if value == "" {
+		return nil
+	}
 	return &value
+}
+
+func parseOptionalBool(raw string) *bool {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return nil
+	}
+	return &parsed
+}
+
+func boolValueOrDefault(value *bool, defaultValue bool) pgtype.Bool {
+	if value == nil {
+		return pgtype.Bool{Bool: defaultValue, Valid: true}
+	}
+	return pgtype.Bool{Bool: *value, Valid: true}
 }
 
 func uuidToString(value pgtype.UUID) string {

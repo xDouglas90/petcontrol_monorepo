@@ -57,6 +57,58 @@ vi.mock('@/lib/api/domain.queries', () => ({
     isLoading: false,
     isError: false,
   }),
+  usePetQuery: () => ({
+    data: {
+      data: {
+        id: 'pet-1',
+        owner_id: 'client-1',
+        owner_name: 'Maria Silva',
+        name: 'Thor',
+        race: 'Labrador',
+        color: 'Caramelo',
+        sex: 'M',
+        size: 'medium',
+        kind: 'dog',
+        temperament: 'playful',
+        image_url: null,
+        birth_date: '2021-08-20',
+        is_active: true,
+        is_deceased: false,
+        is_vaccinated: true,
+        is_neutered: false,
+        is_microchipped: false,
+        microchip_number: null,
+        microchip_expiration_date: null,
+        notes: null,
+        guardians: [],
+      },
+    },
+    isLoading: false,
+    isError: false,
+  }),
+  usePeopleQuery: () => ({
+    data: {
+      data: [
+        {
+          id: 'guardian-1',
+          company_id: 'company-1',
+          company_person_id: 'cp-guardian-1',
+          kind: 'guardian',
+          full_name: 'Guardiao 1',
+          short_name: 'G1',
+          image_url: null,
+          cpf: '12345678909',
+          has_system_user: false,
+          is_active: true,
+          created_at: '2026-04-10T10:00:00Z',
+          updated_at: null,
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
+    },
+    isLoading: false,
+    isError: false,
+  }),
   useServicesQuery: () => ({
     data: {
       data: [

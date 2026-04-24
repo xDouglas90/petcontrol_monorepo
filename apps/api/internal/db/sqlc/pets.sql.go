@@ -12,38 +12,61 @@ import (
 )
 
 const createPet = `-- name: CreatePet :one
-INSERT INTO pets(name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8)
+INSERT INTO pets(name, race, color, sex, size, kind, temperament, image_url, birth_date, owner_id, is_active, is_deceased, is_vaccinated, is_neutered, is_microchipped, microchip_number, microchip_expiration_date, notes)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 RETURNING
-    id, name, size, kind, temperament, image_url, birth_date, owner_id, is_active, notes, created_at, updated_at, deleted_at
+    id, name, race, color, sex, size, kind, temperament, image_url, birth_date, owner_id, is_active, is_deceased, is_vaccinated, is_neutered, is_microchipped, microchip_number, microchip_expiration_date, notes, created_at, updated_at, deleted_at
 `
 
 type CreatePetParams struct {
-	Name        string         `db:"Name" json:"Name"`
-	Size        PetSize        `db:"Size" json:"Size"`
-	Kind        PetKind        `db:"Kind" json:"Kind"`
-	Temperament PetTemperament `db:"Temperament" json:"Temperament"`
-	ImageUrl    pgtype.Text    `db:"ImageUrl" json:"ImageUrl"`
-	BirthDate   pgtype.Date    `db:"BirthDate" json:"BirthDate"`
-	OwnerID     pgtype.UUID    `db:"OwnerID" json:"OwnerID"`
-	Notes       pgtype.Text    `db:"Notes" json:"Notes"`
+	Name                    string         `db:"Name" json:"Name"`
+	Race                    string         `db:"Race" json:"Race"`
+	Color                   string         `db:"Color" json:"Color"`
+	Sex                     string         `db:"Sex" json:"Sex"`
+	Size                    PetSize        `db:"Size" json:"Size"`
+	Kind                    PetKind        `db:"Kind" json:"Kind"`
+	Temperament             PetTemperament `db:"Temperament" json:"Temperament"`
+	ImageUrl                pgtype.Text    `db:"ImageUrl" json:"ImageUrl"`
+	BirthDate               pgtype.Date    `db:"BirthDate" json:"BirthDate"`
+	OwnerID                 pgtype.UUID    `db:"OwnerID" json:"OwnerID"`
+	IsActive                pgtype.Bool    `db:"IsActive" json:"IsActive"`
+	IsDeceased              pgtype.Bool    `db:"IsDeceased" json:"IsDeceased"`
+	IsVaccinated            pgtype.Bool    `db:"IsVaccinated" json:"IsVaccinated"`
+	IsNeutered              pgtype.Bool    `db:"IsNeutered" json:"IsNeutered"`
+	IsMicrochipped          pgtype.Bool    `db:"IsMicrochipped" json:"IsMicrochipped"`
+	MicrochipNumber         pgtype.Text    `db:"MicrochipNumber" json:"MicrochipNumber"`
+	MicrochipExpirationDate pgtype.Date    `db:"MicrochipExpirationDate" json:"MicrochipExpirationDate"`
+	Notes                   pgtype.Text    `db:"Notes" json:"Notes"`
 }
 
 func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, error) {
 	row := q.db.QueryRow(ctx, createPet,
 		arg.Name,
+		arg.Race,
+		arg.Color,
+		arg.Sex,
 		arg.Size,
 		arg.Kind,
 		arg.Temperament,
 		arg.ImageUrl,
 		arg.BirthDate,
 		arg.OwnerID,
+		arg.IsActive,
+		arg.IsDeceased,
+		arg.IsVaccinated,
+		arg.IsNeutered,
+		arg.IsMicrochipped,
+		arg.MicrochipNumber,
+		arg.MicrochipExpirationDate,
 		arg.Notes,
 	)
 	var i Pet
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Race,
+		&i.Color,
+		&i.Sex,
 		&i.Size,
 		&i.Kind,
 		&i.Temperament,
@@ -51,6 +74,12 @@ func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, erro
 		&i.BirthDate,
 		&i.OwnerID,
 		&i.IsActive,
+		&i.IsDeceased,
+		&i.IsVaccinated,
+		&i.IsNeutered,
+		&i.IsMicrochipped,
+		&i.MicrochipNumber,
+		&i.MicrochipExpirationDate,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -87,12 +116,21 @@ SELECT
     cc.company_id,
     pi.full_name AS owner_name,
     p.name,
+    p.race,
+    p.color,
+    p.sex,
     p.size,
     p.kind,
     p.temperament,
     p.image_url,
     p.birth_date,
     p.is_active,
+    p.is_deceased,
+    p.is_vaccinated,
+    p.is_neutered,
+    p.is_microchipped,
+    p.microchip_number,
+    p.microchip_expiration_date,
     p.notes,
     p.created_at,
     p.updated_at,
@@ -118,21 +156,30 @@ type GetPetByIDAndCompanyIDParams struct {
 }
 
 type GetPetByIDAndCompanyIDRow struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	OwnerID     pgtype.UUID        `db:"owner_id" json:"owner_id"`
-	CompanyID   pgtype.UUID        `db:"company_id" json:"company_id"`
-	OwnerName   string             `db:"owner_name" json:"owner_name"`
-	Name        string             `db:"name" json:"name"`
-	Size        PetSize            `db:"size" json:"size"`
-	Kind        PetKind            `db:"kind" json:"kind"`
-	Temperament PetTemperament     `db:"temperament" json:"temperament"`
-	ImageUrl    pgtype.Text        `db:"image_url" json:"image_url"`
-	BirthDate   pgtype.Date        `db:"birth_date" json:"birth_date"`
-	IsActive    bool               `db:"is_active" json:"is_active"`
-	Notes       pgtype.Text        `db:"notes" json:"notes"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	ID                      pgtype.UUID        `db:"id" json:"id"`
+	OwnerID                 pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	CompanyID               pgtype.UUID        `db:"company_id" json:"company_id"`
+	OwnerName               string             `db:"owner_name" json:"owner_name"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
 func (q *Queries) GetPetByIDAndCompanyID(ctx context.Context, arg GetPetByIDAndCompanyIDParams) (GetPetByIDAndCompanyIDRow, error) {
@@ -144,12 +191,156 @@ func (q *Queries) GetPetByIDAndCompanyID(ctx context.Context, arg GetPetByIDAndC
 		&i.CompanyID,
 		&i.OwnerName,
 		&i.Name,
+		&i.Race,
+		&i.Color,
+		&i.Sex,
 		&i.Size,
 		&i.Kind,
 		&i.Temperament,
 		&i.ImageUrl,
 		&i.BirthDate,
 		&i.IsActive,
+		&i.IsDeceased,
+		&i.IsVaccinated,
+		&i.IsNeutered,
+		&i.IsMicrochipped,
+		&i.MicrochipNumber,
+		&i.MicrochipExpirationDate,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getPetDetailByIDAndCompanyID = `-- name: GetPetDetailByIDAndCompanyID :one
+SELECT
+    p.id,
+    p.owner_id,
+    cc.company_id,
+    c.person_id AS owner_person_id,
+    pi.full_name AS owner_name,
+    pi.short_name AS owner_short_name,
+    pi.image_url AS owner_image_url,
+    poc.email AS owner_email,
+    poc.cellphone AS owner_cellphone,
+    poc.has_whatsapp AS owner_has_whatsapp,
+    p.name,
+    p.race,
+    p.color,
+    p.sex,
+    p.size,
+    p.kind,
+    p.temperament,
+    p.image_url,
+    p.birth_date,
+    p.is_active,
+    p.is_deceased,
+    p.is_vaccinated,
+    p.is_neutered,
+    p.is_microchipped,
+    p.microchip_number,
+    p.microchip_expiration_date,
+    p.notes,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at
+FROM
+    pets p
+    INNER JOIN clients c ON c.id = p.owner_id
+    INNER JOIN company_clients cc ON cc.client_id = c.id
+    INNER JOIN people_identifications pi ON pi.person_id = c.person_id
+    LEFT JOIN LATERAL (
+        SELECT
+            contact.email,
+            contact.cellphone,
+            contact.has_whatsapp
+        FROM
+            people_contacts contact
+        WHERE
+            contact.person_id = c.person_id
+            AND contact.is_primary = TRUE
+        ORDER BY
+            contact.created_at ASC
+        LIMIT 1
+    ) poc ON TRUE
+WHERE
+    cc.company_id = $1
+    AND p.id = $2
+    AND cc.is_active = TRUE
+    AND c.deleted_at IS NULL
+LIMIT 1
+`
+
+type GetPetDetailByIDAndCompanyIDParams struct {
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	ID        pgtype.UUID `db:"ID" json:"ID"`
+}
+
+type GetPetDetailByIDAndCompanyIDRow struct {
+	ID                      pgtype.UUID        `db:"id" json:"id"`
+	OwnerID                 pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	CompanyID               pgtype.UUID        `db:"company_id" json:"company_id"`
+	OwnerPersonID           pgtype.UUID        `db:"owner_person_id" json:"owner_person_id"`
+	OwnerName               string             `db:"owner_name" json:"owner_name"`
+	OwnerShortName          string             `db:"owner_short_name" json:"owner_short_name"`
+	OwnerImageUrl           pgtype.Text        `db:"owner_image_url" json:"owner_image_url"`
+	OwnerEmail              string             `db:"owner_email" json:"owner_email"`
+	OwnerCellphone          string             `db:"owner_cellphone" json:"owner_cellphone"`
+	OwnerHasWhatsapp        bool               `db:"owner_has_whatsapp" json:"owner_has_whatsapp"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+}
+
+func (q *Queries) GetPetDetailByIDAndCompanyID(ctx context.Context, arg GetPetDetailByIDAndCompanyIDParams) (GetPetDetailByIDAndCompanyIDRow, error) {
+	row := q.db.QueryRow(ctx, getPetDetailByIDAndCompanyID, arg.CompanyID, arg.ID)
+	var i GetPetDetailByIDAndCompanyIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CompanyID,
+		&i.OwnerPersonID,
+		&i.OwnerName,
+		&i.OwnerShortName,
+		&i.OwnerImageUrl,
+		&i.OwnerEmail,
+		&i.OwnerCellphone,
+		&i.OwnerHasWhatsapp,
+		&i.Name,
+		&i.Race,
+		&i.Color,
+		&i.Sex,
+		&i.Size,
+		&i.Kind,
+		&i.Temperament,
+		&i.ImageUrl,
+		&i.BirthDate,
+		&i.IsActive,
+		&i.IsDeceased,
+		&i.IsVaccinated,
+		&i.IsNeutered,
+		&i.IsMicrochipped,
+		&i.MicrochipNumber,
+		&i.MicrochipExpirationDate,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -166,12 +357,21 @@ SELECT
     cc.company_id,
     pi.full_name AS owner_name,
     p.name,
+    p.race,
+    p.color,
+    p.sex,
     p.size,
     p.kind,
     p.temperament,
     p.image_url,
     p.birth_date,
     p.is_active,
+    p.is_deceased,
+    p.is_vaccinated,
+    p.is_neutered,
+    p.is_microchipped,
+    p.microchip_number,
+    p.microchip_expiration_date,
     p.notes,
     p.created_at,
     p.updated_at,
@@ -185,47 +385,79 @@ WHERE
     cc.company_id = $1
     AND cc.is_active = TRUE
     AND c.deleted_at IS NULL
-    AND p.deleted_at IS NULL
-    AND p.is_active = TRUE
     AND ($2::text = ''
         OR p.name ILIKE '%' || $2::text || '%'
-        OR pi.full_name ILIKE '%' || $2::text || '%')
+        OR pi.full_name ILIKE '%' || $2::text || '%'
+        OR p.race ILIKE '%' || $2::text || '%'
+        OR p.kind::text ILIKE '%' || $2::text || '%'
+        OR p.size::text ILIKE '%' || $2::text || '%'
+        OR p.temperament::text ILIKE '%' || $2::text || '%')
+    AND ($3::pet_size IS NULL
+        OR p.size = $3::pet_size)
+    AND ($4::pet_kind IS NULL
+        OR p.kind = $4::pet_kind)
+    AND ($5::pet_temperament IS NULL
+        OR p.temperament = $5::pet_temperament)
+    AND ($6::text IS NULL
+        OR p.race = $6::text)
+    AND ($7::boolean IS NULL
+        OR p.is_active = $7::boolean)
 ORDER BY
+    p.is_active DESC,
     p.name ASC
-LIMIT $4
-OFFSET $3
+LIMIT $9
+OFFSET $8
 `
 
 type ListPetsByCompanyIDParams struct {
-	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
-	Search    string      `db:"Search" json:"Search"`
-	Offset    int32       `db:"Offset" json:"Offset"`
-	Limit     int32       `db:"Limit" json:"Limit"`
+	CompanyID   pgtype.UUID        `db:"CompanyID" json:"CompanyID"`
+	Search      string             `db:"Search" json:"Search"`
+	Size        NullPetSize        `db:"Size" json:"Size"`
+	Kind        NullPetKind        `db:"Kind" json:"Kind"`
+	Temperament NullPetTemperament `db:"Temperament" json:"Temperament"`
+	Race        pgtype.Text        `db:"Race" json:"Race"`
+	IsActive    pgtype.Bool        `db:"IsActive" json:"IsActive"`
+	Offset      int32              `db:"Offset" json:"Offset"`
+	Limit       int32              `db:"Limit" json:"Limit"`
 }
 
 type ListPetsByCompanyIDRow struct {
-	TotalCount  int64              `db:"total_count" json:"total_count"`
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	OwnerID     pgtype.UUID        `db:"owner_id" json:"owner_id"`
-	CompanyID   pgtype.UUID        `db:"company_id" json:"company_id"`
-	OwnerName   string             `db:"owner_name" json:"owner_name"`
-	Name        string             `db:"name" json:"name"`
-	Size        PetSize            `db:"size" json:"size"`
-	Kind        PetKind            `db:"kind" json:"kind"`
-	Temperament PetTemperament     `db:"temperament" json:"temperament"`
-	ImageUrl    pgtype.Text        `db:"image_url" json:"image_url"`
-	BirthDate   pgtype.Date        `db:"birth_date" json:"birth_date"`
-	IsActive    bool               `db:"is_active" json:"is_active"`
-	Notes       pgtype.Text        `db:"notes" json:"notes"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	TotalCount              int64              `db:"total_count" json:"total_count"`
+	ID                      pgtype.UUID        `db:"id" json:"id"`
+	OwnerID                 pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	CompanyID               pgtype.UUID        `db:"company_id" json:"company_id"`
+	OwnerName               string             `db:"owner_name" json:"owner_name"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
 func (q *Queries) ListPetsByCompanyID(ctx context.Context, arg ListPetsByCompanyIDParams) ([]ListPetsByCompanyIDRow, error) {
 	rows, err := q.db.Query(ctx, listPetsByCompanyID,
 		arg.CompanyID,
 		arg.Search,
+		arg.Size,
+		arg.Kind,
+		arg.Temperament,
+		arg.Race,
+		arg.IsActive,
 		arg.Offset,
 		arg.Limit,
 	)
@@ -243,12 +475,21 @@ func (q *Queries) ListPetsByCompanyID(ctx context.Context, arg ListPetsByCompany
 			&i.CompanyID,
 			&i.OwnerName,
 			&i.Name,
+			&i.Race,
+			&i.Color,
+			&i.Sex,
 			&i.Size,
 			&i.Kind,
 			&i.Temperament,
 			&i.ImageUrl,
 			&i.BirthDate,
 			&i.IsActive,
+			&i.IsDeceased,
+			&i.IsVaccinated,
+			&i.IsNeutered,
+			&i.IsMicrochipped,
+			&i.MicrochipNumber,
+			&i.MicrochipExpirationDate,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -270,40 +511,73 @@ UPDATE
 SET
     owner_id = COALESCE($1, owner_id),
     name = COALESCE($2, name),
-    size = COALESCE($3, size),
-    kind = COALESCE($4, kind),
-    temperament = COALESCE($5, temperament),
-    image_url = COALESCE($6, image_url),
-    birth_date = COALESCE($7, birth_date),
-    notes = COALESCE($8, notes),
+    race = COALESCE($3, race),
+    color = COALESCE($4, color),
+    sex = COALESCE($5, sex),
+    size = COALESCE($6, size),
+    kind = COALESCE($7, kind),
+    temperament = COALESCE($8, temperament),
+    image_url = COALESCE($9, image_url),
+    birth_date = COALESCE($10, birth_date),
+    is_active = COALESCE($11, is_active),
+    is_deceased = COALESCE($12, is_deceased),
+    is_vaccinated = COALESCE($13, is_vaccinated),
+    is_neutered = COALESCE($14, is_neutered),
+    is_microchipped = COALESCE($15, is_microchipped),
+    microchip_number = COALESCE($16, microchip_number),
+    microchip_expiration_date = COALESCE($17, microchip_expiration_date),
+    notes = COALESCE($18, notes),
+    deleted_at = CASE
+        WHEN $11::boolean = TRUE THEN NULL
+        WHEN $11::boolean = FALSE THEN COALESCE(deleted_at, now())
+        ELSE deleted_at
+    END,
     updated_at = now()
 WHERE
-    id = $9
-    AND deleted_at IS NULL
-    AND is_active = TRUE
+    id = $19
 `
 
 type UpdatePetParams struct {
-	OwnerID     pgtype.UUID        `db:"OwnerID" json:"OwnerID"`
-	Name        pgtype.Text        `db:"Name" json:"Name"`
-	Size        NullPetSize        `db:"Size" json:"Size"`
-	Kind        NullPetKind        `db:"Kind" json:"Kind"`
-	Temperament NullPetTemperament `db:"Temperament" json:"Temperament"`
-	ImageUrl    pgtype.Text        `db:"ImageUrl" json:"ImageUrl"`
-	BirthDate   pgtype.Date        `db:"BirthDate" json:"BirthDate"`
-	Notes       pgtype.Text        `db:"Notes" json:"Notes"`
-	ID          pgtype.UUID        `db:"ID" json:"ID"`
+	OwnerID                 pgtype.UUID        `db:"OwnerID" json:"OwnerID"`
+	Name                    pgtype.Text        `db:"Name" json:"Name"`
+	Race                    pgtype.Text        `db:"Race" json:"Race"`
+	Color                   pgtype.Text        `db:"Color" json:"Color"`
+	Sex                     pgtype.Text        `db:"Sex" json:"Sex"`
+	Size                    NullPetSize        `db:"Size" json:"Size"`
+	Kind                    NullPetKind        `db:"Kind" json:"Kind"`
+	Temperament             NullPetTemperament `db:"Temperament" json:"Temperament"`
+	ImageUrl                pgtype.Text        `db:"ImageUrl" json:"ImageUrl"`
+	BirthDate               pgtype.Date        `db:"BirthDate" json:"BirthDate"`
+	IsActive                pgtype.Bool        `db:"IsActive" json:"IsActive"`
+	IsDeceased              pgtype.Bool        `db:"IsDeceased" json:"IsDeceased"`
+	IsVaccinated            pgtype.Bool        `db:"IsVaccinated" json:"IsVaccinated"`
+	IsNeutered              pgtype.Bool        `db:"IsNeutered" json:"IsNeutered"`
+	IsMicrochipped          pgtype.Bool        `db:"IsMicrochipped" json:"IsMicrochipped"`
+	MicrochipNumber         pgtype.Text        `db:"MicrochipNumber" json:"MicrochipNumber"`
+	MicrochipExpirationDate pgtype.Date        `db:"MicrochipExpirationDate" json:"MicrochipExpirationDate"`
+	Notes                   pgtype.Text        `db:"Notes" json:"Notes"`
+	ID                      pgtype.UUID        `db:"ID" json:"ID"`
 }
 
 func (q *Queries) UpdatePet(ctx context.Context, arg UpdatePetParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updatePet,
 		arg.OwnerID,
 		arg.Name,
+		arg.Race,
+		arg.Color,
+		arg.Sex,
 		arg.Size,
 		arg.Kind,
 		arg.Temperament,
 		arg.ImageUrl,
 		arg.BirthDate,
+		arg.IsActive,
+		arg.IsDeceased,
+		arg.IsVaccinated,
+		arg.IsNeutered,
+		arg.IsMicrochipped,
+		arg.MicrochipNumber,
+		arg.MicrochipExpirationDate,
 		arg.Notes,
 		arg.ID,
 	)

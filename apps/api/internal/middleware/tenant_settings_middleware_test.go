@@ -69,7 +69,7 @@ func TestRequireTenantSettingsPermission_AllowsSystemWithMatchingPermission(t *t
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
 		WithArgs(userID, int32(0), int32(1000)).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
-			AddRow(tenantSettingsUUID(t), service.TenantSettingsPermissionCompanyEdit, "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin}, tenantSettingsUUID(t), time.Now(), nil, nil))
+			AddRow(tenantSettingsUUID(t), service.TenantSettingsPermissionCompanyEdit, "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin}, tenantSettingsUUID(t), time.Now(), nil, nil))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {

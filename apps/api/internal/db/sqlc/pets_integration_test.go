@@ -50,12 +50,20 @@ func TestQueries_Pets_Integration(t *testing.T) {
 
 	t.Run("CreateAndGetPet", func(t *testing.T) {
 		pet, err := queries.CreatePet(ctx, sqlc.CreatePetParams{
-			Name:        "Buddy",
-			Size:        sqlc.PetSizeSmall,
-			Kind:        sqlc.PetKindDog,
-			Temperament: sqlc.PetTemperamentCalm,
-			BirthDate:   pgtype.Date{Time: time.Now().AddDate(-1, 0, 0), Valid: true},
-			OwnerID:     client.ID,
+			Name:           "Buddy",
+			Race:           "SRD",
+			Color:          "Branco",
+			Sex:            "M",
+			Size:           sqlc.PetSizeSmall,
+			Kind:           sqlc.PetKindDog,
+			Temperament:    sqlc.PetTemperamentCalm,
+			BirthDate:      pgtype.Date{Time: time.Now().AddDate(-1, 0, 0), Valid: true},
+			OwnerID:        client.ID,
+			IsActive:       pgtype.Bool{Bool: true, Valid: true},
+			IsDeceased:     pgtype.Bool{Bool: false, Valid: true},
+			IsVaccinated:   pgtype.Bool{Bool: false, Valid: true},
+			IsNeutered:     pgtype.Bool{Bool: false, Valid: true},
+			IsMicrochipped: pgtype.Bool{Bool: false, Valid: true},
 		})
 		require.NoError(t, err)
 		require.NotEqual(t, pgtype.UUID{}, pet.ID)

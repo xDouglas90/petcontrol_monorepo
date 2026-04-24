@@ -64,7 +64,7 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 
 | Description                          | Name                         | Default Roles     |
 | ------------------------------------ | ---------------------------- | ----------------- |
-| Editar configurações gerais          | `company_settings:edit`      | ['root', 'admin'] |
+| Editar configurações de negócios     | `company_settings:edit`      | ['root', 'admin'] |
 | Editar configurações de plano        | `plan_settings:edit`         | ['root', 'admin'] |
 | Editar configurações de pagamento    | `payment_settings:edit`      | ['root', 'admin'] |
 | Editar configurações de notificações | `notification_settings:edit` | ['root', 'admin'] |

@@ -95,6 +95,16 @@ func (h *CompanyHandler) Update(c *gin.Context) {
 		return
 	}
 
+	claims, ok := middleware.GetClaims(c)
+	if !ok {
+		middleware.JSONError(c, http.StatusUnauthorized, "auth_claims_required", "auth claims required")
+		return
+	}
+	if claims.Role != string(sqlc.UserRoleTypeAdmin) {
+		middleware.JSONError(c, http.StatusForbidden, "company_admin_required", "company admin required")
+		return
+	}
+
 	var req updateCompanyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_request_body", "invalid request body")

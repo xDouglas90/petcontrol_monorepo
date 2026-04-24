@@ -468,7 +468,7 @@ definitions:
           type: string
         type: array
       description:
-        example: Editar configurações gerais
+        example: Editar configurações de negócios
         type: string
       granted_at:
         example: "2026-04-20T09:30:00Z"

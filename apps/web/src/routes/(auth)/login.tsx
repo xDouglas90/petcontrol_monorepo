@@ -95,17 +95,20 @@ export function LoginPage() {
               {isHealthLoading
                 ? 'Verificando conexão...'
                 : isHealthError
-                  ? 'API indisponível'
+                  ? 'Servidor Indisponível'
                   : authMode === 'mock'
                     ? 'Modo experimental ativo'
-                    : 'Conexão segura'}
+                    : 'Servidor Online'}
             </div>
 
             <div className="max-w-2xl space-y-6">
               <div>
-                <p className="font-display text-sm uppercase tracking-[0.35em] text-sky-600/80">
-                  GroomingFlow
-                </p>
+                <img
+                  aria-label="GroomingFlow Logo"
+                  src="https://storage.googleapis.com/petcontrol_bucket/assets/images/logo-full.png"
+                  alt="GroomingFlow"
+                  className="h-auto w-60"
+                />
                 <h1 className="mt-4 font-display text-5xl leading-[1.1] text-stone-900 sm:text-6xl">
                   Gerencie sua PetShop com{' '}
                   <span className="text-sky-600">precisão</span> e elegância.

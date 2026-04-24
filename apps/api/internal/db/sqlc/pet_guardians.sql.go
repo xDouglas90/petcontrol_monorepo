@@ -24,12 +24,42 @@ func (q *Queries) DeletePetGuardiansByGuardianID(ctx context.Context, guardianid
 	return result.RowsAffected(), nil
 }
 
+const deletePetGuardiansByPetID = `-- name: DeletePetGuardiansByPetID :execrows
+DELETE FROM pet_guardians
+WHERE pet_id = $1
+`
+
+func (q *Queries) DeletePetGuardiansByPetID(ctx context.Context, petid pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePetGuardiansByPetID, petid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const listGuardianPetsByCompanyID = `-- name: ListGuardianPetsByCompanyID :many
 SELECT
     pg.pet_id,
     p.name,
-    p.kind,
+    p.race,
+    p.color,
+    p.sex,
     p.size,
+    p.kind,
+    p.temperament,
+    p.image_url,
+    p.birth_date,
+    p.is_active,
+    p.is_deceased,
+    p.is_vaccinated,
+    p.is_neutered,
+    p.is_microchipped,
+    p.microchip_number,
+    p.microchip_expiration_date,
+    p.notes,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at,
     pi.full_name AS owner_name
 FROM
     pet_guardians pg
@@ -54,11 +84,28 @@ type ListGuardianPetsByCompanyIDParams struct {
 }
 
 type ListGuardianPetsByCompanyIDRow struct {
-	PetID     pgtype.UUID `db:"pet_id" json:"pet_id"`
-	Name      string      `db:"name" json:"name"`
-	Kind      PetKind     `db:"kind" json:"kind"`
-	Size      PetSize     `db:"size" json:"size"`
-	OwnerName string      `db:"owner_name" json:"owner_name"`
+	PetID                   pgtype.UUID        `db:"pet_id" json:"pet_id"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	OwnerName               string             `db:"owner_name" json:"owner_name"`
 }
 
 func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuardianPetsByCompanyIDParams) ([]ListGuardianPetsByCompanyIDRow, error) {
@@ -73,9 +120,108 @@ func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuard
 		if err := rows.Scan(
 			&i.PetID,
 			&i.Name,
-			&i.Kind,
+			&i.Race,
+			&i.Color,
+			&i.Sex,
 			&i.Size,
+			&i.Kind,
+			&i.Temperament,
+			&i.ImageUrl,
+			&i.BirthDate,
+			&i.IsActive,
+			&i.IsDeceased,
+			&i.IsVaccinated,
+			&i.IsNeutered,
+			&i.IsMicrochipped,
+			&i.MicrochipNumber,
+			&i.MicrochipExpirationDate,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 			&i.OwnerName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPetGuardiansByPetID = `-- name: ListPetGuardiansByPetID :many
+SELECT
+    pg.pet_id,
+    pg.guardian_id,
+    pi.full_name,
+    pi.short_name,
+    pi.image_url,
+    pc.email,
+    pc.cellphone,
+    pc.has_whatsapp
+FROM
+    pet_guardians pg
+    INNER JOIN company_people cp ON cp.person_id = pg.guardian_id
+    INNER JOIN people p ON p.id = pg.guardian_id
+    INNER JOIN people_identifications pi ON pi.person_id = pg.guardian_id
+    LEFT JOIN LATERAL (
+        SELECT
+            contact.email,
+            contact.cellphone,
+            contact.has_whatsapp
+        FROM
+            people_contacts contact
+        WHERE
+            contact.person_id = pg.guardian_id
+            AND contact.is_primary = TRUE
+        ORDER BY
+            contact.created_at ASC
+        LIMIT 1
+    ) pc ON TRUE
+WHERE
+    pg.pet_id = $1
+    AND cp.company_id = $2
+    AND p.is_active = TRUE
+ORDER BY
+    pi.full_name ASC
+`
+
+type ListPetGuardiansByPetIDParams struct {
+	PetID     pgtype.UUID `db:"PetID" json:"PetID"`
+	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+}
+
+type ListPetGuardiansByPetIDRow struct {
+	PetID       pgtype.UUID `db:"pet_id" json:"pet_id"`
+	GuardianID  pgtype.UUID `db:"guardian_id" json:"guardian_id"`
+	FullName    string      `db:"full_name" json:"full_name"`
+	ShortName   string      `db:"short_name" json:"short_name"`
+	ImageUrl    pgtype.Text `db:"image_url" json:"image_url"`
+	Email       string      `db:"email" json:"email"`
+	Cellphone   string      `db:"cellphone" json:"cellphone"`
+	HasWhatsapp bool        `db:"has_whatsapp" json:"has_whatsapp"`
+}
+
+func (q *Queries) ListPetGuardiansByPetID(ctx context.Context, arg ListPetGuardiansByPetIDParams) ([]ListPetGuardiansByPetIDRow, error) {
+	rows, err := q.db.Query(ctx, listPetGuardiansByPetID, arg.PetID, arg.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPetGuardiansByPetIDRow
+	for rows.Next() {
+		var i ListPetGuardiansByPetIDRow
+		if err := rows.Scan(
+			&i.PetID,
+			&i.GuardianID,
+			&i.FullName,
+			&i.ShortName,
+			&i.ImageUrl,
+			&i.Email,
+			&i.Cellphone,
+			&i.HasWhatsapp,
 		); err != nil {
 			return nil, err
 		}
@@ -90,8 +236,8 @@ func (q *Queries) ListGuardianPetsByCompanyID(ctx context.Context, arg ListGuard
 const upsertPetGuardian = `-- name: UpsertPetGuardian :execrows
 INSERT INTO pet_guardians(pet_id, guardian_id)
     VALUES ($1, $2)
-ON CONFLICT (pet_id) DO UPDATE SET
-    guardian_id = EXCLUDED.guardian_id
+ON CONFLICT (pet_id, guardian_id)
+    DO NOTHING
 `
 
 type UpsertPetGuardianParams struct {
@@ -105,4 +251,31 @@ func (q *Queries) UpsertPetGuardian(ctx context.Context, arg UpsertPetGuardianPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const validatePetGuardianByCompany = `-- name: ValidatePetGuardianByCompany :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            company_people cp
+            INNER JOIN people p ON p.id = cp.person_id
+        WHERE
+            cp.company_id = $1
+            AND cp.person_id = $2
+            AND p.is_active = TRUE
+    ) AS is_valid
+`
+
+type ValidatePetGuardianByCompanyParams struct {
+	CompanyID  pgtype.UUID `db:"CompanyID" json:"CompanyID"`
+	GuardianID pgtype.UUID `db:"GuardianID" json:"GuardianID"`
+}
+
+func (q *Queries) ValidatePetGuardianByCompany(ctx context.Context, arg ValidatePetGuardianByCompanyParams) (bool, error) {
+	row := q.db.QueryRow(ctx, validatePetGuardianByCompany, arg.CompanyID, arg.GuardianID)
+	var is_valid bool
+	err := row.Scan(&is_valid)
+	return is_valid, err
 }

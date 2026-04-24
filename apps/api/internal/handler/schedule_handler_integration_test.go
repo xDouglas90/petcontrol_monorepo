@@ -447,8 +447,8 @@ func mustInsertPet(t *testing.T, ctx context.Context, pool *pgxpool.Pool, client
 	t.Helper()
 	var id pgtype.UUID
 	err := pool.QueryRow(ctx, `
-		INSERT INTO pets (name, size, kind, temperament, owner_id, is_active)
-		VALUES ('Rex', 'small', 'dog', 'calm', $1, TRUE)
+		INSERT INTO pets (name, race, color, sex, size, kind, temperament, owner_id, is_active)
+		VALUES ('Rex', 'SRD', 'Preto', 'M', 'small', 'dog', 'calm', $1, TRUE)
 		RETURNING id
 	`, clientID).Scan(&id)
 	require.NoError(t, err)

@@ -1482,19 +1482,28 @@ type Person struct {
 }
 
 type Pet struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Size        PetSize            `db:"size" json:"size"`
-	Kind        PetKind            `db:"kind" json:"kind"`
-	Temperament PetTemperament     `db:"temperament" json:"temperament"`
-	ImageUrl    pgtype.Text        `db:"image_url" json:"image_url"`
-	BirthDate   pgtype.Date        `db:"birth_date" json:"birth_date"`
-	OwnerID     pgtype.UUID        `db:"owner_id" json:"owner_id"`
-	IsActive    bool               `db:"is_active" json:"is_active"`
-	Notes       pgtype.Text        `db:"notes" json:"notes"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	ID                      pgtype.UUID        `db:"id" json:"id"`
+	Name                    string             `db:"name" json:"name"`
+	Race                    string             `db:"race" json:"race"`
+	Color                   string             `db:"color" json:"color"`
+	Sex                     string             `db:"sex" json:"sex"`
+	Size                    PetSize            `db:"size" json:"size"`
+	Kind                    PetKind            `db:"kind" json:"kind"`
+	Temperament             PetTemperament     `db:"temperament" json:"temperament"`
+	ImageUrl                pgtype.Text        `db:"image_url" json:"image_url"`
+	BirthDate               pgtype.Date        `db:"birth_date" json:"birth_date"`
+	OwnerID                 pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	IsActive                bool               `db:"is_active" json:"is_active"`
+	IsDeceased              bool               `db:"is_deceased" json:"is_deceased"`
+	IsVaccinated            bool               `db:"is_vaccinated" json:"is_vaccinated"`
+	IsNeutered              bool               `db:"is_neutered" json:"is_neutered"`
+	IsMicrochipped          bool               `db:"is_microchipped" json:"is_microchipped"`
+	MicrochipNumber         pgtype.Text        `db:"microchip_number" json:"microchip_number"`
+	MicrochipExpirationDate pgtype.Date        `db:"microchip_expiration_date" json:"microchip_expiration_date"`
+	Notes                   pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt               pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt               pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
 type PetGuardian struct {

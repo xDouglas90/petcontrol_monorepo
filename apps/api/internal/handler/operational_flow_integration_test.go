@@ -52,6 +52,9 @@ func TestOperationalFlow_ClientPetServiceScheduleAndDeactivationImpact(t *testin
 	petRes := performJSONRequest(t, router, http.MethodPost, "/api/v1/pets", map[string]any{
 		"owner_id":    clientID,
 		"name":        "Nina",
+		"race":        "SRD",
+		"color":       "Preta",
+		"sex":         "F",
 		"size":        "small",
 		"kind":        "dog",
 		"temperament": "loving",
@@ -60,7 +63,19 @@ func TestOperationalFlow_ClientPetServiceScheduleAndDeactivationImpact(t *testin
 	})
 	require.Equal(t, http.StatusCreated, petRes.Code)
 	require.Contains(t, petRes.Body.String(), "Julia Martins")
-	petID := responseDataString(t, petRes, "id")
+	pets, err := queries.ListPetsByCompanyID(ctx, sqlc.ListPetsByCompanyIDParams{
+		CompanyID: tenant.companyID,
+		Limit:     50,
+	})
+	require.NoError(t, err)
+	petID := ""
+	for _, item := range pets {
+		if item.Name == "Nina" {
+			petID = item.ID.String()
+			break
+		}
+	}
+	require.NotEmpty(t, petID)
 
 	serviceRes := performJSONRequest(t, router, http.MethodPost, "/api/v1/services", map[string]any{
 		"type_name":     "Banho",

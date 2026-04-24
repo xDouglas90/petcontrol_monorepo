@@ -1023,7 +1023,11 @@ WITH seeded_client AS (
 )
 INSERT INTO pets (
   name,
+  race,
+  color,
+  sex,
   size,
+  image_url,
   kind,
   temperament,
   birth_date,
@@ -1033,7 +1037,11 @@ INSERT INTO pets (
 )
 SELECT
   'Thor',
+  'SRD',
+  'Preto e Branco',
+  'M',
   'medium',
+  'https://storage.googleapis.com/petcontrol_bucket/assets/images/dog-default-image.png',
   'dog',
   'playful',
   DATE '2021-08-20',

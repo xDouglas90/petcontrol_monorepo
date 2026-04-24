@@ -72,10 +72,10 @@ export function SettingsPage() {
     settingsAccess?.can_manage_permissions ?? currentUser?.role === 'admin';
   const editablePermissionCodes =
     settingsAccess?.editable_permission_codes ?? [];
-  const canEditCompanySettings =
+  const canEditCompanySettings = currentUser?.role === 'admin';
+  const canEditBusinessSettings =
     currentUser?.role === 'admin' ||
     editablePermissionCodes.includes('company_settings:edit');
-  const canEditBusinessSettings = canEditCompanySettings;
 
   if (
     currentUserQuery.isLoading ||
@@ -962,7 +962,7 @@ function getPermissionGroups(snapshot: CompanyUserPermissionsDTO) {
 
 function formatPermissionLabel(code: string) {
   const permissionLabelMap: Record<string, string> = {
-    'company_settings:edit': 'Configurações gerais da empresa',
+    'company_settings:edit': 'Configurações de negócios',
     'plan_settings:edit': 'Operação e regras de agenda',
     'payment_settings:edit': 'Pagamentos e cobrança',
     'notification_settings:edit': 'Notificações automáticas',

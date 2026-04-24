@@ -112,7 +112,7 @@ func main() {
 	protected := v1.Group("/")
 	protected.Use(middleware.Auth(cfg.JWTSecret), middleware.Tenant(), middleware.Audit(queries, logger))
 	protected.GET("/companies/current", companyHandler.Current)
-	protected.PATCH("/companies/current", middleware.RequireTenantSettingsPermission(queries, service.TenantSettingsPermissionCompanyEdit), companyHandler.Update)
+	protected.PATCH("/companies/current", companyHandler.Update)
 	protected.GET("/company-system-configs/current", companySystemConfigHandler.Current)
 	protected.PATCH("/company-system-configs/current", middleware.RequireTenantSettingsPermission(queries, service.TenantSettingsPermissionCompanyEdit), companySystemConfigHandler.Update)
 	protected.GET("/users/me", userHandler.Current)

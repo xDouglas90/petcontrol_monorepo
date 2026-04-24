@@ -67,6 +67,41 @@ func TestCompanyHandler_Current(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestCompanyHandler_UpdateRequiresAdmin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	queries, mock := domainServiceWithMock(t)
+	defer mock.Close()
+
+	serviceUnderTest := service.NewCompanyService(queries)
+	handlerUnderTest := NewCompanyHandler(serviceUnderTest)
+
+	companyID := domainHandlerUUID(t)
+	userID := domainHandlerUUID(t)
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("company_id", companyID)
+		c.Set("auth_claims", appjwt.Claims{
+			UserID:    uuidToString(userID),
+			CompanyID: uuidToString(companyID),
+			Role:      "system",
+			Kind:      "employee",
+		})
+		c.Next()
+	})
+	router.PATCH("/companies/current", handlerUnderTest.Update)
+
+	req := httptest.NewRequest(http.MethodPatch, "/companies/current", bytes.NewBufferString(`{"name":"Nova empresa"}`))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Contains(t, res.Body.String(), "company_admin_required")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestUserHandler_CurrentIncludesSettingsAccess(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -456,7 +491,7 @@ func TestCompanyUserHandler_ListPermissions(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, domainHandlerUUID(t), "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, domainHandlerUUID(t), "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, domainHandlerUUID(t), "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, time.Now(), nil))
 
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
@@ -526,12 +561,12 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, planPermissionID, "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, time.Now(), nil))
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
 		WithArgs(targetUserID, int32(0), int32(1000)).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
-			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
+			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
 
 	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
 		WithArgs(companyID).
@@ -540,7 +575,7 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, planPermissionID, "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, time.Now(), nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
 		WithArgs(companyID).
@@ -561,12 +596,12 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, planPermissionID, "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, time.Now(), nil))
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
 		WithArgs(targetUserID, int32(0), int32(1000)).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
-			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
+			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
 
 	mock.ExpectExec(`(?s)name: DeleteUserPermission`).
 		WithArgs(adminUserID, targetUserID, companyPermissionID).
@@ -597,7 +632,7 @@ func TestCompanyUserHandler_UpdatePermissions(t *testing.T) {
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, planPermissionID, "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, time.Now(), nil))
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
 		WithArgs(targetUserID, int32(0), int32(1000)).
@@ -740,11 +775,11 @@ func TestCompanyUserHandler_UpdatePermissionsRejectsPermissionOutsideCompanyPack
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil))
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil))
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
 		WithArgs(targetUserID, int32(0), int32(1000)).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "code", "description", "default_roles", "granted_by", "granted_at", "revoked_by", "revoked_at"}).
-			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
+			AddRow(companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, adminUserID, time.Now(), nil, nil))
 	mock.ExpectQuery(`(?s)name: GetCompanyByID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "slug", "name", "fantasy_name", "cnpj", "foundation_date", "logo_url", "responsible_id", "active_package", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -752,7 +787,7 @@ func TestCompanyUserHandler_UpdatePermissionsRejectsPermissionOutsideCompanyPack
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil))
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, time.Now(), nil))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
