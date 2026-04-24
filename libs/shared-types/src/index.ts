@@ -42,6 +42,11 @@ export interface ListQueryParams {
   limit?: number;
   search?: string;
   kind?: string;
+  size?: string;
+  temperament?: string;
+  race?: string;
+  is_active?: string;
+  panel?: string;
 }
 
 export interface AuthAccessClaims {
@@ -716,44 +721,98 @@ export interface PetDTO {
   owner_id: UUID;
   company_id?: UUID;
   owner_name?: string;
+  owner_short_name?: string;
+  owner_image_url?: string | null;
+  owner_email?: string;
+  owner_cellphone?: string;
+  owner_has_whatsapp?: boolean;
   name: string;
+  race: string;
+  color: string;
+  sex: string;
   size: PetSize;
   kind: PetKind;
   temperament: PetTemperament;
   image_url?: string | null;
   birth_date?: string | null;
   is_active: boolean;
+  is_deceased: boolean;
+  is_vaccinated: boolean;
+  is_neutered: boolean;
+  is_microchipped: boolean;
+  microchip_number?: string | null;
+  microchip_expiration_date?: string | null;
   notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  guardians?: PetGuardianDTO[];
 }
 
 export interface CreatePetInput {
   owner_id: UUID;
+  guardian_ids?: UUID[];
   name: string;
+  race?: string;
+  color?: string;
+  sex?: string;
   size: PetSize;
   kind: PetKind;
   temperament: PetTemperament;
   image_url?: string;
   upload_object_key?: string;
   birth_date?: string;
+  is_active?: boolean;
+  is_deceased?: boolean;
+  is_vaccinated?: boolean;
+  is_neutered?: boolean;
+  is_microchipped?: boolean;
+  microchip_number?: string;
+  microchip_expiration_date?: string;
   notes?: string;
 }
 
 export interface UpdatePetInput {
   owner_id?: UUID;
+  guardian_ids?: UUID[];
   name?: string;
+  race?: string;
+  color?: string;
+  sex?: string;
   size?: PetSize;
   kind?: PetKind;
   temperament?: PetTemperament;
   image_url?: string;
   upload_object_key?: string;
   birth_date?: string;
+  is_active?: boolean;
+  is_deceased?: boolean;
+  is_vaccinated?: boolean;
+  is_neutered?: boolean;
+  is_microchipped?: boolean;
+  microchip_number?: string;
+  microchip_expiration_date?: string;
   notes?: string;
+}
+
+export interface PetGuardianDTO {
+  guardian_id: UUID;
+  full_name: string;
+  short_name: string;
+  image_url?: string | null;
+  email: string;
+  cellphone: string;
+  has_whatsapp: boolean;
+}
+
+export interface PetDetailDTO extends PetDTO {
+  guardians: PetGuardianDTO[];
 }
 
 export interface PetListApiResponseDTO extends PaginatedResponse<PetDTO> {}
 
 export interface PetApiResponseDTO {
-  data: PetDTO;
+  data: PetDetailDTO;
 }
 
 export interface ServiceTypeDTO {

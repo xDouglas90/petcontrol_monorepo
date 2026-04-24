@@ -314,28 +314,50 @@ type PersonDetailDoc struct {
 
 // PetCreateRequestDoc documents pet creation payload for Swagger.
 type PetCreateRequestDoc struct {
-	OwnerID     string `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
-	Name        string `json:"name" example:"Thor"`
-	Size        string `json:"size" example:"medium"`
-	Kind        string `json:"kind" example:"dog"`
-	Temperament string `json:"temperament" example:"playful"`
-	ImageURL    string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
-	UploadKey   string `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
-	BirthDate   string `json:"birth_date,omitempty" example:"2021-08-20"`
-	Notes       string `json:"notes,omitempty" example:"Gosta de brincar"`
+	OwnerID                 string   `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
+	GuardianIDs             []string `json:"guardian_ids,omitempty" example:"88888888-8888-8888-8888-888888888888"`
+	Name                    string   `json:"name" example:"Thor"`
+	Race                    string   `json:"race" example:"Labrador"`
+	Color                   string   `json:"color" example:"Caramelo"`
+	Sex                     string   `json:"sex" example:"M"`
+	Size                    string   `json:"size" example:"medium"`
+	Kind                    string   `json:"kind" example:"dog"`
+	Temperament             string   `json:"temperament" example:"playful"`
+	ImageURL                string   `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	UploadKey               string   `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
+	BirthDate               string   `json:"birth_date,omitempty" example:"2021-08-20"`
+	IsActive                *bool    `json:"is_active,omitempty" example:"true"`
+	IsDeceased              *bool    `json:"is_deceased,omitempty" example:"false"`
+	IsVaccinated            *bool    `json:"is_vaccinated,omitempty" example:"true"`
+	IsNeutered              *bool    `json:"is_neutered,omitempty" example:"false"`
+	IsMicrochipped          *bool    `json:"is_microchipped,omitempty" example:"false"`
+	MicrochipNumber         string   `json:"microchip_number,omitempty" example:"123456789"`
+	MicrochipExpirationDate string   `json:"microchip_expiration_date,omitempty" example:"2027-08-20"`
+	Notes                   string   `json:"notes,omitempty" example:"Gosta de brincar"`
 }
 
 // PetUpdateRequestDoc documents pet update payload for Swagger.
 type PetUpdateRequestDoc struct {
-	OwnerID     *string `json:"owner_id,omitempty" example:"44444444-4444-4444-4444-444444444444"`
-	Name        *string `json:"name,omitempty" example:"Thorzinho"`
-	Size        *string `json:"size,omitempty" example:"large"`
-	Kind        *string `json:"kind,omitempty" example:"dog"`
-	Temperament *string `json:"temperament,omitempty" example:"loving"`
-	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
-	UploadKey   *string `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
-	BirthDate   *string `json:"birth_date,omitempty" example:"2021-08-20"`
-	Notes       *string `json:"notes,omitempty" example:"Atualizado após consulta"`
+	OwnerID                 *string   `json:"owner_id,omitempty" example:"44444444-4444-4444-4444-444444444444"`
+	GuardianIDs             *[]string `json:"guardian_ids,omitempty" example:"88888888-8888-8888-8888-888888888888"`
+	Name                    *string   `json:"name,omitempty" example:"Thorzinho"`
+	Race                    *string   `json:"race,omitempty" example:"Labrador"`
+	Color                   *string   `json:"color,omitempty" example:"Caramelo"`
+	Sex                     *string   `json:"sex,omitempty" example:"M"`
+	Size                    *string   `json:"size,omitempty" example:"large"`
+	Kind                    *string   `json:"kind,omitempty" example:"dog"`
+	Temperament             *string   `json:"temperament,omitempty" example:"loving"`
+	ImageURL                *string   `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	UploadKey               *string   `json:"upload_object_key,omitempty" example:"uploads/pets/image_url/2026/04/uuid-thor.png"`
+	BirthDate               *string   `json:"birth_date,omitempty" example:"2021-08-20"`
+	IsActive                *bool     `json:"is_active,omitempty" example:"true"`
+	IsDeceased              *bool     `json:"is_deceased,omitempty" example:"false"`
+	IsVaccinated            *bool     `json:"is_vaccinated,omitempty" example:"true"`
+	IsNeutered              *bool     `json:"is_neutered,omitempty" example:"false"`
+	IsMicrochipped          *bool     `json:"is_microchipped,omitempty" example:"false"`
+	MicrochipNumber         *string   `json:"microchip_number,omitempty" example:"123456789"`
+	MicrochipExpirationDate *string   `json:"microchip_expiration_date,omitempty" example:"2027-08-20"`
+	Notes                   *string   `json:"notes,omitempty" example:"Atualizado após consulta"`
 }
 
 // PetListResponseDoc documents the list pets response envelope for Swagger.
@@ -348,23 +370,50 @@ type PetItemResponseDoc struct {
 	Data PetDoc `json:"data"`
 }
 
+// PetGuardianDoc describes a guardian associated with a pet.
+type PetGuardianDoc struct {
+	GuardianID  string  `json:"guardian_id" example:"88888888-8888-8888-8888-888888888888"`
+	FullName    string  `json:"full_name" example:"Maria Silva"`
+	ShortName   string  `json:"short_name" example:"Maria"`
+	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/maria.png"`
+	Email       string  `json:"email" example:"maria@example.com"`
+	Cellphone   string  `json:"cellphone" example:"+5511999990001"`
+	HasWhatsapp bool    `json:"has_whatsapp" example:"true"`
+}
+
 // PetDoc describes the public pet shape returned by API responses.
 type PetDoc struct {
-	ID          string  `json:"id" example:"77777777-7777-7777-7777-777777777777"`
-	OwnerID     string  `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
-	CompanyID   string  `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
-	OwnerName   string  `json:"owner_name" example:"Maria Silva"`
-	Name        string  `json:"name" example:"Thor"`
-	Size        string  `json:"size" example:"medium"`
-	Kind        string  `json:"kind" example:"dog"`
-	Temperament string  `json:"temperament" example:"playful"`
-	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/thor.png"`
-	BirthDate   *string `json:"birth_date,omitempty" example:"2021-08-20"`
-	IsActive    bool    `json:"is_active" example:"true"`
-	Notes       *string `json:"notes,omitempty" example:"Gosta de brincar"`
-	CreatedAt   string  `json:"created_at" example:"2026-04-10T10:00:00Z"`
-	UpdatedAt   *string `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
-	DeletedAt   *string `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+	ID                      string           `json:"id" example:"77777777-7777-7777-7777-777777777777"`
+	OwnerID                 string           `json:"owner_id" example:"44444444-4444-4444-4444-444444444444"`
+	OwnerPersonID           *string          `json:"owner_person_id,omitempty" example:"55555555-5555-5555-5555-555555555555"`
+	CompanyID               string           `json:"company_id" example:"11111111-1111-1111-1111-111111111111"`
+	OwnerName               string           `json:"owner_name" example:"Maria Silva"`
+	OwnerShortName          *string          `json:"owner_short_name,omitempty" example:"Maria"`
+	OwnerImageURL           *string          `json:"owner_image_url,omitempty" example:"https://example.com/maria.png"`
+	OwnerEmail              *string          `json:"owner_email,omitempty" example:"maria@example.com"`
+	OwnerCellphone          *string          `json:"owner_cellphone,omitempty" example:"+5511999990001"`
+	OwnerHasWhatsapp        *bool            `json:"owner_has_whatsapp,omitempty" example:"true"`
+	Name                    string           `json:"name" example:"Thor"`
+	Race                    string           `json:"race" example:"Labrador"`
+	Color                   string           `json:"color" example:"Caramelo"`
+	Sex                     string           `json:"sex" example:"M"`
+	Size                    string           `json:"size" example:"medium"`
+	Kind                    string           `json:"kind" example:"dog"`
+	Temperament             string           `json:"temperament" example:"playful"`
+	ImageURL                *string          `json:"image_url,omitempty" example:"https://example.com/thor.png"`
+	BirthDate               *string          `json:"birth_date,omitempty" example:"2021-08-20"`
+	IsActive                bool             `json:"is_active" example:"true"`
+	IsDeceased              bool             `json:"is_deceased" example:"false"`
+	IsVaccinated            bool             `json:"is_vaccinated" example:"true"`
+	IsNeutered              bool             `json:"is_neutered" example:"false"`
+	IsMicrochipped          bool             `json:"is_microchipped" example:"false"`
+	MicrochipNumber         *string          `json:"microchip_number,omitempty" example:"123456789"`
+	MicrochipExpirationDate *string          `json:"microchip_expiration_date,omitempty" example:"2027-08-20"`
+	Notes                   *string          `json:"notes,omitempty" example:"Gosta de brincar"`
+	CreatedAt               string           `json:"created_at" example:"2026-04-10T10:00:00Z"`
+	UpdatedAt               *string          `json:"updated_at,omitempty" example:"2026-04-10T11:00:00Z"`
+	DeletedAt               *string          `json:"deleted_at,omitempty" example:"2026-04-11T11:00:00Z"`
+	Guardians               []PetGuardianDoc `json:"guardians,omitempty"`
 }
 
 // ServiceCreateRequestDoc documents service creation payload for Swagger.

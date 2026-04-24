@@ -890,10 +890,13 @@ CREATE TABLE pets(
 CREATE INDEX idx_pets_owner ON pets(owner_id);
 
 CREATE TABLE pet_guardians(
-  pet_id uuid PRIMARY KEY REFERENCES pets(id) ON DELETE CASCADE,
+  pet_id uuid NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   guardian_id uuid NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (pet_id, guardian_id)
 );
+
+CREATE INDEX idx_pet_guardians_pet ON pet_guardians(pet_id);
 
 CREATE INDEX idx_pet_guardians_guardian ON pet_guardians(guardian_id);
 
@@ -1317,4 +1320,3 @@ CREATE TABLE translations(
 );
 
 CREATE INDEX idx_translations_entity ON translations(entity_table, entity_id);
-

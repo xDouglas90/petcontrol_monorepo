@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/apperror"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/db/sqlc"
 	"github.com/xdouglas90/petcontrol_monorepo/internal/middleware"
@@ -19,28 +20,49 @@ type PetHandler struct {
 }
 
 type createPetRequest struct {
-	OwnerID     string `json:"owner_id"`
-	Name        string `json:"name"`
-	Race        string `json:"race"`
-	Size        string `json:"size"`
-	Kind        string `json:"kind"`
-	Temperament string `json:"temperament"`
-	ImageURL    string `json:"image_url"`
-	UploadKey   string `json:"upload_object_key"`
-	BirthDate   string `json:"birth_date"`
-	Notes       string `json:"notes"`
+	OwnerID                 string   `json:"owner_id"`
+	GuardianIDs             []string `json:"guardian_ids"`
+	Name                    string   `json:"name"`
+	Race                    string   `json:"race"`
+	Color                   string   `json:"color"`
+	Sex                     string   `json:"sex"`
+	Size                    string   `json:"size"`
+	Kind                    string   `json:"kind"`
+	Temperament             string   `json:"temperament"`
+	ImageURL                string   `json:"image_url"`
+	UploadKey               string   `json:"upload_object_key"`
+	BirthDate               string   `json:"birth_date"`
+	IsActive                *bool    `json:"is_active"`
+	IsDeceased              *bool    `json:"is_deceased"`
+	IsVaccinated            *bool    `json:"is_vaccinated"`
+	IsNeutered              *bool    `json:"is_neutered"`
+	IsMicrochipped          *bool    `json:"is_microchipped"`
+	MicrochipNumber         string   `json:"microchip_number"`
+	MicrochipExpirationDate string   `json:"microchip_expiration_date"`
+	Notes                   string   `json:"notes"`
 }
 
 type updatePetRequest struct {
-	OwnerID     *string `json:"owner_id"`
-	Name        *string `json:"name"`
-	Size        *string `json:"size"`
-	Kind        *string `json:"kind"`
-	Temperament *string `json:"temperament"`
-	ImageURL    *string `json:"image_url"`
-	UploadKey   *string `json:"upload_object_key"`
-	BirthDate   *string `json:"birth_date"`
-	Notes       *string `json:"notes"`
+	OwnerID                 *string   `json:"owner_id"`
+	GuardianIDs             *[]string `json:"guardian_ids"`
+	Name                    *string   `json:"name"`
+	Race                    *string   `json:"race"`
+	Color                   *string   `json:"color"`
+	Sex                     *string   `json:"sex"`
+	Size                    *string   `json:"size"`
+	Kind                    *string   `json:"kind"`
+	Temperament             *string   `json:"temperament"`
+	ImageURL                *string   `json:"image_url"`
+	UploadKey               *string   `json:"upload_object_key"`
+	BirthDate               *string   `json:"birth_date"`
+	IsActive                *bool     `json:"is_active"`
+	IsDeceased              *bool     `json:"is_deceased"`
+	IsVaccinated            *bool     `json:"is_vaccinated"`
+	IsNeutered              *bool     `json:"is_neutered"`
+	IsMicrochipped          *bool     `json:"is_microchipped"`
+	MicrochipNumber         *string   `json:"microchip_number"`
+	MicrochipExpirationDate *string   `json:"microchip_expiration_date"`
+	Notes                   *string   `json:"notes"`
 }
 
 type petUploadResolver interface {
@@ -73,7 +95,33 @@ func (h *PetHandler) List(c *gin.Context) {
 	}
 
 	params := pagination.ParseParams(c)
-	items, err := h.service.ListPetsByCompanyID(c.Request.Context(), companyID, params)
+	sizeRaw := c.Query("size")
+	kindRaw := c.Query("kind")
+	temperamentRaw := c.Query("temperament")
+	raceRaw := c.Query("race")
+	size, err := parseOptionalPetSize(&sizeRaw)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_size", "invalid pet size")
+		return
+	}
+	kind, err := parseOptionalPetKind(&kindRaw)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_kind", "invalid pet kind")
+		return
+	}
+	temperament, err := parseOptionalPetTemperament(&temperamentRaw)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_temperament", "invalid pet temperament")
+		return
+	}
+	filters := service.PetFilters{
+		Size:        size,
+		Kind:        kind,
+		Temperament: temperament,
+		Race:        parseOptionalTrimmed(&raceRaw),
+		IsActive:    parseOptionalBool(c.Query("is_active")),
+	}
+	items, err := h.service.ListPetsByCompanyID(c.Request.Context(), companyID, params, filters)
 	if err != nil {
 		middleware.JSONError(c, http.StatusInternalServerError, "list_pets_failed", "failed to list pets")
 		return
@@ -113,13 +161,21 @@ func (h *PetHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	item, err := h.service.GetPetByID(c.Request.Context(), companyID, petID)
+	item, err := h.service.GetPetDetailByID(c.Request.Context(), companyID, petID)
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "get_pet_failed", "failed to get pet")
 		return
 	}
 
-	middleware.JSONData(c, http.StatusOK, item)
+	guardians, err := h.service.GetPetGuardians(c.Request.Context(), companyID, petID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusInternalServerError, "get_guardians_failed", "failed to get pet guardians")
+		return
+	}
+
+	middleware.JSONData(c, http.StatusOK, gin.H{
+		"data": buildPetResponseData(item, guardians),
+	})
 }
 
 // Create godoc
@@ -154,6 +210,26 @@ func (h *PetHandler) Create(c *gin.Context) {
 		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_owner_id", "invalid owner_id")
 		return
 	}
+	race, err := parseRequiredTrimmed(req.Race)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_race", "invalid pet race")
+		return
+	}
+	color, err := parseRequiredTrimmed(req.Color)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_color", "invalid pet color")
+		return
+	}
+	sex, err := parsePetSex(req.Sex)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_sex", "invalid pet sex")
+		return
+	}
+	guardianIDs, err := parseUUIDSlice(req.GuardianIDs)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_guardian_ids", "invalid guardian_ids")
+		return
+	}
 
 	size, err := parsePetSize(req.Size)
 	if err != nil {
@@ -185,20 +261,42 @@ func (h *PetHandler) Create(c *gin.Context) {
 		return
 	}
 
+	microchipDate, err := parseOptionalDate(req.MicrochipExpirationDate)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_microchip_expiration_date", "invalid microchip expiration date")
+		return
+	}
+
 	item, err := h.service.CreatePet(c.Request.Context(), service.CreatePetInput{
-		CompanyID:   companyID,
-		OwnerID:     ownerID,
-		Name:        strings.TrimSpace(req.Name),
-		Race:        strings.TrimSpace(req.Race),
-		Size:        size,
-		Kind:        kind,
-		Temperament: temperament,
-		ImageURL:    textValue(imageURL),
-		BirthDate:   birthDate,
-		Notes:       textValue(strings.TrimSpace(req.Notes)),
+		CompanyID:               companyID,
+		OwnerID:                 ownerID,
+		GuardianIDs:             guardianIDs,
+		Name:                    strings.TrimSpace(req.Name),
+		Race:                    race,
+		Color:                   color,
+		Sex:                     sex,
+		Size:                    size,
+		Kind:                    kind,
+		Temperament:             temperament,
+		ImageURL:                textValue(imageURL),
+		BirthDate:               birthDate,
+		IsActive:                boolValueOrDefault(req.IsActive, true),
+		IsDeceased:              boolValueOrDefault(req.IsDeceased, false),
+		IsVaccinated:            boolValueOrDefault(req.IsVaccinated, false),
+		IsNeutered:              boolValueOrDefault(req.IsNeutered, false),
+		IsMicrochipped:          boolValueOrDefault(req.IsMicrochipped, false),
+		MicrochipNumber:         textValue(strings.TrimSpace(req.MicrochipNumber)),
+		MicrochipExpirationDate: microchipDate,
+		Notes:                   textValue(strings.TrimSpace(req.Notes)),
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "create_pet_failed", "failed to create pet")
+		return
+	}
+
+	guardians, err := h.service.GetPetGuardians(c.Request.Context(), companyID, item.ID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusInternalServerError, "get_guardians_failed", "failed to get pet guardians")
 		return
 	}
 
@@ -211,7 +309,9 @@ func (h *PetHandler) Create(c *gin.Context) {
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, http.StatusCreated, item)
+	middleware.JSONData(c, http.StatusCreated, gin.H{
+		"data": buildPetResponseData(item, guardians),
+	})
 }
 
 // Update godoc
@@ -265,6 +365,16 @@ func (h *PetHandler) Update(c *gin.Context) {
 		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_owner_id", "invalid owner_id")
 		return
 	}
+	guardianIDs, err := parseOptionalUUIDSlice(req.GuardianIDs)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_guardian_ids", "invalid guardian_ids")
+		return
+	}
+	sex, err := parseOptionalPetSex(req.Sex)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_pet_sex", "invalid pet sex")
+		return
+	}
 
 	size, err := parseOptionalPetSize(req.Size)
 	if err != nil {
@@ -296,20 +406,43 @@ func (h *PetHandler) Update(c *gin.Context) {
 		return
 	}
 
+	microchipDate, err := parseOptionalDatePointer(req.MicrochipExpirationDate)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_microchip_expiration_date", "invalid microchip expiration date")
+		return
+	}
+
 	item, err := h.service.UpdatePet(c.Request.Context(), service.UpdatePetInput{
-		CompanyID:   companyID,
-		PetID:       petID,
-		OwnerID:     ownerID,
-		Name:        parseOptionalTrimmed(req.Name),
-		Size:        size,
-		Kind:        kind,
-		Temperament: temperament,
-		ImageURL:    imageURL,
-		BirthDate:   birthDate,
-		Notes:       parseOptionalTrimmed(req.Notes),
+		CompanyID:               companyID,
+		PetID:                   petID,
+		OwnerID:                 ownerID,
+		GuardianIDs:             guardianIDs,
+		Name:                    parseOptionalTrimmed(req.Name),
+		Race:                    parseOptionalTrimmed(req.Race),
+		Color:                   parseOptionalTrimmed(req.Color),
+		Sex:                     sex,
+		Size:                    size,
+		Kind:                    kind,
+		Temperament:             temperament,
+		ImageURL:                imageURL,
+		BirthDate:               birthDate,
+		IsActive:                req.IsActive,
+		IsDeceased:              req.IsDeceased,
+		IsVaccinated:            req.IsVaccinated,
+		IsNeutered:              req.IsNeutered,
+		IsMicrochipped:          req.IsMicrochipped,
+		MicrochipNumber:         parseOptionalTrimmed(req.MicrochipNumber),
+		MicrochipExpirationDate: microchipDate,
+		Notes:                   parseOptionalTrimmed(req.Notes),
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "update_pet_failed", "failed to update pet")
+		return
+	}
+
+	guardians, err := h.service.GetPetGuardians(c.Request.Context(), companyID, item.ID)
+	if err != nil {
+		middleware.JSONError(c, http.StatusInternalServerError, "get_guardians_failed", "failed to get pet guardians")
 		return
 	}
 
@@ -322,7 +455,9 @@ func (h *PetHandler) Update(c *gin.Context) {
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, http.StatusOK, item)
+	middleware.JSONData(c, http.StatusOK, gin.H{
+		"data": buildPetResponseData(item, guardians),
+	})
 }
 
 // Delete godoc
@@ -391,7 +526,11 @@ func parseOptionalPetSize(raw *string) (*sqlc.PetSize, error) {
 	if raw == nil {
 		return nil, nil
 	}
-	value, err := parsePetSize(*raw)
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	value, err := parsePetSize(trimmed)
 	if err != nil {
 		return nil, err
 	}
@@ -408,11 +547,48 @@ func parsePetKind(raw string) (sqlc.PetKind, error) {
 	}
 }
 
+func parsePetSex(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	switch trimmed {
+	case "M", "F":
+		return trimmed, nil
+	default:
+		return "", apperror.ErrUnprocessableEntity
+	}
+}
+
+func parseOptionalPetSex(raw *string) (*string, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	value, err := parsePetSex(trimmed)
+	if err != nil {
+		return nil, err
+	}
+	return &value, nil
+}
+
+func parseRequiredTrimmed(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", apperror.ErrUnprocessableEntity
+	}
+	return trimmed, nil
+}
+
 func parseOptionalPetKind(raw *string) (*sqlc.PetKind, error) {
 	if raw == nil {
 		return nil, nil
 	}
-	value, err := parsePetKind(*raw)
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	value, err := parsePetKind(trimmed)
 	if err != nil {
 		return nil, err
 	}
@@ -433,23 +609,102 @@ func parseOptionalPetTemperament(raw *string) (*sqlc.PetTemperament, error) {
 	if raw == nil {
 		return nil, nil
 	}
-	value, err := parsePetTemperament(*raw)
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	value, err := parsePetTemperament(trimmed)
 	if err != nil {
 		return nil, err
 	}
 	return &value, nil
 }
 
+func buildPetResponseData(item sqlc.GetPetDetailByIDAndCompanyIDRow, guardians []sqlc.ListPetGuardiansByPetIDRow) gin.H {
+	return gin.H{
+		"id":                        uuidToString(item.ID),
+		"owner_id":                  uuidToString(item.OwnerID),
+		"company_id":                uuidToString(item.CompanyID),
+		"owner_person_id":           uuidToString(item.OwnerPersonID),
+		"owner_name":                item.OwnerName,
+		"owner_short_name":          item.OwnerShortName,
+		"owner_image_url":           nullableText(item.OwnerImageUrl),
+		"owner_email":               item.OwnerEmail,
+		"owner_cellphone":           item.OwnerCellphone,
+		"owner_has_whatsapp":        item.OwnerHasWhatsapp,
+		"name":                      item.Name,
+		"race":                      item.Race,
+		"color":                     item.Color,
+		"sex":                       item.Sex,
+		"size":                      item.Size,
+		"kind":                      item.Kind,
+		"temperament":               item.Temperament,
+		"image_url":                 nullableText(item.ImageUrl),
+		"birth_date":                nullableDate(item.BirthDate),
+		"is_active":                 item.IsActive,
+		"is_deceased":               item.IsDeceased,
+		"is_vaccinated":             item.IsVaccinated,
+		"is_neutered":               item.IsNeutered,
+		"is_microchipped":           item.IsMicrochipped,
+		"microchip_number":          nullableText(item.MicrochipNumber),
+		"microchip_expiration_date": nullableDate(item.MicrochipExpirationDate),
+		"notes":                     nullableText(item.Notes),
+		"created_at":                formatTimestamptz(item.CreatedAt),
+		"updated_at":                nullableTimestamptz(item.UpdatedAt),
+		"deleted_at":                nullableTimestamptz(item.DeletedAt),
+		"guardians":                 buildPetGuardianDocs(guardians),
+	}
+}
+
+func buildPetGuardianDocs(items []sqlc.ListPetGuardiansByPetIDRow) []gin.H {
+	result := make([]gin.H, 0, len(items))
+	for _, item := range items {
+		result = append(result, gin.H{
+			"pet_id":       uuidToString(item.PetID),
+			"guardian_id":  uuidToString(item.GuardianID),
+			"full_name":    item.FullName,
+			"short_name":   item.ShortName,
+			"image_url":    nullableText(item.ImageUrl),
+			"email":        item.Email,
+			"cellphone":    item.Cellphone,
+			"has_whatsapp": item.HasWhatsapp,
+		})
+	}
+	return result
+}
+
 func hasPetUpdatePayload(req updatePetRequest) bool {
 	return req.OwnerID != nil ||
+		req.GuardianIDs != nil ||
 		req.Name != nil ||
+		req.Race != nil ||
+		req.Color != nil ||
+		req.Sex != nil ||
 		req.Size != nil ||
 		req.Kind != nil ||
 		req.Temperament != nil ||
 		req.ImageURL != nil ||
 		req.UploadKey != nil ||
 		req.BirthDate != nil ||
+		req.IsActive != nil ||
+		req.IsDeceased != nil ||
+		req.IsVaccinated != nil ||
+		req.IsNeutered != nil ||
+		req.IsMicrochipped != nil ||
+		req.MicrochipNumber != nil ||
+		req.MicrochipExpirationDate != nil ||
 		req.Notes != nil
+}
+
+func parseOptionalUUIDSlice(raw *[]string) (*[]pgtype.UUID, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	items, err := parseUUIDSlice(*raw)
+	if err != nil {
+		return nil, err
+	}
+	return &items, nil
 }
 
 func (h *PetHandler) resolveUploadObjectKey(ctx context.Context, objectKey string, fallback string) (string, error) {
