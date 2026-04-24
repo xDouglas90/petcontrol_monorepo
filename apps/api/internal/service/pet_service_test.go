@@ -100,13 +100,19 @@ func TestPetService_CreatePet(t *testing.T) {
 				nil,
 			))
 
-	mock.ExpectQuery(`(?s)name: GetPetByIDAndCompanyID`).
+	mock.ExpectQuery(`(?s)name: GetPetDetailByIDAndCompanyID`).
 		WithArgs(companyID, petID).
 		WillReturnRows(pgxmock.NewRows([]string{
 			"id",
 			"owner_id",
 			"company_id",
+			"owner_person_id",
 			"owner_name",
+			"owner_short_name",
+			"owner_image_url",
+			"owner_email",
+			"owner_cellphone",
+			"owner_has_whatsapp",
 			"name",
 			"race",
 			"color",
@@ -132,7 +138,13 @@ func TestPetService_CreatePet(t *testing.T) {
 				petID.String(),
 				ownerID.String(),
 				companyID.String(),
+				newDomainUUID(t).String(),
 				"Maria Silva",
+				"Maria",
+				nil,
+				"maria@petcontrol.local",
+				"+5511999990001",
+				true,
 				"Thor",
 				"",
 				"",
@@ -159,6 +171,7 @@ func TestPetService_CreatePet(t *testing.T) {
 		CompanyID:   companyID,
 		OwnerID:     ownerID,
 		Name:        "Thor",
+		Sex:         "M",
 		Size:        sqlc.PetSizeMedium,
 		Kind:        sqlc.PetKindDog,
 		Temperament: sqlc.PetTemperamentPlayful,

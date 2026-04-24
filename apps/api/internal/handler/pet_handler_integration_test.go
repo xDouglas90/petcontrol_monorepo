@@ -76,6 +76,9 @@ func TestPetEndpoints_CreateRejectsOwnerFromAnotherTenant(t *testing.T) {
 	body, err := json.Marshal(map[string]any{
 		"owner_id":    clientB.String(),
 		"name":        "Thor",
+		"race":        "SRD",
+		"color":       "Preto",
+		"sex":         "M",
 		"size":        "medium",
 		"kind":        "dog",
 		"temperament": "playful",
@@ -119,6 +122,9 @@ func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
 	createBody, err := json.Marshal(map[string]any{
 		"owner_id":    clientA.String(),
 		"name":        "Thor",
+		"race":        "SRD",
+		"color":       "Preto",
+		"sex":         "M",
 		"size":        "medium",
 		"kind":        "dog",
 		"temperament": "playful",
@@ -225,6 +231,9 @@ func TestPetEndpoints_CreateAndUpdateUsingUploadObjectKey(t *testing.T) {
 	createBody, err := json.Marshal(map[string]any{
 		"owner_id":          clientID.String(),
 		"name":              "Thor",
+		"race":              "SRD",
+		"color":             "Preto",
+		"sex":               "M",
 		"size":              "medium",
 		"kind":              "dog",
 		"temperament":       "playful",
@@ -279,6 +288,124 @@ func TestPetEndpoints_CreateAndUpdateUsingUploadObjectKey(t *testing.T) {
 	require.Equal(t, updatedURL, item.ImageUrl.String)
 }
 
+func TestPetEndpoints_CreateAndUpdateWithGuardianIDs(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-guardian-a")
+	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-guardian-b")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
+	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
+
+	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenantA.companyID, "Ana Lima", "12345678931")
+	guardianA := mustCreateGuardianPersonRecord(t, ctx, pool, tenantA.companyID, "Guardiao A", "12345678932")
+	guardianB := mustCreateGuardianPersonRecord(t, ctx, pool, tenantA.companyID, "Guardiao B", "12345678933")
+	guardianOtherTenant := mustCreateGuardianPersonRecord(t, ctx, pool, tenantB.companyID, "Guardiao Externo", "12345678934")
+
+	router := setupPetRouterForTenant(queries, tenantA)
+
+	rejectBody, err := json.Marshal(map[string]any{
+		"owner_id":     clientID.String(),
+		"guardian_ids": []string{guardianOtherTenant.String()},
+		"name":         "Thor",
+		"race":         "SRD",
+		"color":        "Preto",
+		"sex":          "M",
+		"size":         "medium",
+		"kind":         "dog",
+		"temperament":  "playful",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/pets", bytes.NewReader(rejectBody))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusUnprocessableEntity, res.Code)
+
+	createBody, err := json.Marshal(map[string]any{
+		"owner_id":     clientID.String(),
+		"guardian_ids": []string{guardianA.String()},
+		"name":         "Thor",
+		"race":         "SRD",
+		"color":        "Preto",
+		"sex":          "M",
+		"size":         "medium",
+		"kind":         "dog",
+		"temperament":  "playful",
+	})
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pets", bytes.NewReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusCreated, res.Code)
+	require.Contains(t, res.Body.String(), guardianA.String())
+
+	items, err := queries.ListPetsByCompanyID(ctx, sqlc.ListPetsByCompanyIDParams{
+		CompanyID: tenantA.companyID,
+		Limit:     10,
+	})
+	require.NoError(t, err)
+
+	var petID pgtype.UUID
+	for _, item := range items {
+		if item.Name == "Thor" {
+			petID = item.ID
+			break
+		}
+	}
+	require.True(t, petID.Valid)
+
+	updateBody, err := json.Marshal(map[string]any{
+		"guardian_ids": []string{guardianB.String()},
+	})
+	require.NoError(t, err)
+
+	req = httptest.NewRequest(http.MethodPut, "/api/v1/pets/"+petID.String(), bytes.NewReader(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	res = httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), guardianB.String())
+	require.NotContains(t, res.Body.String(), guardianA.String())
+
+	guardians, err := queries.ListPetGuardiansByPetID(ctx, sqlc.ListPetGuardiansByPetIDParams{
+		PetID:     petID,
+		CompanyID: tenantA.companyID,
+	})
+	require.NoError(t, err)
+	require.Len(t, guardians, 1)
+	require.Equal(t, guardianB.String(), guardians[0].GuardianID.String())
+}
+
+func TestPetEndpoints_ListSupportsStructuredFilters(t *testing.T) {
+	ctx := context.Background()
+	pool := setupPetIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "pet-filters")
+	moduleID := mustCreateClientModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
+
+	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenant.companyID, "Ana Lima", "12345678935")
+	dogID := mustCreatePetRecordWithAttrs(t, ctx, queries, clientID, "Thor", sqlc.PetKindDog, sqlc.PetSizeMedium, sqlc.PetTemperamentPlayful, true)
+	_ = mustCreatePetRecordWithAttrs(t, ctx, queries, clientID, "Mingau", sqlc.PetKindCat, sqlc.PetSizeSmall, sqlc.PetTemperamentCalm, false)
+
+	router := setupPetRouterForTenant(queries, tenant)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/pets?kind=dog&size=medium&temperament=playful&is_active=true", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), dogID.String())
+	require.Contains(t, res.Body.String(), "Thor")
+	require.NotContains(t, res.Body.String(), "Mingau")
+}
+
 func setupPetIntegrationPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	setup := integration.SetupPostgresWithMigrations(t)
@@ -320,17 +447,22 @@ type handlerUploadResolver interface {
 
 func mustCreatePetRecord(t *testing.T, ctx context.Context, queries *sqlc.Queries, ownerID pgtype.UUID, name string) pgtype.UUID {
 	t.Helper()
+	return mustCreatePetRecordWithAttrs(t, ctx, queries, ownerID, name, sqlc.PetKindDog, sqlc.PetSizeMedium, sqlc.PetTemperamentPlayful, true)
+}
+
+func mustCreatePetRecordWithAttrs(t *testing.T, ctx context.Context, queries *sqlc.Queries, ownerID pgtype.UUID, name string, kind sqlc.PetKind, size sqlc.PetSize, temperament sqlc.PetTemperament, isActive bool) pgtype.UUID {
+	t.Helper()
 	pet, err := queries.CreatePet(ctx, sqlc.CreatePetParams{
 		Name:           name,
 		Race:           "SRD",
 		Color:          "Preto",
 		Sex:            "M",
-		Size:           sqlc.PetSizeMedium,
-		Kind:           sqlc.PetKindDog,
-		Temperament:    sqlc.PetTemperamentPlayful,
+		Size:           size,
+		Kind:           kind,
+		Temperament:    temperament,
 		BirthDate:      pgtype.Date{Time: time.Date(2021, 8, 20, 0, 0, 0, 0, time.UTC), Valid: true},
 		OwnerID:        ownerID,
-		IsActive:       pgtype.Bool{Bool: true, Valid: true},
+		IsActive:       pgtype.Bool{Bool: isActive, Valid: true},
 		IsDeceased:     pgtype.Bool{Bool: false, Valid: true},
 		IsVaccinated:   pgtype.Bool{Bool: false, Valid: true},
 		IsNeutered:     pgtype.Bool{Bool: false, Valid: true},
@@ -339,4 +471,36 @@ func mustCreatePetRecord(t *testing.T, ctx context.Context, queries *sqlc.Querie
 	})
 	require.NoError(t, err)
 	return pet.ID
+}
+
+func mustCreateGuardianPersonRecord(t *testing.T, ctx context.Context, pool *pgxpool.Pool, companyID pgtype.UUID, fullName string, cpf string) pgtype.UUID {
+	t.Helper()
+
+	var personID pgtype.UUID
+	err := pool.QueryRow(ctx, `
+		INSERT INTO people (kind, is_active, has_system_user)
+		VALUES ('guardian', TRUE, FALSE)
+		RETURNING id
+	`).Scan(&personID)
+	require.NoError(t, err)
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO people_identifications (person_id, full_name, short_name, gender_identity, marital_status, birth_date, cpf)
+		VALUES ($1, $2, $3, 'not_to_expose', 'single', DATE '1990-01-01', $4)
+	`, personID, fullName, fullName, cpf)
+	require.NoError(t, err)
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO people_contacts (person_id, email, cellphone, has_whatsapp, is_primary)
+		VALUES ($1, $2, '+5511999990000', TRUE, TRUE)
+	`, personID, "guardian-"+cpf+"@petcontrol.local")
+	require.NoError(t, err)
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO company_people (company_id, person_id)
+		VALUES ($1, $2)
+	`, companyID, personID)
+	require.NoError(t, err)
+
+	return personID
 }
