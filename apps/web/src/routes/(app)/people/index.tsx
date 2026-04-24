@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, useParams } from '@tanstack/react-router';
+import { Pencil } from 'lucide-react';
 import { buildCompanyRoute, DEFAULT_PAGE } from '@petcontrol/shared-constants';
 import type {
   BankAccountKind,
@@ -334,6 +335,43 @@ function readPageFromLocation(): number {
   return parsed;
 }
 
+function readSelectedPersonIdFromLocation(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id') ?? params.get('person');
+}
+
+function syncPersonSelectionToLocation({
+  selectedPersonId,
+  panelMode,
+}: {
+  selectedPersonId: string | null;
+  panelMode: PanelMode;
+}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  if (panelMode === 'create') {
+    url.searchParams.delete('id');
+  } else if (selectedPersonId) {
+    url.searchParams.set('id', selectedPersonId);
+  } else {
+    url.searchParams.delete('id');
+  }
+  url.searchParams.delete('person');
+
+  window.history.replaceState(
+    {},
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
 function syncSelectedKindToLocation(kind: 'all' | PersonKind) {
   if (typeof window === 'undefined') {
     return;
@@ -611,7 +649,9 @@ export function PeoplePage() {
     ...(selectedKind !== 'all' ? { kind: selectedKind } : {}),
   });
   const petsQuery = usePetsQuery({ page: 1, limit: 200 });
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(() =>
+    readSelectedPersonIdFromLocation(),
+  );
   const [panelMode, setPanelMode] = useState<PanelMode>('view');
 
   const editableKinds = useMemo(
@@ -719,6 +759,13 @@ export function PeoplePage() {
   useEffect(() => {
     syncPageToLocation(page);
   }, [page]);
+
+  useEffect(() => {
+    syncPersonSelectionToLocation({
+      selectedPersonId: activeSelectedPersonId,
+      panelMode,
+    });
+  }, [activeSelectedPersonId, panelMode]);
 
   const selectedPerson =
     filteredPeople.find((person) => person.id === activeSelectedPersonId) ??
@@ -2326,9 +2373,11 @@ export function PeoplePage() {
                   <button
                     type="button"
                     onClick={startEdit}
+                    title="Editar"
+                    aria-label="Editar"
                     className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
                   >
-                    Editar
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
                   </button>
                 ) : null}
               </div>

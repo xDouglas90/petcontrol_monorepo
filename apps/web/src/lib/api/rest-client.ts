@@ -27,6 +27,7 @@ import type {
   CreateServiceInput,
   ListQueryParams,
   PetDTO,
+  PetGuardianDTO,
   PetApiResponseDTO,
   PetListApiResponseDTO,
   CurrentCompanyApiResponseDTO,
@@ -237,11 +238,19 @@ let mockPets: PetDTO[] = [
     owner_id: mockClients[0].id,
     company_id: mockCompany.id,
     owner_name: mockClients[0].full_name,
+    owner_short_name: mockClients[0].short_name,
     name: 'Thor',
+    race: 'Labrador',
+    color: 'Caramelo',
+    sex: 'M',
     size: 'medium',
     kind: 'dog',
     temperament: 'playful',
     is_active: true,
+    is_deceased: false,
+    is_vaccinated: true,
+    is_neutered: false,
+    is_microchipped: false,
   },
 ];
 
@@ -1074,9 +1083,44 @@ export async function listPets(
 ): Promise<PetListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
+    const filtered = mockPets.filter((item) => {
+      if (params?.search) {
+        const needle = params.search.trim().toLowerCase();
+        const haystack = [
+          item.name,
+          item.owner_name ?? '',
+          item.race,
+          item.kind,
+          item.size,
+          item.temperament,
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(needle)) {
+          return false;
+        }
+      }
+      if (params?.kind && item.kind !== params.kind) return false;
+      if (params?.size && item.size !== params.size) return false;
+      if (params?.temperament && item.temperament !== params.temperament)
+        return false;
+      if (params?.is_active != null) {
+        const active = params.is_active === 'true';
+        if (item.is_active !== active) return false;
+      }
+      return true;
+    });
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 10;
+    const start = (page - 1) * limit;
     return {
-      data: [...mockPets],
-      meta: { total: mockPets.length, page: 1, limit: 100, total_pages: 1 },
+      data: filtered.slice(start, start + limit),
+      meta: {
+        total: filtered.length,
+        page,
+        limit,
+        total_pages: Math.max(1, Math.ceil(filtered.length / limit)),
+      },
     };
   }
 
@@ -1086,6 +1130,30 @@ export async function listPets(
     queryParams: params,
   });
   return payload;
+}
+
+export async function getPet(
+  accessToken: string,
+  petId: string,
+): Promise<PetApiResponseDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(100);
+    const pet = mockPets.find((item) => item.id === petId);
+    if (!pet) {
+      throw new ApiError('Pet não encontrado', 404, { error: 'not found' });
+    }
+    return {
+      data: {
+        ...pet,
+        guardians: pet.guardians ?? [],
+      },
+    };
+  }
+
+  return request<PetApiResponseDTO>(API_PATHS.petsById(petId), {
+    method: 'GET',
+    accessToken,
+  });
 }
 
 export async function listServices(
@@ -1201,14 +1269,25 @@ export async function createPet(
       owner_id: input.owner_id,
       company_id: mockCompany.id,
       owner_name: owner?.full_name,
+      owner_short_name: owner?.short_name,
       name: input.name,
+      race: input.race ?? '',
+      color: input.color ?? '',
+      sex: input.sex ?? '',
       size: input.size,
       kind: input.kind,
       temperament: input.temperament,
       image_url: input.image_url ?? null,
       birth_date: input.birth_date ?? null,
-      is_active: true,
+      is_active: input.is_active ?? true,
+      is_deceased: input.is_deceased ?? false,
+      is_vaccinated: input.is_vaccinated ?? false,
+      is_neutered: input.is_neutered ?? false,
+      is_microchipped: input.is_microchipped ?? false,
+      microchip_number: input.microchip_number ?? null,
+      microchip_expiration_date: input.microchip_expiration_date ?? null,
       notes: input.notes ?? null,
+      guardians: resolvePetGuardians(input.guardian_ids),
     };
     mockPets = [...mockPets, pet];
     return pet;
@@ -1240,6 +1319,14 @@ export async function updatePet(
       ...input,
       owner_id: ownerID,
       owner_name: owner?.full_name ?? existing.owner_name,
+      owner_short_name: owner?.short_name ?? existing.owner_short_name,
+      race: input.race ?? existing.race,
+      color: input.color ?? existing.color,
+      sex: input.sex ?? existing.sex,
+      guardians:
+        input.guardian_ids !== undefined
+          ? resolvePetGuardians(input.guardian_ids)
+          : (existing.guardians ?? []),
     };
     mockPets = mockPets.map((item) => (item.id === petId ? updated : item));
     return updated;
@@ -1254,6 +1341,36 @@ export async function updatePet(
     },
   );
   return payload.data;
+}
+
+function resolvePetGuardians(
+  guardianIDs?: string[],
+): PetGuardianDTO[] {
+  if (!guardianIDs || guardianIDs.length === 0) {
+    return [];
+  }
+
+  const uniqueIDs = Array.from(new Set(guardianIDs));
+  return uniqueIDs.flatMap((guardianID) => {
+    const person = mockPeople.find(
+      (item) => item.id === guardianID && item.kind === 'guardian',
+    );
+    if (!person) {
+      return [];
+    }
+    const detail = mockPersonDetails[guardianID];
+    return [
+      {
+        guardian_id: guardianID,
+        full_name: person.full_name ?? '',
+        short_name: person.short_name ?? '',
+        image_url: person.image_url ?? null,
+        email: detail?.contact?.email ?? '',
+        cellphone: detail?.contact?.cellphone ?? '',
+        has_whatsapp: detail?.contact?.has_whatsapp ?? false,
+      },
+    ];
+  });
 }
 
 export async function deletePet(
@@ -1504,6 +1621,13 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.search)
     entries.push(`search=${encodeURIComponent(params.search)}`);
   if (params.kind) entries.push(`kind=${encodeURIComponent(params.kind)}`);
+  if (params.size) entries.push(`size=${encodeURIComponent(params.size)}`);
+  if (params.temperament)
+    entries.push(`temperament=${encodeURIComponent(params.temperament)}`);
+  if (params.race) entries.push(`race=${encodeURIComponent(params.race)}`);
+  if (params.is_active)
+    entries.push(`is_active=${encodeURIComponent(params.is_active)}`);
+  if (params.panel) entries.push(`panel=${encodeURIComponent(params.panel)}`);
   return entries.length > 0 ? `?${entries.join('&')}` : '';
 }
 

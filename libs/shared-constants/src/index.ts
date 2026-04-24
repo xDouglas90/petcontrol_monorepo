@@ -16,6 +16,7 @@ export const API_PATHS = {
   peopleById: (personId: string) => `/people/${personId}`,
   clients: '/clients',
   pets: '/pets',
+  petsById: (petId: string) => `/pets/${petId}`,
   services: '/services',
   uploadsIntent: '/uploads/intent',
   uploadsComplete: '/uploads/complete',

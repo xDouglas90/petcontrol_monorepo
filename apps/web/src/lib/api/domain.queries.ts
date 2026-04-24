@@ -40,6 +40,7 @@ import {
   getCurrentCompany,
   getCurrentCompanySystemConfig,
   getCurrentUser,
+  getPet,
   getPerson,
   listPeople,
   listAdminSystemChatMessages,
@@ -79,6 +80,7 @@ export const domainQueryKeys = {
     ['domain', 'clients', params ?? EMPTY_PARAMS] as const,
   pets: (params?: ListQueryParams) =>
     ['domain', 'pets', params ?? EMPTY_PARAMS] as const,
+  pet: (petId: string) => ['domain', 'pets', petId] as const,
   services: (params?: ListQueryParams) =>
     ['domain', 'services', params ?? EMPTY_PARAMS] as const,
   schedules: (params?: ListQueryParams) =>
@@ -409,6 +411,21 @@ export function usePetsQuery(params?: ListQueryParams) {
         throw new Error('Sessão não disponível');
       }
       return listPets(session.accessToken, params);
+    },
+  });
+}
+
+export function usePetQuery(petId?: string) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.pet(petId ?? 'none'),
+    enabled: Boolean(session?.accessToken && petId),
+    queryFn: async () => {
+      if (!session?.accessToken || !petId) {
+        throw new Error('Sessão não disponível');
+      }
+      return getPet(session.accessToken, petId);
     },
   });
 }

@@ -357,7 +357,27 @@ export function AppLayout() {
                 <SidebarLink
                   to={buildCompanyRoute(currentSlug, 'pets')}
                   icon={PawPrint}
-                  label="Pets"
+                  label={
+                    <span className="flex w-full items-center">
+                      <span className="flex-grow truncate">Pets</span>
+                      <button
+                        aria-label="Adicionar pet"
+                        type="button"
+                        title="Adicionar pet"
+                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          const event = new CustomEvent(
+                            'open-pets-create-form',
+                          );
+                          window.dispatchEvent(event);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </span>
+                  }
                   expanded={isDesktopViewport ? sidebarOpen : true}
                   collapsedDesktop={isDesktopViewport && !sidebarOpen}
                   onNavigate={handleSidebarLinkClick}
