@@ -669,7 +669,7 @@ export async function getCompanyUserPermissions(
       {
         id: crypto.randomUUID(),
         code: 'company_settings:edit',
-        description: 'Editar configurações gerais',
+        description: 'Editar configurações de negócios',
         default_roles: ['root', 'admin'],
         is_active: false,
         is_default_for_role: false,

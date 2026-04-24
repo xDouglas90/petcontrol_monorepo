@@ -114,7 +114,7 @@ describe('SettingsPage', () => {
           {
             id: 'permission-1',
             code: 'company_settings:edit',
-            description: 'Editar configurações gerais',
+            description: 'Editar configurações de negócios',
             default_roles: ['root', 'admin'],
             is_active: false,
             is_default_for_role: false,
@@ -133,7 +133,7 @@ describe('SettingsPage', () => {
               {
                 id: 'permission-1',
                 code: 'company_settings:edit',
-                description: 'Editar configurações gerais',
+                description: 'Editar configurações de negócios',
                 default_roles: ['root', 'admin'],
                 is_active: false,
                 is_default_for_role: false,
@@ -197,7 +197,9 @@ describe('SettingsPage', () => {
     render(<SettingsPage />);
 
     expect(screen.getByText('Configurações da empresa')).toBeTruthy();
-    expect(screen.getByText('Configurações de negócios')).toBeTruthy();
+    expect(
+      screen.getAllByText('Configurações de negócios').length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText('Permissões por usuário')).toBeTruthy();
     expect(screen.getByText('Central de ajustes')).toBeTruthy();
     expect(screen.getAllByText('Configurações').length).toBeGreaterThan(0);
@@ -229,6 +231,16 @@ describe('SettingsPage', () => {
     expect(
       screen.getAllByText('Configurações da empresa').length,
     ).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('button', { name: 'Salvar empresa' }).hasAttribute(
+        'disabled',
+      ),
+    ).toBe(true);
+    expect(
+      screen.getByRole('button', { name: 'Salvar negócio' }).hasAttribute(
+        'disabled',
+      ),
+    ).toBe(false);
     expect(screen.queryByText('Permissões por usuário')).toBeNull();
   });
 
@@ -404,7 +416,7 @@ describe('SettingsPage', () => {
           {
             id: 'permission-1',
             code: 'company_settings:edit',
-            description: 'Editar configurações gerais',
+            description: 'Editar configurações de negócios',
             default_roles: ['root', 'admin'],
             is_active: false,
             is_default_for_role: false,
@@ -433,7 +445,7 @@ describe('SettingsPage', () => {
               {
                 id: 'permission-1',
                 code: 'company_settings:edit',
-                description: 'Editar configurações gerais',
+                description: 'Editar configurações de negócios',
                 default_roles: ['root', 'admin'],
                 is_active: false,
                 is_default_for_role: false,
@@ -460,7 +472,7 @@ describe('SettingsPage', () => {
 
     fireEvent.click(
       screen.getByRole('checkbox', {
-        name: /configurações gerais da empresa/i,
+        name: /configurações de negócios/i,
       }),
     );
 
@@ -471,5 +483,45 @@ describe('SettingsPage', () => {
         permission_codes: ['plan_settings:edit', 'company_settings:edit'],
       });
     });
+  });
+
+  it('permite editar apenas negócios para system com company_settings:edit', async () => {
+    mockUseCurrentUserQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        user_id: 'system-user-1',
+        company_id: 'company-1',
+        person_id: 'person-1',
+        role: 'system',
+        kind: 'employee',
+        full_name: 'System',
+        short_name: 'System',
+        image_url: null,
+        settings_access: {
+          can_view: true,
+          can_manage_permissions: false,
+          active_permission_codes: ['company_settings:edit'],
+          editable_permission_codes: ['company_settings:edit'],
+        },
+      },
+    });
+
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText('Mín. agendamentos/dia'), {
+      target: { value: '9' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar negócio' }));
+
+    await waitFor(() => {
+      expect(
+        mockUpdateCurrentCompanySystemConfigMutateAsync,
+      ).toHaveBeenCalled();
+    });
+    expect(
+      screen.getByRole('button', { name: 'Salvar empresa' }).hasAttribute(
+        'disabled',
+      ),
+    ).toBe(true);
   });
 });

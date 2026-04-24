@@ -2872,7 +2872,7 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string",
-                    "example": "Editar configurações gerais"
+                    "example": "Editar configurações de negócios"
                 },
                 "granted_at": {
                     "type": "string",

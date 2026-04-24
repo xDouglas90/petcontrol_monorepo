@@ -49,7 +49,7 @@ func TestCompanyUserPermissionService_ListTenantSettingsPermissionsBuildsGroupsF
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, now, nil).
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, now, nil).
 			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, planPermissionID, "plan_settings:edit", "Editar configurações de plano", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin, sqlc.UserRoleTypeSystem}, now, nil).
 			AddRow(ucrModuleID, "UCR", "Usuários", "Gestão de usuários", sqlc.ModulePackageStarter, usersViewPermissionID, "users:view", "Visualizar usuário", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeInternal, sqlc.UserRoleTypeAdmin}, now, nil))
 	mock.ExpectQuery(`(?s)name: ListPermissionsByUserID`).
@@ -93,7 +93,7 @@ func TestCompanyUserPermissionService_UpdateTenantSettingsPermissionsRejectsPerm
 	mock.ExpectQuery(`(?s)name: ListTenantSettingsPermissionsByCompanyID`).
 		WithArgs(companyID).
 		WillReturnRows(pgxmock.NewRows([]string{"module_id", "module_code", "module_name", "module_description", "module_min_package", "id", "code", "description", "default_roles", "created_at", "updated_at"}).
-			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, now, nil))
+			AddRow(cfgModuleID, "CFG", "Configurações", "Configurações do tenant", sqlc.ModulePackageStarter, companyPermissionID, "company_settings:edit", "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeRoot, sqlc.UserRoleTypeAdmin}, now, nil))
 
 	_, err = serviceUnderTest.UpdateTenantSettingsPermissions(context.Background(), companyID, actorUserID, targetUserID, []string{"chat:view"})
 	require.ErrorIs(t, err, apperror.ErrUnprocessableEntity)

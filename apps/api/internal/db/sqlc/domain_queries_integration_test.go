@@ -361,7 +361,7 @@ func TestQueries_TenantSettingsCatalog_IntegrationFiltersInternalMissingAndPremi
 	})
 	require.NoError(t, err)
 
-	cfgPermission := mustCreatePermission(t, queries, fmt.Sprintf("company_settings:test:%d", time.Now().UnixNano()), "Editar configurações gerais", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
+	cfgPermission := mustCreatePermission(t, queries, fmt.Sprintf("company_settings:test:%d", time.Now().UnixNano()), "Editar configurações de negócios", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
 	premiumPermission := mustCreatePermission(t, queries, fmt.Sprintf("finances:test:%d", time.Now().UnixNano()), "Visualizar financeiro", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
 	internalPermission := mustCreatePermission(t, queries, fmt.Sprintf("logs:test:%d", time.Now().UnixNano()), "Visualizar logs", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})
 	unlinkedPermission := mustCreatePermission(t, queries, fmt.Sprintf("orphan:test:%d", time.Now().UnixNano()), "Permissão sem módulo", []sqlc.UserRoleType{sqlc.UserRoleTypeAdmin})

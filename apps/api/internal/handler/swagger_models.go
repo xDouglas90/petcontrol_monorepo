@@ -625,7 +625,7 @@ type CompanyUserPermissionGroupDoc struct {
 type CompanyUserPermissionDoc struct {
 	ID               string   `json:"id" example:"44444444-4444-4444-4444-444444444444"`
 	Code             string   `json:"code" example:"company_settings:edit"`
-	Description      *string  `json:"description,omitempty" example:"Editar configurações gerais"`
+	Description      *string  `json:"description,omitempty" example:"Editar configurações de negócios"`
 	DefaultRoles     []string `json:"default_roles" example:"root,admin"`
 	IsActive         bool     `json:"is_active" example:"true"`
 	IsDefaultForRole bool     `json:"is_default_for_role" example:"false"`
