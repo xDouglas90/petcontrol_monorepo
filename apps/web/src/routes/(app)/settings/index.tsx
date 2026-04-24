@@ -105,7 +105,7 @@ export function SettingsPage() {
     <div>
       <section className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
         <div className="divide-y divide-stone-200">
-          <section className="bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] px-6 py-7 md:px-7">
+          <section className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-7 md:px-7">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-stone-400">
@@ -249,7 +249,7 @@ function CompanySettingsForm({
           <ReadOnlyField
             label="CNPJ"
             value={initialData.cnpj}
-            helpText="Campo apenas informativo nesta fase."
+            helpText="Para alterar, contate o suporte."
           />
           <ReadOnlyField
             label="Plano ativo"

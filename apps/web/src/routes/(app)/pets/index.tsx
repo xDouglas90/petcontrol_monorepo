@@ -368,7 +368,7 @@ export function PetsPage() {
     <div className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
       <div className="grid min-h-full grid-cols-1 divide-y divide-stone-100 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
         <section>
-          <header className="bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] px-6 py-8 lg:px-10">
+          <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
@@ -1106,7 +1106,7 @@ function PetListCard({
 
   return (
     <article
-      className={`transition ${selected ? 'bg-sky-50/50 ring-1 ring-inset ring-sky-100' : 'bg-white hover:bg-stone-50'}`}
+      className={`transition ${selected ? 'bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] ring-1 ring-inset ring-sky-100' : 'bg-white hover:bg-stone-50'}`}
     >
       <button
         type="button"

@@ -187,7 +187,7 @@ export function DashboardPage() {
 
   return (
     <main className="flex min-w-0 flex-col divide-y divide-stone-100 min-h-full">
-      <header className="bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] px-6 py-8 lg:px-10">
+      <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
         <div className="flex flex-col gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">

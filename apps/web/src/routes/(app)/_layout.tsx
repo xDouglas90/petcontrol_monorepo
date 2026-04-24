@@ -535,7 +535,7 @@ function TenantBrand({
         <img
           src={logoUrl}
           alt={`Logo de ${companyName}`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-fill"
         />
       </div>
     );
