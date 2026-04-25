@@ -41,6 +41,7 @@ import {
   getCurrentCompanySystemConfig,
   getCurrentUser,
   getPet,
+  getService,
   getPerson,
   listPeople,
   listAdminSystemChatMessages,
@@ -83,6 +84,7 @@ export const domainQueryKeys = {
   pet: (petId: string) => ['domain', 'pets', petId] as const,
   services: (params?: ListQueryParams) =>
     ['domain', 'services', params ?? EMPTY_PARAMS] as const,
+  service: (serviceId: string) => ['domain', 'services', serviceId] as const,
   schedules: (params?: ListQueryParams) =>
     ['domain', 'schedules', params ?? EMPTY_PARAMS] as const,
   scheduleHistory: (scheduleId: string) =>
@@ -445,6 +447,21 @@ export function useServicesQuery(params?: ListQueryParams) {
   });
 }
 
+export function useServiceQuery(serviceId?: string) {
+  const session = useAuthStore(selectSession);
+
+  return useQuery({
+    queryKey: domainQueryKeys.service(serviceId ?? 'none'),
+    enabled: Boolean(session?.accessToken && serviceId),
+    queryFn: async () => {
+      if (!session?.accessToken || !serviceId) {
+        throw new Error('Sessão não disponível');
+      }
+      return getService(session.accessToken, serviceId);
+    },
+  });
+}
+
 export function useCreateScheduleMutation() {
   const queryClient = useQueryClient();
   const session = useAuthStore(selectSession);
@@ -616,9 +633,12 @@ export function useCreateServiceMutation() {
       }
       return createService(session.accessToken, input);
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allServices(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.service(created.id),
       });
     },
   });
@@ -641,9 +661,12 @@ export function useUpdateServiceMutation() {
       }
       return updateService(session.accessToken, serviceId, input);
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allServices(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: domainQueryKeys.service(variables.serviceId),
       });
       await queryClient.invalidateQueries({
         queryKey: domainQueryKeys.allSchedules(),

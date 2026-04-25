@@ -97,6 +97,32 @@ func TestServiceEndpoints_SystemCannotCreateWithViewOnlyPermission(t *testing.T)
 	require.Contains(t, res.Body.String(), "permission_required")
 }
 
+func TestServiceEndpoints_ListSupportsStructuredFilters(t *testing.T) {
+	ctx := context.Background()
+	pool := setupScheduleIntegrationPool(t)
+	queries := sqlc.New(pool)
+
+	tenant := mustCreateTenantFixture(t, ctx, pool, "tenant-service-filters")
+	moduleID := mustCreateServiceModule(t, ctx, pool)
+	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, moduleID)
+	mustGrantServicePermissions(t, ctx, pool, tenant.userID, service.PermissionServicesView)
+
+	mustInsertServiceCatalogRecordWithOptions(t, ctx, pool, tenant.companyID, "Banho completo", "Banho", "89.90", true)
+	mustInsertServiceCatalogRecordWithOptions(t, ctx, pool, tenant.companyID, "Tosa luxo", "Tosa", "150.00", true)
+	mustInsertServiceCatalogRecordWithOptions(t, ctx, pool, tenant.companyID, "Banho antigo", "Banho", "50.00", false)
+
+	router := setupServiceRouterForTenant(pool, queries, tenant)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/services?type_name=Banho&is_active=true&min_price=80.00&max_price=100.00", nil)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code)
+	require.Contains(t, res.Body.String(), "Banho completo")
+	require.NotContains(t, res.Body.String(), "Tosa luxo")
+	require.NotContains(t, res.Body.String(), "Banho antigo")
+}
+
 func setupServiceRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queries, tenant integrationTenantFixture) *gin.Engine {
 	return setupServiceRouterForTenantWithRole(pool, queries, tenant, "admin")
 }
@@ -187,27 +213,32 @@ func serviceSubServicePayload(title string, description string, price string) ma
 
 func mustInsertServiceCatalogRecord(t *testing.T, ctx context.Context, pool *pgxpool.Pool, companyID pgtype.UUID, title string) pgtype.UUID {
 	t.Helper()
+	return mustInsertServiceCatalogRecordWithOptions(t, ctx, pool, companyID, title, "Banho", "50.00", true)
+}
+
+func mustInsertServiceCatalogRecordWithOptions(t *testing.T, ctx context.Context, pool *pgxpool.Pool, companyID pgtype.UUID, title string, typeName string, price string, active bool) pgtype.UUID {
+	t.Helper()
 
 	var typeID pgtype.UUID
 	err := pool.QueryRow(ctx, `
 		INSERT INTO service_types (name)
-		VALUES ('Banho')
+		VALUES ($1)
 		RETURNING id
-	`).Scan(&typeID)
+	`, typeName).Scan(&typeID)
 	require.NoError(t, err)
 
 	var serviceID pgtype.UUID
 	err = pool.QueryRow(ctx, `
 		INSERT INTO services (type_id, title, description, price, discount_rate, is_active)
-		VALUES ($1, $2, 'Descrição', 50.00, 0.00, TRUE)
+		VALUES ($1, $2, 'Descrição', $3, 0.00, TRUE)
 		RETURNING id
-	`, typeID, title).Scan(&serviceID)
+	`, typeID, title, price).Scan(&serviceID)
 	require.NoError(t, err)
 
 	_, err = pool.Exec(ctx, `
 		INSERT INTO company_services (company_id, service_id, is_active)
-		VALUES ($1, $2, TRUE)
-	`, companyID, serviceID)
+		VALUES ($1, $2, $3)
+	`, companyID, serviceID, active)
 	require.NoError(t, err)
 
 	return serviceID

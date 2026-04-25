@@ -18,6 +18,14 @@ type ServiceService struct {
 	queries *sqlc.Queries
 }
 
+type ServiceListFilters struct {
+	pagination.Params
+	TypeName string
+	IsActive *bool
+	MinPrice *pgtype.Numeric
+	MaxPrice *pgtype.Numeric
+}
+
 type CreateServiceInput struct {
 	CompanyID    pgtype.UUID
 	TypeName     string
@@ -78,12 +86,31 @@ func NewServiceService(db clientTxStarter, queries *sqlc.Queries) *ServiceServic
 	return &ServiceService{db: db, queries: queries}
 }
 
-func (s *ServiceService) ListServicesByCompanyID(ctx context.Context, companyID pgtype.UUID, p pagination.Params) ([]sqlc.ListServicesByCompanyIDRow, error) {
+func (s *ServiceService) ListServicesByCompanyID(ctx context.Context, companyID pgtype.UUID, filters ServiceListFilters) ([]sqlc.ListServicesByCompanyIDRow, error) {
+	isActive := pgtype.Bool{}
+	if filters.IsActive != nil {
+		isActive = pgtype.Bool{Bool: *filters.IsActive, Valid: true}
+	}
+
+	minPrice := pgtype.Numeric{}
+	if filters.MinPrice != nil {
+		minPrice = *filters.MinPrice
+	}
+
+	maxPrice := pgtype.Numeric{}
+	if filters.MaxPrice != nil {
+		maxPrice = *filters.MaxPrice
+	}
+
 	return s.queries.ListServicesByCompanyID(ctx, sqlc.ListServicesByCompanyIDParams{
 		CompanyID: companyID,
-		Search:    p.Search,
-		Offset:    int32(p.Offset),
-		Limit:     int32(p.Limit),
+		Search:    filters.Search,
+		TypeName:  strings.TrimSpace(filters.TypeName),
+		IsActive:  isActive,
+		MinPrice:  minPrice,
+		MaxPrice:  maxPrice,
+		Offset:    int32(filters.Offset),
+		Limit:     int32(filters.Limit),
 	})
 }
 

@@ -209,7 +209,6 @@ FROM
 WHERE
     cs.company_id = $1
     AND s.id = $2
-    AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
 LIMIT 1
@@ -291,23 +290,34 @@ FROM
             sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = $1
-    AND cs.is_active = TRUE
+    AND ($2::boolean IS NULL
+        OR cs.is_active = $2::boolean)
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
-    AND ($2::text = ''
-        OR s.title ILIKE '%' || $2::text || '%'
-        OR s.description ILIKE '%' || $2::text || '%')
+    AND ($3::text = ''
+        OR s.title ILIKE '%' || $3::text || '%'
+        OR s.description ILIKE '%' || $3::text || '%')
+    AND ($4::text = ''
+        OR st.name = $4::text)
+    AND ($5::numeric IS NULL
+        OR s.price >= $5::numeric)
+    AND ($6::numeric IS NULL
+        OR s.price <= $6::numeric)
 ORDER BY
     s.title ASC
-LIMIT $4
-OFFSET $3
+LIMIT $8
+OFFSET $7
 `
 
 type ListServicesByCompanyIDParams struct {
-	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
-	Search    string      `db:"Search" json:"Search"`
-	Offset    int32       `db:"Offset" json:"Offset"`
-	Limit     int32       `db:"Limit" json:"Limit"`
+	CompanyID pgtype.UUID    `db:"CompanyID" json:"CompanyID"`
+	IsActive  pgtype.Bool    `db:"IsActive" json:"IsActive"`
+	Search    string         `db:"Search" json:"Search"`
+	TypeName  string         `db:"TypeName" json:"TypeName"`
+	MinPrice  pgtype.Numeric `db:"MinPrice" json:"MinPrice"`
+	MaxPrice  pgtype.Numeric `db:"MaxPrice" json:"MaxPrice"`
+	Offset    int32          `db:"Offset" json:"Offset"`
+	Limit     int32          `db:"Limit" json:"Limit"`
 }
 
 type ListServicesByCompanyIDRow struct {
@@ -329,7 +339,11 @@ type ListServicesByCompanyIDRow struct {
 func (q *Queries) ListServicesByCompanyID(ctx context.Context, arg ListServicesByCompanyIDParams) ([]ListServicesByCompanyIDRow, error) {
 	rows, err := q.db.Query(ctx, listServicesByCompanyID,
 		arg.CompanyID,
+		arg.IsActive,
 		arg.Search,
+		arg.TypeName,
+		arg.MinPrice,
+		arg.MaxPrice,
 		arg.Offset,
 		arg.Limit,
 	)

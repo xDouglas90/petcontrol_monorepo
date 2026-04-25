@@ -418,26 +418,49 @@ type PetDoc struct {
 
 // ServiceCreateRequestDoc documents service creation payload for Swagger.
 type ServiceCreateRequestDoc struct {
-	TypeName     string `json:"type_name" example:"Banho"`
-	Title        string `json:"title" example:"Banho completo"`
-	Description  string `json:"description" example:"Banho com secagem e perfume"`
-	Notes        string `json:"notes,omitempty" example:"Inclui perfume hipoalergênico"`
-	Price        string `json:"price" example:"89.90"`
-	DiscountRate string `json:"discount_rate,omitempty" example:"0.00"`
-	ImageURL     string `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
-	IsActive     *bool  `json:"is_active,omitempty" example:"true"`
+	TypeName     string                        `json:"type_name" example:"Banho"`
+	Title        string                        `json:"title" example:"Banho completo"`
+	Description  string                        `json:"description" example:"Banho com secagem e perfume"`
+	Notes        string                        `json:"notes,omitempty" example:"Inclui perfume hipoalergênico"`
+	Price        string                        `json:"price" example:"89.90"`
+	DiscountRate string                        `json:"discount_rate,omitempty" example:"0.00"`
+	ImageURL     string                        `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
+	IsActive     *bool                         `json:"is_active,omitempty" example:"true"`
+	SubServices  []ServiceSubServiceRequestDoc `json:"sub_services"`
 }
 
 // ServiceUpdateRequestDoc documents service update payload for Swagger.
 type ServiceUpdateRequestDoc struct {
-	TypeName     *string `json:"type_name,omitempty" example:"Tosa"`
-	Title        *string `json:"title,omitempty" example:"Tosa higiênica"`
-	Description  *string `json:"description,omitempty" example:"Tosa leve para manutenção"`
-	Notes        *string `json:"notes,omitempty" example:"Adicionar avaliação do pelo"`
-	Price        *string `json:"price,omitempty" example:"59.90"`
-	DiscountRate *string `json:"discount_rate,omitempty" example:"10.00"`
-	ImageURL     *string `json:"image_url,omitempty" example:"https://example.com/services/tosa.png"`
-	IsActive     *bool   `json:"is_active,omitempty" example:"true"`
+	TypeName     *string                       `json:"type_name,omitempty" example:"Tosa"`
+	Title        *string                       `json:"title,omitempty" example:"Tosa higiênica"`
+	Description  *string                       `json:"description,omitempty" example:"Tosa leve para manutenção"`
+	Notes        *string                       `json:"notes,omitempty" example:"Adicionar avaliação do pelo"`
+	Price        *string                       `json:"price,omitempty" example:"59.90"`
+	DiscountRate *string                       `json:"discount_rate,omitempty" example:"10.00"`
+	ImageURL     *string                       `json:"image_url,omitempty" example:"https://example.com/services/tosa.png"`
+	IsActive     *bool                         `json:"is_active,omitempty" example:"true"`
+	SubServices  []ServiceSubServiceRequestDoc `json:"sub_services,omitempty"`
+}
+
+// ServiceSubServiceRequestDoc documents service sub-service payload for Swagger.
+type ServiceSubServiceRequestDoc struct {
+	TypeName     string                         `json:"type_name,omitempty" example:"Banho"`
+	Title        string                         `json:"title" example:"Banho médio"`
+	Description  string                         `json:"description" example:"Banho para pets médios"`
+	Notes        string                         `json:"notes,omitempty" example:"Inclui escovação"`
+	Price        string                         `json:"price" example:"89.90"`
+	DiscountRate string                         `json:"discount_rate,omitempty" example:"0.00"`
+	ImageURL     string                         `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
+	IsActive     *bool                          `json:"is_active,omitempty" example:"true"`
+	AverageTimes []ServiceAverageTimeRequestDoc `json:"average_times"`
+}
+
+// ServiceAverageTimeRequestDoc documents average-time payload for Swagger.
+type ServiceAverageTimeRequestDoc struct {
+	PetSize            string `json:"pet_size" example:"medium"`
+	PetKind            string `json:"pet_kind" example:"dog"`
+	PetTemperament     string `json:"pet_temperament" example:"playful"`
+	AverageTimeMinutes int    `json:"average_time_minutes" example:"60"`
 }
 
 // ServiceListResponseDoc documents the list services response envelope for Swagger.
@@ -452,16 +475,42 @@ type ServiceItemResponseDoc struct {
 
 // ServiceDoc describes the public service shape returned by API responses.
 type ServiceDoc struct {
-	ID           string  `json:"id" example:"88888888-8888-8888-8888-888888888888"`
-	TypeID       string  `json:"type_id" example:"99999999-9999-9999-9999-999999999999"`
-	TypeName     string  `json:"type_name" example:"Banho"`
-	Title        string  `json:"title" example:"Banho completo"`
-	Description  string  `json:"description" example:"Banho com secagem e perfume"`
-	Notes        *string `json:"notes,omitempty" example:"Inclui perfume hipoalergênico"`
-	Price        string  `json:"price" example:"89.90"`
-	DiscountRate string  `json:"discount_rate" example:"0.00"`
-	ImageURL     *string `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
-	IsActive     bool    `json:"is_active" example:"true"`
+	ID                string                 `json:"id" example:"88888888-8888-8888-8888-888888888888"`
+	TypeID            string                 `json:"type_id" example:"99999999-9999-9999-9999-999999999999"`
+	TypeName          string                 `json:"type_name" example:"Banho"`
+	Title             string                 `json:"title" example:"Banho completo"`
+	Description       string                 `json:"description" example:"Banho com secagem e perfume"`
+	Notes             *string                `json:"notes,omitempty" example:"Inclui perfume hipoalergênico"`
+	Price             string                 `json:"price" example:"89.90"`
+	DiscountRate      string                 `json:"discount_rate" example:"0.00"`
+	ImageURL          *string                `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
+	IsActive          bool                   `json:"is_active" example:"true"`
+	SubServicesCount  int64                  `json:"sub_services_count" example:"1"`
+	AverageTimesCount int64                  `json:"average_times_count" example:"1"`
+	SubServices       []ServiceSubServiceDoc `json:"sub_services,omitempty"`
+}
+
+// ServiceSubServiceDoc describes a sub-service returned by service detail responses.
+type ServiceSubServiceDoc struct {
+	ID           string                  `json:"id" example:"77777777-7777-7777-7777-777777777777"`
+	TypeID       string                  `json:"type_id" example:"99999999-9999-9999-9999-999999999999"`
+	Title        string                  `json:"title" example:"Banho médio"`
+	Description  string                  `json:"description" example:"Banho para pets médios"`
+	Notes        *string                 `json:"notes,omitempty" example:"Inclui escovação"`
+	Price        string                  `json:"price" example:"89.90"`
+	DiscountRate string                  `json:"discount_rate" example:"0.00"`
+	ImageURL     *string                 `json:"image_url,omitempty" example:"https://example.com/services/bath.png"`
+	IsActive     bool                    `json:"is_active" example:"true"`
+	AverageTimes []ServiceAverageTimeDoc `json:"average_times"`
+}
+
+// ServiceAverageTimeDoc describes a service average time returned by the API.
+type ServiceAverageTimeDoc struct {
+	ID                 string `json:"id" example:"66666666-6666-6666-6666-666666666666"`
+	PetSize            string `json:"pet_size" example:"medium"`
+	PetKind            string `json:"pet_kind" example:"dog"`
+	PetTemperament     string `json:"pet_temperament" example:"playful"`
+	AverageTimeMinutes int16  `json:"average_time_minutes" example:"60"`
 }
 
 // ScheduleCreateRequestDoc documents schedule creation payload for Swagger.

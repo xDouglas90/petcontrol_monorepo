@@ -28,6 +28,8 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 		configCount                   int
 		petCount                      int
 		serviceCount                  int
+		subServiceCount               int
+		averageTimeCount              int
 		confirmedStatusCount          int
 		dashboardSeedCount            int
 		permissionCount               int
@@ -195,7 +197,7 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 		  AND up.revoked_at IS NULL
 	`).Scan(&systemSettingsCount)
 	require.NoError(t, err)
-	require.Equal(t, 1, systemSettingsCount)
+	require.Equal(t, 0, systemSettingsCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)
@@ -237,17 +239,44 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	require.Equal(t, 1, petCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
-		SELECT COUNT(*)
+		SELECT COUNT(DISTINCT s.id)
 		FROM company_services cs
 		INNER JOIN companies c ON c.id = cs.company_id
 		INNER JOIN services s ON s.id = cs.service_id
 		WHERE c.slug = 'petcontrol-dev'
-		  AND s.title = 'Banho completo'
+		  AND s.title IN ('Banho completo', 'Tosa higiênica')
 		  AND cs.is_active = TRUE
 		  AND s.deleted_at IS NULL
 	`).Scan(&serviceCount)
 	require.NoError(t, err)
-	require.Equal(t, 1, serviceCount)
+	require.Equal(t, 2, serviceCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(DISTINCT ss.id)
+		FROM sub_services ss
+		INNER JOIN services s ON s.id = ss.service_id
+		INNER JOIN company_services cs ON cs.service_id = s.id
+		INNER JOIN companies c ON c.id = cs.company_id
+		WHERE c.slug = 'petcontrol-dev'
+		  AND s.title IN ('Banho completo', 'Tosa higiênica')
+		  AND ss.deleted_at IS NULL
+	`).Scan(&subServiceCount)
+	require.NoError(t, err)
+	require.Equal(t, 4, subServiceCount)
+
+	err = setup.Pool.QueryRow(setup.Ctx, `
+		SELECT COUNT(DISTINCT sat.id)
+		FROM services_average_times sat
+		INNER JOIN sub_services ss ON ss.id = sat.sub_service_id
+		INNER JOIN services s ON s.id = ss.service_id
+		INNER JOIN company_services cs ON cs.service_id = s.id
+		INNER JOIN companies c ON c.id = cs.company_id
+		WHERE c.slug = 'petcontrol-dev'
+		  AND s.title IN ('Banho completo', 'Tosa higiênica')
+		  AND ss.deleted_at IS NULL
+	`).Scan(&averageTimeCount)
+	require.NoError(t, err)
+	require.Equal(t, 8, averageTimeCount)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)

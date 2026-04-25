@@ -18,6 +18,7 @@ import type {
 import {
   useCreateServiceMutation,
   useDeleteServiceMutation,
+  useServiceQuery,
   useServicesQuery,
   useUpdateServiceMutation,
 } from '@/lib/api/domain.queries';
@@ -25,9 +26,18 @@ import { ApiError } from '@/lib/api/rest-client';
 import { useListParams } from '@/hooks/use-list-params';
 import { SearchBar } from '@/ui/search-bar';
 import { PaginationBar } from '@/ui/pagination-bar';
+import { selectSession, useAuthStore } from '@/lib/auth/auth.store';
 
 type ServiceFormState = CreateServiceInput;
 type ServicePanelMode = 'create' | 'detail' | 'edit';
+type ServiceStatusFilter = 'all' | 'active' | 'inactive';
+
+type ServiceFilterState = {
+  type_name: string;
+  is_active: ServiceStatusFilter;
+  min_price: string;
+  max_price: string;
+};
 
 const petSizeOptions: Array<{ value: PetSize; label: string }> = [
   { value: 'small', label: 'Pequeno' },
@@ -88,24 +98,52 @@ const initialServiceForm: ServiceFormState = {
   sub_services: [createSubService()],
 };
 
+const initialServiceFilters: ServiceFilterState = {
+  type_name: '',
+  is_active: 'all',
+  min_price: '',
+  max_price: '',
+};
+
 export function ServicesPage() {
-  const { params, search, setSearch, goToPage } = useListParams();
-  const servicesQuery = useServicesQuery(params);
+  const session = useAuthStore(selectSession);
+  const canManageServices = session?.role === 'admin';
+  const { page, params, search, setSearch, goToPage } = useListParams(
+    undefined,
+    readSearchFromLocation(),
+    readPageFromLocation(),
+  );
   const createMutation = useCreateServiceMutation();
   const updateMutation = useUpdateServiceMutation();
   const deleteMutation = useDeleteServiceMutation();
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
-    null,
+    readSelectedServiceIdFromLocation(),
   );
   const [panelMode, setPanelMode] = useState<ServicePanelMode>('create');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>(
-    'all',
+  const [filters, setFilters] = useState<ServiceFilterState>(() =>
+    readServiceFiltersFromLocation(),
   );
-  const [minPriceFilter, setMinPriceFilter] = useState('');
-  const [maxPriceFilter, setMaxPriceFilter] = useState('');
   const [form, setForm] = useState<ServiceFormState>(initialServiceForm);
+
+  useEffect(() => {
+    setPanelMode(readPanelModeFromLocation(canManageServices));
+  }, [canManageServices]);
+
+  const servicesQueryParams = useMemo(
+    () => ({
+      ...params,
+      ...(filters.type_name ? { type_name: filters.type_name } : {}),
+      ...(filters.is_active !== 'all'
+        ? { is_active: filters.is_active === 'active' ? 'true' : 'false' }
+        : {}),
+      ...(filters.min_price ? { min_price: filters.min_price } : {}),
+      ...(filters.max_price ? { max_price: filters.max_price } : {}),
+    }),
+    [filters, params],
+  );
+
+  const servicesQuery = useServicesQuery(servicesQueryParams);
 
   const mutationError =
     createMutation.error || updateMutation.error || deleteMutation.error;
@@ -115,6 +153,9 @@ export function ServicesPage() {
     deleteMutation.isPending;
 
   function resetForm() {
+    if (!canManageServices) {
+      return;
+    }
     setEditingServiceId(null);
     setSelectedServiceId(null);
     setPanelMode('create');
@@ -123,6 +164,9 @@ export function ServicesPage() {
 
   useEffect(() => {
     const openCreateForm = () => {
+      if (!canManageServices) {
+        return;
+      }
       setEditingServiceId(null);
       setSelectedServiceId(null);
       setPanelMode('create');
@@ -133,9 +177,22 @@ export function ServicesPage() {
     return () => {
       window.removeEventListener('open-services-create-form', openCreateForm);
     };
-  }, []);
+  }, [canManageServices]);
+
+  useEffect(() => {
+    syncServiceLocation({
+      page,
+      search,
+      selectedServiceId,
+      panelMode,
+      filters,
+    });
+  }, [filters, page, panelMode, search, selectedServiceId]);
 
   function startEdit(service: ServiceDTO) {
+    if (!canManageServices) {
+      return;
+    }
     setEditingServiceId(service.id);
     setSelectedServiceId(service.id);
     setPanelMode('edit');
@@ -187,6 +244,13 @@ export function ServicesPage() {
     setPanelMode('detail');
   }
 
+  function updateFilter<K extends keyof ServiceFilterState>(
+    key: K,
+    value: ServiceFilterState[K],
+  ) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
   function addSubService() {
     setForm((current) => ({
       ...current,
@@ -223,17 +287,17 @@ export function ServicesPage() {
         itemIndex === subServiceIndex
           ? {
               ...subService,
-              average_times: [
-                ...subService.average_times,
-                createAverageTime(),
-              ],
+              average_times: [...subService.average_times, createAverageTime()],
             }
           : subService,
       ),
     }));
   }
 
-  function removeAverageTime(subServiceIndex: number, averageTimeIndex: number) {
+  function removeAverageTime(
+    subServiceIndex: number,
+    averageTimeIndex: number,
+  ) {
     setForm((current) => ({
       ...current,
       sub_services: current.sub_services.map((subService, itemIndex) =>
@@ -274,6 +338,9 @@ export function ServicesPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManageServices) {
+      return;
+    }
     const payload = normalizePayload(form);
 
     if (editingServiceId) {
@@ -287,43 +354,53 @@ export function ServicesPage() {
       return;
     }
 
-    await createMutation.mutateAsync(payload);
-    resetForm();
+    const created = await createMutation.mutateAsync(payload);
+    setSelectedServiceId(created.id);
+    setEditingServiceId(null);
+    setPanelMode('detail');
   }
 
   const services = servicesQuery.data?.data ?? [];
   const typeOptions = useMemo(
     () =>
-      Array.from(new Set(services.map((service) => service.type_name))).sort(
-        (a, b) => a.localeCompare(b),
-      ),
-    [services],
+      Array.from(
+        new Set(
+          [filters.type_name, ...services.map((service) => service.type_name)]
+            .map((value) => value.trim())
+            .filter(Boolean),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [filters.type_name, services],
   );
-  const visibleServices = useMemo(
-    () =>
-      services.filter((service) => {
-        const price = Number(service.price);
-        const minPrice = Number(minPriceFilter);
-        const maxPrice = Number(maxPriceFilter);
-        const matchesType = !typeFilter || service.type_name === typeFilter;
-        const matchesStatus =
-          statusFilter === 'all' ||
-          (statusFilter === 'active' && service.is_active) ||
-          (statusFilter === 'inactive' && !service.is_active);
-        const matchesMin =
-          !minPriceFilter || (Number.isFinite(price) && price >= minPrice);
-        const matchesMax =
-          !maxPriceFilter || (Number.isFinite(price) && price <= maxPrice);
 
-        return matchesType && matchesStatus && matchesMin && matchesMax;
-      }),
-    [maxPriceFilter, minPriceFilter, services, statusFilter, typeFilter],
+  const activeSelectedServiceId =
+    panelMode === 'create'
+      ? null
+      : selectedServiceId &&
+          services.some((service) => service.id === selectedServiceId)
+        ? selectedServiceId
+        : (services[0]?.id ?? null);
+  const serviceDetailQuery = useServiceQuery(
+    activeSelectedServiceId ?? undefined,
   );
-  const selectedService =
+  const selectedServiceSummary =
     services.find((service) => service.id === selectedServiceId) ??
-    visibleServices[0] ??
+    services[0] ??
     null;
+  const selectedService =
+    serviceDetailQuery.data?.data?.id === activeSelectedServiceId
+      ? serviceDetailQuery.data.data
+      : selectedServiceSummary;
   const showDetail = panelMode === 'detail' && selectedService !== null;
+
+  useEffect(() => {
+    if (
+      panelMode !== 'create' &&
+      activeSelectedServiceId !== selectedServiceId
+    ) {
+      setSelectedServiceId(activeSelectedServiceId);
+    }
+  }, [activeSelectedServiceId, panelMode, selectedServiceId]);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -342,7 +419,8 @@ export function ServicesPage() {
           <button
             type="button"
             onClick={resetForm}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+            disabled={!canManageServices}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Novo
           </button>
@@ -362,8 +440,10 @@ export function ServicesPage() {
             <select
               id="services-type-filter"
               className={fieldClassName}
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
+              value={filters.type_name}
+              onChange={(event) =>
+                updateFilter('type_name', event.target.value)
+              }
             >
               <option value="">Todos</option>
               {typeOptions.map((typeName) => (
@@ -377,10 +457,11 @@ export function ServicesPage() {
             <select
               id="services-status-filter"
               className={fieldClassName}
-              value={statusFilter}
+              value={filters.is_active}
               onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as 'all' | 'active' | 'inactive',
+                updateFilter(
+                  'is_active',
+                  event.target.value as ServiceStatusFilter,
                 )
               }
             >
@@ -395,8 +476,10 @@ export function ServicesPage() {
               className={fieldClassName}
               inputMode="decimal"
               placeholder="0.00"
-              value={minPriceFilter}
-              onChange={(event) => setMinPriceFilter(event.target.value)}
+              value={filters.min_price}
+              onChange={(event) =>
+                updateFilter('min_price', event.target.value)
+              }
             />
           </FilterField>
           <FilterField label="Preço máx." htmlFor="services-max-price-filter">
@@ -405,8 +488,10 @@ export function ServicesPage() {
               className={fieldClassName}
               inputMode="decimal"
               placeholder="0.00"
-              value={maxPriceFilter}
-              onChange={(event) => setMaxPriceFilter(event.target.value)}
+              value={filters.max_price}
+              onChange={(event) =>
+                updateFilter('max_price', event.target.value)
+              }
             />
           </FilterField>
         </div>
@@ -418,10 +503,10 @@ export function ServicesPage() {
           {servicesQuery.isError ? (
             <StateMessage message="Falha ao carregar serviços." tone="error" />
           ) : null}
-          {!servicesQuery.isLoading && visibleServices.length === 0 ? (
+          {!servicesQuery.isLoading && services.length === 0 ? (
             <StateMessage message="Nenhum serviço cadastrado." />
           ) : null}
-          {visibleServices.map((service) => (
+          {services.map((service) => (
             <article
               key={service.id}
               className={`rounded-3xl border p-4 transition ${selectedServiceId === service.id ? 'border-primary/40 bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
@@ -455,32 +540,40 @@ export function ServicesPage() {
                     {service.average_times_count ?? 0} tempo(s) médio(s)
                   </p>
                 </div>
-                <Actions
-                  onEdit={(event) => {
-                    event.stopPropagation();
-                    startEdit(service);
-                  }}
-                  onDelete={(event) => {
-                    event.stopPropagation();
-                    void deleteMutation.mutateAsync(service.id);
-                  }}
-                />
+                {canManageServices ? (
+                  <Actions
+                    onEdit={(event) => {
+                      event.stopPropagation();
+                      startEdit(service);
+                    }}
+                    onDelete={(event) => {
+                      event.stopPropagation();
+                      void deleteMutation.mutateAsync(service.id);
+                    }}
+                  />
+                ) : null}
               </div>
             </article>
           ))}
         </div>
 
-        <PaginationBar meta={servicesQuery.data?.meta} onPageChange={goToPage} />
+        <PaginationBar
+          meta={servicesQuery.data?.meta}
+          onPageChange={goToPage}
+        />
       </section>
 
       <aside className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
         {showDetail ? (
           <ServiceDetailPanel
             service={selectedService}
+            canManage={canManageServices}
             onCreate={resetForm}
             onEdit={() => startEdit(selectedService)}
             onDelete={() => void deleteMutation.mutateAsync(selectedService.id)}
           />
+        ) : !canManageServices ? (
+          <StateMessage message="Selecione um serviço para visualizar os detalhes." />
         ) : (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
@@ -494,292 +587,296 @@ export function ServicesPage() {
               className="mt-6 space-y-4"
               onSubmit={(event) => void submit(event)}
             >
-          <Field label="Tipo" htmlFor="service-type">
-            <input
-              id="service-type"
-              required
-              className={fieldClassName}
-              value={form.type_name}
-              onChange={(event) =>
-                setForm({ ...form, type_name: event.target.value })
-              }
-            />
-          </Field>
-          <Field label="Título" htmlFor="service-title">
-            <input
-              id="service-title"
-              required
-              className={fieldClassName}
-              value={form.title}
-              onChange={(event) =>
-                setForm({ ...form, title: event.target.value })
-              }
-            />
-          </Field>
-          <Field label="Descrição" htmlFor="service-description">
-            <textarea
-              id="service-description"
-              required
-              className={fieldClassName}
-              rows={3}
-              value={form.description}
-              onChange={(event) =>
-                setForm({ ...form, description: event.target.value })
-              }
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Preço base" htmlFor="service-price">
-              <input
-                id="service-price"
-                required
-                className={fieldClassName}
-                placeholder="0.00"
-                value={form.price}
-                onChange={(event) =>
-                  setForm({ ...form, price: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Desconto (%)" htmlFor="service-discount">
-              <input
-                id="service-discount"
-                className={fieldClassName}
-                placeholder="0.00"
-                value={form.discount_rate}
-                onChange={(event) =>
-                  setForm({ ...form, discount_rate: event.target.value })
-                }
-              />
-            </Field>
-          </div>
+              <Field label="Tipo" htmlFor="service-type">
+                <input
+                  id="service-type"
+                  required
+                  className={fieldClassName}
+                  value={form.type_name}
+                  onChange={(event) =>
+                    setForm({ ...form, type_name: event.target.value })
+                  }
+                />
+              </Field>
+              <Field label="Título" htmlFor="service-title">
+                <input
+                  id="service-title"
+                  required
+                  className={fieldClassName}
+                  value={form.title}
+                  onChange={(event) =>
+                    setForm({ ...form, title: event.target.value })
+                  }
+                />
+              </Field>
+              <Field label="Descrição" htmlFor="service-description">
+                <textarea
+                  id="service-description"
+                  required
+                  className={fieldClassName}
+                  rows={3}
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm({ ...form, description: event.target.value })
+                  }
+                />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Preço base" htmlFor="service-price">
+                  <input
+                    id="service-price"
+                    required
+                    className={fieldClassName}
+                    placeholder="0.00"
+                    value={form.price}
+                    onChange={(event) =>
+                      setForm({ ...form, price: event.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Desconto (%)" htmlFor="service-discount">
+                  <input
+                    id="service-discount"
+                    className={fieldClassName}
+                    placeholder="0.00"
+                    value={form.discount_rate}
+                    onChange={(event) =>
+                      setForm({ ...form, discount_rate: event.target.value })
+                    }
+                  />
+                </Field>
+              </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-white">Subserviços</p>
-              <button
-                type="button"
-                onClick={addSubService}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
-              >
-                Adicionar
-              </button>
-            </div>
-
-            {form.sub_services.map((subService, subServiceIndex) => (
-              <div
-                key={subServiceIndex}
-                className="rounded-3xl border border-white/10 bg-white/5 p-4"
-              >
+              <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-white">
-                    Subserviço {subServiceIndex + 1}
+                    Subserviços
                   </p>
                   <button
                     type="button"
-                    onClick={() => removeSubService(subServiceIndex)}
-                    disabled={form.sub_services.length === 1}
-                    className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={addSubService}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
                   >
-                    Remover
+                    Adicionar
                   </button>
                 </div>
-                <div className="mt-4 space-y-4">
-                  <Field
-                    label="Título"
-                    htmlFor={`sub-service-title-${subServiceIndex}`}
-                  >
-                    <input
-                      id={`sub-service-title-${subServiceIndex}`}
-                      required
-                      className={fieldClassName}
-                      value={subService.title}
-                      onChange={(event) =>
-                        updateSubService(subServiceIndex, {
-                          title: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field
-                    label="Descrição"
-                    htmlFor={`sub-service-description-${subServiceIndex}`}
-                  >
-                    <textarea
-                      id={`sub-service-description-${subServiceIndex}`}
-                      required
-                      className={fieldClassName}
-                      rows={2}
-                      value={subService.description}
-                      onChange={(event) =>
-                        updateSubService(subServiceIndex, {
-                          description: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field
-                    label="Preço"
-                    htmlFor={`sub-service-price-${subServiceIndex}`}
-                  >
-                    <input
-                      id={`sub-service-price-${subServiceIndex}`}
-                      required
-                      className={fieldClassName}
-                      placeholder="0.00"
-                      value={subService.price}
-                      onChange={(event) =>
-                        updateSubService(subServiceIndex, {
-                          price: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
 
-                  <div className="space-y-3">
+                {form.sub_services.map((subService, subServiceIndex) => (
+                  <div
+                    key={subServiceIndex}
+                    className="rounded-3xl border border-white/10 bg-white/5 p-4"
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Tempos médios
+                      <p className="text-sm font-semibold text-white">
+                        Subserviço {subServiceIndex + 1}
                       </p>
                       <button
                         type="button"
-                        onClick={() => addAverageTime(subServiceIndex)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                        onClick={() => removeSubService(subServiceIndex)}
+                        disabled={form.sub_services.length === 1}
+                        className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Adicionar
+                        Remover
                       </button>
                     </div>
+                    <div className="mt-4 space-y-4">
+                      <Field
+                        label="Título"
+                        htmlFor={`sub-service-title-${subServiceIndex}`}
+                      >
+                        <input
+                          id={`sub-service-title-${subServiceIndex}`}
+                          required
+                          className={fieldClassName}
+                          value={subService.title}
+                          onChange={(event) =>
+                            updateSubService(subServiceIndex, {
+                              title: event.target.value,
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field
+                        label="Descrição"
+                        htmlFor={`sub-service-description-${subServiceIndex}`}
+                      >
+                        <textarea
+                          id={`sub-service-description-${subServiceIndex}`}
+                          required
+                          className={fieldClassName}
+                          rows={2}
+                          value={subService.description}
+                          onChange={(event) =>
+                            updateSubService(subServiceIndex, {
+                              description: event.target.value,
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field
+                        label="Preço"
+                        htmlFor={`sub-service-price-${subServiceIndex}`}
+                      >
+                        <input
+                          id={`sub-service-price-${subServiceIndex}`}
+                          required
+                          className={fieldClassName}
+                          placeholder="0.00"
+                          value={subService.price}
+                          onChange={(event) =>
+                            updateSubService(subServiceIndex, {
+                              price: event.target.value,
+                            })
+                          }
+                        />
+                      </Field>
 
-                    {subService.average_times.map(
-                      (averageTime, averageTimeIndex) => (
-                        <div
-                          key={averageTimeIndex}
-                          className="rounded-2xl border border-white/10 bg-slate-950/40 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm text-slate-200">
-                              Tempo {averageTimeIndex + 1}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeAverageTime(
-                                  subServiceIndex,
-                                  averageTimeIndex,
-                                )
-                              }
-                              disabled={subService.average_times.length === 1}
-                              className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              Remover
-                            </button>
-                          </div>
-                          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                            <Field
-                              label="Porte"
-                              htmlFor={`average-time-size-${subServiceIndex}-${averageTimeIndex}`}
-                            >
-                              <Select
-                                id={`average-time-size-${subServiceIndex}-${averageTimeIndex}`}
-                                value={averageTime.pet_size}
-                                options={petSizeOptions}
-                                onChange={(value) =>
-                                  updateAverageTime(
-                                    subServiceIndex,
-                                    averageTimeIndex,
-                                    { pet_size: value as PetSize },
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field
-                              label="Espécie"
-                              htmlFor={`average-time-kind-${subServiceIndex}-${averageTimeIndex}`}
-                            >
-                              <Select
-                                id={`average-time-kind-${subServiceIndex}-${averageTimeIndex}`}
-                                value={averageTime.pet_kind}
-                                options={petKindOptions}
-                                onChange={(value) =>
-                                  updateAverageTime(
-                                    subServiceIndex,
-                                    averageTimeIndex,
-                                    { pet_kind: value as PetKind },
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field
-                              label="Temperamento"
-                              htmlFor={`average-time-temperament-${subServiceIndex}-${averageTimeIndex}`}
-                            >
-                              <Select
-                                id={`average-time-temperament-${subServiceIndex}-${averageTimeIndex}`}
-                                value={averageTime.pet_temperament}
-                                options={temperamentOptions}
-                                onChange={(value) =>
-                                  updateAverageTime(
-                                    subServiceIndex,
-                                    averageTimeIndex,
-                                    {
-                                      pet_temperament:
-                                        value as PetTemperament,
-                                    },
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field
-                              label="Minutos"
-                              htmlFor={`average-time-minutes-${subServiceIndex}-${averageTimeIndex}`}
-                            >
-                              <input
-                                id={`average-time-minutes-${subServiceIndex}-${averageTimeIndex}`}
-                                required
-                                min={1}
-                                type="number"
-                                className={fieldClassName}
-                                value={averageTime.average_time_minutes}
-                                onChange={(event) =>
-                                  updateAverageTime(
-                                    subServiceIndex,
-                                    averageTimeIndex,
-                                    {
-                                      average_time_minutes: Number(
-                                        event.target.value,
-                                      ),
-                                    },
-                                  )
-                                }
-                              />
-                            </Field>
-                          </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Tempos médios
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => addAverageTime(subServiceIndex)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                          >
+                            Adicionar
+                          </button>
                         </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
 
-          <Field label="Notas" htmlFor="service-notes">
-            <textarea
-              id="service-notes"
-              className={fieldClassName}
-              rows={3}
-              value={form.notes}
-              onChange={(event) =>
-                setForm({ ...form, notes: event.target.value })
-              }
-            />
-          </Field>
-          <MutationError error={mutationError} />
-          <FormActions
-            isPending={isPending}
-            editing={Boolean(editingServiceId)}
-            onReset={resetForm}
-          />
+                        {subService.average_times.map(
+                          (averageTime, averageTimeIndex) => (
+                            <div
+                              key={averageTimeIndex}
+                              className="rounded-2xl border border-white/10 bg-slate-950/40 p-3"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-sm text-slate-200">
+                                  Tempo {averageTimeIndex + 1}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeAverageTime(
+                                      subServiceIndex,
+                                      averageTimeIndex,
+                                    )
+                                  }
+                                  disabled={
+                                    subService.average_times.length === 1
+                                  }
+                                  className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                                <Field
+                                  label="Porte"
+                                  htmlFor={`average-time-size-${subServiceIndex}-${averageTimeIndex}`}
+                                >
+                                  <Select
+                                    id={`average-time-size-${subServiceIndex}-${averageTimeIndex}`}
+                                    value={averageTime.pet_size}
+                                    options={petSizeOptions}
+                                    onChange={(value) =>
+                                      updateAverageTime(
+                                        subServiceIndex,
+                                        averageTimeIndex,
+                                        { pet_size: value as PetSize },
+                                      )
+                                    }
+                                  />
+                                </Field>
+                                <Field
+                                  label="Espécie"
+                                  htmlFor={`average-time-kind-${subServiceIndex}-${averageTimeIndex}`}
+                                >
+                                  <Select
+                                    id={`average-time-kind-${subServiceIndex}-${averageTimeIndex}`}
+                                    value={averageTime.pet_kind}
+                                    options={petKindOptions}
+                                    onChange={(value) =>
+                                      updateAverageTime(
+                                        subServiceIndex,
+                                        averageTimeIndex,
+                                        { pet_kind: value as PetKind },
+                                      )
+                                    }
+                                  />
+                                </Field>
+                                <Field
+                                  label="Temperamento"
+                                  htmlFor={`average-time-temperament-${subServiceIndex}-${averageTimeIndex}`}
+                                >
+                                  <Select
+                                    id={`average-time-temperament-${subServiceIndex}-${averageTimeIndex}`}
+                                    value={averageTime.pet_temperament}
+                                    options={temperamentOptions}
+                                    onChange={(value) =>
+                                      updateAverageTime(
+                                        subServiceIndex,
+                                        averageTimeIndex,
+                                        {
+                                          pet_temperament:
+                                            value as PetTemperament,
+                                        },
+                                      )
+                                    }
+                                  />
+                                </Field>
+                                <Field
+                                  label="Minutos"
+                                  htmlFor={`average-time-minutes-${subServiceIndex}-${averageTimeIndex}`}
+                                >
+                                  <input
+                                    id={`average-time-minutes-${subServiceIndex}-${averageTimeIndex}`}
+                                    required
+                                    min={1}
+                                    type="number"
+                                    className={fieldClassName}
+                                    value={averageTime.average_time_minutes}
+                                    onChange={(event) =>
+                                      updateAverageTime(
+                                        subServiceIndex,
+                                        averageTimeIndex,
+                                        {
+                                          average_time_minutes: Number(
+                                            event.target.value,
+                                          ),
+                                        },
+                                      )
+                                    }
+                                  />
+                                </Field>
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Field label="Notas" htmlFor="service-notes">
+                <textarea
+                  id="service-notes"
+                  className={fieldClassName}
+                  rows={3}
+                  value={form.notes}
+                  onChange={(event) =>
+                    setForm({ ...form, notes: event.target.value })
+                  }
+                />
+              </Field>
+              <MutationError error={mutationError} />
+              <FormActions
+                isPending={isPending}
+                editing={Boolean(editingServiceId)}
+                onReset={resetForm}
+              />
             </form>
           </>
         )}
@@ -815,6 +912,146 @@ function normalizePayload(form: ServiceFormState): CreateServiceInput {
       })),
     })),
   };
+}
+
+function readSearchFromLocation(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return new URLSearchParams(window.location.search).get('search') ?? '';
+}
+
+function readPageFromLocation(): number {
+  if (typeof window === 'undefined') {
+    return 1;
+  }
+
+  const raw = new URLSearchParams(window.location.search).get('page');
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return 1;
+  }
+
+  return parsed;
+}
+
+function readPanelModeFromLocation(
+  canManageServices: boolean,
+): ServicePanelMode {
+  if (!canManageServices || typeof window === 'undefined') {
+    return 'detail';
+  }
+
+  const panel = new URLSearchParams(window.location.search).get('panel');
+  if (panel === 'edit') {
+    return 'edit';
+  }
+  if (panel === 'detail') {
+    return 'detail';
+  }
+  return 'create';
+}
+
+function readSelectedServiceIdFromLocation(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id') ?? params.get('service');
+}
+
+function readServiceFiltersFromLocation(): ServiceFilterState {
+  if (typeof window === 'undefined') {
+    return initialServiceFilters;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const isActive = params.get('is_active');
+  return {
+    type_name: params.get('type_name') ?? '',
+    is_active:
+      isActive === 'true'
+        ? 'active'
+        : isActive === 'false'
+          ? 'inactive'
+          : 'all',
+    min_price: params.get('min_price') ?? '',
+    max_price: params.get('max_price') ?? '',
+  };
+}
+
+function syncServiceLocation({
+  page,
+  search,
+  selectedServiceId,
+  panelMode,
+  filters,
+}: {
+  page: number;
+  search: string;
+  selectedServiceId: string | null;
+  panelMode: ServicePanelMode;
+  filters: ServiceFilterState;
+}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+
+  if (page <= 1) url.searchParams.delete('page');
+  else url.searchParams.set('page', String(page));
+
+  const trimmedSearch = search.trim();
+  if (trimmedSearch === '') url.searchParams.delete('search');
+  else url.searchParams.set('search', trimmedSearch);
+
+  const trimmedType = filters.type_name.trim();
+  if (trimmedType === '') url.searchParams.delete('type_name');
+  else url.searchParams.set('type_name', trimmedType);
+
+  if (filters.is_active === 'all') url.searchParams.delete('is_active');
+  else
+    url.searchParams.set(
+      'is_active',
+      filters.is_active === 'active' ? 'true' : 'false',
+    );
+
+  const trimmedMinPrice = filters.min_price.trim();
+  if (trimmedMinPrice === '') url.searchParams.delete('min_price');
+  else url.searchParams.set('min_price', trimmedMinPrice);
+
+  const trimmedMaxPrice = filters.max_price.trim();
+  if (trimmedMaxPrice === '') url.searchParams.delete('max_price');
+  else url.searchParams.set('max_price', trimmedMaxPrice);
+
+  if (panelMode === 'create') {
+    url.searchParams.set('panel', 'create');
+    url.searchParams.delete('id');
+  } else if (panelMode === 'edit') {
+    url.searchParams.set('panel', 'edit');
+    if (selectedServiceId) {
+      url.searchParams.set('id', selectedServiceId);
+    } else {
+      url.searchParams.delete('id');
+    }
+  } else {
+    url.searchParams.delete('panel');
+    if (selectedServiceId) {
+      url.searchParams.set('id', selectedServiceId);
+    } else {
+      url.searchParams.delete('id');
+    }
+  }
+  url.searchParams.delete('service');
+
+  window.history.replaceState(
+    {},
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 }
 
 function FilterField({
@@ -882,11 +1119,13 @@ function Select({
 
 function ServiceDetailPanel({
   service,
+  canManage,
   onCreate,
   onEdit,
   onDelete,
 }: {
   service: ServiceDTO;
+  canManage: boolean;
   onCreate: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -1000,29 +1239,31 @@ function ServiceDetailPanel({
         ))}
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110"
-        >
-          Editar
-        </button>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
-        >
-          Novo
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-500/20"
-        >
-          Excluir
-        </button>
-      </div>
+      {canManage ? (
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={onCreate}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+          >
+            Novo
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-500/20"
+          >
+            Excluir
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

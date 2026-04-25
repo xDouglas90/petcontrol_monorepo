@@ -108,8 +108,16 @@ func NewServiceHandler(service *service.ServiceService) *ServiceHandler {
 // @Tags services
 // @Security BearerAuth
 // @Produce json
+// @Param search query string false "Search by title or description"
+// @Param type_name query string false "Filter by service type name"
+// @Param is_active query bool false "Filter by tenant service active state"
+// @Param min_price query string false "Minimum base price"
+// @Param max_price query string false "Maximum base price"
+// @Param page query int false "Page number"
+// @Param limit query int false "Page size"
 // @Success 200 {object} ServiceListResponseDoc
 // @Failure 403 {object} APIErrorResponseDoc
+// @Failure 422 {object} APIErrorResponseDoc
 // @Failure 500 {object} APIErrorResponseDoc
 // @Router /services [get]
 func (h *ServiceHandler) List(c *gin.Context) {
@@ -120,7 +128,13 @@ func (h *ServiceHandler) List(c *gin.Context) {
 	}
 
 	params := pagination.ParseParams(c)
-	items, err := h.service.ListServicesByCompanyID(c.Request.Context(), companyID, params)
+	filters, err := parseServiceListFilters(c, params)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_service_filters", "invalid service filters")
+		return
+	}
+
+	items, err := h.service.ListServicesByCompanyID(c.Request.Context(), companyID, filters)
 	if err != nil {
 		middleware.JSONError(c, http.StatusInternalServerError, "list_services_failed", "failed to list services")
 		return
@@ -386,6 +400,39 @@ func (h *ServiceHandler) Delete(c *gin.Context) {
 	})
 
 	c.Status(http.StatusNoContent)
+}
+
+func parseServiceListFilters(c *gin.Context, params pagination.Params) (service.ServiceListFilters, error) {
+	filters := service.ServiceListFilters{
+		Params:   params,
+		TypeName: strings.TrimSpace(c.Query("type_name")),
+	}
+
+	if rawIsActive := strings.TrimSpace(c.Query("is_active")); rawIsActive != "" {
+		isActive, err := strconv.ParseBool(rawIsActive)
+		if err != nil {
+			return service.ServiceListFilters{}, err
+		}
+		filters.IsActive = &isActive
+	}
+
+	if rawMinPrice := strings.TrimSpace(c.Query("min_price")); rawMinPrice != "" {
+		minPrice, err := parseRequiredNumeric(rawMinPrice)
+		if err != nil {
+			return service.ServiceListFilters{}, err
+		}
+		filters.MinPrice = &minPrice
+	}
+
+	if rawMaxPrice := strings.TrimSpace(c.Query("max_price")); rawMaxPrice != "" {
+		maxPrice, err := parseRequiredNumeric(rawMaxPrice)
+		if err != nil {
+			return service.ServiceListFilters{}, err
+		}
+		filters.MaxPrice = &maxPrice
+	}
+
+	return filters, nil
 }
 
 func mapServiceList(items []sqlc.ListServicesByCompanyIDRow) []serviceResponse {

@@ -1913,6 +1913,50 @@ const docTemplate = `{
                     "services"
                 ],
                 "summary": "List services",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by title or description",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by service type name",
+                        "name": "type_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by tenant service active state",
+                        "name": "is_active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Minimum base price",
+                        "name": "min_price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Maximum base price",
+                        "name": "max_price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1922,6 +1966,12 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIErrorResponseDoc"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handler.APIErrorResponseDoc"
                         }
@@ -3713,13 +3763,54 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2021-08-20"
                 },
+                "color": {
+                    "type": "string",
+                    "example": "Caramelo"
+                },
+                "guardian_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "88888888-8888-8888-8888-888888888888"
+                    ]
+                },
                 "image_url": {
                     "type": "string",
                     "example": "https://example.com/thor.png"
                 },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_deceased": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_microchipped": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_neutered": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_vaccinated": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "kind": {
                     "type": "string",
                     "example": "dog"
+                },
+                "microchip_expiration_date": {
+                    "type": "string",
+                    "example": "2027-08-20"
+                },
+                "microchip_number": {
+                    "type": "string",
+                    "example": "123456789"
                 },
                 "name": {
                     "type": "string",
@@ -3732,6 +3823,14 @@ const docTemplate = `{
                 "owner_id": {
                     "type": "string",
                     "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "race": {
+                    "type": "string",
+                    "example": "Labrador"
+                },
+                "sex": {
+                    "type": "string",
+                    "example": "M"
                 },
                 "size": {
                     "type": "string",
@@ -3754,6 +3853,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2021-08-20"
                 },
+                "color": {
+                    "type": "string",
+                    "example": "Caramelo"
+                },
                 "company_id": {
                     "type": "string",
                     "example": "11111111-1111-1111-1111-111111111111"
@@ -3765,6 +3868,12 @@ const docTemplate = `{
                 "deleted_at": {
                     "type": "string",
                     "example": "2026-04-11T11:00:00Z"
+                },
+                "guardians": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PetGuardianDoc"
+                    }
                 },
                 "id": {
                     "type": "string",
@@ -3778,9 +3887,33 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": true
                 },
+                "is_deceased": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_microchipped": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_neutered": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_vaccinated": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "kind": {
                     "type": "string",
                     "example": "dog"
+                },
+                "microchip_expiration_date": {
+                    "type": "string",
+                    "example": "2027-08-20"
+                },
+                "microchip_number": {
+                    "type": "string",
+                    "example": "123456789"
                 },
                 "name": {
                     "type": "string",
@@ -3790,13 +3923,45 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Gosta de brincar"
                 },
+                "owner_cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "owner_email": {
+                    "type": "string",
+                    "example": "maria@example.com"
+                },
+                "owner_has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "owner_id": {
                     "type": "string",
                     "example": "44444444-4444-4444-4444-444444444444"
                 },
+                "owner_image_url": {
+                    "type": "string",
+                    "example": "https://example.com/maria.png"
+                },
                 "owner_name": {
                     "type": "string",
                     "example": "Maria Silva"
+                },
+                "owner_person_id": {
+                    "type": "string",
+                    "example": "55555555-5555-5555-5555-555555555555"
+                },
+                "owner_short_name": {
+                    "type": "string",
+                    "example": "Maria"
+                },
+                "race": {
+                    "type": "string",
+                    "example": "Labrador"
+                },
+                "sex": {
+                    "type": "string",
+                    "example": "M"
                 },
                 "size": {
                     "type": "string",
@@ -3809,6 +3974,39 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2026-04-10T11:00:00Z"
+                }
+            }
+        },
+        "handler.PetGuardianDoc": {
+            "type": "object",
+            "properties": {
+                "cellphone": {
+                    "type": "string",
+                    "example": "+5511999990001"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@example.com"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Maria Silva"
+                },
+                "guardian_id": {
+                    "type": "string",
+                    "example": "88888888-8888-8888-8888-888888888888"
+                },
+                "has_whatsapp": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/maria.png"
+                },
+                "short_name": {
+                    "type": "string",
+                    "example": "Maria"
                 }
             }
         },
@@ -3838,13 +4036,54 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2021-08-20"
                 },
+                "color": {
+                    "type": "string",
+                    "example": "Caramelo"
+                },
+                "guardian_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "88888888-8888-8888-8888-888888888888"
+                    ]
+                },
                 "image_url": {
                     "type": "string",
                     "example": "https://example.com/thor.png"
                 },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_deceased": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_microchipped": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_neutered": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_vaccinated": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "kind": {
                     "type": "string",
                     "example": "dog"
+                },
+                "microchip_expiration_date": {
+                    "type": "string",
+                    "example": "2027-08-20"
+                },
+                "microchip_number": {
+                    "type": "string",
+                    "example": "123456789"
                 },
                 "name": {
                     "type": "string",
@@ -3857,6 +4096,14 @@ const docTemplate = `{
                 "owner_id": {
                     "type": "string",
                     "example": "44444444-4444-4444-4444-444444444444"
+                },
+                "race": {
+                    "type": "string",
+                    "example": "Labrador"
+                },
+                "sex": {
+                    "type": "string",
+                    "example": "M"
                 },
                 "size": {
                     "type": "string",
@@ -4143,6 +4390,52 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.ServiceAverageTimeDoc": {
+            "type": "object",
+            "properties": {
+                "average_time_minutes": {
+                    "type": "integer",
+                    "example": 60
+                },
+                "id": {
+                    "type": "string",
+                    "example": "66666666-6666-6666-6666-666666666666"
+                },
+                "pet_kind": {
+                    "type": "string",
+                    "example": "dog"
+                },
+                "pet_size": {
+                    "type": "string",
+                    "example": "medium"
+                },
+                "pet_temperament": {
+                    "type": "string",
+                    "example": "playful"
+                }
+            }
+        },
+        "handler.ServiceAverageTimeRequestDoc": {
+            "type": "object",
+            "properties": {
+                "average_time_minutes": {
+                    "type": "integer",
+                    "example": 60
+                },
+                "pet_kind": {
+                    "type": "string",
+                    "example": "dog"
+                },
+                "pet_size": {
+                    "type": "string",
+                    "example": "medium"
+                },
+                "pet_temperament": {
+                    "type": "string",
+                    "example": "playful"
+                }
+            }
+        },
         "handler.ServiceCreateRequestDoc": {
             "type": "object",
             "properties": {
@@ -4170,6 +4463,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "89.90"
                 },
+                "sub_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceSubServiceRequestDoc"
+                    }
+                },
                 "title": {
                     "type": "string",
                     "example": "Banho completo"
@@ -4183,6 +4482,10 @@ const docTemplate = `{
         "handler.ServiceDoc": {
             "type": "object",
             "properties": {
+                "average_times_count": {
+                    "type": "integer",
+                    "example": 1
+                },
                 "description": {
                     "type": "string",
                     "example": "Banho com secagem e perfume"
@@ -4210,6 +4513,16 @@ const docTemplate = `{
                 "price": {
                     "type": "string",
                     "example": "89.90"
+                },
+                "sub_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceSubServiceDoc"
+                    }
+                },
+                "sub_services_count": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "title": {
                     "type": "string",
@@ -4244,6 +4557,96 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.ServiceSubServiceDoc": {
+            "type": "object",
+            "properties": {
+                "average_times": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceAverageTimeDoc"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Banho para pets médios"
+                },
+                "discount_rate": {
+                    "type": "string",
+                    "example": "0.00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "77777777-7777-7777-7777-777777777777"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/services/bath.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Inclui escovação"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "89.90"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Banho médio"
+                },
+                "type_id": {
+                    "type": "string",
+                    "example": "99999999-9999-9999-9999-999999999999"
+                }
+            }
+        },
+        "handler.ServiceSubServiceRequestDoc": {
+            "type": "object",
+            "properties": {
+                "average_times": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceAverageTimeRequestDoc"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Banho para pets médios"
+                },
+                "discount_rate": {
+                    "type": "string",
+                    "example": "0.00"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/services/bath.png"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Inclui escovação"
+                },
+                "price": {
+                    "type": "string",
+                    "example": "89.90"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Banho médio"
+                },
+                "type_name": {
+                    "type": "string",
+                    "example": "Banho"
+                }
+            }
+        },
         "handler.ServiceUpdateRequestDoc": {
             "type": "object",
             "properties": {
@@ -4270,6 +4673,12 @@ const docTemplate = `{
                 "price": {
                     "type": "string",
                     "example": "59.90"
+                },
+                "sub_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ServiceSubServiceRequestDoc"
+                    }
                 },
                 "title": {
                     "type": "string",

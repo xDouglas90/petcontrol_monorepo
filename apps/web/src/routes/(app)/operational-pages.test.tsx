@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { ClientsPage } from './clients';
 import { PetsPage } from './pets';
 import { ServicesPage } from './services';
+import { useAuthStore } from '@/lib/auth/auth.store';
 
 const idleMutation = {
   isPending: false,
@@ -33,7 +34,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
           is_active: true,
         },
       ],
-      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
     },
     isLoading: false,
     isError: false,
@@ -52,7 +53,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
           is_active: true,
         },
       ],
-      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
     },
     isLoading: false,
     isError: false,
@@ -123,7 +124,24 @@ vi.mock('@/lib/api/domain.queries', () => ({
           is_active: true,
         },
       ],
-      meta: { total: 1, page: 1, limit: 10, total_pages: 1 }
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
+    },
+    isLoading: false,
+    isError: false,
+  }),
+  useServiceQuery: () => ({
+    data: {
+      data: {
+        id: 'service-1',
+        type_id: 'type-1',
+        type_name: 'Banho',
+        title: 'Banho completo',
+        description: 'Banho com secagem e perfume',
+        price: '89.90',
+        discount_rate: '0.00',
+        is_active: true,
+        sub_services: [],
+      },
     },
     isLoading: false,
     isError: false,
@@ -142,6 +160,7 @@ vi.mock('@/lib/api/domain.queries', () => ({
 describe('operational domain pages', () => {
   afterEach(() => {
     cleanup();
+    useAuthStore.getState().clearSession();
   });
 
   it('renderiza a tela operacional de clientes', () => {
@@ -163,6 +182,15 @@ describe('operational domain pages', () => {
   });
 
   it('renderiza a tela operacional de serviços', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'token',
+      tokenType: 'Bearer',
+      userId: 'user-1',
+      companyId: 'company-1',
+      role: 'admin',
+      kind: 'owner',
+    });
+
     render(<ServicesPage />);
 
     expect(screen.getByRole('heading', { name: 'Serviços' })).toBeTruthy();

@@ -41,11 +41,14 @@ export interface ListQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  type_name?: string;
   kind?: string;
   size?: string;
   temperament?: string;
   race?: string;
   is_active?: string;
+  min_price?: string;
+  max_price?: string;
   panel?: string;
 }
 

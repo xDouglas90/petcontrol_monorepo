@@ -34,12 +34,19 @@ FROM
             sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
-    AND cs.is_active = TRUE
+    AND (sqlc.narg('IsActive')::boolean IS NULL
+        OR cs.is_active = sqlc.narg('IsActive')::boolean)
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
     AND (sqlc.arg('Search')::text = ''
         OR s.title ILIKE '%' || sqlc.arg('Search')::text || '%'
         OR s.description ILIKE '%' || sqlc.arg('Search')::text || '%')
+    AND (sqlc.arg('TypeName')::text = ''
+        OR st.name = sqlc.arg('TypeName')::text)
+    AND (sqlc.narg('MinPrice')::numeric IS NULL
+        OR s.price >= sqlc.narg('MinPrice')::numeric)
+    AND (sqlc.narg('MaxPrice')::numeric IS NULL
+        OR s.price <= sqlc.narg('MaxPrice')::numeric)
 ORDER BY
     s.title ASC
 LIMIT sqlc.arg('Limit')
@@ -81,7 +88,6 @@ FROM
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
     AND s.id = sqlc.arg('ID')
-    AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
 LIMIT 1;

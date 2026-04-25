@@ -775,7 +775,9 @@ export async function updateCompanyUserPermissions(
       permission_groups: current.permission_groups.map((group) => ({
         ...group,
         permissions: group.permissions.map((permission) => {
-          const updated = permissions.find((item) => item.code === permission.code);
+          const updated = permissions.find(
+            (item) => item.code === permission.code,
+          );
           return updated ?? permission;
         }),
       })),
@@ -903,10 +905,13 @@ export async function getPerson(
     return person;
   }
 
-  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
-    method: 'GET',
-    accessToken,
-  });
+  const payload = await request<PersonApiResponseDTO>(
+    API_PATHS.peopleById(personId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
   return payload.data;
 }
 
@@ -1025,8 +1030,7 @@ export async function updatePerson(
             email: input.email ?? current.contact.email,
             phone: input.phone ?? current.contact.phone,
             cellphone: input.cellphone ?? current.contact.cellphone,
-            has_whatsapp:
-              input.has_whatsapp ?? current.contact.has_whatsapp,
+            has_whatsapp: input.has_whatsapp ?? current.contact.has_whatsapp,
           }
         : null,
       address:
@@ -1037,7 +1041,9 @@ export async function updatePerson(
         current.kind === 'client'
           ? {
               client_since:
-                input.client_since ?? current.client_details?.client_since ?? null,
+                input.client_since ??
+                current.client_details?.client_since ??
+                null,
               notes: input.notes ?? current.client_details?.notes ?? null,
             }
           : current.client_details,
@@ -1091,11 +1097,14 @@ export async function updatePerson(
     return updated;
   }
 
-  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
-    method: 'PATCH',
-    accessToken,
-    body: input,
-  });
+  const payload = await request<PersonApiResponseDTO>(
+    API_PATHS.peopleById(personId),
+    {
+      method: 'PATCH',
+      accessToken,
+      body: input,
+    },
+  );
   return payload.data;
 }
 
@@ -1184,9 +1193,37 @@ export async function listServices(
 ): Promise<ServiceListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
+    const filtered = mockServices.filter((service) => {
+      const search = params?.search?.trim().toLowerCase();
+      const price = Number(service.price);
+      const minPrice = Number(params?.min_price);
+      const maxPrice = Number(params?.max_price);
+
+      const matchesSearch =
+        !search ||
+        service.title.toLowerCase().includes(search) ||
+        service.description.toLowerCase().includes(search);
+      const matchesType =
+        !params?.type_name || service.type_name === params.type_name;
+      const matchesStatus =
+        !params?.is_active ||
+        service.is_active === (params.is_active === 'true');
+      const matchesMin =
+        !params?.min_price || (Number.isFinite(price) && price >= minPrice);
+      const matchesMax =
+        !params?.max_price || (Number.isFinite(price) && price <= maxPrice);
+
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesStatus &&
+        matchesMin &&
+        matchesMax
+      );
+    });
     return {
-      data: [...mockServices],
-      meta: { total: mockServices.length, page: 1, limit: 100, total_pages: 1 },
+      data: filtered,
+      meta: { total: filtered.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -1196,6 +1233,25 @@ export async function listServices(
     queryParams: params,
   });
   return payload;
+}
+
+export async function getService(
+  accessToken: string,
+  serviceId: string,
+): Promise<ServiceApiResponseDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(100);
+    const item = mockServices.find((service) => service.id === serviceId);
+    if (!item) {
+      throw new ApiError('Serviço não encontrado', 404, { error: 'not found' });
+    }
+    return { data: item };
+  }
+
+  return request<ServiceApiResponseDTO>(`${API_PATHS.services}/${serviceId}`, {
+    method: 'GET',
+    accessToken,
+  });
 }
 
 export async function createClient(
@@ -1365,9 +1421,7 @@ export async function updatePet(
   return payload.data;
 }
 
-function resolvePetGuardians(
-  guardianIDs?: string[],
-): PetGuardianDTO[] {
+function resolvePetGuardians(guardianIDs?: string[]): PetGuardianDTO[] {
   if (!guardianIDs || guardianIDs.length === 0) {
     return [];
   }
@@ -1689,6 +1743,8 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.limit != null) entries.push(`limit=${params.limit}`);
   if (params.search)
     entries.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.type_name)
+    entries.push(`type_name=${encodeURIComponent(params.type_name)}`);
   if (params.kind) entries.push(`kind=${encodeURIComponent(params.kind)}`);
   if (params.size) entries.push(`size=${encodeURIComponent(params.size)}`);
   if (params.temperament)
@@ -1696,6 +1752,10 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.race) entries.push(`race=${encodeURIComponent(params.race)}`);
   if (params.is_active)
     entries.push(`is_active=${encodeURIComponent(params.is_active)}`);
+  if (params.min_price)
+    entries.push(`min_price=${encodeURIComponent(params.min_price)}`);
+  if (params.max_price)
+    entries.push(`max_price=${encodeURIComponent(params.max_price)}`);
   if (params.panel) entries.push(`panel=${encodeURIComponent(params.panel)}`);
   return entries.length > 0 ? `?${entries.join('&')}` : '';
 }

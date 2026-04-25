@@ -70,7 +70,8 @@ Iniciada em 24/04/2026.
 - Implementado: teste de autorização bloqueando criação por usuário `system` com permissão apenas de visualização.
 - Implementado: filtros estruturados na UI por tipo, status e faixa de preço.
 - Implementado: detalhe agregado readonly selecionável no aside.
-- Pendente: validação visual por permissão no frontend e persistência dos filtros estruturados na URL/API.
+- Implementado: validação visual por permissão no frontend, mantendo usuários sem mutação em fluxo readonly.
+- Implementado: persistência dos filtros estruturados na URL e envio dos filtros para a API.
 
 ## Escopo Funcional Confirmado
 
@@ -251,10 +252,10 @@ Frontend:
 - [x] Implementar atualização agregada transacional.
 - [x] Garantir rollback completo em caso de falha parcial.
 - [x] Evoluir `ServiceHandler` para novo contrato.
-- [ ] Atualizar Swagger/docs do módulo de serviços.
+- [x] Atualizar Swagger/docs do módulo de serviços.
 - [x] Reestruturar `/services` para layout `lista + aside`.
 - [x] Implementar filtros estruturados na UI.
-- [ ] Persistir filtros estruturados na URL/API.
+- [x] Persistir filtros estruturados na URL/API.
 - [x] Implementar detalhe agregado readonly no aside.
 - [x] Implementar criação/edição agregada no aside.
 - [x] Adicionar botão `+` no menu lateral para criação direta.
