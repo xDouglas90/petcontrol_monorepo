@@ -386,6 +386,7 @@ describe('Router integration', () => {
     const peopleLink = screen.getByRole('link', { name: 'Pessoas' });
     const clientsLink = screen.getByRole('link', { name: 'Clientes' });
     const petsLink = screen.getByRole('link', { name: 'Pets' });
+    const servicesLink = screen.getByRole('link', { name: 'Serviços' });
     const settingsLink = screen.getByRole('link', { name: 'Configurações' });
 
     expect(dashboardLink.getAttribute('href')).toBe(
@@ -397,6 +398,7 @@ describe('Router integration', () => {
     expect(peopleLink.getAttribute('href')).toBe('/petcontrol-dev/people');
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
+    expect(servicesLink.getAttribute('href')).toBe('/petcontrol-dev/services');
     expect(settingsLink.getAttribute('href')).toBe('/petcontrol-dev/settings');
   });
 

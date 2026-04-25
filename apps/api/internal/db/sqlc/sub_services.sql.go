@@ -45,6 +45,25 @@ func (q *Queries) DeleteSubService(ctx context.Context, id pgtype.UUID) (SubServ
 	return i, err
 }
 
+const deleteSubServicesByServiceID = `-- name: DeleteSubServicesByServiceID :execrows
+UPDATE
+    sub_services
+SET
+    deleted_at = now(),
+    updated_at = now()
+WHERE
+    service_id = $1
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) DeleteSubServicesByServiceID(ctx context.Context, serviceid pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteSubServicesByServiceID, serviceid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getSubServiceByID = `-- name: GetSubServiceByID :one
 SELECT
     ss.id,

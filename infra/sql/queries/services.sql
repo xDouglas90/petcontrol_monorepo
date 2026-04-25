@@ -10,11 +10,28 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
     AND cs.is_active = TRUE
@@ -39,11 +56,28 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
     AND s.id = sqlc.arg('ID')
@@ -135,4 +169,3 @@ SELECT
             AND cs.service_id = sqlc.arg('ServiceID')
             AND cs.is_active = TRUE
             AND s.deleted_at IS NULL) AS is_valid;
-

@@ -264,6 +264,28 @@ let mockServices: ServiceDTO[] = [
     price: '89.90',
     discount_rate: '0.00',
     is_active: true,
+    sub_services_count: 1,
+    average_times_count: 1,
+    sub_services: [
+      {
+        id: '77777777-7777-7777-7777-777777777777',
+        type_id: '88888888-8888-8888-8888-888888888888',
+        title: 'Banho porte médio',
+        description: 'Banho completo para pets médios',
+        price: '89.90',
+        discount_rate: '0.00',
+        is_active: true,
+        average_times: [
+          {
+            id: '99999999-9999-9999-9999-999999999999',
+            pet_size: 'medium',
+            pet_kind: 'dog',
+            pet_temperament: 'playful',
+            average_time_minutes: 60,
+          },
+        ],
+      },
+    ],
   },
 ];
 
@@ -1406,6 +1428,26 @@ export async function createService(
       discount_rate: input.discount_rate ?? '0.00',
       image_url: input.image_url ?? null,
       is_active: input.is_active ?? true,
+      sub_services_count: input.sub_services.length,
+      average_times_count: input.sub_services.reduce(
+        (total, subService) => total + subService.average_times.length,
+        0,
+      ),
+      sub_services: input.sub_services.map((subService) => ({
+        id: crypto.randomUUID(),
+        type_id: crypto.randomUUID(),
+        title: subService.title,
+        description: subService.description,
+        notes: subService.notes ?? null,
+        price: subService.price,
+        discount_rate: subService.discount_rate ?? '0.00',
+        image_url: subService.image_url ?? null,
+        is_active: subService.is_active ?? true,
+        average_times: subService.average_times.map((averageTime) => ({
+          id: crypto.randomUUID(),
+          ...averageTime,
+        })),
+      })),
     };
     mockServices = [...mockServices, item];
     return item;
@@ -1430,7 +1472,34 @@ export async function updateService(
     if (!existing) {
       throw new ApiError('Serviço não encontrado', 404, { error: 'not found' });
     }
-    const updated = { ...existing, ...input };
+    const updated: ServiceDTO = {
+      ...existing,
+      ...input,
+      sub_services_count:
+        input.sub_services?.length ?? existing.sub_services_count,
+      average_times_count:
+        input.sub_services?.reduce(
+          (total, subService) => total + subService.average_times.length,
+          0,
+        ) ?? existing.average_times_count,
+      sub_services: input.sub_services
+        ? input.sub_services.map((subService) => ({
+            id: crypto.randomUUID(),
+            type_id: crypto.randomUUID(),
+            title: subService.title,
+            description: subService.description,
+            notes: subService.notes ?? null,
+            price: subService.price,
+            discount_rate: subService.discount_rate ?? '0.00',
+            image_url: subService.image_url ?? null,
+            is_active: subService.is_active ?? true,
+            average_times: subService.average_times.map((averageTime) => ({
+              id: crypto.randomUUID(),
+              ...averageTime,
+            })),
+          }))
+        : existing.sub_services,
+    };
     mockServices = mockServices.map((item) =>
       item.id === serviceId ? updated : item,
     );

@@ -858,6 +858,30 @@ export interface ServiceDTO {
   discount_rate: string;
   image_url?: string | null;
   is_active: boolean;
+  sub_services_count?: number;
+  average_times_count?: number;
+  sub_services?: ServiceSubServiceDTO[];
+}
+
+export interface ServiceSubServiceDTO {
+  id: UUID;
+  type_id: UUID;
+  title: string;
+  description: string;
+  notes?: string | null;
+  price: string;
+  discount_rate: string;
+  image_url?: string | null;
+  is_active: boolean;
+  average_times: ServiceAverageTimeDTO[];
+}
+
+export interface ServiceAverageTimeDTO {
+  id: UUID;
+  pet_size: PetSize;
+  pet_kind: PetKind;
+  pet_temperament: PetTemperament;
+  average_time_minutes: number;
 }
 
 export interface CreateServiceInput {
@@ -869,6 +893,7 @@ export interface CreateServiceInput {
   discount_rate?: string;
   image_url?: string;
   is_active?: boolean;
+  sub_services: CreateServiceSubServiceInput[];
 }
 
 export interface UpdateServiceInput {
@@ -880,6 +905,26 @@ export interface UpdateServiceInput {
   discount_rate?: string;
   image_url?: string;
   is_active?: boolean;
+  sub_services?: CreateServiceSubServiceInput[];
+}
+
+export interface CreateServiceSubServiceInput {
+  type_name?: string;
+  title: string;
+  description: string;
+  notes?: string;
+  price: string;
+  discount_rate?: string;
+  image_url?: string;
+  is_active?: boolean;
+  average_times: CreateServiceAverageTimeInput[];
+}
+
+export interface CreateServiceAverageTimeInput {
+  pet_size: PetSize;
+  pet_kind: PetKind;
+  pet_temperament: PetTemperament;
+  average_time_minutes: number;
 }
 
 export interface ServiceListApiResponseDTO extends PaginatedResponse<ServiceDTO> {}

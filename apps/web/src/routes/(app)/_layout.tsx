@@ -382,6 +382,42 @@ export function AppLayout() {
                   collapsedDesktop={isDesktopViewport && !sidebarOpen}
                   onNavigate={handleSidebarLinkClick}
                 />
+                <SidebarLink
+                  to={buildCompanyRoute(currentSlug, 'services')}
+                  icon={Sparkles}
+                  label={
+                    <span className="flex w-full items-center">
+                      <span className="flex-grow truncate">Serviços</span>
+                      <button
+                        aria-label="Adicionar serviço"
+                        type="button"
+                        title="Adicionar serviço"
+                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          navigate({
+                            to: buildCompanyRoute(currentSlug, 'services'),
+                            search: {},
+                            hash: '',
+                            replace: false,
+                          });
+                          setTimeout(() => {
+                            const event = new CustomEvent(
+                              'open-services-create-form',
+                            );
+                            window.dispatchEvent(event);
+                          }, 50);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </span>
+                  }
+                  expanded={isDesktopViewport ? sidebarOpen : true}
+                  collapsedDesktop={isDesktopViewport && !sidebarOpen}
+                  onNavigate={handleSidebarLinkClick}
+                />
               </nav>
 
               <div className="px-4 pb-4">

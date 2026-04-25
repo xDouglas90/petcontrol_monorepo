@@ -165,6 +165,24 @@ func TestSeedScriptCreatesOperationalSupportData(t *testing.T) {
 	`).Scan(&permissionCount)
 	require.NoError(t, err)
 	require.Equal(t, permissionCount, systemPermissionCount)
+	require.Equal(t, 2, systemPermissionCount)
+
+	rows, err := setup.Pool.Query(setup.Ctx, `
+		SELECT p.code
+		FROM permissions p
+		WHERE 'system'::user_role_type = ANY(p.default_roles)
+		ORDER BY p.code
+	`)
+	require.NoError(t, err)
+	defer rows.Close()
+	systemPermissionCodes := make([]string, 0, 2)
+	for rows.Next() {
+		var code string
+		require.NoError(t, rows.Scan(&code))
+		systemPermissionCodes = append(systemPermissionCodes, code)
+	}
+	require.NoError(t, rows.Err())
+	require.Equal(t, []string{"services:view", "users:view"}, systemPermissionCodes)
 
 	err = setup.Pool.QueryRow(setup.Ctx, `
 		SELECT COUNT(*)

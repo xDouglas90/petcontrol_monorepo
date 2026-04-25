@@ -28,6 +28,7 @@ type CreateServiceInput struct {
 	DiscountRate pgtype.Numeric
 	ImageURL     pgtype.Text
 	IsActive     bool
+	SubServices  []ServiceSubServiceInput
 }
 
 type UpdateServiceInput struct {
@@ -41,6 +42,36 @@ type UpdateServiceInput struct {
 	DiscountRate *pgtype.Numeric
 	ImageURL     *string
 	IsActive     *bool
+	SubServices  *[]ServiceSubServiceInput
+}
+
+type ServiceSubServiceInput struct {
+	TypeName     string
+	Title        string
+	Description  string
+	Notes        pgtype.Text
+	Price        pgtype.Numeric
+	DiscountRate pgtype.Numeric
+	ImageURL     pgtype.Text
+	IsActive     bool
+	AverageTimes []ServiceAverageTimeInput
+}
+
+type ServiceAverageTimeInput struct {
+	PetSize            sqlc.PetSize
+	PetKind            sqlc.PetKind
+	PetTemperament     sqlc.PetTemperament
+	AverageTimeMinutes int16
+}
+
+type ServiceDetail struct {
+	Item        sqlc.GetServiceByIDAndCompanyIDRow
+	SubServices []ServiceSubServiceDetail
+}
+
+type ServiceSubServiceDetail struct {
+	Item         sqlc.SubService
+	AverageTimes []sqlc.ServicesAverageTime
 }
 
 func NewServiceService(db clientTxStarter, queries *sqlc.Queries) *ServiceService {
@@ -67,10 +98,40 @@ func (s *ServiceService) GetServiceByID(ctx context.Context, companyID pgtype.UU
 	return item, err
 }
 
-func (s *ServiceService) CreateService(ctx context.Context, input CreateServiceInput) (sqlc.GetServiceByIDAndCompanyIDRow, error) {
+func (s *ServiceService) GetServiceDetailByID(ctx context.Context, companyID pgtype.UUID, serviceID pgtype.UUID) (ServiceDetail, error) {
+	item, err := s.GetServiceByID(ctx, companyID, serviceID)
+	if err != nil {
+		return ServiceDetail{}, err
+	}
+
+	subServices, err := s.queries.ListSubServicesByServiceID(ctx, sqlc.ListSubServicesByServiceIDParams{
+		ServiceID: serviceID,
+		Limit:     1000,
+		Offset:    0,
+	})
+	if err != nil {
+		return ServiceDetail{}, err
+	}
+
+	averageTimes, err := s.queries.ListServiceAverageTimesByServiceID(ctx, serviceID)
+	if err != nil {
+		return ServiceDetail{}, err
+	}
+
+	return ServiceDetail{
+		Item:        item,
+		SubServices: groupServiceAverageTimes(subServices, averageTimes),
+	}, nil
+}
+
+func (s *ServiceService) CreateService(ctx context.Context, input CreateServiceInput) (ServiceDetail, error) {
+	if err := validateServiceSubServices(input.SubServices); err != nil {
+		return ServiceDetail{}, err
+	}
+
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, err
+		return ServiceDetail{}, err
 	}
 	committed := false
 	defer func() {
@@ -82,7 +143,7 @@ func (s *ServiceService) CreateService(ctx context.Context, input CreateServiceI
 	txQueries := s.queries.WithTx(tx)
 	typeID, err := resolveServiceTypeID(ctx, txQueries, input.TypeName)
 	if err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, err
+		return ServiceDetail{}, err
 	}
 
 	created, err := txQueries.CreateService(ctx, sqlc.CreateServiceParams{
@@ -96,7 +157,7 @@ func (s *ServiceService) CreateService(ctx context.Context, input CreateServiceI
 		IsActive:     input.IsActive,
 	})
 	if err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, mapServiceDBError(err)
+		return ServiceDetail{}, mapServiceDBError(err)
 	}
 
 	_, err = txQueries.CreateCompanyService(ctx, sqlc.CreateCompanyServiceParams{
@@ -104,32 +165,54 @@ func (s *ServiceService) CreateService(ctx context.Context, input CreateServiceI
 		ServiceID: created.ID,
 	})
 	if err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, mapServiceDBError(err)
+		return ServiceDetail{}, mapServiceDBError(err)
+	}
+
+	if err := replaceServiceSubServices(ctx, txQueries, created.ID, typeID, input.SubServices); err != nil {
+		return ServiceDetail{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, err
+		return ServiceDetail{}, err
 	}
 	committed = true
 
-	return s.GetServiceByID(ctx, input.CompanyID, created.ID)
+	return s.GetServiceDetailByID(ctx, input.CompanyID, created.ID)
 }
 
-func (s *ServiceService) UpdateService(ctx context.Context, input UpdateServiceInput) (sqlc.GetServiceByIDAndCompanyIDRow, error) {
+func (s *ServiceService) UpdateService(ctx context.Context, input UpdateServiceInput) (ServiceDetail, error) {
 	if _, err := s.GetServiceByID(ctx, input.CompanyID, input.ServiceID); err != nil {
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, err
+		return ServiceDetail{}, err
 	}
 
+	if input.SubServices != nil {
+		if err := validateServiceSubServices(*input.SubServices); err != nil {
+			return ServiceDetail{}, err
+		}
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return ServiceDetail{}, err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	txQueries := s.queries.WithTx(tx)
 	typeID := pgtype.UUID{}
 	if input.TypeName != nil {
-		resolvedTypeID, err := resolveServiceTypeID(ctx, s.queries, *input.TypeName)
+		resolvedTypeID, err := resolveServiceTypeID(ctx, txQueries, *input.TypeName)
 		if err != nil {
-			return sqlc.GetServiceByIDAndCompanyIDRow{}, err
+			return ServiceDetail{}, err
 		}
 		typeID = resolvedTypeID
 	}
 
-	_, err := s.queries.UpdateServiceByIDAndCompanyID(ctx, sqlc.UpdateServiceByIDAndCompanyIDParams{
+	updated, err := txQueries.UpdateServiceByIDAndCompanyID(ctx, sqlc.UpdateServiceByIDAndCompanyIDParams{
 		TypeID:       typeID,
 		Title:        optionalText(input.Title),
 		Description:  optionalText(input.Description),
@@ -143,12 +226,29 @@ func (s *ServiceService) UpdateService(ctx context.Context, input UpdateServiceI
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return sqlc.GetServiceByIDAndCompanyIDRow{}, apperror.ErrNotFound
+			return ServiceDetail{}, apperror.ErrNotFound
 		}
-		return sqlc.GetServiceByIDAndCompanyIDRow{}, mapServiceDBError(err)
+		return ServiceDetail{}, mapServiceDBError(err)
 	}
 
-	return s.GetServiceByID(ctx, input.CompanyID, input.ServiceID)
+	if input.SubServices != nil {
+		if _, err := txQueries.DeleteServiceAverageTimesByServiceID(ctx, input.ServiceID); err != nil {
+			return ServiceDetail{}, err
+		}
+		if _, err := txQueries.DeleteSubServicesByServiceID(ctx, input.ServiceID); err != nil {
+			return ServiceDetail{}, err
+		}
+		if err := replaceServiceSubServices(ctx, txQueries, input.ServiceID, updated.TypeID, *input.SubServices); err != nil {
+			return ServiceDetail{}, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return ServiceDetail{}, err
+	}
+	committed = true
+
+	return s.GetServiceDetailByID(ctx, input.CompanyID, input.ServiceID)
 }
 
 func (s *ServiceService) DeactivateService(ctx context.Context, companyID pgtype.UUID, serviceID pgtype.UUID) error {
@@ -163,6 +263,84 @@ func (s *ServiceService) DeactivateService(ctx context.Context, companyID pgtype
 		return err
 	}
 	return nil
+}
+
+func replaceServiceSubServices(ctx context.Context, queries sqlc.Querier, serviceID pgtype.UUID, defaultTypeID pgtype.UUID, subServices []ServiceSubServiceInput) error {
+	for _, item := range subServices {
+		typeID := defaultTypeID
+		if strings.TrimSpace(item.TypeName) != "" {
+			resolvedTypeID, err := resolveServiceTypeID(ctx, queries, item.TypeName)
+			if err != nil {
+				return err
+			}
+			typeID = resolvedTypeID
+		}
+
+		created, err := queries.InsertSubService(ctx, sqlc.InsertSubServiceParams{
+			ServiceID:    serviceID,
+			TypeID:       typeID,
+			Title:        item.Title,
+			Description:  item.Description,
+			Notes:        item.Notes,
+			Price:        item.Price,
+			DiscountRate: item.DiscountRate,
+			ImageURL:     item.ImageURL,
+			IsActive:     pgtype.Bool{Bool: item.IsActive, Valid: true},
+		})
+		if err != nil {
+			return mapServiceDBError(err)
+		}
+
+		for _, averageTime := range item.AverageTimes {
+			_, err := queries.InsertServiceAverageTime(ctx, sqlc.InsertServiceAverageTimeParams{
+				ServiceID:          serviceID,
+				SubServiceID:       created.ID,
+				PetSize:            averageTime.PetSize,
+				PetKind:            averageTime.PetKind,
+				PetTemperament:     averageTime.PetTemperament,
+				AverageTimeMinutes: averageTime.AverageTimeMinutes,
+			})
+			if err != nil {
+				return mapServiceDBError(err)
+			}
+		}
+	}
+	return nil
+}
+
+func validateServiceSubServices(subServices []ServiceSubServiceInput) error {
+	if len(subServices) == 0 {
+		return apperror.ErrUnprocessableEntity
+	}
+	for _, item := range subServices {
+		if strings.TrimSpace(item.Title) == "" || strings.TrimSpace(item.Description) == "" || len(item.AverageTimes) == 0 {
+			return apperror.ErrUnprocessableEntity
+		}
+		for _, averageTime := range item.AverageTimes {
+			if averageTime.PetSize == "" || averageTime.PetKind == "" || averageTime.PetTemperament == "" || averageTime.AverageTimeMinutes <= 0 {
+				return apperror.ErrUnprocessableEntity
+			}
+		}
+	}
+	return nil
+}
+
+func groupServiceAverageTimes(subServices []sqlc.SubService, averageTimes []sqlc.ServicesAverageTime) []ServiceSubServiceDetail {
+	bySubServiceID := make(map[string][]sqlc.ServicesAverageTime, len(subServices))
+	for _, averageTime := range averageTimes {
+		if averageTime.SubServiceID.Valid {
+			bySubServiceID[averageTime.SubServiceID.String()] = append(bySubServiceID[averageTime.SubServiceID.String()], averageTime)
+		}
+	}
+
+	details := make([]ServiceSubServiceDetail, 0, len(subServices))
+	for _, subService := range subServices {
+		details = append(details, ServiceSubServiceDetail{
+			Item:         subService,
+			AverageTimes: bySubServiceID[subService.ID.String()],
+		})
+	}
+	return details
 }
 
 func resolveServiceTypeID(ctx context.Context, queries sqlc.Querier, rawName string) (pgtype.UUID, error) {

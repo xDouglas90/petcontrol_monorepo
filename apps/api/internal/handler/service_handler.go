@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,38 +19,83 @@ type ServiceHandler struct {
 }
 
 type createServiceRequest struct {
-	TypeName     string `json:"type_name"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	Notes        string `json:"notes"`
-	Price        string `json:"price"`
-	DiscountRate string `json:"discount_rate"`
-	ImageURL     string `json:"image_url"`
-	IsActive     *bool  `json:"is_active"`
+	TypeName     string                     `json:"type_name"`
+	Title        string                     `json:"title"`
+	Description  string                     `json:"description"`
+	Notes        string                     `json:"notes"`
+	Price        string                     `json:"price"`
+	DiscountRate string                     `json:"discount_rate"`
+	ImageURL     string                     `json:"image_url"`
+	IsActive     *bool                      `json:"is_active"`
+	SubServices  []serviceSubServiceRequest `json:"sub_services"`
 }
 
 type updateServiceRequest struct {
-	TypeName     *string `json:"type_name"`
-	Title        *string `json:"title"`
-	Description  *string `json:"description"`
-	Notes        *string `json:"notes"`
-	Price        *string `json:"price"`
-	DiscountRate *string `json:"discount_rate"`
-	ImageURL     *string `json:"image_url"`
-	IsActive     *bool   `json:"is_active"`
+	TypeName     *string                     `json:"type_name"`
+	Title        *string                     `json:"title"`
+	Description  *string                     `json:"description"`
+	Notes        *string                     `json:"notes"`
+	Price        *string                     `json:"price"`
+	DiscountRate *string                     `json:"discount_rate"`
+	ImageURL     *string                     `json:"image_url"`
+	IsActive     *bool                       `json:"is_active"`
+	SubServices  *[]serviceSubServiceRequest `json:"sub_services"`
 }
 
 type serviceResponse struct {
-	ID           string  `json:"id"`
-	TypeID       string  `json:"type_id"`
-	TypeName     string  `json:"type_name"`
-	Title        string  `json:"title"`
-	Description  string  `json:"description"`
-	Notes        *string `json:"notes,omitempty"`
-	Price        string  `json:"price"`
-	DiscountRate string  `json:"discount_rate"`
-	ImageURL     *string `json:"image_url,omitempty"`
-	IsActive     bool    `json:"is_active"`
+	ID                string                      `json:"id"`
+	TypeID            string                      `json:"type_id"`
+	TypeName          string                      `json:"type_name"`
+	Title             string                      `json:"title"`
+	Description       string                      `json:"description"`
+	Notes             *string                     `json:"notes,omitempty"`
+	Price             string                      `json:"price"`
+	DiscountRate      string                      `json:"discount_rate"`
+	ImageURL          *string                     `json:"image_url,omitempty"`
+	IsActive          bool                        `json:"is_active"`
+	SubServicesCount  int64                       `json:"sub_services_count"`
+	AverageTimesCount int64                       `json:"average_times_count"`
+	SubServices       []serviceSubServiceResponse `json:"sub_services,omitempty"`
+}
+
+type serviceSubServiceRequest struct {
+	TypeName     string                      `json:"type_name"`
+	Title        string                      `json:"title"`
+	Description  string                      `json:"description"`
+	Notes        string                      `json:"notes"`
+	Price        string                      `json:"price"`
+	DiscountRate string                      `json:"discount_rate"`
+	ImageURL     string                      `json:"image_url"`
+	IsActive     *bool                       `json:"is_active"`
+	AverageTimes []serviceAverageTimeRequest `json:"average_times"`
+}
+
+type serviceAverageTimeRequest struct {
+	PetSize            string `json:"pet_size"`
+	PetKind            string `json:"pet_kind"`
+	PetTemperament     string `json:"pet_temperament"`
+	AverageTimeMinutes int    `json:"average_time_minutes"`
+}
+
+type serviceSubServiceResponse struct {
+	ID           string                       `json:"id"`
+	TypeID       string                       `json:"type_id"`
+	Title        string                       `json:"title"`
+	Description  string                       `json:"description"`
+	Notes        *string                      `json:"notes,omitempty"`
+	Price        string                       `json:"price"`
+	DiscountRate string                       `json:"discount_rate"`
+	ImageURL     *string                      `json:"image_url,omitempty"`
+	IsActive     bool                         `json:"is_active"`
+	AverageTimes []serviceAverageTimeResponse `json:"average_times"`
+}
+
+type serviceAverageTimeResponse struct {
+	ID                 string `json:"id"`
+	PetSize            string `json:"pet_size"`
+	PetKind            string `json:"pet_kind"`
+	PetTemperament     string `json:"pet_temperament"`
+	AverageTimeMinutes int16  `json:"average_time_minutes"`
 }
 
 func NewServiceHandler(service *service.ServiceService) *ServiceHandler {
@@ -114,13 +160,13 @@ func (h *ServiceHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	item, err := h.service.GetServiceByID(c.Request.Context(), companyID, serviceID)
+	item, err := h.service.GetServiceDetailByID(c.Request.Context(), companyID, serviceID)
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "get_service_failed", "failed to get service")
 		return
 	}
 
-	middleware.JSONData(c, http.StatusOK, mapServiceItem(item))
+	middleware.JSONData(c, http.StatusOK, mapServiceDetail(item))
 }
 
 // Create godoc
@@ -162,6 +208,12 @@ func (h *ServiceHandler) Create(c *gin.Context) {
 		return
 	}
 
+	subServices, err := parseServiceSubServices(req.SubServices)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_sub_services", "invalid sub_services")
+		return
+	}
+
 	item, err := h.service.CreateService(c.Request.Context(), service.CreateServiceInput{
 		CompanyID:    companyID,
 		TypeName:     strings.TrimSpace(req.TypeName),
@@ -172,6 +224,7 @@ func (h *ServiceHandler) Create(c *gin.Context) {
 		DiscountRate: discountRate,
 		ImageURL:     textValue(strings.TrimSpace(req.ImageURL)),
 		IsActive:     req.IsActive == nil || *req.IsActive,
+		SubServices:  subServices,
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "create_service_failed", "failed to create service")
@@ -181,13 +234,13 @@ func (h *ServiceHandler) Create(c *gin.Context) {
 	middleware.AddAuditEntry(c, middleware.AuditEntry{
 		Action:      sqlc.LogActionCreate,
 		EntityTable: "services",
-		EntityID:    item.ID,
+		EntityID:    item.Item.ID,
 		CompanyID:   companyID,
 		OldData:     nil,
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, http.StatusCreated, mapServiceItem(item))
+	middleware.JSONData(c, http.StatusCreated, mapServiceDetail(item))
 }
 
 // Update godoc
@@ -248,6 +301,12 @@ func (h *ServiceHandler) Update(c *gin.Context) {
 		return
 	}
 
+	subServices, err := parseOptionalServiceSubServices(req.SubServices)
+	if err != nil {
+		middleware.JSONError(c, http.StatusUnprocessableEntity, "invalid_sub_services", "invalid sub_services")
+		return
+	}
+
 	item, err := h.service.UpdateService(c.Request.Context(), service.UpdateServiceInput{
 		CompanyID:    companyID,
 		ServiceID:    serviceID,
@@ -259,6 +318,7 @@ func (h *ServiceHandler) Update(c *gin.Context) {
 		DiscountRate: discountRate,
 		ImageURL:     parseOptionalTrimmed(req.ImageURL),
 		IsActive:     req.IsActive,
+		SubServices:  subServices,
 	})
 	if err != nil {
 		middleware.JSONError(c, apperror.HTTPStatus(err), "update_service_failed", "failed to update service")
@@ -268,13 +328,13 @@ func (h *ServiceHandler) Update(c *gin.Context) {
 	middleware.AddAuditEntry(c, middleware.AuditEntry{
 		Action:      sqlc.LogActionUpdate,
 		EntityTable: "services",
-		EntityID:    item.ID,
+		EntityID:    item.Item.ID,
 		CompanyID:   companyID,
 		OldData:     before,
 		NewData:     item,
 	})
 
-	middleware.JSONData(c, http.StatusOK, mapServiceItem(item))
+	middleware.JSONData(c, http.StatusOK, mapServiceDetail(item))
 }
 
 // Delete godoc
@@ -332,16 +392,18 @@ func mapServiceList(items []sqlc.ListServicesByCompanyIDRow) []serviceResponse {
 	mapped := make([]serviceResponse, 0, len(items))
 	for _, item := range items {
 		mapped = append(mapped, serviceResponse{
-			ID:           item.ID.String(),
-			TypeID:       item.TypeID.String(),
-			TypeName:     item.TypeName,
-			Title:        item.Title,
-			Description:  item.Description,
-			Notes:        nullableText(item.Notes),
-			Price:        numericToString(item.Price),
-			DiscountRate: numericToString(item.DiscountRate),
-			ImageURL:     nullableText(item.ImageUrl),
-			IsActive:     item.IsActive,
+			ID:                item.ID.String(),
+			TypeID:            item.TypeID.String(),
+			TypeName:          item.TypeName,
+			Title:             item.Title,
+			Description:       item.Description,
+			Notes:             nullableText(item.Notes),
+			Price:             numericToString(item.Price),
+			DiscountRate:      numericToString(item.DiscountRate),
+			ImageURL:          nullableText(item.ImageUrl),
+			IsActive:          item.IsActive,
+			SubServicesCount:  item.SubServicesCount,
+			AverageTimesCount: item.AverageTimesCount,
 		})
 	}
 	return mapped
@@ -349,17 +411,121 @@ func mapServiceList(items []sqlc.ListServicesByCompanyIDRow) []serviceResponse {
 
 func mapServiceItem(item sqlc.GetServiceByIDAndCompanyIDRow) serviceResponse {
 	return serviceResponse{
-		ID:           item.ID.String(),
-		TypeID:       item.TypeID.String(),
-		TypeName:     item.TypeName,
-		Title:        item.Title,
-		Description:  item.Description,
-		Notes:        nullableText(item.Notes),
-		Price:        numericToString(item.Price),
-		DiscountRate: numericToString(item.DiscountRate),
-		ImageURL:     nullableText(item.ImageUrl),
-		IsActive:     item.IsActive,
+		ID:                item.ID.String(),
+		TypeID:            item.TypeID.String(),
+		TypeName:          item.TypeName,
+		Title:             item.Title,
+		Description:       item.Description,
+		Notes:             nullableText(item.Notes),
+		Price:             numericToString(item.Price),
+		DiscountRate:      numericToString(item.DiscountRate),
+		ImageURL:          nullableText(item.ImageUrl),
+		IsActive:          item.IsActive,
+		SubServicesCount:  item.SubServicesCount,
+		AverageTimesCount: item.AverageTimesCount,
 	}
+}
+
+func mapServiceDetail(detail service.ServiceDetail) serviceResponse {
+	response := mapServiceItem(detail.Item)
+	response.SubServices = make([]serviceSubServiceResponse, 0, len(detail.SubServices))
+	for _, subService := range detail.SubServices {
+		item := subService.Item
+		mapped := serviceSubServiceResponse{
+			ID:           item.ID.String(),
+			TypeID:       item.TypeID.String(),
+			Title:        item.Title,
+			Description:  item.Description,
+			Notes:        nullableText(item.Notes),
+			Price:        numericToString(item.Price),
+			DiscountRate: numericToString(item.DiscountRate),
+			ImageURL:     nullableText(item.ImageUrl),
+			IsActive:     item.IsActive,
+			AverageTimes: make([]serviceAverageTimeResponse, 0, len(subService.AverageTimes)),
+		}
+		for _, averageTime := range subService.AverageTimes {
+			mapped.AverageTimes = append(mapped.AverageTimes, serviceAverageTimeResponse{
+				ID:                 averageTime.ID.String(),
+				PetSize:            string(averageTime.PetSize),
+				PetKind:            string(averageTime.PetKind),
+				PetTemperament:     string(averageTime.PetTemperament),
+				AverageTimeMinutes: averageTime.AverageTimeMinutes,
+			})
+		}
+		response.SubServices = append(response.SubServices, mapped)
+	}
+	return response
+}
+
+func parseOptionalServiceSubServices(raw *[]serviceSubServiceRequest) (*[]service.ServiceSubServiceInput, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	parsed, err := parseServiceSubServices(*raw)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
+}
+
+func parseServiceSubServices(raw []serviceSubServiceRequest) ([]service.ServiceSubServiceInput, error) {
+	items := make([]service.ServiceSubServiceInput, 0, len(raw))
+	for _, subService := range raw {
+		price, err := parseRequiredNumeric(subService.Price)
+		if err != nil {
+			return nil, err
+		}
+		discountRate, err := parseOptionalNumeric(subService.DiscountRate)
+		if err != nil {
+			return nil, err
+		}
+
+		averageTimes, err := parseServiceAverageTimes(subService.AverageTimes)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, service.ServiceSubServiceInput{
+			TypeName:     strings.TrimSpace(subService.TypeName),
+			Title:        strings.TrimSpace(subService.Title),
+			Description:  strings.TrimSpace(subService.Description),
+			Notes:        textValue(strings.TrimSpace(subService.Notes)),
+			Price:        price,
+			DiscountRate: discountRate,
+			ImageURL:     textValue(strings.TrimSpace(subService.ImageURL)),
+			IsActive:     subService.IsActive == nil || *subService.IsActive,
+			AverageTimes: averageTimes,
+		})
+	}
+	return items, nil
+}
+
+func parseServiceAverageTimes(raw []serviceAverageTimeRequest) ([]service.ServiceAverageTimeInput, error) {
+	items := make([]service.ServiceAverageTimeInput, 0, len(raw))
+	for _, averageTime := range raw {
+		if averageTime.AverageTimeMinutes <= 0 || averageTime.AverageTimeMinutes > 32767 {
+			return nil, strconv.ErrSyntax
+		}
+		petSize, err := parsePetSize(averageTime.PetSize)
+		if err != nil {
+			return nil, err
+		}
+		petKind, err := parsePetKind(averageTime.PetKind)
+		if err != nil {
+			return nil, err
+		}
+		petTemperament, err := parsePetTemperament(averageTime.PetTemperament)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, service.ServiceAverageTimeInput{
+			PetSize:            petSize,
+			PetKind:            petKind,
+			PetTemperament:     petTemperament,
+			AverageTimeMinutes: int16(averageTime.AverageTimeMinutes),
+		})
+	}
+	return items, nil
 }
 
 func parseRequiredNumeric(raw string) (pgtype.Numeric, error) {
@@ -406,5 +572,6 @@ func hasServiceUpdatePayload(req updateServiceRequest) bool {
 		req.Price != nil ||
 		req.DiscountRate != nil ||
 		req.ImageURL != nil ||
-		req.IsActive != nil
+		req.IsActive != nil ||
+		req.SubServices != nil
 }

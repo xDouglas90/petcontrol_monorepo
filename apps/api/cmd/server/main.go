@@ -154,12 +154,12 @@ func main() {
 	pets.DELETE("/:id", petHandler.Delete)
 
 	services := protected.Group("/services")
-	services.Use(middleware.RequireModule(queries, "SCH"))
-	services.GET("", serviceHandler.List)
-	services.POST("", serviceHandler.Create)
-	services.GET("/:id", serviceHandler.GetByID)
-	services.PUT("/:id", serviceHandler.Update)
-	services.DELETE("/:id", serviceHandler.Delete)
+	services.Use(middleware.RequireModule(queries, "SVC"))
+	services.GET("", middleware.RequirePermission(queries, service.PermissionServicesView), serviceHandler.List)
+	services.POST("", middleware.RequirePermission(queries, service.PermissionServicesCreate), serviceHandler.Create)
+	services.GET("/:id", middleware.RequirePermission(queries, service.PermissionServicesView), serviceHandler.GetByID)
+	services.PUT("/:id", middleware.RequirePermission(queries, service.PermissionServicesUpdate), serviceHandler.Update)
+	services.DELETE("/:id", middleware.RequirePermission(queries, service.PermissionServicesDelete), serviceHandler.Delete)
 
 	schedules := protected.Group("/schedules")
 	schedules.Use(middleware.RequireModule(queries, "SCH"))
