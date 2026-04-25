@@ -1106,22 +1106,22 @@ function PetListCard({
 
   return (
     <article
-      className={`group flex items-center justify-between gap-4 rounded-[1.8rem] border p-4 transition ${selected ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
+      className={`group rounded-[1.8rem] border p-4 transition ${selected ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
     >
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="flex w-full flex-col gap-3 text-left"
       >
         <div className="flex items-center gap-4">
-          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
             <img
               src={imageUrl}
               alt={pet.name}
               className="h-full w-full object-cover"
             />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium text-foreground group-hover:text-primary transition">
                 {pet.name}
@@ -1137,10 +1137,16 @@ function PetListCard({
             <p className="mt-0.5 text-sm text-muted">
               Tutor: {pet.owner_name ?? pet.owner_id}
             </p>
-            <p className="text-[11px] text-muted/70">
-              {resolvePetKindLabel(pet.kind)} · {resolvePetSizeLabel(pet.size)} · {resolvePetTemperamentLabel(pet.temperament)}
-            </p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-4 sm:grid-cols-3 border-t border-border/30 pt-3">
+          <MetaRow label="Tipo" value={resolvePetKindLabel(pet.kind)} />
+          <MetaRow label="Porte" value={resolvePetSizeLabel(pet.size)} />
+          <MetaRow label="Temperamento" value={resolvePetTemperamentLabel(pet.temperament)} />
+          <MetaRow label="Cor" value={pet.color || 'Não informada'} />
+          <MetaRow label="Sexo" value={pet.sex || 'Não informado'} />
+          <MetaRow label="Idade" value={resolvePetAgeLabel(pet.birth_date)} />
         </div>
       </button>
     </article>
@@ -1469,6 +1475,65 @@ function isPetTemperament(value: string | null): value is PetTemperament {
     value === 'playful' ||
     value === 'loving'
   );
+}
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-1.5">
+      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">
+        {label}
+      </span>
+      <span className="text-xs font-medium text-foreground">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function resolvePetAgeLabel(birthDate?: string | null): string {
+  if (!birthDate) {
+    return 'Não informada';
+  }
+
+  const parts = birthDate.split('-').map((part) => Number(part));
+  if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+    return 'Não informada';
+  }
+
+  const [year, month, day] = parts;
+  const today = new Date();
+  const nowYear = today.getFullYear();
+  const nowMonth = today.getMonth() + 1;
+  const nowDay = today.getDate();
+
+  let years = nowYear - year;
+  let months = nowMonth - month;
+  let days = nowDay - day;
+
+  if (days < 0) {
+    months -= 1;
+    const previousMonthLastDay = new Date(nowYear, nowMonth - 1, 0).getDate();
+    days += previousMonthLastDay;
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  if (years < 0) {
+    return 'Não informada';
+  }
+
+  if (years > 0) {
+    return years === 1 ? '1 ano' : `${years} anos`;
+  }
+
+  if (months > 0) {
+    return months === 1 ? '1 mês' : `${months} meses`;
+  }
+
+  return days === 1 ? '1 dia' : `${days} dias`;
 }
 
 function resolvePetKindLabel(kind: PetKind) {
