@@ -489,7 +489,7 @@ export function PetsPage() {
                 <StateMessage message="Nenhum pet encontrado com os filtros atuais." />
               ) : null}
 
-              <div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {visiblePets.map((pet) => {
                   const isSelected = pet.id === activeSelectedPetId;
                   return (
@@ -955,9 +955,7 @@ function PetDetailPanel({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-muted">
-          Detalhe
-        </p>
+        <p className="text-xs uppercase tracking-[0.3em] text-muted">Detalhe</p>
         <h2 className="mt-2 font-display text-3xl text-foreground">
           {pet.name}
         </h2>
@@ -1140,10 +1138,13 @@ function PetListCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-4 sm:grid-cols-3 border-t border-border/30 pt-3">
+        <div className="grid grid-cols-2 gap-x-1 sm:grid-cols-3 border-t border-border/30 pt-2">
           <MetaRow label="Tipo" value={resolvePetKindLabel(pet.kind)} />
           <MetaRow label="Porte" value={resolvePetSizeLabel(pet.size)} />
-          <MetaRow label="Temperamento" value={resolvePetTemperamentLabel(pet.temperament)} />
+          <MetaRow
+            label="Temperamento"
+            value={resolvePetTemperamentLabel(pet.temperament)}
+          />
           <MetaRow label="Cor" value={pet.color || 'Não informada'} />
           <MetaRow label="Sexo" value={pet.sex || 'Não informado'} />
           <MetaRow label="Idade" value={resolvePetAgeLabel(pet.birth_date)} />
@@ -1217,9 +1218,7 @@ function ToggleField({
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-b border-border py-3 pr-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-muted">
-        {label}
-      </p>
+      <p className="text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
       <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
@@ -1483,9 +1482,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
       <span className="text-[10px] uppercase tracking-[0.2em] text-muted">
         {label}
       </span>
-      <span className="text-xs font-medium text-foreground">
-        {value}
-      </span>
+      <span className="text-xs font-medium text-foreground">{value}</span>
     </div>
   );
 }

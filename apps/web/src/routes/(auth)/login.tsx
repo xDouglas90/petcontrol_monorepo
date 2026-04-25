@@ -77,20 +77,20 @@ export function LoginPage() {
                 isHealthLoading
                   ? 'border-border/50 bg-surface/50 text-muted/70'
                   : isHealthError
-                    ? 'border-red-100 bg-red-50 text-red-600'
+                    ? 'border-rose-400/30 bg-rose-500/10 text-rose-300'
                     : authMode === 'mock'
-                      ? 'border-amber-100 bg-amber-50 text-amber-600'
-                      : 'border-emerald-100 bg-emerald-50 text-emerald-600',
+                      ? 'border-amber-400/30 bg-amber-500/10 text-amber-300'
+                      : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300',
               )}
             >
               {isHealthLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-muted/70" />
               ) : isHealthError ? (
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-rose-400" />
               ) : authMode === 'mock' ? (
-                <Sparkles className="h-4 w-4 text-amber-500" />
+                <Sparkles className="h-4 w-4 text-amber-400" />
               ) : (
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               )}
               {isHealthLoading
                 ? 'Verificando conexão...'
@@ -111,7 +111,7 @@ export function LoginPage() {
                 />
                 <h1 className="mt-4 font-display text-5xl leading-[1.1] text-foreground sm:text-6xl">
                   Gerencie sua PetShop com{' '}
-                  <span className="text-sky-600">precisão</span> e elegância.
+                  <span className="text-sky-400">precisão</span> e elegância.
                 </h1>
               </div>
               <p className="max-w-xl text-lg leading-relaxed text-muted">
@@ -143,7 +143,7 @@ export function LoginPage() {
         <section className="flex items-center justify-center">
           <div className="w-full max-w-lg rounded-[2.5rem] border border-border/50 bg-surface p-8 shadow-premium sm:p-10">
             <div className="mb-10 space-y-2 text-center lg:text-left">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-600/80">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary/80">
                 Bem-vindo
               </p>
               <h2 className="font-display text-4xl text-foreground">
@@ -175,7 +175,7 @@ export function LoginPage() {
               />
 
               {mutation.error instanceof ApiError ? (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
                   {mutation.error.message}
                 </div>
               ) : null}
@@ -184,7 +184,7 @@ export function LoginPage() {
                 type="submit"
                 disabled={mutation.isPending}
                 className={cn(
-                  'group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 py-4 text-sm font-bold text-white transition-all hover:bg-sky-700 shadow-md hover:shadow-lg active:scale-[0.98]',
+                  'group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 py-4 text-sm font-bold text-white transition-all hover:bg-sky-500 shadow-md hover:shadow-lg active:scale-[0.98]',
                   'disabled:cursor-not-allowed disabled:opacity-70',
                 )}
               >
@@ -193,16 +193,16 @@ export function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-10 grid gap-3 rounded-[1.5rem] border border-border/50 bg-surface/50 p-5 text-sm">
+            <div className="mt-10 grid gap-3 rounded-[1.5rem] border border-border/50 bg-surface/30 p-5 text-sm">
               <div className="flex items-center justify-between gap-4">
                 <span className="font-medium text-muted">Servidor</span>
-                <code className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm">
+                <code className="rounded-full border border-border/50 bg-surface px-3 py-1 text-xs font-semibold text-primary shadow-sm">
                   {import.meta.env.VITE_API_URL ? 'Cloud API' : 'Localhost'}
                 </code>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="font-medium text-muted">Ambiente</span>
-                <code className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm uppercase">
+                <code className="rounded-full border border-border/50 bg-surface px-3 py-1 text-xs font-semibold text-primary shadow-sm uppercase">
                   {getAuthMode()}
                 </code>
               </div>
@@ -224,8 +224,8 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border/50 bg-surface p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+    <article className="rounded-2xl border border-border/50 bg-surface/30 p-5 transition-all hover:bg-surface/60 hover:border-border">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-surface text-primary shadow-sm">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="font-display text-lg text-foreground">{title}</h3>
