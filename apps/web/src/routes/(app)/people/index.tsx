@@ -958,19 +958,19 @@ export function PeoplePage() {
   }
 
   return (
-    <div className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
-      <div className="grid min-h-full grid-cols-1 divide-y divide-stone-100 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
-        <section>
+    <main className="flex min-w-0 flex-col min-h-full">
+      <div className="flex-1 grid grid-cols-1 divide-y divide-border/50 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
+        <section className="flex flex-col min-h-full">
           <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-muted">
                   Gestão de Pessoas
                 </p>
-                <h1 className="mt-3 font-display text-4xl text-stone-950 sm:text-5xl">
+                <h1 className="mt-3 font-display text-4xl text-foreground sm:text-5xl">
                   Pessoas
                 </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-stone-500">
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
                   Base de pessoas do sistema. Visualize, gerencie e evolua o
                   cadastro de clientes, funcionários, fornecedores e
                   responsáveis em um único lugar.
@@ -980,7 +980,7 @@ export function PeoplePage() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-white transition hover:bg-sky-700 shadow-sm shadow-sky-200"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground transition hover:bg-sky-700 shadow-sm shadow-sky-200"
               >
                 Inserir pessoa
               </button>
@@ -994,7 +994,7 @@ export function PeoplePage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por nome, CPF ou tipo..."
-                className="h-12 flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:bg-white"
+                className="h-12 flex-1 rounded-2xl border border-border bg-surface/50 px-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface"
               />
 
               <select
@@ -1003,7 +1003,7 @@ export function PeoplePage() {
                 onChange={(event) =>
                   setSelectedKind(event.target.value as 'all' | PersonKind)
                 }
-                className="h-12 rounded-2xl border border-stone-200 bg-white px-4 text-sm text-stone-700 outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
               >
                 {PERSON_KIND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1013,7 +1013,7 @@ export function PeoplePage() {
               </select>
             </div>
 
-            <div className="mt-8 space-y-px divide-y divide-stone-100 border-y border-stone-100">
+            <div className="mt-8 space-y-px divide-y divide-border/50 border-y border-border/50">
               {peopleQuery.isLoading ? (
                 <PeopleStateMessage message="Carregando pessoas..." />
               ) : null}
@@ -1045,24 +1045,24 @@ export function PeoplePage() {
                     }}
                     className={`flex w-full flex-col gap-3 p-6 text-left transition ${
                       isSelected
-                        ? 'bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] ring-1 ring-inset ring-sky-100'
-                        : 'bg-white hover:bg-stone-50'
+                        ? 'bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] ring-1 ring-inset ring-sky-900/50'
+                        : 'bg-surface hover:bg-surface/50'
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-2">
-                          <h2 className="font-display text-xl text-stone-900">
+                          <h2 className="font-display text-xl text-foreground">
                             {person.full_name ?? 'Pessoa sem identificação'}
                           </h2>
-                          <p className="text-sm text-stone-500">
+                          <p className="text-sm text-muted">
                             {resolveKindLabel(person.kind)}
                           </p>
                         </div>
-                        <p className="mt-2 text-sm text-stone-400 md:hidden">
+                        <p className="mt-2 text-sm text-muted md:hidden">
                           {person.email ?? 'Email não informado'}
                         </p>
-                        <div className="mt-2 flex flex-col gap-1 text-xs text-stone-400 md:flex-row md:flex-wrap md:items-center md:gap-2">
+                        <div className="mt-2 flex flex-col gap-1 text-xs text-muted md:flex-row md:flex-wrap md:items-center md:gap-2">
                           <span>{person.email ?? 'Email não informado'}</span>
                           {person.cpf ? (
                             <>
@@ -1094,7 +1094,7 @@ export function PeoplePage() {
                         className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
                           person.is_active
                             ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-stone-200 text-stone-600'
+                            : 'bg-stone-200 text-foreground'
                         }`}
                       >
                         {person.is_active ? 'Ativo' : 'Inativo'}
@@ -1112,15 +1112,15 @@ export function PeoplePage() {
           </div>
         </section>
 
-        <aside className="bg-white p-6 lg:p-10">
+        <aside className="bg-surface/30 p-6 lg:p-10">
           {panelMode === 'create' || panelMode === 'edit' ? (
             <div className="sticky top-10">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
                     {panelMode === 'create' ? 'Nova pessoa' : 'Editar pessoa'}
                   </p>
-                  <h2 className="mt-4 font-display text-3xl text-stone-950">
+                  <h2 className="mt-4 font-display text-3xl text-foreground">
                     {panelMode === 'create'
                       ? 'Formulário de cadastro'
                       : form.full_name || 'Atualizar cadastro'}
@@ -1130,13 +1130,13 @@ export function PeoplePage() {
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50"
+                  className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/50"
                 >
                   Cancelar
                 </button>
               </div>
 
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
                 Campos com * são obrigatórios.
               </p>
 
@@ -1170,7 +1170,7 @@ export function PeoplePage() {
                     </select>
                   </Field>
                 ) : (
-                  <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
+                  <div className="rounded-2xl border border-border bg-surface/50 px-4 py-3 text-sm text-foreground">
                     Tipo atual: {resolveKindLabel(form.kind)}
                   </div>
                 )}
@@ -1671,7 +1671,7 @@ export function PeoplePage() {
                             ))}
                           </select>
                         </Field>
-                        <p className="text-xs leading-5 text-stone-500">
+                        <p className="text-xs leading-5 text-muted">
                           Segure <strong>Ctrl</strong> ou <strong>Cmd</strong>{' '}
                           para selecionar mais de um pet.
                         </p>
@@ -2338,7 +2338,7 @@ export function PeoplePage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSaving
                       ? 'Salvando...'
@@ -2349,7 +2349,7 @@ export function PeoplePage() {
                   <button
                     type="button"
                     onClick={cancelForm}
-                    className="inline-flex h-12 items-center justify-center rounded-2xl border border-stone-200 px-6 text-sm font-semibold text-stone-600 transition hover:bg-stone-50"
+                    className="inline-flex h-12 items-center justify-center rounded-2xl border border-border px-6 text-sm font-semibold text-foreground transition hover:bg-surface/50"
                   >
                     Voltar
                   </button>
@@ -2360,10 +2360,10 @@ export function PeoplePage() {
             <div className="sticky top-10">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
                     Seleção atual
                   </p>
-                  <h2 className="mt-4 font-display text-3xl text-stone-950">
+                  <h2 className="mt-4 font-display text-3xl text-foreground">
                     {selectedPerson.full_name ?? 'Pessoa sem identificação'}
                   </h2>
                 </div>
@@ -2374,7 +2374,7 @@ export function PeoplePage() {
                     onClick={startEdit}
                     title="Editar"
                     aria-label="Editar"
-                    className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+                    className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/50"
                   >
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -2679,7 +2679,7 @@ export function PeoplePage() {
               ) : null}
             </div>
           ) : (
-            <div className="flex h-full min-h-[18rem] items-center justify-center text-center text-sm text-stone-400">
+            <div className="flex h-full min-h-[18rem] items-center justify-center text-center text-sm text-muted">
               <div className="max-w-[200px]">
                 <p>
                   Selecione uma pessoa da lista para abrir o painel lateral.
@@ -2689,14 +2689,14 @@ export function PeoplePage() {
           )}
         </aside>
       </div>
-    </div>
+    </main>
   );
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <dl className="border-b border-stone-100 pb-3 last:border-0">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.24em] text-stone-400">
+    <dl className="border-b border-border/50 pb-3 last:border-0">
+      <dt className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {label}
       </dt>
       <dd className="mt-1 text-sm font-medium text-stone-800">{value}</dd>
@@ -2715,7 +2715,7 @@ function DetailSection({
 }) {
   return (
     <section>
-      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-stone-400">
+      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {title}
       </p>
       {errorMessages && errorMessages.length > 0 ? (
@@ -2743,7 +2743,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-stone-400">
+      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {label}
         {required ? <span className="ml-1 text-rose-500">*</span> : null}
       </span>
@@ -2765,11 +2765,11 @@ function ToggleRow({
 }) {
   return (
     <label
-      className={`flex items-center justify-between gap-4 rounded-2xl border border-stone-200 px-4 py-3 ${
-        disabled ? 'cursor-not-allowed bg-stone-50/80 opacity-70' : ''
+      className={`flex items-center justify-between gap-4 rounded-2xl border border-border px-4 py-3 ${
+        disabled ? 'cursor-not-allowed bg-surface/30 opacity-70' : ''
       }`}
     >
-      <span className="text-sm font-medium text-stone-700">{label}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
       <input
         type="checkbox"
         checked={checked}
@@ -2793,7 +2793,7 @@ function PeopleStateMessage({
       className={`rounded-2xl border px-4 py-3 text-sm ${
         tone === 'error'
           ? 'border-rose-200 bg-rose-50 text-rose-700'
-          : 'border-stone-200 bg-stone-50 text-stone-500'
+          : 'border-border bg-surface/50 text-muted'
       }`}
     >
       {message}
@@ -2802,7 +2802,7 @@ function PeopleStateMessage({
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:bg-white';
+  'w-full rounded-2xl border border-border bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface';
 
 function resolveKindLabel(kind: PersonKind) {
   switch (kind) {

@@ -360,7 +360,10 @@ export function ServicesPage() {
     setPanelMode('detail');
   }
 
-  const services = servicesQuery.data?.data ?? [];
+  const services = useMemo(
+    () => servicesQuery.data?.data ?? [],
+    [servicesQuery.data?.data],
+  );
   const typeOptions = useMemo(
     () =>
       Array.from(
@@ -403,15 +406,15 @@ export function ServicesPage() {
   }, [activeSelectedServiceId, panelMode, selectedServiceId]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px] h-full p-6">
+      <section className="app-panel p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+            <p className="app-eyebrow">
               Catálogo
             </p>
-            <h2 className="mt-2 font-display text-3xl text-white">Serviços</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+            <h2 className="mt-2 font-display text-3xl text-foreground">Serviços</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted">
               Serviços, subserviços e tempos médios usados pelos agendamentos do
               tenant.
             </p>
@@ -420,7 +423,7 @@ export function ServicesPage() {
             type="button"
             onClick={resetForm}
             disabled={!canManageServices}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface/50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Novo
           </button>
@@ -509,7 +512,7 @@ export function ServicesPage() {
           {services.map((service) => (
             <article
               key={service.id}
-              className={`rounded-3xl border p-4 transition ${selectedServiceId === service.id ? 'border-primary/40 bg-primary/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+              className={`rounded-3xl border p-4 transition ${selectedServiceId === service.id ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/50 hover:bg-surface/50'}`}
             >
               <div
                 className="flex cursor-pointer flex-wrap items-start justify-between gap-3"
@@ -525,17 +528,17 @@ export function ServicesPage() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-xl text-white">
+                    <h3 className="font-display text-xl text-foreground">
                       {service.title}
                     </h3>
                     <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
                       {service.is_active ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="mt-1 text-sm text-muted">
                     {service.type_name} · R$ {service.price}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted">
                     {service.sub_services_count ?? 0} subserviço(s) ·{' '}
                     {service.average_times_count ?? 0} tempo(s) médio(s)
                   </p>
@@ -563,7 +566,7 @@ export function ServicesPage() {
         />
       </section>
 
-      <aside className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
+      <aside className="app-panel p-6">
         {showDetail ? (
           <ServiceDetailPanel
             service={selectedService}
@@ -576,10 +579,10 @@ export function ServicesPage() {
           <StateMessage message="Selecione um serviço para visualizar os detalhes." />
         ) : (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted">
               {editingServiceId ? 'Editar serviço' : 'Novo serviço'}
             </p>
-            <h3 className="mt-2 font-display text-2xl text-white">
+            <h3 className="mt-2 font-display text-2xl text-foreground">
               {editingServiceId ? 'Atualizar catálogo' : 'Criar catálogo'}
             </h3>
 
@@ -649,13 +652,13 @@ export function ServicesPage() {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-foreground">
                     Subserviços
                   </p>
                   <button
                     type="button"
                     onClick={addSubService}
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                    className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1 text-xs text-foreground transition hover:bg-surface/50"
                   >
                     Adicionar
                   </button>
@@ -664,10 +667,10 @@ export function ServicesPage() {
                 {form.sub_services.map((subService, subServiceIndex) => (
                   <div
                     key={subServiceIndex}
-                    className="rounded-3xl border border-white/10 bg-white/5 p-4"
+                    className="rounded-3xl border border-border/50 bg-surface/50 p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-foreground">
                         Subserviço {subServiceIndex + 1}
                       </p>
                       <button
@@ -733,13 +736,13 @@ export function ServicesPage() {
 
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
                             Tempos médios
                           </p>
                           <button
                             type="button"
                             onClick={() => addAverageTime(subServiceIndex)}
-                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                            className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1 text-xs text-foreground transition hover:bg-surface/50"
                           >
                             Adicionar
                           </button>
@@ -749,10 +752,10 @@ export function ServicesPage() {
                           (averageTime, averageTimeIndex) => (
                             <div
                               key={averageTimeIndex}
-                              className="rounded-2xl border border-white/10 bg-slate-950/40 p-3"
+                              className="rounded-2xl border border-border/50 bg-surface/50 p-3"
                             >
                               <div className="flex items-center justify-between gap-3">
-                                <p className="text-sm text-slate-200">
+                                <p className="text-sm text-foreground">
                                   Tempo {averageTimeIndex + 1}
                                 </p>
                                 <button
@@ -886,7 +889,7 @@ export function ServicesPage() {
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
 function cloneInitialForm(): ServiceFormState {
   return {
@@ -1065,7 +1068,7 @@ function FilterField({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+      <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
         {label}
       </span>
       {children}
@@ -1084,7 +1087,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
       {children}
     </label>
   );
@@ -1134,26 +1137,26 @@ function ServiceDetailPanel({
 
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+      <p className="app-eyebrow">
         Detalhe
       </p>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-2xl text-white">{service.title}</h3>
-          <p className="mt-1 text-sm text-slate-300">{service.type_name}</p>
+          <h3 className="font-display text-2xl text-foreground">{service.title}</h3>
+          <p className="mt-1 text-sm text-muted">{service.type_name}</p>
         </div>
         <span
           className={`rounded-full border px-3 py-1 text-xs ${
             service.is_active
               ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100'
-              : 'border-slate-400/30 bg-slate-500/10 text-slate-200'
+              : 'border-slate-400/30 bg-slate-500/10 text-foreground'
           }`}
         >
           {service.is_active ? 'Ativo' : 'Inativo'}
         </span>
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-slate-300">
+      <p className="mt-4 text-sm leading-6 text-muted">
         {service.description}
       </p>
 
@@ -1177,18 +1180,18 @@ function ServiceDetailPanel({
       </div>
 
       {service.notes ? (
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <div className="mt-5 rounded-2xl border border-border/50 bg-surface/50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
             Notas
           </p>
-          <p className="mt-2 text-sm text-slate-300">{service.notes}</p>
+          <p className="mt-2 text-sm text-muted">{service.notes}</p>
         </div>
       ) : null}
 
       <div className="mt-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-white">Subserviços</p>
-          <span className="text-xs text-slate-500">{subServices.length}</span>
+          <p className="text-sm font-semibold text-foreground">Subserviços</p>
+          <span className="text-xs text-muted">{subServices.length}</span>
         </div>
 
         {subServices.length === 0 ? (
@@ -1198,22 +1201,22 @@ function ServiceDetailPanel({
         {subServices.map((subService) => (
           <div
             key={subService.id}
-            className="rounded-3xl border border-white/10 bg-white/5 p-4"
+            className="rounded-3xl border border-border/50 bg-surface/50 p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-display text-lg text-white">
+                <p className="font-display text-lg text-foreground">
                   {subService.title}
                 </p>
-                <p className="mt-1 text-sm text-slate-300">
+                <p className="mt-1 text-sm text-muted">
                   R$ {subService.price}
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300">
+              <span className="rounded-full border border-border/50 px-2 py-1 text-xs text-muted">
                 {subService.average_times.length} tempo(s)
               </span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted">
               {subService.description}
             </p>
 
@@ -1222,7 +1225,7 @@ function ServiceDetailPanel({
                 {subService.average_times.map((averageTime) => (
                   <div
                     key={averageTime.id}
-                    className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2 text-xs text-slate-300"
+                    className="rounded-2xl border border-border/50 bg-surface/50 px-3 py-2 text-xs text-muted"
                   >
                     {formatOptionLabel(petSizeOptions, averageTime.pet_size)} ·{' '}
                     {formatOptionLabel(petKindOptions, averageTime.pet_kind)} ·{' '}
@@ -1251,7 +1254,7 @@ function ServiceDetailPanel({
           <button
             type="button"
             onClick={onCreate}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+            className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface/50"
           >
             Novo
           </button>
@@ -1270,11 +1273,11 @@ function ServiceDetailPanel({
 
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+    <div className="rounded-2xl border border-border/50 bg-surface/50 p-3">
+      <p className="text-xs uppercase tracking-[0.16em] text-muted">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }
@@ -1298,7 +1301,7 @@ function Actions({
       <button
         type="button"
         onClick={onEdit}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+        className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1 text-xs text-foreground transition hover:bg-surface/50"
       >
         Editar
       </button>
@@ -1322,7 +1325,7 @@ function StateMessage({
 }) {
   return (
     <div
-      className={`rounded-2xl border px-4 py-3 text-sm ${tone === 'error' ? 'border-rose-400/30 bg-rose-500/10 text-rose-100' : 'border-white/10 bg-white/5 text-slate-300'}`}
+      className={`rounded-2xl border px-4 py-3 text-sm ${tone === 'error' ? 'border-rose-400/30 bg-rose-500/10 text-rose-100' : 'border-border/50 bg-surface/50 text-muted'}`}
     >
       {message}
     </div>
@@ -1359,7 +1362,7 @@ function FormActions({
       <button
         type="button"
         onClick={onReset}
-        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+        className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface/50"
       >
         Limpar
       </button>

@@ -91,11 +91,11 @@ export function DashboardPage() {
     !systemConfig
   ) {
     return (
-      <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-6 text-rose-700">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em]">
+      <section className="app-panel border-rose-500/30 bg-rose-500/10 p-6 text-rose-500">
+        <p className="app-eyebrow text-rose-500">
           Dashboard indisponível
         </p>
-        <h2 className="mt-3 font-display text-3xl text-rose-900">
+        <h2 className="mt-3 font-display text-3xl text-rose-400">
           Não foi possível carregar os dados operacionais da empresa.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7">
@@ -108,16 +108,16 @@ export function DashboardPage() {
 
   if (currentUser.role !== 'admin') {
     return (
-      <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-400">
+      <section className="app-panel p-6 shadow-premium">
+        <p className="app-eyebrow">
           Home em preparação
         </p>
-        <h2 className="mt-3 font-display text-3xl text-stone-900">
+        <h2 className="mt-3 font-display text-3xl text-foreground">
           A experiência inicial para o perfil{' '}
-          <span className="lowercase">{currentUser.role}</span> ainda será
+          <span className="lowercase text-primary">{currentUser.role}</span> ainda será
           construída.
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-500">
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
           Nesta etapa, o dashboard completo está sendo priorizado para o papel
           de administrador da empresa.
         </p>
@@ -186,31 +186,31 @@ export function DashboardPage() {
   ] as const;
 
   return (
-    <main className="flex min-w-0 flex-col divide-y divide-stone-100 min-h-full">
+    <main className="flex min-w-0 flex-col divide-y divide-border/50 min-h-full">
       <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
-              Dashboard admin
+            <p className="app-eyebrow text-[11px]">
+              VISÃO GERAL
             </p>
             <div className="mt-3 flex items-center justify-between gap-4">
-              <h1 className="font-display text-4xl text-stone-950 sm:text-5xl">
+              <h1 className="font-display text-4xl text-foreground sm:text-5xl">
                 Olá, {greetingName}
               </h1>
 
-              <div className="flex items-center gap-3 text-stone-400">
+              <div className="flex items-center gap-3 text-muted">
                 <CalendarDays className="h-5 w-5" />
                 <div className="hidden sm:block">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em]">
+                  <p className="app-eyebrow text-[11px]">
                     Hoje
                   </p>
-                  <span className="text-sm font-medium text-stone-700">
+                  <span className="text-sm font-medium text-foreground">
                     {formatLongDate(now)}
                   </span>
                 </div>
               </div>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-5 text-stone-500">
+            <p className="mt-4 max-w-2xl text-sm leading-5 text-muted">
               Você está visualizando a operação de {company.fantasy_name}, com
               foco em agenda diária, comparação mensal e eficiência da meta.
             </p>
@@ -227,14 +227,14 @@ export function DashboardPage() {
 
       <section className="p-6 lg:p-10">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+          <p className="app-eyebrow">
             Performance
           </p>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="font-display text-2xl text-stone-950">
+            <h3 className="font-display text-2xl text-foreground">
               Ocupação por horário operacional
             </h3>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600">
+            <div className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1.5 text-xs font-medium text-foreground">
               <select
                 id="dashboard-week-range"
                 aria-label="Selecionar semana de performance"
@@ -250,7 +250,7 @@ export function DashboardPage() {
               </select>
             </div>
           </div>
-          <p className="mt-2 text-sm text-stone-500">
+          <p className="mt-2 text-sm text-muted">
             Comparativo da semana selecionada com o mesmo recorte do mês
             anterior, respeitando a janela operacional da empresa.
           </p>
@@ -265,7 +265,7 @@ export function DashboardPage() {
           />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-6 text-sm text-stone-500">
+        <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted">
           <LegendDot color="bg-sky-400" label="Mês atual" />
           <LegendDot color="bg-amber-400" label="Mês anterior" />
         </div>
@@ -274,41 +274,41 @@ export function DashboardPage() {
       <section className="p-6 lg:p-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+            <p className="app-eyebrow">
               Operação atual
             </p>
-            <h3 className="font-display text-2xl text-stone-950">
+            <h3 className="font-display text-2xl text-foreground">
               Agendamentos em andamento
             </h3>
-            <span className="text-xs font-medium text-stone-400">
+            <span className="text-xs font-medium text-muted">
               {currentShiftLabel}
             </span>
           </div>
-          <div className="rounded-[1.4rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-600">
+          <div className="rounded-[1.4rem] border border-border/50 bg-surface/50 px-4 py-2 text-sm font-medium text-foreground">
             Meta mensal concluída: {completionPercentage}%
           </div>
         </div>
 
         <div className="mt-8 space-y-4">
           {shiftSchedules.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center text-stone-400">
-              Nenhum atendimento registrado para o turno atual.
+            <div className="rounded-2xl border border-dashed border-border/50 p-8 text-center text-muted">
+              Nenhum agendamento ocorrendo neste momento.
             </div>
           ) : (
             shiftSchedules.map((item) => (
               <article
                 key={item.id}
-                className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-stone-100 bg-stone-50/60 p-4 transition hover:border-stone-200 hover:bg-stone-50"
+                className="group flex items-center justify-between gap-4 rounded-[1.8rem] border border-border/50 bg-surface/30 p-4 transition hover:border-border hover:bg-surface/60"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
                     <PawPrint className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-medium text-stone-900 group-hover:text-sky-600 transition">
+                    <p className="font-medium text-foreground group-hover:text-primary transition">
                       {item.pet_name ?? 'Pet sem nome'}
                     </p>
-                    <p className="text-sm text-stone-400">
+                    <p className="text-sm text-muted">
                       {item.client_name ?? 'Tutor não identificado'}
                     </p>
                   </div>
@@ -319,11 +319,11 @@ export function DashboardPage() {
                     <span
                       className={`h-2 w-2 rounded-full ${resolveScheduleStatusDotClass(item.current_status)}`}
                     />
-                    <span className="text-sm font-medium text-stone-600">
+                    <span className="text-sm font-medium text-foreground">
                       {formatScheduleStatus(item.current_status)}
                     </span>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 text-sm text-stone-400">
+                  <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted">
                     <Clock3 className="h-4 w-4" />
                     {formatElapsedTime(
                       item,
@@ -358,44 +358,40 @@ function AdminStatCard({
 }) {
   const isNeutral = change === 0;
   const positive = change > 0;
-  const ChangeIcon = positive ? TrendingUp : TrendingDown;
 
   return (
-    <article className="group relative rounded-[2.5rem] border border-stone-100 bg-stone-50/50 p-6 transition hover:bg-white hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
-      {/* Title at the top */}
-      <p className="text-sm font-medium text-stone-400">{label}</p>
+    <article className="app-card transition hover:border-border hover:bg-surface/80 p-6 group relative">
+      <p className="app-eyebrow">{label}</p>
 
       <div className="mt-4 flex items-center gap-4">
-        {/* Icon and Value side-by-side */}
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-900 shadow-sm transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted shadow-sm transition-colors group-hover:border-primary/50 group-hover:bg-primary/10 group-hover:text-primary">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex flex-1 justify-center">
           <div className="flex flex-col items-center justify-center gap-1 text-center">
-            <p className="font-display text-4xl text-stone-950">{value}</p>
+            <p className="font-display text-4xl text-foreground">{value}</p>
             <div
               className={`inline-flex items-center justify-center gap-1 text-xs font-bold ${
                 isNeutral
-                  ? 'text-stone-400'
+                  ? 'text-muted'
                   : positive
                     ? 'text-emerald-500'
                     : 'text-rose-500'
               }`}
             >
               {!isNeutral ? (
-                <ChangeIcon className="h-3.5 w-3.5 stroke-[3]" />
+                positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
               ) : null}
               {isNeutral ? 'estável' : `${positive ? '+' : ''}${change}`}
-              {!isNeutral ? ` ${changeLabel}` : ''}
+              {!isNeutral && changeLabel ? ` ${changeLabel}` : ''}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Absolute Hover Box */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-2 px-4 pb-6 opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
-        <div className="rounded-2xl bg-sky-600 p-4 shadow-xl ring-1 ring-sky-300/40">
-          <p className="text-xs leading-relaxed text-white/90">{description}</p>
+      <div className="pointer-events-none absolute -top-12 right-0 z-10 w-64 translate-x-4 opacity-0 transition-all duration-300 group-hover:-translate-x-2 group-hover:opacity-100">
+        <div className="rounded-2xl bg-surface border border-border p-4 shadow-glow ring-1 ring-primary/20">
+          <p className="text-xs leading-relaxed text-muted">{description}</p>
         </div>
       </div>
     </article>
@@ -447,14 +443,14 @@ function WeeklyPerformanceChart({
                 y1={y}
                 x2="324"
                 y2={y}
-                className="stroke-stone-100"
+                className="stroke-border/50"
                 strokeWidth="1"
               />
               <text
                 x="24"
                 y={y + 4}
                 textAnchor="end"
-                className="fill-stone-300 text-[10px] font-medium"
+                className="fill-muted text-[10px] font-medium"
               >
                 {formatHourLabel(hour)}
               </text>
@@ -490,7 +486,7 @@ function WeeklyPerformanceChart({
               x={x}
               y="190"
               textAnchor="middle"
-              className="fill-stone-400 text-[10px] font-medium"
+              className="fill-muted text-[10px] font-medium"
             >
               {item.label}
             </text>
@@ -512,11 +508,11 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="h-52 animate-pulse rounded-[1.85rem] bg-stone-200/70" />
+    <div className="space-y-4 p-6 lg:p-10">
+      <div className="h-52 animate-pulse rounded-[1.85rem] bg-surface" />
       <div className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]">
-        <div className="h-80 animate-pulse rounded-[1.85rem] bg-stone-200/70" />
-        <div className="h-80 animate-pulse rounded-[1.85rem] bg-stone-200/70" />
+        <div className="h-80 animate-pulse rounded-[1.85rem] bg-surface" />
+        <div className="h-80 animate-pulse rounded-[1.85rem] bg-surface" />
       </div>
     </div>
   );

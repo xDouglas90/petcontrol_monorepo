@@ -137,9 +137,9 @@ export function AppLayout() {
 
   if (companyQuery.isError || currentUserQuery.isError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#ebe8e4] px-6 text-center text-stone-900">
-        <p className="text-xl font-medium text-rose-600">Erro de Contexto</p>
-        <p className="mt-2 text-sm text-stone-500">
+      <div className="flex app-shell flex-col items-center justify-center px-6 text-center">
+        <p className="text-xl font-medium text-rose-500">Erro de Contexto</p>
+        <p className="mt-2 text-sm text-muted">
           Não conseguimos carregar sua empresa ou o perfil autenticado.
         </p>
         <div className="mt-6 flex gap-4">
@@ -148,13 +148,13 @@ export function AppLayout() {
               void companyQuery.refetch();
               void currentUserQuery.refetch();
             }}
-            className="rounded-xl bg-sky-600 px-4 py-2 text-sm text-white transition hover:bg-sky-700"
+            className="rounded-xl bg-primary px-4 py-2 text-sm text-stone-900 font-bold transition hover:bg-primary/90"
           >
             Tentar novamente
           </button>
           <button
             onClick={() => clearSession()}
-            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-600 transition hover:bg-rose-100"
+            className="rounded-xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-rose-500 transition hover:bg-surface"
           >
             Sair
           </button>
@@ -220,20 +220,20 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-stone-900">
+    <div className="app-shell">
       {!isDesktopViewport && sidebarOpen ? (
         <button
           type="button"
           aria-label="Fechar menu lateral"
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-stone-950/25 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-40 bg-stone-950/50 backdrop-blur-[2px] lg:hidden"
         />
       ) : null}
 
       <div className="mx-auto flex min-h-screen max-w-[1920px]">
         <aside
           className={cn(
-            'flex flex-col overflow-hidden bg-white border-r border-stone-100 transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:max-h-screen',
+            'flex flex-col overflow-hidden transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:max-h-screen app-sidebar',
             isDesktopViewport
               ? cn('hidden lg:flex', sidebarOpen ? 'w-[19.5rem]' : 'w-[5rem]')
               : cn(
@@ -245,7 +245,7 @@ export function AppLayout() {
           )}
           aria-hidden={!isDesktopViewport && !sidebarOpen ? 'true' : undefined}
         >
-          <div className="flex items-center justify-between border-b border-stone-100 px-5 py-5">
+          <div className="flex items-center justify-between border-b border-border/50 px-5 py-5">
             <div
               className={cn(
                 'flex items-center gap-3 overflow-hidden transition-all duration-300',
@@ -259,10 +259,10 @@ export function AppLayout() {
                 logoUrl={company.logo_url}
               />
               <div className="min-w-0">
-                <p className="truncate font-display text-xl text-stone-900">
+                <p className="truncate font-display text-xl text-foreground">
                   {companyDisplayName}
                 </p>
-                <p className="truncate text-xs uppercase tracking-[0.28em] text-stone-400">
+                <p className="app-eyebrow truncate">
                   admin workspace
                 </p>
               </div>
@@ -272,7 +272,7 @@ export function AppLayout() {
               type="button"
               onClick={toggleSidebar}
               title={sidebarOpen ? 'Recolher sidebar' : 'Expandir sidebar'}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted transition hover:border-border hover:bg-surface hover:text-foreground"
             >
               {isDesktopViewport ? (
                 <ChevronRight
@@ -319,7 +319,7 @@ export function AppLayout() {
                           aria-label="Adicionar pessoa"
                           type="button"
                           title="Adicionar pessoa"
-                          className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                          className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -364,7 +364,7 @@ export function AppLayout() {
                         aria-label="Adicionar pet"
                         type="button"
                         title="Adicionar pet"
-                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
@@ -392,7 +392,7 @@ export function AppLayout() {
                         aria-label="Adicionar serviço"
                         type="button"
                         title="Adicionar serviço"
-                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-xs font-bold text-sky-600 shadow hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
@@ -429,7 +429,7 @@ export function AppLayout() {
               </div>
             </div>
 
-            <div className="mt-auto w-full space-y-2 border-t border-stone-100 bg-white px-4 py-4">
+            <div className="mt-auto w-full space-y-2 border-t border-border/50 bg-transparent px-4 py-4">
               {canViewSettings ? (
                 <SidebarLink
                   to={`/${normalizeCompanySlug(currentSlug)}/settings`}
@@ -447,7 +447,7 @@ export function AppLayout() {
                   clearSession();
                 }}
                 className={cn(
-                  'flex w-full items-center rounded-2xl text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-900',
+                  'flex w-full items-center rounded-2xl text-sm transition app-nav-inactive',
                   isDesktopViewport && !sidebarOpen
                     ? 'justify-center px-0 py-3'
                     : 'gap-3 px-4 py-3',
@@ -463,12 +463,12 @@ export function AppLayout() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <header className="flex items-center justify-between rounded-[2rem] border border-white/70 bg-white/80 px-4 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.06)] backdrop-blur-xl lg:hidden">
+          <header className="flex items-center justify-between app-card px-4 py-4 lg:hidden">
             <button
               type="button"
               onClick={toggleSidebar}
               title="Alternar sidebar"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted transition hover:border-border hover:bg-surface hover:text-foreground"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -519,13 +519,13 @@ function SidebarLink({
       )}
       activeProps={{
         className: cn(
-          'bg-sky-100 text-sky-600 font-bold shadow-sm',
+          'app-nav-active',
           collapsedDesktop ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3',
         ),
       }}
       inactiveProps={{
         className: cn(
-          'text-stone-500 hover:bg-sky-50 hover:text-sky-600',
+          'app-nav-inactive',
           collapsedDesktop ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3',
         ),
       }}
@@ -567,7 +567,7 @@ function TenantBrand({
 }) {
   if (logoUrl) {
     return (
-      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-stone-50">
+      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-border bg-surface">
         <img
           src={logoUrl}
           alt={`Logo de ${companyName}`}
@@ -578,7 +578,7 @@ function TenantBrand({
   }
 
   return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-600 font-display text-sm uppercase tracking-[0.18em] text-white">
+    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary font-display text-sm uppercase tracking-[0.18em] text-stone-900 font-bold">
       {resolveInitials(companyName)}
     </div>
   );
@@ -599,7 +599,7 @@ function UserAvatar({
     return (
       <div
         className={cn(
-          'overflow-hidden rounded-2xl border border-white/20 bg-white/15',
+          'overflow-hidden rounded-2xl border border-border/50 bg-surface/50',
           sizeClass,
         )}
       >
@@ -615,7 +615,7 @@ function UserAvatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-2xl bg-sky-600 font-display uppercase tracking-[0.18em] text-white',
+        'flex items-center justify-center rounded-2xl bg-primary font-display uppercase tracking-[0.18em] text-stone-900 font-bold',
         sizeClass,
       )}
     >
@@ -639,7 +639,7 @@ function UpgradeCard({
   if (!expanded) {
     return (
       <div className="flex justify-center py-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-500 shadow-sm border border-sky-100">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface/50 text-primary shadow-sm border border-border/50">
           <Sparkles className="h-5 w-5" />
         </div>
       </div>
@@ -651,10 +651,10 @@ function UpgradeCard({
     : `Upgrade para ${suggestedPlan}`;
 
   return (
-    <div className="mt-4 rounded-[2rem] bg-stone-50 p-6 border border-stone-100">
+    <div className="mt-4 rounded-[2rem] app-panel p-6">
       <div className="flex flex-col items-center text-center">
-        <h4 className="font-display text-lg text-stone-900">{title}</h4>
-        <p className="mt-2 text-xs leading-relaxed text-stone-400 px-2">
+        <h4 className="font-display text-lg text-foreground">{title}</h4>
+        <p className="mt-2 text-xs leading-relaxed text-muted px-2">
           {isSpecialTier
             ? 'Você já possui todos os recursos liberados.'
             : 'Ganhe 1 mês grátis e desbloqueie novos recursos agora.'}
@@ -663,8 +663,8 @@ function UpgradeCard({
         <button
           type="button"
           className={cn(
-            'mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-sky-100 px-4 py-3 text-sm font-bold text-sky-600 transition hover:bg-sky-200 shadow-sm',
-            isSpecialTier && 'bg-sky-600 text-white hover:bg-sky-700',
+            'mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-surface/80 border border-border/50 px-4 py-3 text-sm font-bold text-primary transition hover:bg-surface shadow-sm',
+            isSpecialTier && 'bg-primary text-stone-900 hover:bg-primary/90',
           )}
         >
           {isSpecialTier ? 'Ver detalhes' : 'Fazer Upgrade'}
@@ -676,10 +676,10 @@ function UpgradeCard({
 
 function LoadingScreen() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#ebe8e4] px-6 text-center text-stone-900">
-      <div className="max-w-sm rounded-[2rem] border border-white/70 bg-white/90 px-8 py-10 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-        <p className="font-display text-3xl">PetControl</p>
-        <p className="mt-3 text-sm text-stone-500">
+    <div className="flex app-shell items-center justify-center px-6 text-center">
+      <div className="max-w-sm app-card px-8 py-10">
+        <p className="font-display text-3xl text-foreground">PetControl</p>
+        <p className="mt-3 text-sm text-muted">
           Sincronizando o novo shell e carregando o contexto autenticado.
         </p>
       </div>

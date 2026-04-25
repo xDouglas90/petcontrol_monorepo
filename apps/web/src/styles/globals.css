@@ -5,16 +5,16 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --background: 250 250 249; /* stone-50 */
-  --foreground: 12 10 9;     /* stone-950 */
-  --muted: 120 113 108;      /* stone-500 */
-  --surface: 255 255 255;    /* white */
-  --panel: 250 250 249;      /* stone-50 */
-  --border: 231 229 228;     /* stone-200 */
-  --primary: 2 132 199;      /* sky-600 */
-  --secondary: 16 185 129;   /* emerald-500 */
-  --accent: 245 158 11;      /* amber-500 */
+  color-scheme: dark;
+  --background: 15 23 42; /* slate-900 */
+  --foreground: 248 250 252; /* slate-50 */
+  --muted: 148 163 184; /* slate-400 */
+  --surface: 30 41 59; /* slate-800 */
+  --panel: 15 23 42; /* slate-900 */
+  --border: 51 65 85; /* slate-700 */
+  --primary: 6 182 212; /* cyan-500 */
+  --secondary: 14 165 233; /* sky-500 */
+  --accent: 245 158 11; /* amber-500 */
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Manrope', sans-serif;
 }
@@ -42,8 +42,8 @@ body {
   font-family: var(--font-body);
   background-color: rgb(var(--background));
   background-image: 
-    radial-gradient(at 0% 0%, rgba(2, 132, 199, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.02) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.03) 0px, transparent 50%);
   color: rgb(var(--foreground));
   background-attachment: fixed;
 }
@@ -67,7 +67,37 @@ body {
   }
 }
 
-/* Custom Scrollbar for Executive Light */
+@layer components {
+  .app-shell {
+    @apply min-h-screen bg-background text-foreground selection:bg-accent/30;
+  }
+  
+  .app-sidebar {
+    @apply bg-panel border-r border-border/50;
+  }
+  
+  .app-card {
+    @apply bg-surface/50 border border-border/50 rounded-2xl backdrop-blur-md shadow-card;
+  }
+  
+  .app-panel {
+    @apply bg-surface border border-border rounded-xl;
+  }
+  
+  .app-eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-primary;
+  }
+
+  .app-nav-active {
+    @apply bg-accent text-stone-900 font-bold shadow-sm;
+  }
+
+  .app-nav-inactive {
+    @apply text-muted hover:bg-surface hover:text-foreground;
+  }
+}
+
+/* Custom Scrollbar for Executive Dark */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -78,9 +108,9 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-stone-200 rounded-full transition-colors;
+  @apply bg-slate-700 rounded-full transition-colors;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-stone-300;
+  @apply bg-slate-600;
 }
