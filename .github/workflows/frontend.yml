@@ -2,7 +2,7 @@ name: Frontend CI
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'develop']
     paths:
       - 'apps/web/**'
       - 'libs/shared-constants/**'
@@ -15,7 +15,7 @@ on:
       - 'turbo.json'
       - '.github/workflows/frontend.yml'
   pull_request:
-    branches: ['main']
+    branches: ['main', 'develop']
     paths:
       - 'apps/web/**'
       - 'libs/shared-constants/**'
@@ -87,6 +87,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run shared libs tests
         run: |
+          pnpm --filter @petcontrol/shared-types test
           pnpm --filter @petcontrol/shared-utils test
           pnpm --filter @petcontrol/shared-constants test
           pnpm --filter @petcontrol/ui test
@@ -95,6 +96,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: libs-test
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
       - name: Set up pnpm
@@ -112,13 +114,64 @@ jobs:
           pnpm --filter @petcontrol/shared-utils build
           pnpm --filter @petcontrol/shared-constants build
           pnpm --filter @petcontrol/ui build
-      - name: Run Vitest
-        run: pnpm --filter web test
+      - name: Run Vitest with timeout and fallback
+        run: |
+          set -euo pipefail
+          PRIMARY_TIMEOUT="12m"
+          FALLBACK_TIMEOUT="12m"
+
+          set +e
+          timeout "$PRIMARY_TIMEOUT" pnpm --filter web test
+          status=$?
+          set -e
+
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          if [ "$status" -ne 124 ]; then
+            echo "Primary web test command failed with status $status."
+            exit "$status"
+          fi
+
+          echo "::warning title=Vitest timeout::Primary web test run timed out after $PRIMARY_TIMEOUT. Retrying with forks pool."
+          timeout "$FALLBACK_TIMEOUT" pnpm --filter web exec vitest run --pool=forks
+
+  runtime-matrix:
+    name: Runtime Matrix (Node ${{ matrix.node-version }} / Vitest 4)
+    runs-on: ubuntu-latest
+    needs: libs-test
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['22', '24']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build shared libraries
+        run: |
+          pnpm --filter @petcontrol/shared-types build
+          pnpm --filter @petcontrol/shared-utils build
+          pnpm --filter @petcontrol/shared-constants build
+          pnpm --filter @petcontrol/ui build
+      - name: Run matrix runtime probe
+        run: |
+          set -euo pipefail
+          timeout 10m pnpm --filter web exec vitest run
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, runtime-matrix]
     steps:
       - uses: actions/checkout@v6
       - name: Set up pnpm

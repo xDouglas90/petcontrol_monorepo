@@ -58,6 +58,10 @@ vi.mock('@/lib/api/domain.queries', () => ({
   },
 }));
 
+vi.mock('@/components/admin-support-chat-aside', () => ({
+  AdminSupportChatAside: () => <div data-testid="support-chat">Chat</div>,
+}));
+
 describe('Router integration', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -371,8 +375,10 @@ describe('Router integration', () => {
       expect(router.state.location.pathname).toBe('/petcontrol-dev/schedules');
     });
 
-    expect(screen.getByText('Agendamentos do tenant')).toBeTruthy();
-    expect(screen.getByText('Criar agendamento')).toBeTruthy();
+    expect(screen.getByText(/Gestão completa da agenda do tenant/i)).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Novo agendamento' }),
+    ).toBeTruthy();
     expect(screen.getAllByText('Maria Silva')).not.toHaveLength(0);
     expect(screen.getAllByText('Thor')).not.toHaveLength(0);
     expect(screen.getAllByText('Banho completo')).not.toHaveLength(0);
@@ -382,6 +388,7 @@ describe('Router integration', () => {
     const peopleLink = screen.getByRole('link', { name: 'Pessoas' });
     const clientsLink = screen.getByRole('link', { name: 'Clientes' });
     const petsLink = screen.getByRole('link', { name: 'Pets' });
+    const servicesLink = screen.getByRole('link', { name: 'Serviços' });
     const settingsLink = screen.getByRole('link', { name: 'Configurações' });
 
     expect(dashboardLink.getAttribute('href')).toBe(
@@ -393,6 +400,7 @@ describe('Router integration', () => {
     expect(peopleLink.getAttribute('href')).toBe('/petcontrol-dev/people');
     expect(clientsLink.getAttribute('href')).toBe('/petcontrol-dev/clients');
     expect(petsLink.getAttribute('href')).toBe('/petcontrol-dev/pets');
+    expect(servicesLink.getAttribute('href')).toBe('/petcontrol-dev/services');
     expect(settingsLink.getAttribute('href')).toBe('/petcontrol-dev/settings');
   });
 
@@ -414,7 +422,7 @@ describe('Router integration', () => {
       expect(screen.getAllByText(/Dashboard/i).length).toBeGreaterThan(0);
     }, { timeout: 5000 });
     expect(screen.getAllByText(/PetControl Dev/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Agendamentos do tenant/i)).toBeTruthy();
+    expect(screen.getByText(/Gestão completa da agenda do tenant/i)).toBeTruthy();
   }, 10000);
 
   it('renderiza a rota /:companySlug/people com o módulo de pessoas ativo', async () => {

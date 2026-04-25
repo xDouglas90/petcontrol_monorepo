@@ -138,7 +138,7 @@ func main() {
 	people.PATCH("/:id", middleware.RequirePermission(queries, service.PermissionPeopleUpdate), peopleHandler.Update)
 
 	clients := protected.Group("/clients")
-	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.Use(middleware.RequireModule(queries, "CLI"))
 	clients.GET("", clientHandler.List)
 	clients.POST("", clientHandler.Create)
 	clients.GET("/:id", clientHandler.GetByID)
@@ -146,7 +146,7 @@ func main() {
 	clients.DELETE("/:id", clientHandler.Delete)
 
 	pets := protected.Group("/pets")
-	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.Use(middleware.RequireModule(queries, "PET"))
 	pets.GET("", petHandler.List)
 	pets.POST("", petHandler.Create)
 	pets.GET("/:id", petHandler.GetByID)
@@ -154,12 +154,12 @@ func main() {
 	pets.DELETE("/:id", petHandler.Delete)
 
 	services := protected.Group("/services")
-	services.Use(middleware.RequireModule(queries, "SCH"))
-	services.GET("", serviceHandler.List)
-	services.POST("", serviceHandler.Create)
-	services.GET("/:id", serviceHandler.GetByID)
-	services.PUT("/:id", serviceHandler.Update)
-	services.DELETE("/:id", serviceHandler.Delete)
+	services.Use(middleware.RequireModule(queries, "SVC"))
+	services.GET("", middleware.RequirePermission(queries, service.PermissionServicesView), serviceHandler.List)
+	services.POST("", middleware.RequirePermission(queries, service.PermissionServicesCreate), serviceHandler.Create)
+	services.GET("/:id", middleware.RequirePermission(queries, service.PermissionServicesView), serviceHandler.GetByID)
+	services.PUT("/:id", middleware.RequirePermission(queries, service.PermissionServicesUpdate), serviceHandler.Update)
+	services.DELETE("/:id", middleware.RequirePermission(queries, service.PermissionServicesDelete), serviceHandler.Delete)
 
 	schedules := protected.Group("/schedules")
 	schedules.Use(middleware.RequireModule(queries, "SCH"))

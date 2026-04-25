@@ -53,15 +53,15 @@ export function ImageUpload({
   return (
     <div className={cn('space-y-2', className)}>
       {label && (
-        <span className="text-sm font-medium text-slate-200">{label}</span>
+        <span className="text-sm font-medium text-foreground">{label}</span>
       )}
 
       <div
         className={cn(
-          'relative group flex flex-col items-center justify-center aspect-square w-32 rounded-3xl border-2 border-dashed transition-all overflow-hidden bg-white/5',
+          'relative group flex flex-col items-center justify-center aspect-square w-32 rounded-3xl border-2 border-dashed transition-all overflow-hidden bg-surface/30',
           preview
             ? 'border-primary/40'
-            : 'border-white/10 hover:border-primary/30 hover:bg-white/10 cursor-pointer',
+            : 'border-border/50 hover:border-primary/30 hover:bg-surface cursor-pointer',
         )}
         onClick={() => !preview && fileInputRef.current?.click()}
       >
@@ -87,7 +87,7 @@ export function ImageUpload({
               <button
                 type="button"
                 title="Trocar imagem"
-                className="p-2 rounded-full bg-primary text-slate-950 scale-75 group-hover:scale-100 transition-transform pointer-events-auto"
+                className="p-2 rounded-full bg-primary text-black scale-75 group-hover:scale-100 transition-transform pointer-events-auto"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
@@ -98,7 +98,7 @@ export function ImageUpload({
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-slate-400 p-4 text-center">
+          <div className="flex flex-col items-center gap-2 text-muted p-4 text-center">
             <Upload size={24} />
             <span className="text-[10px] font-medium uppercase tracking-wider">
               Selecionar Foto

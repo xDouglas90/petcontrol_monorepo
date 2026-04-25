@@ -2,7 +2,7 @@ name: Go CI
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'develop']
     paths:
       - 'apps/api/**'
       - 'apps/worker/**'
@@ -14,7 +14,7 @@ on:
       - 'Makefile'
       - '.github/workflows/go.yml'
   pull_request:
-    branches: ['main']
+    branches: ['main', 'develop']
     paths:
       - 'apps/api/**'
       - 'apps/worker/**'

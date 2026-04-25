@@ -37,6 +37,7 @@ import { PaginationBar } from '@/ui/pagination-bar';
 import { ImageUpload } from '@/ui/image-upload';
 import { useAuthStore, selectSession } from '@/lib/auth/auth.store';
 import { useToastStore } from '@/stores/toast.store';
+import { SearchBar } from '@/ui/search-bar';
 
 type PetPanelMode = 'view' | 'create' | 'edit';
 type PetStatusFilter = 'all' | 'active' | 'inactive';
@@ -365,19 +366,17 @@ export function PetsPage() {
   const listIsEmpty =
     !petsQuery.isLoading && !petsQuery.isError && visiblePets.length === 0;
   return (
-    <div className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
-      <div className="grid min-h-full grid-cols-1 divide-y divide-stone-100 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
-        <section>
-          <header className="bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_40%),linear-gradient(145deg,#fffef8,#f5f5f4)] px-6 py-8 lg:px-10">
+    <main className="flex min-w-0 flex-col min-h-full">
+      <div className="flex-1 grid grid-cols-1 divide-y divide-border/50 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
+        <section className="flex flex-col min-h-full">
+          <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-stone-400">
-                  Gestão de Pets
-                </p>
-                <h1 className="mt-3 font-display text-4xl text-stone-950 sm:text-5xl">
+                <p className="app-eyebrow">Gestão de Pets</p>
+                <h1 className="mt-3 font-display text-4xl text-foreground sm:text-5xl">
                   Pets
                 </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-stone-500">
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
                   Listagem de pets com filtros estruturados, acesso rápido ao
                   detalhe e composição visual centrada na imagem do pet.
                 </p>
@@ -386,7 +385,7 @@ export function PetsPage() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-700"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm"
               >
                 Inserir pet
               </button>
@@ -395,12 +394,11 @@ export function PetsPage() {
 
           <div className="px-6 py-6 lg:px-10 lg:py-10">
             <div>
-              <input
+              <SearchBar
                 id="pets-search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={setSearch}
                 placeholder="Buscar por nome do pet, nome do cliente, raça ou tipo..."
-                className="h-12 w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:bg-white"
               />
             </div>
 
@@ -414,7 +412,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['size'],
                   )
                 }
-                className="h-12 rounded-2xl border border-stone-200 bg-white px-4 text-sm text-stone-700 outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_SIZE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -432,7 +430,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['kind'],
                   )
                 }
-                className="h-12 rounded-2xl border border-stone-200 bg-white px-4 text-sm text-stone-700 outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_KIND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -450,7 +448,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['temperament'],
                   )
                 }
-                className="h-12 rounded-2xl border border-stone-200 bg-white px-4 text-sm text-stone-700 outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_TEMPERAMENT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -468,7 +466,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['is_active'],
                   )
                 }
-                className="h-12 rounded-2xl border border-stone-200 bg-white px-4 text-sm text-stone-700 outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -478,7 +476,7 @@ export function PetsPage() {
               </select>
             </div>
 
-            <div className="mt-8 space-y-px divide-y divide-stone-100 border-y border-stone-100">
+            <div className="mt-8 space-y-px divide-y divide-border/50 border-y border-border/50">
               {petsQuery.isLoading ? (
                 <StateMessage message="Carregando pets..." />
               ) : null}
@@ -489,7 +487,7 @@ export function PetsPage() {
                 <StateMessage message="Nenhum pet encontrado com os filtros atuais." />
               ) : null}
 
-              <div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {visiblePets.map((pet) => {
                   const isSelected = pet.id === activeSelectedPetId;
                   return (
@@ -504,7 +502,7 @@ export function PetsPage() {
               </div>
             </div>
 
-            <div className="border-t border-stone-100 pt-4">
+            <div className="border-t border-border/50 pt-4">
               <PaginationBar
                 meta={petsQuery.data?.meta}
                 onPageChange={goToPage}
@@ -513,7 +511,7 @@ export function PetsPage() {
           </div>
         </section>
 
-        <aside className="bg-white p-6 xl:sticky xl:top-0 xl:h-screen xl:overflow-y-auto xl:p-10">
+        <aside className="bg-surface/30 p-6 xl:sticky xl:top-0 xl:h-screen xl:overflow-y-auto xl:p-10">
           {panelMode === 'create' || panelMode === 'edit' ? (
             <PetFormPanel
               mode={panelMode}
@@ -542,7 +540,7 @@ export function PetsPage() {
           )}
         </aside>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -578,10 +576,10 @@ function PetFormPanel({
     <div className="xl:sticky xl:top-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
-            {mode === 'edit' ? 'Editar pet' : 'Novo pet'}
+          <p className="app-eyebrow">
+            {mode === 'create' ? 'Novo pet' : 'Editar pet'}
           </p>
-          <h2 className="mt-4 font-display text-3xl text-stone-950">
+          <h2 className="mt-4 font-display text-3xl text-foreground">
             {mode === 'edit' ? 'Atualizar cadastro' : 'Formulário de cadastro'}
           </h2>
         </div>
@@ -589,13 +587,13 @@ function PetFormPanel({
         <button
           type="button"
           onClick={onReset}
-          className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50"
+          className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/50"
         >
           Cancelar
         </button>
       </div>
 
-      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
+      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
         Campos com * sao obrigatórios.
       </p>
 
@@ -917,7 +915,7 @@ function PetFormPanel({
           <button
             type="submit"
             disabled={isPending}
-            className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending
               ? 'Salvando...'
@@ -928,7 +926,7 @@ function PetFormPanel({
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex h-12 items-center justify-center rounded-2xl border border-stone-200 px-6 text-sm font-semibold text-stone-600 transition hover:bg-stone-50"
+            className="inline-flex h-12 items-center justify-center rounded-2xl border border-border px-6 text-sm font-semibold text-foreground transition hover:bg-surface/50"
           >
             Cancelar
           </button>
@@ -955,19 +953,17 @@ function PetDetailPanel({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-stone-400">
-          Detalhe
-        </p>
-        <h2 className="mt-2 font-display text-3xl text-stone-950">
+        <p className="text-xs uppercase tracking-[0.3em] text-muted">Detalhe</p>
+        <h2 className="mt-2 font-display text-3xl text-foreground">
           {pet.name}
         </h2>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-muted">
           {resolvePetKindLabel(pet.kind)} · {resolvePetSizeLabel(pet.size)}
         </p>
       </div>
 
-      <div className="space-y-4 border-y border-stone-200 py-4">
-        <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100">
+      <div className="space-y-4 border-y border-border py-4">
+        <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-surface/50">
           <img
             src={imageUrl}
             alt={pet.name}
@@ -976,7 +972,7 @@ function PetDetailPanel({
         </div>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-stone-400">
+            <p className="text-xs uppercase tracking-[0.28em] text-muted">
               Status
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -992,7 +988,7 @@ function PetDetailPanel({
               onClick={onEdit}
               title="Editar"
               aria-label="Editar"
-              className="inline-flex h-10 items-center justify-center rounded-2xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/50"
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -1001,7 +997,7 @@ function PetDetailPanel({
               onClick={onDelete}
               title="Excluir"
               aria-label="Excluir"
-              className="inline-flex h-10 items-center justify-center rounded-2xl border border-rose-200 px-6 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-rose-400/40 px-6 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/10"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -1039,8 +1035,8 @@ function PetDetailPanel({
         />
       </div>
 
-      <section className="border-t border-stone-200 pt-4">
-        <p className="text-xs uppercase tracking-[0.28em] text-stone-400">
+      <section className="border-t border-border pt-4">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted">
           Guardiões
         </p>
         <div className="mt-3 space-y-0">
@@ -1048,18 +1044,18 @@ function PetDetailPanel({
             guardians.map((guardian) => (
               <div
                 key={guardian.guardian_id}
-                className="border-b border-stone-200 py-3 last:border-b-0"
+                className="border-b border-border py-3 last:border-b-0"
               >
-                <p className="font-medium text-stone-950">
+                <p className="font-medium text-foreground">
                   {guardian.full_name}
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-muted">
                   {guardian.email} · {guardian.cellphone}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-stone-500">
+            <p className="text-sm text-muted">
               Nenhum guardião vinculado a este pet.
             </p>
           )}
@@ -1067,11 +1063,11 @@ function PetDetailPanel({
       </section>
 
       {pet.notes ? (
-        <section className="border-t border-stone-200 pt-4">
-          <p className="text-xs uppercase tracking-[0.28em] text-stone-400">
+        <section className="border-t border-border pt-4">
+          <p className="text-xs uppercase tracking-[0.28em] text-muted">
             Observações
           </p>
-          <p className="mt-3 text-sm leading-6 text-stone-700">{pet.notes}</p>
+          <p className="mt-3 text-sm leading-6 text-foreground">{pet.notes}</p>
         </section>
       ) : null}
     </div>
@@ -1086,9 +1082,9 @@ function EmptyAside({
   description: string;
 }) {
   return (
-    <div className="flex min-h-[24rem] flex-col justify-center border-t border-stone-200 py-8 text-center">
-      <p className="font-display text-3xl text-stone-950">{title}</p>
-      <p className="mt-3 text-sm leading-6 text-stone-600">{description}</p>
+    <div className="flex min-h-[24rem] flex-col justify-center border-t border-border py-8 text-center">
+      <p className="font-display text-3xl text-foreground">{title}</p>
+      <p className="mt-3 text-sm leading-6 text-foreground">{description}</p>
     </div>
   );
 }
@@ -1106,54 +1102,50 @@ function PetListCard({
 
   return (
     <article
-      className={`transition ${selected ? 'bg-sky-50/50 ring-1 ring-inset ring-sky-100' : 'bg-white hover:bg-stone-50'}`}
+      className={`group rounded-[1.8rem] border p-4 transition ${selected ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
     >
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full flex-col gap-4 p-4 text-lef lg:flex-row items-center"
+        className="flex w-full flex-col gap-3 text-left"
       >
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 lg:h-20 lg:w-20">
-          <img
-            src={imageUrl}
-            alt={pet.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex items-start justify-between border-b gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <h3 className="font-display text-xl text-stone-950">
-                  {pet.name}
-                </h3>
-                <span className="text-sm text-stone-400">
-                  ({pet.race || 'sem raça'})
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-stone-500">
-                Tutor: {pet.owner_name ?? pet.owner_id}
+        <div className="flex items-center gap-4">
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+            <img
+              src={imageUrl}
+              alt={pet.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-foreground group-hover:text-primary transition">
+                {pet.name}
               </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
+              <span className="text-[11px] text-muted">
+                ({pet.race || 'sem raça'})
+              </span>
               <StatusBadge active={pet.is_active} />
               {pet.is_deceased ? (
                 <StatusBadge label="Falecido" tone="neutral" />
               ) : null}
             </div>
+            <p className="mt-0.5 text-sm text-muted">
+              Tutor: {pet.owner_name ?? pet.owner_id}
+            </p>
           </div>
+        </div>
 
-          <div className="grid text-xs text-stone-600 sm:grid-cols-3">
-            <MetaRow label="Tipo" value={resolvePetKindLabel(pet.kind)} />
-            <MetaRow label="Porte" value={resolvePetSizeLabel(pet.size)} />
-            <MetaRow
-              label="Temperamento"
-              value={resolvePetTemperamentLabel(pet.temperament)}
-            />
-            <MetaRow label="Cor" value={pet.color || 'Não informada'} />
-            <MetaRow label="Sexo" value={pet.sex || 'Não informado'} />
-            <MetaRow label="Idade" value={resolvePetAgeLabel(pet.birth_date)} />
-          </div>
+        <div className="grid grid-cols-2 gap-x-1 sm:grid-cols-3 border-t border-border/30 pt-2">
+          <MetaRow label="Tipo" value={resolvePetKindLabel(pet.kind)} />
+          <MetaRow label="Porte" value={resolvePetSizeLabel(pet.size)} />
+          <MetaRow
+            label="Temperamento"
+            value={resolvePetTemperamentLabel(pet.temperament)}
+          />
+          <MetaRow label="Cor" value={pet.color || 'Não informada'} />
+          <MetaRow label="Sexo" value={pet.sex || 'Não informado'} />
+          <MetaRow label="Idade" value={resolvePetAgeLabel(pet.birth_date)} />
         </div>
       </button>
     </article>
@@ -1173,7 +1165,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-stone-400">
+      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {label}
         {required ? <span className="ml-1 text-rose-500">*</span> : null}
       </span>
@@ -1191,7 +1183,7 @@ function DetailSection({
 }) {
   return (
     <section>
-      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-stone-400">
+      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {title}
       </p>
       <div className="mt-3 space-y-4">{children}</div>
@@ -1209,13 +1201,13 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-2xl border border-stone-200 px-4 py-3">
-      <span className="text-sm font-medium text-stone-700">{label}</span>
+    <label className="flex items-center justify-between gap-4 rounded-2xl border border-border px-4 py-3">
+      <span className="text-sm font-medium text-foreground">{label}</span>
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-stone-300 text-sky-600 focus:ring-sky-500"
+        className="h-4 w-4 rounded border-border/50 bg-surface/50 text-primary focus:ring-primary/20"
       />
     </label>
   );
@@ -1223,24 +1215,9 @@ function ToggleField({
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-stone-200 py-3 pr-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-stone-400">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-medium text-stone-950">{value}</p>
-    </div>
-  );
-}
-
-function MetaRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-left gap-2 py-1.5 pr-2">
-      <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400">
-        {label}:
-      </span>
-      <span className="text-right text-xs font-medium text-stone-800">
-        {value}
-      </span>
+    <div className="border-b border-border py-3 pr-4">
+      <p className="text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }
@@ -1258,7 +1235,7 @@ function StatusBadge({
   const activeTone = active ?? tone === 'active';
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] ${activeTone ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] border ${activeTone ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-border/50 bg-surface/50 text-muted'}`}
     >
       {text}
     </span>
@@ -1274,7 +1251,7 @@ function StateMessage({
 }) {
   return (
     <div
-      className={`border-l-2 pl-3 text-sm ${tone === 'error' ? 'border-rose-300 text-rose-700' : 'border-stone-300 text-stone-600'}`}
+      className={`border-l-2 pl-3 text-sm ${tone === 'error' ? 'border-rose-400/40 text-rose-200' : 'border-border/50 text-foreground'}`}
     >
       {message}
     </div>
@@ -1285,7 +1262,7 @@ function MutationError({ error }: { error: unknown }) {
   if (!(error instanceof ApiError)) return null;
 
   return (
-    <div className="border-l-2 border-rose-300 pl-3 text-sm text-rose-700">
+    <div className="border-l-2 border-rose-400/40 pl-3 text-sm text-rose-200">
       {error.message}
     </div>
   );
@@ -1497,6 +1474,17 @@ function isPetTemperament(value: string | null): value is PetTemperament {
   );
 }
 
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-1.5">
+      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">
+        {label}
+      </span>
+      <span className="text-xs font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
 function resolvePetAgeLabel(birthDate?: string | null): string {
   if (!birthDate) {
     return 'Não informada';
@@ -1603,4 +1591,4 @@ function boolToLabel(value: boolean) {
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:bg-white';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';

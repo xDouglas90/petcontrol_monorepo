@@ -57,6 +57,16 @@ WHERE
 RETURNING
     *;
 
+-- name: DeleteSubServicesByServiceID :execrows
+UPDATE
+    sub_services
+SET
+    deleted_at = now(),
+    updated_at = now()
+WHERE
+    service_id = sqlc.arg('ServiceID')
+    AND deleted_at IS NULL;
+
 -- name: ListSubServicesByServiceID :many
 SELECT
     ss.id,
@@ -81,4 +91,3 @@ ORDER BY
     ss.created_at DESC
 LIMIT sqlc.arg('Limit')
 OFFSET sqlc.arg('Offset');
-

@@ -184,15 +184,31 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = $1
     AND s.id = $2
-    AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
 LIMIT 1
@@ -204,16 +220,18 @@ type GetServiceByIDAndCompanyIDParams struct {
 }
 
 type GetServiceByIDAndCompanyIDRow struct {
-	ID           pgtype.UUID    `db:"id" json:"id"`
-	TypeID       pgtype.UUID    `db:"type_id" json:"type_id"`
-	TypeName     string         `db:"type_name" json:"type_name"`
-	Title        string         `db:"title" json:"title"`
-	Description  string         `db:"description" json:"description"`
-	Notes        pgtype.Text    `db:"notes" json:"notes"`
-	Price        pgtype.Numeric `db:"price" json:"price"`
-	DiscountRate pgtype.Numeric `db:"discount_rate" json:"discount_rate"`
-	ImageUrl     pgtype.Text    `db:"image_url" json:"image_url"`
-	IsActive     bool           `db:"is_active" json:"is_active"`
+	ID                pgtype.UUID    `db:"id" json:"id"`
+	TypeID            pgtype.UUID    `db:"type_id" json:"type_id"`
+	TypeName          string         `db:"type_name" json:"type_name"`
+	Title             string         `db:"title" json:"title"`
+	Description       string         `db:"description" json:"description"`
+	Notes             pgtype.Text    `db:"notes" json:"notes"`
+	Price             pgtype.Numeric `db:"price" json:"price"`
+	DiscountRate      pgtype.Numeric `db:"discount_rate" json:"discount_rate"`
+	ImageUrl          pgtype.Text    `db:"image_url" json:"image_url"`
+	IsActive          bool           `db:"is_active" json:"is_active"`
+	SubServicesCount  int64          `db:"sub_services_count" json:"sub_services_count"`
+	AverageTimesCount int64          `db:"average_times_count" json:"average_times_count"`
 }
 
 func (q *Queries) GetServiceByIDAndCompanyID(ctx context.Context, arg GetServiceByIDAndCompanyIDParams) (GetServiceByIDAndCompanyIDRow, error) {
@@ -230,6 +248,8 @@ func (q *Queries) GetServiceByIDAndCompanyID(ctx context.Context, arg GetService
 		&i.DiscountRate,
 		&i.ImageUrl,
 		&i.IsActive,
+		&i.SubServicesCount,
+		&i.AverageTimesCount,
 	)
 	return i, err
 }
@@ -246,50 +266,84 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = $1
-    AND cs.is_active = TRUE
+    AND ($2::boolean IS NULL
+        OR cs.is_active = $2::boolean)
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
-    AND ($2::text = ''
-        OR s.title ILIKE '%' || $2::text || '%'
-        OR s.description ILIKE '%' || $2::text || '%')
+    AND ($3::text = ''
+        OR s.title ILIKE '%' || $3::text || '%'
+        OR s.description ILIKE '%' || $3::text || '%')
+    AND ($4::text = ''
+        OR st.name = $4::text)
+    AND ($5::numeric IS NULL
+        OR s.price >= $5::numeric)
+    AND ($6::numeric IS NULL
+        OR s.price <= $6::numeric)
 ORDER BY
     s.title ASC
-LIMIT $4
-OFFSET $3
+LIMIT $8
+OFFSET $7
 `
 
 type ListServicesByCompanyIDParams struct {
-	CompanyID pgtype.UUID `db:"CompanyID" json:"CompanyID"`
-	Search    string      `db:"Search" json:"Search"`
-	Offset    int32       `db:"Offset" json:"Offset"`
-	Limit     int32       `db:"Limit" json:"Limit"`
+	CompanyID pgtype.UUID    `db:"CompanyID" json:"CompanyID"`
+	IsActive  pgtype.Bool    `db:"IsActive" json:"IsActive"`
+	Search    string         `db:"Search" json:"Search"`
+	TypeName  string         `db:"TypeName" json:"TypeName"`
+	MinPrice  pgtype.Numeric `db:"MinPrice" json:"MinPrice"`
+	MaxPrice  pgtype.Numeric `db:"MaxPrice" json:"MaxPrice"`
+	Offset    int32          `db:"Offset" json:"Offset"`
+	Limit     int32          `db:"Limit" json:"Limit"`
 }
 
 type ListServicesByCompanyIDRow struct {
-	TotalCount   int64          `db:"total_count" json:"total_count"`
-	ID           pgtype.UUID    `db:"id" json:"id"`
-	TypeID       pgtype.UUID    `db:"type_id" json:"type_id"`
-	TypeName     string         `db:"type_name" json:"type_name"`
-	Title        string         `db:"title" json:"title"`
-	Description  string         `db:"description" json:"description"`
-	Notes        pgtype.Text    `db:"notes" json:"notes"`
-	Price        pgtype.Numeric `db:"price" json:"price"`
-	DiscountRate pgtype.Numeric `db:"discount_rate" json:"discount_rate"`
-	ImageUrl     pgtype.Text    `db:"image_url" json:"image_url"`
-	IsActive     bool           `db:"is_active" json:"is_active"`
+	TotalCount        int64          `db:"total_count" json:"total_count"`
+	ID                pgtype.UUID    `db:"id" json:"id"`
+	TypeID            pgtype.UUID    `db:"type_id" json:"type_id"`
+	TypeName          string         `db:"type_name" json:"type_name"`
+	Title             string         `db:"title" json:"title"`
+	Description       string         `db:"description" json:"description"`
+	Notes             pgtype.Text    `db:"notes" json:"notes"`
+	Price             pgtype.Numeric `db:"price" json:"price"`
+	DiscountRate      pgtype.Numeric `db:"discount_rate" json:"discount_rate"`
+	ImageUrl          pgtype.Text    `db:"image_url" json:"image_url"`
+	IsActive          bool           `db:"is_active" json:"is_active"`
+	SubServicesCount  int64          `db:"sub_services_count" json:"sub_services_count"`
+	AverageTimesCount int64          `db:"average_times_count" json:"average_times_count"`
 }
 
 func (q *Queries) ListServicesByCompanyID(ctx context.Context, arg ListServicesByCompanyIDParams) ([]ListServicesByCompanyIDRow, error) {
 	rows, err := q.db.Query(ctx, listServicesByCompanyID,
 		arg.CompanyID,
+		arg.IsActive,
 		arg.Search,
+		arg.TypeName,
+		arg.MinPrice,
+		arg.MaxPrice,
 		arg.Offset,
 		arg.Limit,
 	)
@@ -312,6 +366,8 @@ func (q *Queries) ListServicesByCompanyID(ctx context.Context, arg ListServicesB
 			&i.DiscountRate,
 			&i.ImageUrl,
 			&i.IsActive,
+			&i.SubServicesCount,
+			&i.AverageTimesCount,
 		); err != nil {
 			return nil, err
 		}

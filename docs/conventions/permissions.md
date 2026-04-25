@@ -75,20 +75,20 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 
 | Description       | Name                | Default Roles               |
 | ----------------- | ------------------- | --------------------------- |
-| Criar pessoa      | `people:create`     | ['root', 'admin', 'system'] |
-| Visualizar pessoa | `people:view`       | ['root', 'admin', 'system'] |
-| Atualizar pessoa  | `people:update`     | ['root', 'admin', 'system'] |
-| Deletar pessoa    | `people:delete`     | ['root', 'admin', 'system'] |
-| Restaurar pessoa  | `people:restore`    | ['root', 'admin', 'system'] |
-| Desativar pessoa  | `people:deactivate` | ['root', 'admin', 'system'] |
-| Reativar pessoa   | `people:reactivate` | ['root', 'admin', 'system'] |
+| Criar pessoa      | `people:create`     | ['root', 'admin'] |
+| Visualizar pessoa | `people:view`       | ['root', 'admin'] |
+| Atualizar pessoa  | `people:update`     | ['root', 'admin'] |
+| Deletar pessoa    | `people:delete`     | ['root', 'admin'] |
+| Restaurar pessoa  | `people:restore`    | ['root', 'admin'] |
+| Desativar pessoa  | `people:deactivate` | ['root', 'admin'] |
+| Reativar pessoa   | `people:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Usuários
 
 | Description         | Name            | Default Roles                 |
 | ------------------- | --------------- | ----------------------------- |
 | Criar usuário       | `users:create`  | ['root', 'internal', 'admin'] |
-| Visualizar usuário  | `users:view`    | ['root', 'internal', 'admin'] |
+| Visualizar usuário  | `users:view`    | ['root', 'internal', 'admin', 'system'] |
 | Atualizar usuário   | `users:update`  | ['root', 'internal', 'admin'] |
 | Deletar usuário     | `users:delete`  | ['root', 'internal', 'admin'] |
 | Restaurar usuário   | `users:restore` | ['root', 'internal', 'admin'] |
@@ -99,57 +99,57 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 
 | Description        | Name                 | Default Roles               |
 | ------------------ | -------------------- | --------------------------- |
-| Criar cliente      | `clients:create`     | ['root', 'admin', 'system'] |
-| Visualizar cliente | `clients:view`       | ['root', 'admin', 'system'] |
-| Atualizar cliente  | `clients:update`     | ['root', 'admin', 'system'] |
-| Deletar cliente    | `clients:delete`     | ['root', 'admin', 'system'] |
-| Restaurar cliente  | `clients:restore`    | ['root', 'admin', 'system'] |
-| Desativar cliente  | `clients:deactivate` | ['root', 'admin', 'system'] |
-| Reativar cliente   | `clients:reactivate` | ['root', 'admin', 'system'] |
+| Criar cliente      | `clients:create`     | ['root', 'admin'] |
+| Visualizar cliente | `clients:view`       | ['root', 'admin'] |
+| Atualizar cliente  | `clients:update`     | ['root', 'admin'] |
+| Deletar cliente    | `clients:delete`     | ['root', 'admin'] |
+| Restaurar cliente  | `clients:restore`    | ['root', 'admin'] |
+| Desativar cliente  | `clients:deactivate` | ['root', 'admin'] |
+| Reativar cliente   | `clients:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Pets
 
 | Description    | Name              | Default Roles                         |
 | -------------- | ----------------- | ------------------------------------- |
-| Criar pet      | `pets:create`     | ['root', 'admin', 'system', 'common'] |
-| Visualizar pet | `pets:view`       | ['root', 'admin', 'system', 'common'] |
-| Atualizar pet  | `pets:update`     | ['root', 'admin', 'system', 'common'] |
-| Deletar pet    | `pets:delete`     | ['root', 'admin', 'system', 'common'] |
-| Desativar pet  | `pets:deactivate` | ['root', 'admin', 'system', 'common'] |
-| Reativar pet   | `pets:reactivate` | ['root', 'admin', 'system', 'common'] |
+| Criar pet      | `pets:create`     | ['root', 'admin', 'common'] |
+| Visualizar pet | `pets:view`       | ['root', 'admin', 'common'] |
+| Atualizar pet  | `pets:update`     | ['root', 'admin', 'common'] |
+| Deletar pet    | `pets:delete`     | ['root', 'admin', 'common'] |
+| Desativar pet  | `pets:deactivate` | ['root', 'admin', 'common'] |
+| Reativar pet   | `pets:reactivate` | ['root', 'admin', 'common'] |
 
 ### Módulo de Agendamentos
 
 | Description            | Name                   | Default Roles                         |
 | ---------------------- | ---------------------- | ------------------------------------- |
-| Criar agendamento      | `schedules:create`     | ['root', 'admin', 'system', 'common'] |
-| Visualizar agendamento | `schedules:view`       | ['root', 'admin', 'system', 'common'] |
-| Atualizar agendamento  | `schedules:update`     | ['root', 'admin', 'system', 'common'] |
-| Deletar agendamento    | `schedules:delete`     | ['root', 'admin', 'system', 'common'] |
-| Desativar agendamento  | `schedules:deactivate` | ['root', 'admin', 'system', 'common'] |
-| Reativar agendamento   | `schedules:reactivate` | ['root', 'admin', 'system', 'common'] |
+| Criar agendamento      | `schedules:create`     | ['root', 'admin', 'common'] |
+| Visualizar agendamento | `schedules:view`       | ['root', 'admin', 'common'] |
+| Atualizar agendamento  | `schedules:update`     | ['root', 'admin', 'common'] |
+| Deletar agendamento    | `schedules:delete`     | ['root', 'admin', 'common'] |
+| Desativar agendamento  | `schedules:deactivate` | ['root', 'admin', 'common'] |
+| Reativar agendamento   | `schedules:reactivate` | ['root', 'admin', 'common'] |
 
 ### Módulo de Produtos
 
 | Description        | Name                  | Default Roles               |
 | ------------------ | --------------------- | --------------------------- |
-| Criar produto      | `products:create`     | ['root', 'admin', 'system'] |
-| Visualizar produto | `products:view`       | ['root', 'admin', 'system'] |
-| Atualizar produto  | `products:update`     | ['root', 'admin', 'system'] |
-| Deletar produto    | `products:delete`     | ['root', 'admin', 'system'] |
-| Desativar produto  | `products:deactivate` | ['root', 'admin', 'system'] |
-| Reativar produto   | `products:reactivate` | ['root', 'admin', 'system'] |
+| Criar produto      | `products:create`     | ['root', 'admin'] |
+| Visualizar produto | `products:view`       | ['root', 'admin'] |
+| Atualizar produto  | `products:update`     | ['root', 'admin'] |
+| Deletar produto    | `products:delete`     | ['root', 'admin'] |
+| Desativar produto  | `products:deactivate` | ['root', 'admin'] |
+| Reativar produto   | `products:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Serviços
 
 | Description        | Name                  | Default Roles                         |
 | ------------------ | --------------------- | ------------------------------------- |
-| Criar serviço      | `services:create`     | ['root', 'admin', 'system']           |
+| Criar serviço      | `services:create`     | ['root', 'admin']           |
 | Visualizar serviço | `services:view`       | ['root', 'admin', 'system', 'common'] |
-| Atualizar serviço  | `services:update`     | ['root', 'admin', 'system']           |
-| Deletar serviço    | `services:delete`     | ['root', 'admin', 'system']           |
-| Desativar serviço  | `services:deactivate` | ['root', 'admin', 'system']           |
-| Reativar serviço   | `services:reactivate` | ['root', 'admin', 'system']           |
+| Atualizar serviço  | `services:update`     | ['root', 'admin']           |
+| Deletar serviço    | `services:delete`     | ['root', 'admin']           |
+| Desativar serviço  | `services:deactivate` | ['root', 'admin']           |
+| Reativar serviço   | `services:reactivate` | ['root', 'admin']           |
 
 ### Módulo de Logs
 
@@ -197,95 +197,95 @@ As permissões são divididas em módulos e ações. Cada módulo representa uma
 
 | Description           | Name                   | Default Roles               |
 | --------------------- | ---------------------- | --------------------------- |
-| Criar fornecedor      | `suppliers:create`     | ['root', 'admin', 'system'] |
-| Visualizar fornecedor | `suppliers:view`       | ['root', 'admin', 'system'] |
-| Atualizar fornecedor  | `suppliers:update`     | ['root', 'admin', 'system'] |
-| Deletar fornecedor    | `suppliers:delete`     | ['root', 'admin', 'system'] |
-| Restaurar fornecedor  | `suppliers:restore`    | ['root', 'admin', 'system'] |
-| Desativar fornecedor  | `suppliers:deactivate` | ['root', 'admin', 'system'] |
-| Reativar fornecedor   | `suppliers:reactivate` | ['root', 'admin', 'system'] |
+| Criar fornecedor      | `suppliers:create`     | ['root', 'admin'] |
+| Visualizar fornecedor | `suppliers:view`       | ['root', 'admin'] |
+| Atualizar fornecedor  | `suppliers:update`     | ['root', 'admin'] |
+| Deletar fornecedor    | `suppliers:delete`     | ['root', 'admin'] |
+| Restaurar fornecedor  | `suppliers:restore`    | ['root', 'admin'] |
+| Desativar fornecedor  | `suppliers:deactivate` | ['root', 'admin'] |
+| Reativar fornecedor   | `suppliers:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Acesso de Usuários Externos
 
 | Description       | Name                         | Default Roles               |
 | ----------------- | ---------------------------- | --------------------------- |
-| Criar acesso      | `external_access:create`     | ['root', 'admin', 'system'] |
-| Visualizar acesso | `external_access:view`       | ['root', 'admin', 'system'] |
-| Atualizar acesso  | `external_access:update`     | ['root', 'admin', 'system'] |
-| Deletar acesso    | `external_access:delete`     | ['root', 'admin', 'system'] |
-| Desativar acesso  | `external_access:deactivate` | ['root', 'admin', 'system'] |
-| Reativar acesso   | `external_access:reactivate` | ['root', 'admin', 'system'] |
+| Criar acesso      | `external_access:create`     | ['root', 'admin'] |
+| Visualizar acesso | `external_access:view`       | ['root', 'admin'] |
+| Atualizar acesso  | `external_access:update`     | ['root', 'admin'] |
+| Deletar acesso    | `external_access:delete`     | ['root', 'admin'] |
+| Desativar acesso  | `external_access:deactivate` | ['root', 'admin'] |
+| Reativar acesso   | `external_access:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Estoque
 
 | Description        | Name               | Default Roles               |
 | ------------------ | ------------------ | --------------------------- |
-| Criar estoque      | `stock:create`     | ['root', 'admin', 'system'] |
-| Visualizar estoque | `stock:view`       | ['root', 'admin', 'system'] |
-| Atualizar estoque  | `stock:update`     | ['root', 'admin', 'system'] |
-| Deletar estoque    | `stock:delete`     | ['root', 'admin', 'system'] |
-| Desativar estoque  | `stock:deactivate` | ['root', 'admin', 'system'] |
-| Reativar estoque   | `stock:reactivate` | ['root', 'admin', 'system'] |
+| Criar estoque      | `stock:create`     | ['root', 'admin'] |
+| Visualizar estoque | `stock:view`       | ['root', 'admin'] |
+| Atualizar estoque  | `stock:update`     | ['root', 'admin'] |
+| Deletar estoque    | `stock:delete`     | ['root', 'admin'] |
+| Desativar estoque  | `stock:deactivate` | ['root', 'admin'] |
+| Reativar estoque   | `stock:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Creche de Pets
 
 | Description       | Name                 | Default Roles               |
 | ----------------- | -------------------- | --------------------------- |
-| Criar creche      | `daycare:create`     | ['root', 'admin', 'system'] |
-| Visualizar creche | `daycare:view`       | ['root', 'admin', 'system'] |
-| Atualizar creche  | `daycare:update`     | ['root', 'admin', 'system'] |
-| Deletar creche    | `daycare:delete`     | ['root', 'admin', 'system'] |
-| Restaurar creche  | `daycare:restore`    | ['root', 'admin', 'system'] |
-| Desativar creche  | `daycare:deactivate` | ['root', 'admin', 'system'] |
-| Reativar creche   | `daycare:reactivate` | ['root', 'admin', 'system'] |
+| Criar creche      | `daycare:create`     | ['root', 'admin'] |
+| Visualizar creche | `daycare:view`       | ['root', 'admin'] |
+| Atualizar creche  | `daycare:update`     | ['root', 'admin'] |
+| Deletar creche    | `daycare:delete`     | ['root', 'admin'] |
+| Restaurar creche  | `daycare:restore`    | ['root', 'admin'] |
+| Desativar creche  | `daycare:deactivate` | ['root', 'admin'] |
+| Reativar creche   | `daycare:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Hotel de Pets
 
 | Description      | Name               | Default Roles               |
 | ---------------- | ------------------ | --------------------------- |
-| Criar hotel      | `hotel:create`     | ['root', 'admin', 'system'] |
-| Visualizar hotel | `hotel:view`       | ['root', 'admin', 'system'] |
-| Atualizar hotel  | `hotel:update`     | ['root', 'admin', 'system'] |
-| Deletar hotel    | `hotel:delete`     | ['root', 'admin', 'system'] |
-| Restaurar hotel  | `hotel:restore`    | ['root', 'admin', 'system'] |
-| Desativar hotel  | `hotel:deactivate` | ['root', 'admin', 'system'] |
-| Reativar hotel   | `hotel:reactivate` | ['root', 'admin', 'system'] |
+| Criar hotel      | `hotel:create`     | ['root', 'admin'] |
+| Visualizar hotel | `hotel:view`       | ['root', 'admin'] |
+| Atualizar hotel  | `hotel:update`     | ['root', 'admin'] |
+| Deletar hotel    | `hotel:delete`     | ['root', 'admin'] |
+| Restaurar hotel  | `hotel:restore`    | ['root', 'admin'] |
+| Desativar hotel  | `hotel:deactivate` | ['root', 'admin'] |
+| Reativar hotel   | `hotel:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Chat
 
 | Description     | Name              | Default Roles               |
 | --------------- | ----------------- | --------------------------- |
-| Criar chat      | `chat:create`     | ['root', 'admin', 'system'] |
-| Visualizar chat | `chat:view`       | ['root', 'admin', 'system'] |
-| Atualizar chat  | `chat:update`     | ['root', 'admin', 'system'] |
-| Deletar chat    | `chat:delete`     | ['root', 'admin', 'system'] |
-| Restaurar chat  | `chat:restore`    | ['root', 'admin', 'system'] |
-| Desativar chat  | `chat:deactivate` | ['root', 'admin', 'system'] |
-| Reativar chat   | `chat:reactivate` | ['root', 'admin', 'system'] |
+| Criar chat      | `chat:create`     | ['root', 'admin'] |
+| Visualizar chat | `chat:view`       | ['root', 'admin'] |
+| Atualizar chat  | `chat:update`     | ['root', 'admin'] |
+| Deletar chat    | `chat:delete`     | ['root', 'admin'] |
+| Restaurar chat  | `chat:restore`    | ['root', 'admin'] |
+| Desativar chat  | `chat:deactivate` | ['root', 'admin'] |
+| Reativar chat   | `chat:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Notificações
 
 | Description            | Name                       | Default Roles               |
 | ---------------------- | -------------------------- | --------------------------- |
-| Criar notificação      | `notifications:create`     | ['root', 'admin', 'system'] |
-| Visualizar notificação | `notifications:view`       | ['root', 'admin', 'system'] |
-| Atualizar notificação  | `notifications:update`     | ['root', 'admin', 'system'] |
-| Deletar notificação    | `notifications:delete`     | ['root', 'admin', 'system'] |
-| Restaurar notificação  | `notifications:restore`    | ['root', 'admin', 'system'] |
-| Desativar notificação  | `notifications:deactivate` | ['root', 'admin', 'system'] |
-| Reativar notificação   | `notifications:reactivate` | ['root', 'admin', 'system'] |
+| Criar notificação      | `notifications:create`     | ['root', 'admin'] |
+| Visualizar notificação | `notifications:view`       | ['root', 'admin'] |
+| Atualizar notificação  | `notifications:update`     | ['root', 'admin'] |
+| Deletar notificação    | `notifications:delete`     | ['root', 'admin'] |
+| Restaurar notificação  | `notifications:restore`    | ['root', 'admin'] |
+| Desativar notificação  | `notifications:deactivate` | ['root', 'admin'] |
+| Reativar notificação   | `notifications:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Tele-busca/Entrega de Pets
 
 | Description                      | Name                         | Default Roles               |
 | -------------------------------- | ---------------------------- | --------------------------- |
-| Criar serviço de tele-busca      | `pickup_delivery:create`     | ['root', 'admin', 'system'] |
-| Visualizar serviço de tele-busca | `pickup_delivery:view`       | ['root', 'admin', 'system'] |
-| Atualizar serviço de tele-busca  | `pickup_delivery:update`     | ['root', 'admin', 'system'] |
-| Deletar serviço de tele-busca    | `pickup_delivery:delete`     | ['root', 'admin', 'system'] |
-| Restaurar serviço de tele-busca  | `pickup_delivery:restore`    | ['root', 'admin', 'system'] |
-| Desativar serviço de tele-busca  | `pickup_delivery:deactivate` | ['root', 'admin', 'system'] |
-| Reativar serviço de tele-busca   | `pickup_delivery:reactivate` | ['root', 'admin', 'system'] |
+| Criar serviço de tele-busca      | `pickup_delivery:create`     | ['root', 'admin'] |
+| Visualizar serviço de tele-busca | `pickup_delivery:view`       | ['root', 'admin'] |
+| Atualizar serviço de tele-busca  | `pickup_delivery:update`     | ['root', 'admin'] |
+| Deletar serviço de tele-busca    | `pickup_delivery:delete`     | ['root', 'admin'] |
+| Restaurar serviço de tele-busca  | `pickup_delivery:restore`    | ['root', 'admin'] |
+| Desativar serviço de tele-busca  | `pickup_delivery:deactivate` | ['root', 'admin'] |
+| Reativar serviço de tele-busca   | `pickup_delivery:reactivate` | ['root', 'admin'] |
 
 ### Módulo de Logs de Auditoria
 

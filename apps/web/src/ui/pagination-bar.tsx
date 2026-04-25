@@ -12,8 +12,8 @@ export function PaginationBar({ meta, onPageChange }: PaginationBarProps) {
   const { page, total_pages, total } = meta;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-sm text-slate-300">
-      <span className="text-xs text-slate-500">
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-sm text-foreground">
+      <span className="text-xs text-muted">
         Página {page} de {total_pages} · {total} registro{total !== 1 ? 's' : ''}
       </span>
 
@@ -23,14 +23,14 @@ export function PaginationBar({ meta, onPageChange }: PaginationBarProps) {
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           title="Página anterior"
-          className="rounded-xl border border-white/10 bg-white/5 p-1.5 text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-border/50 bg-surface/50 p-1.5 text-muted transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         {generatePageNumbers(page, total_pages).map((num, idx) =>
           num === null ? (
-            <span key={`ellipsis-${idx}`} className="px-1 text-slate-500">
+            <span key={`ellipsis-${idx}`} className="px-1 text-muted">
               …
             </span>
           ) : (
@@ -41,7 +41,7 @@ export function PaginationBar({ meta, onPageChange }: PaginationBarProps) {
               className={`min-w-[2rem] rounded-xl border px-2 py-1 text-xs font-medium transition ${
                 num === page
                   ? 'border-primary/40 bg-primary/20 text-primary'
-                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                  : 'border-border/50 bg-surface/50 text-muted hover:bg-surface'
               }`}
             >
               {num}
@@ -54,7 +54,7 @@ export function PaginationBar({ meta, onPageChange }: PaginationBarProps) {
           disabled={page >= total_pages}
           onClick={() => onPageChange(page + 1)}
           title="Próxima página"
-          className="rounded-xl border border-white/10 bg-white/5 p-1.5 text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-border/50 bg-surface/50 p-1.5 text-muted transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

@@ -18,8 +18,8 @@ export function AppToastViewport() {
           className={cn(
             'pointer-events-auto rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm',
             toast.variant === 'error'
-              ? 'border-rose-200 bg-white text-rose-700'
-              : 'border-emerald-200 bg-white text-emerald-700',
+              ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+              : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
           )}
         >
           <div className="flex items-start justify-between gap-3">
@@ -27,7 +27,7 @@ export function AppToastViewport() {
             <button
               type="button"
               onClick={() => dismissToast(toast.id)}
-              className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-400 transition hover:text-stone-600"
+              className="text-xs font-semibold uppercase tracking-[0.16em] text-muted transition hover:text-foreground"
             >
               fechar
             </button>

@@ -244,6 +244,7 @@ describe('AppLayout', () => {
     expect(screen.getAllByText('Correct Company')).not.toHaveLength(0);
     expect(screen.getByRole('link', { name: 'Clientes' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Pets' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Serviços' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Agendamentos' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Configurações' })).toBeTruthy();
     expect(screen.getByText('Upgrade para basic')).toBeTruthy();
@@ -418,6 +419,7 @@ describe('AppLayout', () => {
 
     expect(useUIStore.getState().sidebarOpen).toBe(true);
     expect(screen.getByRole('link', { name: 'Clientes' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Serviços' })).toBeTruthy();
   });
 
   it('abre o drawer no mobile ao clicar no menu hambúrguer', () => {

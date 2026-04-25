@@ -39,7 +39,7 @@ func TestPetEndpoints_ListIsTenantScoped(t *testing.T) {
 
 	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-list-a")
 	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-list-b")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
 	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
 	clientA := mustCreateClientRecord(t, ctx, pool, queries, tenantA.companyID, "Ana Lima", "12345678922")
@@ -67,7 +67,7 @@ func TestPetEndpoints_CreateRejectsOwnerFromAnotherTenant(t *testing.T) {
 
 	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-create-a")
 	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-create-b")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
 	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
 	clientB := mustCreateClientRecord(t, ctx, pool, queries, tenantB.companyID, "Bruno Costa", "12345678925")
@@ -110,7 +110,7 @@ func TestPetEndpoints_CreateUpdateDeleteRespectTenant(t *testing.T) {
 
 	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-crud-a")
 	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-crud-b")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
 	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
 	clientA := mustCreateClientRecord(t, ctx, pool, queries, tenantA.companyID, "Ana Lima", "12345678926")
@@ -221,7 +221,7 @@ func TestPetEndpoints_CreateAndUpdateUsingUploadObjectKey(t *testing.T) {
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "pet-upload-key")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
 	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenant.companyID, "Ana Lima", "12345678928")
 
@@ -295,7 +295,7 @@ func TestPetEndpoints_CreateAndUpdateWithGuardianIDs(t *testing.T) {
 
 	tenantA := mustCreateTenantFixture(t, ctx, pool, "pet-guardian-a")
 	tenantB := mustCreateTenantFixture(t, ctx, pool, "pet-guardian-b")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenantA.companyID, moduleID)
 	mustAttachClientModule(t, ctx, pool, tenantB.companyID, moduleID)
 
@@ -388,7 +388,7 @@ func TestPetEndpoints_ListSupportsStructuredFilters(t *testing.T) {
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "pet-filters")
-	moduleID := mustCreateClientModule(t, ctx, pool)
+	moduleID := mustCreatePetModule(t, ctx, pool)
 	mustAttachClientModule(t, ctx, pool, tenant.companyID, moduleID)
 
 	clientID := mustCreateClientRecord(t, ctx, pool, queries, tenant.companyID, "Ana Lima", "12345678935")
@@ -431,7 +431,7 @@ func setupPetRouterForTenantWithUploadResolver(queries sqlc.Querier, tenant inte
 	router.Use(middleware.Audit(queries, nil))
 
 	pets := router.Group("/api/v1/pets")
-	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.Use(middleware.RequireModule(queries, "PET"))
 	pets.GET("", petHandler.List)
 	pets.POST("", petHandler.Create)
 	pets.GET("/:id", petHandler.GetByID)

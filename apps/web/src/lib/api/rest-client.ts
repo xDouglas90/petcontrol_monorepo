@@ -264,6 +264,28 @@ let mockServices: ServiceDTO[] = [
     price: '89.90',
     discount_rate: '0.00',
     is_active: true,
+    sub_services_count: 1,
+    average_times_count: 1,
+    sub_services: [
+      {
+        id: '77777777-7777-7777-7777-777777777777',
+        type_id: '88888888-8888-8888-8888-888888888888',
+        title: 'Banho porte médio',
+        description: 'Banho completo para pets médios',
+        price: '89.90',
+        discount_rate: '0.00',
+        is_active: true,
+        average_times: [
+          {
+            id: '99999999-9999-9999-9999-999999999999',
+            pet_size: 'medium',
+            pet_kind: 'dog',
+            pet_temperament: 'playful',
+            average_time_minutes: 60,
+          },
+        ],
+      },
+    ],
   },
 ];
 
@@ -753,7 +775,9 @@ export async function updateCompanyUserPermissions(
       permission_groups: current.permission_groups.map((group) => ({
         ...group,
         permissions: group.permissions.map((permission) => {
-          const updated = permissions.find((item) => item.code === permission.code);
+          const updated = permissions.find(
+            (item) => item.code === permission.code,
+          );
           return updated ?? permission;
         }),
       })),
@@ -881,10 +905,13 @@ export async function getPerson(
     return person;
   }
 
-  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
-    method: 'GET',
-    accessToken,
-  });
+  const payload = await request<PersonApiResponseDTO>(
+    API_PATHS.peopleById(personId),
+    {
+      method: 'GET',
+      accessToken,
+    },
+  );
   return payload.data;
 }
 
@@ -1003,8 +1030,7 @@ export async function updatePerson(
             email: input.email ?? current.contact.email,
             phone: input.phone ?? current.contact.phone,
             cellphone: input.cellphone ?? current.contact.cellphone,
-            has_whatsapp:
-              input.has_whatsapp ?? current.contact.has_whatsapp,
+            has_whatsapp: input.has_whatsapp ?? current.contact.has_whatsapp,
           }
         : null,
       address:
@@ -1015,7 +1041,9 @@ export async function updatePerson(
         current.kind === 'client'
           ? {
               client_since:
-                input.client_since ?? current.client_details?.client_since ?? null,
+                input.client_since ??
+                current.client_details?.client_since ??
+                null,
               notes: input.notes ?? current.client_details?.notes ?? null,
             }
           : current.client_details,
@@ -1069,11 +1097,14 @@ export async function updatePerson(
     return updated;
   }
 
-  const payload = await request<PersonApiResponseDTO>(API_PATHS.peopleById(personId), {
-    method: 'PATCH',
-    accessToken,
-    body: input,
-  });
+  const payload = await request<PersonApiResponseDTO>(
+    API_PATHS.peopleById(personId),
+    {
+      method: 'PATCH',
+      accessToken,
+      body: input,
+    },
+  );
   return payload.data;
 }
 
@@ -1162,9 +1193,37 @@ export async function listServices(
 ): Promise<ServiceListApiResponseDTO> {
   if (authMode === AUTH_MODES.mock) {
     await delay(120);
+    const filtered = mockServices.filter((service) => {
+      const search = params?.search?.trim().toLowerCase();
+      const price = Number(service.price);
+      const minPrice = Number(params?.min_price);
+      const maxPrice = Number(params?.max_price);
+
+      const matchesSearch =
+        !search ||
+        service.title.toLowerCase().includes(search) ||
+        service.description.toLowerCase().includes(search);
+      const matchesType =
+        !params?.type_name || service.type_name === params.type_name;
+      const matchesStatus =
+        !params?.is_active ||
+        service.is_active === (params.is_active === 'true');
+      const matchesMin =
+        !params?.min_price || (Number.isFinite(price) && price >= minPrice);
+      const matchesMax =
+        !params?.max_price || (Number.isFinite(price) && price <= maxPrice);
+
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesStatus &&
+        matchesMin &&
+        matchesMax
+      );
+    });
     return {
-      data: [...mockServices],
-      meta: { total: mockServices.length, page: 1, limit: 100, total_pages: 1 },
+      data: filtered,
+      meta: { total: filtered.length, page: 1, limit: 100, total_pages: 1 },
     };
   }
 
@@ -1174,6 +1233,25 @@ export async function listServices(
     queryParams: params,
   });
   return payload;
+}
+
+export async function getService(
+  accessToken: string,
+  serviceId: string,
+): Promise<ServiceApiResponseDTO> {
+  if (authMode === AUTH_MODES.mock) {
+    await delay(100);
+    const item = mockServices.find((service) => service.id === serviceId);
+    if (!item) {
+      throw new ApiError('Serviço não encontrado', 404, { error: 'not found' });
+    }
+    return { data: item };
+  }
+
+  return request<ServiceApiResponseDTO>(`${API_PATHS.services}/${serviceId}`, {
+    method: 'GET',
+    accessToken,
+  });
 }
 
 export async function createClient(
@@ -1343,9 +1421,7 @@ export async function updatePet(
   return payload.data;
 }
 
-function resolvePetGuardians(
-  guardianIDs?: string[],
-): PetGuardianDTO[] {
+function resolvePetGuardians(guardianIDs?: string[]): PetGuardianDTO[] {
   if (!guardianIDs || guardianIDs.length === 0) {
     return [];
   }
@@ -1406,6 +1482,26 @@ export async function createService(
       discount_rate: input.discount_rate ?? '0.00',
       image_url: input.image_url ?? null,
       is_active: input.is_active ?? true,
+      sub_services_count: input.sub_services.length,
+      average_times_count: input.sub_services.reduce(
+        (total, subService) => total + subService.average_times.length,
+        0,
+      ),
+      sub_services: input.sub_services.map((subService) => ({
+        id: crypto.randomUUID(),
+        type_id: crypto.randomUUID(),
+        title: subService.title,
+        description: subService.description,
+        notes: subService.notes ?? null,
+        price: subService.price,
+        discount_rate: subService.discount_rate ?? '0.00',
+        image_url: subService.image_url ?? null,
+        is_active: subService.is_active ?? true,
+        average_times: subService.average_times.map((averageTime) => ({
+          id: crypto.randomUUID(),
+          ...averageTime,
+        })),
+      })),
     };
     mockServices = [...mockServices, item];
     return item;
@@ -1430,7 +1526,34 @@ export async function updateService(
     if (!existing) {
       throw new ApiError('Serviço não encontrado', 404, { error: 'not found' });
     }
-    const updated = { ...existing, ...input };
+    const updated: ServiceDTO = {
+      ...existing,
+      ...input,
+      sub_services_count:
+        input.sub_services?.length ?? existing.sub_services_count,
+      average_times_count:
+        input.sub_services?.reduce(
+          (total, subService) => total + subService.average_times.length,
+          0,
+        ) ?? existing.average_times_count,
+      sub_services: input.sub_services
+        ? input.sub_services.map((subService) => ({
+            id: crypto.randomUUID(),
+            type_id: crypto.randomUUID(),
+            title: subService.title,
+            description: subService.description,
+            notes: subService.notes ?? null,
+            price: subService.price,
+            discount_rate: subService.discount_rate ?? '0.00',
+            image_url: subService.image_url ?? null,
+            is_active: subService.is_active ?? true,
+            average_times: subService.average_times.map((averageTime) => ({
+              id: crypto.randomUUID(),
+              ...averageTime,
+            })),
+          }))
+        : existing.sub_services,
+    };
     mockServices = mockServices.map((item) =>
       item.id === serviceId ? updated : item,
     );
@@ -1620,6 +1743,8 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.limit != null) entries.push(`limit=${params.limit}`);
   if (params.search)
     entries.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.type_name)
+    entries.push(`type_name=${encodeURIComponent(params.type_name)}`);
   if (params.kind) entries.push(`kind=${encodeURIComponent(params.kind)}`);
   if (params.size) entries.push(`size=${encodeURIComponent(params.size)}`);
   if (params.temperament)
@@ -1627,6 +1752,10 @@ function buildQueryString(params?: ListQueryParams): string {
   if (params.race) entries.push(`race=${encodeURIComponent(params.race)}`);
   if (params.is_active)
     entries.push(`is_active=${encodeURIComponent(params.is_active)}`);
+  if (params.min_price)
+    entries.push(`min_price=${encodeURIComponent(params.min_price)}`);
+  if (params.max_price)
+    entries.push(`max_price=${encodeURIComponent(params.max_price)}`);
   if (params.panel) entries.push(`panel=${encodeURIComponent(params.panel)}`);
   return entries.length > 0 ? `?${entries.join('&')}` : '';
 }

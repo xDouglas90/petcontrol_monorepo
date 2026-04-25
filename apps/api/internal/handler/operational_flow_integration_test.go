@@ -25,10 +25,14 @@ func TestOperationalFlow_ClientPetServiceScheduleAndDeactivationImpact(t *testin
 	queries := sqlc.New(pool)
 
 	tenant := mustCreateTenantFixture(t, ctx, pool, "operational-flow")
-	crmModuleID := mustCreateClientModule(t, ctx, pool)
+	clientsModuleID := mustCreateClientModule(t, ctx, pool)
+	petsModuleID := mustCreatePetModule(t, ctx, pool)
 	scheduleModuleID := mustCreateScheduleModule(t, ctx, pool)
-	mustAttachClientModule(t, ctx, pool, tenant.companyID, crmModuleID)
+	serviceModuleID := mustCreateServiceModule(t, ctx, pool)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, clientsModuleID)
+	mustAttachClientModule(t, ctx, pool, tenant.companyID, petsModuleID)
 	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, scheduleModuleID)
+	mustAttachScheduleModule(t, ctx, pool, tenant.companyID, serviceModuleID)
 
 	router := setupOperationalFlowRouterForTenant(pool, queries, tenant)
 
@@ -83,6 +87,9 @@ func TestOperationalFlow_ClientPetServiceScheduleAndDeactivationImpact(t *testin
 		"description":   "Banho com secagem para o fluxo completo",
 		"price":         "89.90",
 		"discount_rate": "0.00",
+		"sub_services": []map[string]any{
+			serviceSubServicePayload("Banho médio operacional", "Banho médio para fluxo completo", "89.90"),
+		},
 	})
 	require.Equal(t, http.StatusCreated, serviceRes.Code)
 	serviceID := responseDataString(t, serviceRes, "id")
@@ -153,7 +160,7 @@ func setupOperationalFlowRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queri
 	router.Use(middleware.Audit(queries, nil))
 
 	clients := router.Group("/api/v1/clients")
-	clients.Use(middleware.RequireModule(queries, "CRM"))
+	clients.Use(middleware.RequireModule(queries, "CLI"))
 	clients.GET("", clientHandler.List)
 	clients.POST("", clientHandler.Create)
 	clients.GET("/:id", clientHandler.GetByID)
@@ -161,7 +168,7 @@ func setupOperationalFlowRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queri
 	clients.DELETE("/:id", clientHandler.Delete)
 
 	pets := router.Group("/api/v1/pets")
-	pets.Use(middleware.RequireModule(queries, "CRM"))
+	pets.Use(middleware.RequireModule(queries, "PET"))
 	pets.GET("", petHandler.List)
 	pets.POST("", petHandler.Create)
 	pets.GET("/:id", petHandler.GetByID)
@@ -169,7 +176,7 @@ func setupOperationalFlowRouterForTenant(pool *pgxpool.Pool, queries *sqlc.Queri
 	pets.DELETE("/:id", petHandler.Delete)
 
 	services := router.Group("/api/v1/services")
-	services.Use(middleware.RequireModule(queries, "SCH"))
+	services.Use(middleware.RequireModule(queries, "SVC"))
 	services.GET("", serviceHandler.List)
 	services.POST("", serviceHandler.Create)
 	services.GET("/:id", serviceHandler.GetByID)

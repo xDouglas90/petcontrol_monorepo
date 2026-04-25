@@ -195,309 +195,315 @@ export function SchedulesPage() {
     createMutation.error || updateMutation.error || deleteMutation.error;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="space-y-4 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
-            Schedules
-          </p>
-          <h2 className="mt-2 font-display text-3xl text-white">
-            Agendamentos do tenant
-          </h2>
-          <p className="mt-2 text-sm text-slate-300">
-            Lista real conectada em GET /api/v1/schedules, com isolamento por
-            company_id no backend.
-          </p>
-        </div>
+    <main className="flex min-w-0 flex-col min-h-full">
+      <div className="flex-1 grid grid-cols-1 divide-y divide-border/50 xl:grid-cols-[minmax(0,1.1fr)_26rem] xl:divide-x xl:divide-y-0">
+        <section className="flex flex-col min-h-full">
+          <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="app-eyebrow">Operação</p>
+                <h1 className="mt-3 font-display text-4xl text-foreground sm:text-5xl">
+                  Agendamentos
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
+                  Gestão completa da agenda do tenant. Monitore o status dos
+                  serviços, tempos de execução e entregas programadas.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm"
+              >
+                Novo agendamento
+              </button>
+            </div>
+          </header>
 
-        <div className="mt-4">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por cliente, pet ou serviço..."
-            id="schedules-search"
-          />
-        </div>
+          <div className="p-6 lg:p-10">
+            <div className="mt-4">
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar por cliente, pet ou serviço..."
+                id="schedules-search"
+              />
+            </div>
 
-        <div className="mt-4 overflow-hidden rounded-3xl border border-white/10">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-white/5 text-slate-300">
-              <tr>
-                <th className="px-4 py-3 font-medium">Data</th>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Pet</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
+            <div className="mt-6 space-y-3">
               {viewState === 'loading' ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-6 text-center text-slate-300"
-                  >
-                    Carregando schedules...
-                  </td>
-                </tr>
+                <div className="rounded-2xl border border-border/50 bg-surface/30 p-8 text-center text-muted">
+                  Carregando agendamentos...
+                </div>
               ) : null}
 
               {viewState === 'error' ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-6 text-center text-rose-200"
-                  >
-                    Falha ao buscar schedules.
-                  </td>
-                </tr>
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-8 text-center text-rose-200">
+                  Falha ao buscar agendamentos.
+                </div>
               ) : null}
 
               {viewState === 'empty' ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-6 text-center text-slate-300"
-                  >
-                    Nenhum agendamento encontrado para este tenant.
-                  </td>
-                </tr>
+                <div className="rounded-2xl border border-border/50 bg-surface/30 p-8 text-center text-muted">
+                  Nenhum agendamento encontrado para este tenant.
+                </div>
               ) : null}
 
               {viewState === 'ready'
                 ? schedules.map((schedule) => (
-                    <tr key={schedule.id} className="border-t border-white/10">
-                      <td className="px-4 py-3 text-slate-200">
-                        {new Date(schedule.scheduled_at).toLocaleString(
-                          'pt-BR',
-                          {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          },
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-slate-300">
-                        {schedule.client_name || schedule.client_id}
-                      </td>
-                      <td className="px-4 py-3 text-slate-300">
-                        <div>{schedule.pet_name || schedule.pet_id}</div>
-                        {schedule.service_titles?.length ? (
-                          <div className="mt-1 text-xs text-slate-400">
-                            {schedule.service_titles.join(', ')}
+                    <article
+                      key={schedule.id}
+                      className={`group flex items-center justify-between gap-4 rounded-[1.8rem] border p-5 transition ${editingScheduleId === schedule.id ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
+                    >
+                      <div className="flex w-full items-center justify-between gap-4">
+                        <div className="flex items-center gap-5">
+                          <div className="flex flex-col items-center justify-center rounded-2xl bg-surface border border-border/50 px-3 py-2 text-center shadow-sm">
+                            <span className="text-[10px] uppercase font-bold text-muted">
+                              {new Date(
+                                schedule.scheduled_at,
+                              ).toLocaleDateString('pt-BR', { month: 'short' })}
+                            </span>
+                            <span className="text-xl font-display font-bold text-primary">
+                              {new Date(schedule.scheduled_at).getDate()}
+                            </span>
                           </div>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            'rounded-full border px-2 py-1 text-xs',
-                            scheduleStatusColorClass(schedule.current_status),
-                          )}
-                        >
-                          {formatScheduleStatus(schedule.current_status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground group-hover:text-primary transition">
+                                {schedule.pet_name || 'Pet N/I'}
+                              </p>
+                              <span
+                                className={cn(
+                                  'rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase',
+                                  scheduleStatusColorClass(
+                                    schedule.current_status,
+                                  ),
+                                )}
+                              >
+                                {formatScheduleStatus(schedule.current_status)}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-sm text-muted">
+                              Tutor: {schedule.client_name || 'N/I'} ·{' '}
+                              {new Date(
+                                schedule.scheduled_at,
+                              ).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                            {schedule.service_titles?.length ? (
+                              <p className="mt-1 text-[11px] text-muted/70 truncate max-w-xs">
+                                {schedule.service_titles.join(', ')}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={() => startEdit(schedule.id)}
-                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                            className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1.5 text-xs text-foreground transition hover:bg-surface"
                           >
                             Editar
                           </button>
                           <button
                             type="button"
                             onClick={() => void removeSchedule(schedule.id)}
-                            className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/20"
+                            className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 transition hover:bg-rose-500/20"
                           >
                             Excluir
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </article>
                   ))
                 : null}
-            </tbody>
-          </table>
-        </div>
-
-        <PaginationBar
-          meta={schedulesQuery.data?.meta}
-          onPageChange={goToPage}
-        />
-      </section>
-
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
-          {editingScheduleId ? 'Editar schedule' : 'Novo schedule'}
-        </p>
-        <h3 className="mt-2 font-display text-2xl text-white">
-          {editingScheduleId ? 'Atualizar agendamento' : 'Criar agendamento'}
-        </h3>
-
-        <form
-          className="mt-6 space-y-4"
-          onSubmit={form.handleSubmit((values) => {
-            void onSubmit(values);
-          })}
-        >
-          <FormField
-            label="Cliente"
-            htmlFor="schedule-client"
-            error={form.formState.errors.clientId?.message}
-          >
-            <select
-              id="schedule-client"
-              title="Selecione o cliente"
-              {...form.register('clientId')}
-              className={fieldClassName}
-            >
-              <option value="">Selecione um cliente</option>
-              {(clientsQuery.data?.data ?? []).map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.full_name}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            label="Pet"
-            htmlFor="schedule-pet"
-            error={form.formState.errors.petId?.message}
-          >
-            <select
-              id="schedule-pet"
-              title="Selecione o pet"
-              {...form.register('petId')}
-              className={fieldClassName}
-            >
-              <option value="">Selecione um pet</option>
-              {availablePets.map((pet) => (
-                <option key={pet.id} value={pet.id}>
-                  {pet.name}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            label="Serviços"
-            htmlFor="schedule-services"
-            error={form.formState.errors.serviceIds?.message}
-          >
-            <select
-              id="schedule-services"
-              title="Selecione os serviços (segure Ctrl para múltiplos)"
-              {...form.register('serviceIds')}
-              multiple
-              className={`${fieldClassName} min-h-32`}
-            >
-              {(servicesQuery.data?.data ?? []).map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.title}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            label="Data/Hora"
-            htmlFor="schedule-at"
-            error={form.formState.errors.scheduledAt?.message}
-          >
-            <input
-              id="schedule-at"
-              title="Data e hora do agendamento"
-              {...form.register('scheduledAt')}
-              type="datetime-local"
-              className={fieldClassName}
-            />
-          </FormField>
-
-          <FormField
-            label="Fim estimado"
-            htmlFor="schedule-end"
-            error={form.formState.errors.estimatedEnd?.message}
-          >
-            <input
-              id="schedule-end"
-              title="Previsão de término"
-              {...form.register('estimatedEnd')}
-              type="datetime-local"
-              className={fieldClassName}
-            />
-          </FormField>
-
-          <FormField
-            label="Status"
-            htmlFor="schedule-status"
-            error={form.formState.errors.status?.message}
-          >
-            <select
-              id="schedule-status"
-              title="Status do agendamento"
-              {...form.register('status')}
-              className={fieldClassName}
-            >
-              {scheduleStatusOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            label="Observações"
-            htmlFor="schedule-notes"
-            error={form.formState.errors.notes?.message}
-          >
-            <textarea
-              id="schedule-notes"
-              title="Observações do agendamento"
-              {...form.register('notes')}
-              className={fieldClassName}
-              rows={3}
-              placeholder="Ex: Trazer toalha própria, alérgico a tal produto..."
-            />
-          </FormField>
-
-          {mutationError instanceof ApiError ? (
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-              {mutationError.message}
             </div>
-          ) : null}
 
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={pendingMutation}
-              className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {pendingMutation
-                ? 'Salvando...'
-                : editingScheduleId
-                  ? 'Atualizar'
-                  : 'Criar'}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
-            >
-              Limpar
-            </button>
+            <PaginationBar
+              meta={schedulesQuery.data?.meta}
+              onPageChange={goToPage}
+            />
           </div>
-        </form>
-      </section>
-    </div>
+        </section>
+
+        <aside className="bg-surface/30 p-6 lg:p-10">
+          <div className="xl:sticky xl:top-10">
+            <p className="app-eyebrow">
+              {editingScheduleId ? 'Editar agendamento' : 'Novo agendamento'}
+            </p>
+            <h3 className="mt-4 font-display text-3xl text-foreground">
+              {editingScheduleId
+                ? 'Atualizar agendamento'
+                : 'Criar agendamento'}
+            </h3>
+
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={form.handleSubmit((values) => {
+                void onSubmit(values);
+              })}
+            >
+              <FormField
+                label="Cliente"
+                htmlFor="schedule-client"
+                error={form.formState.errors.clientId?.message}
+              >
+                <select
+                  id="schedule-client"
+                  title="Selecione o cliente"
+                  {...form.register('clientId')}
+                  className={fieldClassName}
+                >
+                  <option value="">Selecione um cliente</option>
+                  {(clientsQuery.data?.data ?? []).map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.full_name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Pet"
+                htmlFor="schedule-pet"
+                error={form.formState.errors.petId?.message}
+              >
+                <select
+                  id="schedule-pet"
+                  title="Selecione o pet"
+                  {...form.register('petId')}
+                  className={fieldClassName}
+                >
+                  <option value="">Selecione um pet</option>
+                  {availablePets.map((pet) => (
+                    <option key={pet.id} value={pet.id}>
+                      {pet.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Serviços"
+                htmlFor="schedule-services"
+                error={form.formState.errors.serviceIds?.message}
+              >
+                <select
+                  id="schedule-services"
+                  title="Selecione os serviços (segure Ctrl para múltiplos)"
+                  {...form.register('serviceIds')}
+                  multiple
+                  className={`${fieldClassName} min-h-32`}
+                >
+                  {(servicesQuery.data?.data ?? []).map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.title}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Data/Hora"
+                htmlFor="schedule-at"
+                error={form.formState.errors.scheduledAt?.message}
+              >
+                <input
+                  id="schedule-at"
+                  title="Data e hora do agendamento"
+                  {...form.register('scheduledAt')}
+                  type="datetime-local"
+                  className={fieldClassName}
+                />
+              </FormField>
+
+              <FormField
+                label="Fim estimado"
+                htmlFor="schedule-end"
+                error={form.formState.errors.estimatedEnd?.message}
+              >
+                <input
+                  id="schedule-end"
+                  title="Previsão de término"
+                  {...form.register('estimatedEnd')}
+                  type="datetime-local"
+                  className={fieldClassName}
+                />
+              </FormField>
+
+              <FormField
+                label="Status"
+                htmlFor="schedule-status"
+                error={form.formState.errors.status?.message}
+              >
+                <select
+                  id="schedule-status"
+                  title="Status do agendamento"
+                  {...form.register('status')}
+                  className={fieldClassName}
+                >
+                  {scheduleStatusOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Observações"
+                htmlFor="schedule-notes"
+                error={form.formState.errors.notes?.message}
+              >
+                <textarea
+                  id="schedule-notes"
+                  title="Observações do agendamento"
+                  {...form.register('notes')}
+                  className={fieldClassName}
+                  rows={3}
+                  placeholder="Ex: Trazer toalha própria, alérgico a tal produto..."
+                />
+              </FormField>
+
+              {mutationError instanceof ApiError ? (
+                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                  {mutationError.message}
+                </div>
+              ) : null}
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={pendingMutation}
+                  className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {pendingMutation
+                    ? 'Salvando...'
+                    : editingScheduleId
+                      ? 'Atualizar'
+                      : 'Criar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface"
+                >
+                  Limpar
+                </button>
+              </div>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </main>
   );
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
 function FormField({
   label,
@@ -512,7 +518,7 @@ function FormField({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
       {children}
       {error ? <span className="text-sm text-rose-300">{error}</span> : null}
     </label>

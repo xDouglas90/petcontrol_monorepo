@@ -21,7 +21,33 @@ import {
 
 describe("shared-types domain contracts", () => {
   it("exports module codes for the current seeded domain set", () => {
-    expect(MODULE_CODES).toEqual(["PPL", "SCH", "CRM", "FIN"]);
+    expect(MODULE_CODES).toEqual([
+      "CFG",
+      "UCR",
+      "SCH",
+      "SVC",
+      "PPL",
+      "SPM",
+      "PET",
+      "TNT",
+      "DHB",
+      "CLI",
+      "RPT",
+      "CRP",
+      "PRD",
+      "GSM",
+      "DLV",
+      "PDC",
+      "PHO",
+      "CHT",
+      "NTF",
+      "FIN",
+      "INV",
+      "SUP",
+      "EUA",
+      "AUD",
+      "ATL",
+    ]);
   });
 
   it("exports user roles and company user kinds aligned with the database schema", () => {

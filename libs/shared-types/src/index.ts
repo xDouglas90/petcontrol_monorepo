@@ -41,11 +41,14 @@ export interface ListQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  type_name?: string;
   kind?: string;
   size?: string;
   temperament?: string;
   race?: string;
   is_active?: string;
+  min_price?: string;
+  max_price?: string;
   panel?: string;
 }
 
@@ -104,7 +107,33 @@ export const MODULE_PACKAGES = [
 
 export type ModulePackage = (typeof MODULE_PACKAGES)[number];
 
-export const MODULE_CODES = ['PPL', 'SCH', 'CRM', 'FIN'] as const;
+export const MODULE_CODES = [
+  'CFG',
+  'UCR',
+  'SCH',
+  'SVC',
+  'PPL',
+  'SPM',
+  'PET',
+  'TNT',
+  'DHB',
+  'CLI',
+  'RPT',
+  'CRP',
+  'PRD',
+  'GSM',
+  'DLV',
+  'PDC',
+  'PHO',
+  'CHT',
+  'NTF',
+  'FIN',
+  'INV',
+  'SUP',
+  'EUA',
+  'AUD',
+  'ATL',
+] as const;
 
 export type ModuleCode = (typeof MODULE_CODES)[number];
 
@@ -832,6 +861,30 @@ export interface ServiceDTO {
   discount_rate: string;
   image_url?: string | null;
   is_active: boolean;
+  sub_services_count?: number;
+  average_times_count?: number;
+  sub_services?: ServiceSubServiceDTO[];
+}
+
+export interface ServiceSubServiceDTO {
+  id: UUID;
+  type_id: UUID;
+  title: string;
+  description: string;
+  notes?: string | null;
+  price: string;
+  discount_rate: string;
+  image_url?: string | null;
+  is_active: boolean;
+  average_times: ServiceAverageTimeDTO[];
+}
+
+export interface ServiceAverageTimeDTO {
+  id: UUID;
+  pet_size: PetSize;
+  pet_kind: PetKind;
+  pet_temperament: PetTemperament;
+  average_time_minutes: number;
 }
 
 export interface CreateServiceInput {
@@ -843,6 +896,7 @@ export interface CreateServiceInput {
   discount_rate?: string;
   image_url?: string;
   is_active?: boolean;
+  sub_services: CreateServiceSubServiceInput[];
 }
 
 export interface UpdateServiceInput {
@@ -854,6 +908,26 @@ export interface UpdateServiceInput {
   discount_rate?: string;
   image_url?: string;
   is_active?: boolean;
+  sub_services?: CreateServiceSubServiceInput[];
+}
+
+export interface CreateServiceSubServiceInput {
+  type_name?: string;
+  title: string;
+  description: string;
+  notes?: string;
+  price: string;
+  discount_rate?: string;
+  image_url?: string;
+  is_active?: boolean;
+  average_times: CreateServiceAverageTimeInput[];
+}
+
+export interface CreateServiceAverageTimeInput {
+  pet_size: PetSize;
+  pet_kind: PetKind;
+  pet_temperament: PetTemperament;
+  average_time_minutes: number;
 }
 
 export interface ServiceListApiResponseDTO extends PaginatedResponse<ServiceDTO> {}

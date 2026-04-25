@@ -1715,6 +1715,18 @@ type ServiceType struct {
 	DeletedAt   pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
 }
 
+type ServicesAverageTime struct {
+	ID                 pgtype.UUID        `db:"id" json:"id"`
+	ServiceID          pgtype.UUID        `db:"service_id" json:"service_id"`
+	SubServiceID       pgtype.UUID        `db:"sub_service_id" json:"sub_service_id"`
+	PetSize            PetSize            `db:"pet_size" json:"pet_size"`
+	PetKind            PetKind            `db:"pet_kind" json:"pet_kind"`
+	PetTemperament     PetTemperament     `db:"pet_temperament" json:"pet_temperament"`
+	AverageTimeMinutes int16              `db:"average_time_minutes" json:"average_time_minutes"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type SubService struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
 	ServiceID    pgtype.UUID        `db:"service_id" json:"service_id"`

@@ -10,19 +10,43 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
-    AND cs.is_active = TRUE
+    AND (sqlc.narg('IsActive')::boolean IS NULL
+        OR cs.is_active = sqlc.narg('IsActive')::boolean)
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
     AND (sqlc.arg('Search')::text = ''
         OR s.title ILIKE '%' || sqlc.arg('Search')::text || '%'
         OR s.description ILIKE '%' || sqlc.arg('Search')::text || '%')
+    AND (sqlc.arg('TypeName')::text = ''
+        OR st.name = sqlc.arg('TypeName')::text)
+    AND (sqlc.narg('MinPrice')::numeric IS NULL
+        OR s.price >= sqlc.narg('MinPrice')::numeric)
+    AND (sqlc.narg('MaxPrice')::numeric IS NULL
+        OR s.price <= sqlc.narg('MaxPrice')::numeric)
 ORDER BY
     s.title ASC
 LIMIT sqlc.arg('Limit')
@@ -39,15 +63,31 @@ SELECT
     s.price,
     s.discount_rate,
     s.image_url,
-    cs.is_active
+    cs.is_active,
+    COALESCE(sub_services.count, 0)::bigint AS sub_services_count,
+    COALESCE(average_times.count, 0)::bigint AS average_times_count
 FROM
     company_services cs
     INNER JOIN services s ON s.id = cs.service_id
     INNER JOIN service_types st ON st.id = s.type_id
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            sub_services ss
+        WHERE
+            ss.service_id = s.id
+            AND ss.deleted_at IS NULL) sub_services ON TRUE
+    LEFT JOIN LATERAL (
+        SELECT
+            COUNT(*) AS count
+        FROM
+            services_average_times sat
+        WHERE
+            sat.service_id = s.id) average_times ON TRUE
 WHERE
     cs.company_id = sqlc.arg('CompanyID')
     AND s.id = sqlc.arg('ID')
-    AND cs.is_active = TRUE
     AND s.deleted_at IS NULL
     AND st.deleted_at IS NULL
 LIMIT 1;
@@ -135,4 +175,3 @@ SELECT
             AND cs.service_id = sqlc.arg('ServiceID')
             AND cs.is_active = TRUE
             AND s.deleted_at IS NULL) AS is_valid;
-

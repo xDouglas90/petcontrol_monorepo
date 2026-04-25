@@ -1,4 +1,4 @@
-# ADR 0008: Guarda do domínio Pets pelo módulo CRM
+# ADR 0008: Guarda do domínio Pets pelo módulo PET
 
 ## Status
 
@@ -7,25 +7,25 @@ Aceito
 ## Contexto
 
 Durante a expansão do núcleo operacional do PetControl, foi implementado o CRUD para as entidades `clients`, `pets` e `services`.
-Observou-se uma discrepância semântica em relação a alguns registros documentais anteriores e lógicos:
+Observou-se um desvio histórico entre o catálogo de módulos atual e uma guarda legada aplicada no passado:
 
-- O código atual e partes documentais planeadas protegem as rotas de `pets` requerendo o módulo `CRM` ativo (`RequireModule(queries, "CRM")`).
-- Semanticamente, `pets` também estão fortemente ligados ao contexto de atendimento e agendamentos (`SCH`), o que originou questionamentos de domínio.
+- O catálogo atual já possui um módulo dedicado `PET`.
+- Havia proteção legada das rotas de `pets` por `CRM`, o que não refletia mais a modelagem modular vigente.
 
-O conflito central reside na pergunta: o modelo de negócio vê "Pets" primariamente como cadastro relacional (clientes e agregados) ou como itens operacionais de atendimento?
+O conflito central passou a ser: manter compatibilidade legada (`CRM`) ou alinhar a autorização ao módulo de domínio dedicado (`PET`)?
 
 ## Decisão
 
-O domínio `pets` continuará sob a guarda primária do módulo `CRM` (Customer Relationship Management) tanto na infraestrutura de roteamento do Backend quanto na conceituação arquitetural.
+O domínio `pets` passa a ficar sob a guarda primária do módulo `PET` na infraestrutura de roteamento do backend e na conceituação arquitetural.
 
 ### Justificativas
 
-1. **Modelagem Baseada em Relacionamento**: Um pet (paciente) existe unicamente como uma entidade subordinada a um `client` (tutor), com chave estrangeira obrigatória (`owner_id` referenciando `clients.id`).
-2. **Separação de Preocupações (SoC)**: O módulo `SCH` (Agendamentos) foca em transações de tempo e serviços. O gerenciamento de portfólio de entes (tutores e pets) e atributos duradouros deles (aniversários, raça, etc) pertence categoricamente ao ciclo de relacionamento (`CRM`).
-3. **Agrupamento de Venda Comercial**: Os pacotes vigentes assumem uma estrutura fundamental de licença combinada onde a contratação de pacotes abrange módulos base em tandem como "Core Operacional".
+1. **Coerência de Catálogo**: O módulo `PET` existe como módulo de domínio e deve ser a referência de autorização das rotas de pets.
+2. **Separação de Preocupações (SoC)**: `CLI` cobre o domínio de clientes/tutores e `PET` cobre o domínio de pets; ambos continuam relacionais, mas com fronteiras de autorização explícitas.
+3. **Redução de Legado**: A remoção da guarda via `CRM` elimina ambiguidade entre seed, planos e middlewares.
 
 ## Consequências
 
-- **Acesso Obrigatório em Cascatas**: Para que o módulo `SCH` funcione e associe cliente/pet a agendamentos, o tenant deve preferencialmente possuir acesso ao módulo `CRM` para realizar o registro e a consulta prévia de tais entidades.
-- **Acoplamento Inerente de Domínio**: Adota-se que o módulo `SCH` possui uma forte dependência *business-logic-wise* sobre domínios providos pelo `CRM`.
-- Futuramente, se a API passar a vender licenças extremante fracionadas e for demandado que a gestão de pets ocorra unicamente pelo aspecto clínico sem o viés de retenção de clientes do `CRM`, essa guarda modular nas rotas deverá ser extraída para verificações polimórficas (ex: `RequireAnyModule("CRM", "CLINIC")`). No cenário em vigência, o acoplamento de autorização é deliberado.
+- As rotas de `/pets` passam a requerer `RequireModule(..., "PET")`.
+- O módulo `SCH` continua dependente dos dados de cliente/pet para operação, mas sem sobrepor os limites de autorização dos módulos `CLI` e `PET`.
+- O seed e os testes de integração passam a usar módulos atuais, sem dependência de código legado `CRM`.

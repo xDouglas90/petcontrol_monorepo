@@ -1072,11 +1072,41 @@ definitions:
       birth_date:
         example: "2021-08-20"
         type: string
+      color:
+        example: Caramelo
+        type: string
+      guardian_ids:
+        example:
+        - 88888888-8888-8888-8888-888888888888
+        items:
+          type: string
+        type: array
       image_url:
         example: https://example.com/thor.png
         type: string
+      is_active:
+        example: true
+        type: boolean
+      is_deceased:
+        example: false
+        type: boolean
+      is_microchipped:
+        example: false
+        type: boolean
+      is_neutered:
+        example: false
+        type: boolean
+      is_vaccinated:
+        example: true
+        type: boolean
       kind:
         example: dog
+        type: string
+      microchip_expiration_date:
+        example: "2027-08-20"
+        type: string
+      microchip_number:
+        example: "123456789"
         type: string
       name:
         example: Thor
@@ -1086,6 +1116,12 @@ definitions:
         type: string
       owner_id:
         example: 44444444-4444-4444-4444-444444444444
+        type: string
+      race:
+        example: Labrador
+        type: string
+      sex:
+        example: M
         type: string
       size:
         example: medium
@@ -1102,6 +1138,9 @@ definitions:
       birth_date:
         example: "2021-08-20"
         type: string
+      color:
+        example: Caramelo
+        type: string
       company_id:
         example: 11111111-1111-1111-1111-111111111111
         type: string
@@ -1111,6 +1150,10 @@ definitions:
       deleted_at:
         example: "2026-04-11T11:00:00Z"
         type: string
+      guardians:
+        items:
+          $ref: '#/definitions/handler.PetGuardianDoc'
+        type: array
       id:
         example: 77777777-7777-7777-7777-777777777777
         type: string
@@ -1120,8 +1163,26 @@ definitions:
       is_active:
         example: true
         type: boolean
+      is_deceased:
+        example: false
+        type: boolean
+      is_microchipped:
+        example: false
+        type: boolean
+      is_neutered:
+        example: false
+        type: boolean
+      is_vaccinated:
+        example: true
+        type: boolean
       kind:
         example: dog
+        type: string
+      microchip_expiration_date:
+        example: "2027-08-20"
+        type: string
+      microchip_number:
+        example: "123456789"
         type: string
       name:
         example: Thor
@@ -1129,11 +1190,35 @@ definitions:
       notes:
         example: Gosta de brincar
         type: string
+      owner_cellphone:
+        example: "+5511999990001"
+        type: string
+      owner_email:
+        example: maria@example.com
+        type: string
+      owner_has_whatsapp:
+        example: true
+        type: boolean
       owner_id:
         example: 44444444-4444-4444-4444-444444444444
         type: string
+      owner_image_url:
+        example: https://example.com/maria.png
+        type: string
       owner_name:
         example: Maria Silva
+        type: string
+      owner_person_id:
+        example: 55555555-5555-5555-5555-555555555555
+        type: string
+      owner_short_name:
+        example: Maria
+        type: string
+      race:
+        example: Labrador
+        type: string
+      sex:
+        example: M
         type: string
       size:
         example: medium
@@ -1143,6 +1228,30 @@ definitions:
         type: string
       updated_at:
         example: "2026-04-10T11:00:00Z"
+        type: string
+    type: object
+  handler.PetGuardianDoc:
+    properties:
+      cellphone:
+        example: "+5511999990001"
+        type: string
+      email:
+        example: maria@example.com
+        type: string
+      full_name:
+        example: Maria Silva
+        type: string
+      guardian_id:
+        example: 88888888-8888-8888-8888-888888888888
+        type: string
+      has_whatsapp:
+        example: true
+        type: boolean
+      image_url:
+        example: https://example.com/maria.png
+        type: string
+      short_name:
+        example: Maria
         type: string
     type: object
   handler.PetItemResponseDoc:
@@ -1162,11 +1271,41 @@ definitions:
       birth_date:
         example: "2021-08-20"
         type: string
+      color:
+        example: Caramelo
+        type: string
+      guardian_ids:
+        example:
+        - 88888888-8888-8888-8888-888888888888
+        items:
+          type: string
+        type: array
       image_url:
         example: https://example.com/thor.png
         type: string
+      is_active:
+        example: true
+        type: boolean
+      is_deceased:
+        example: false
+        type: boolean
+      is_microchipped:
+        example: false
+        type: boolean
+      is_neutered:
+        example: false
+        type: boolean
+      is_vaccinated:
+        example: true
+        type: boolean
       kind:
         example: dog
+        type: string
+      microchip_expiration_date:
+        example: "2027-08-20"
+        type: string
+      microchip_number:
+        example: "123456789"
         type: string
       name:
         example: Thorzinho
@@ -1176,6 +1315,12 @@ definitions:
         type: string
       owner_id:
         example: 44444444-4444-4444-4444-444444444444
+        type: string
+      race:
+        example: Labrador
+        type: string
+      sex:
+        example: M
         type: string
       size:
         example: large
@@ -1380,6 +1525,39 @@ definitions:
         example: Confirmado por telefone
         type: string
     type: object
+  handler.ServiceAverageTimeDoc:
+    properties:
+      average_time_minutes:
+        example: 60
+        type: integer
+      id:
+        example: 66666666-6666-6666-6666-666666666666
+        type: string
+      pet_kind:
+        example: dog
+        type: string
+      pet_size:
+        example: medium
+        type: string
+      pet_temperament:
+        example: playful
+        type: string
+    type: object
+  handler.ServiceAverageTimeRequestDoc:
+    properties:
+      average_time_minutes:
+        example: 60
+        type: integer
+      pet_kind:
+        example: dog
+        type: string
+      pet_size:
+        example: medium
+        type: string
+      pet_temperament:
+        example: playful
+        type: string
+    type: object
   handler.ServiceCreateRequestDoc:
     properties:
       description:
@@ -1400,6 +1578,10 @@ definitions:
       price:
         example: "89.90"
         type: string
+      sub_services:
+        items:
+          $ref: '#/definitions/handler.ServiceSubServiceRequestDoc'
+        type: array
       title:
         example: Banho completo
         type: string
@@ -1409,6 +1591,9 @@ definitions:
     type: object
   handler.ServiceDoc:
     properties:
+      average_times_count:
+        example: 1
+        type: integer
       description:
         example: Banho com secagem e perfume
         type: string
@@ -1430,6 +1615,13 @@ definitions:
       price:
         example: "89.90"
         type: string
+      sub_services:
+        items:
+          $ref: '#/definitions/handler.ServiceSubServiceDoc'
+        type: array
+      sub_services_count:
+        example: 1
+        type: integer
       title:
         example: Banho completo
         type: string
@@ -1452,6 +1644,71 @@ definitions:
           $ref: '#/definitions/handler.ServiceDoc'
         type: array
     type: object
+  handler.ServiceSubServiceDoc:
+    properties:
+      average_times:
+        items:
+          $ref: '#/definitions/handler.ServiceAverageTimeDoc'
+        type: array
+      description:
+        example: Banho para pets médios
+        type: string
+      discount_rate:
+        example: "0.00"
+        type: string
+      id:
+        example: 77777777-7777-7777-7777-777777777777
+        type: string
+      image_url:
+        example: https://example.com/services/bath.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      notes:
+        example: Inclui escovação
+        type: string
+      price:
+        example: "89.90"
+        type: string
+      title:
+        example: Banho médio
+        type: string
+      type_id:
+        example: 99999999-9999-9999-9999-999999999999
+        type: string
+    type: object
+  handler.ServiceSubServiceRequestDoc:
+    properties:
+      average_times:
+        items:
+          $ref: '#/definitions/handler.ServiceAverageTimeRequestDoc'
+        type: array
+      description:
+        example: Banho para pets médios
+        type: string
+      discount_rate:
+        example: "0.00"
+        type: string
+      image_url:
+        example: https://example.com/services/bath.png
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      notes:
+        example: Inclui escovação
+        type: string
+      price:
+        example: "89.90"
+        type: string
+      title:
+        example: Banho médio
+        type: string
+      type_name:
+        example: Banho
+        type: string
+    type: object
   handler.ServiceUpdateRequestDoc:
     properties:
       description:
@@ -1472,6 +1729,10 @@ definitions:
       price:
         example: "59.90"
         type: string
+      sub_services:
+        items:
+          $ref: '#/definitions/handler.ServiceSubServiceRequestDoc'
+        type: array
       title:
         example: Tosa higiênica
         type: string
@@ -2712,6 +2973,35 @@ paths:
   /services:
     get:
       description: Returns services from the authenticated tenant.
+      parameters:
+      - description: Search by title or description
+        in: query
+        name: search
+        type: string
+      - description: Filter by service type name
+        in: query
+        name: type_name
+        type: string
+      - description: Filter by tenant service active state
+        in: query
+        name: is_active
+        type: boolean
+      - description: Minimum base price
+        in: query
+        name: min_price
+        type: string
+      - description: Maximum base price
+        in: query
+        name: max_price
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
@@ -2721,6 +3011,10 @@ paths:
             $ref: '#/definitions/handler.ServiceListResponseDoc'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.APIErrorResponseDoc'
+        "422":
+          description: Unprocessable Entity
           schema:
             $ref: '#/definitions/handler.APIErrorResponseDoc'
         "500":
