@@ -410,10 +410,10 @@ export function ServicesPage() {
       <section className="app-panel p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="app-eyebrow">
-              Catálogo
-            </p>
-            <h2 className="mt-2 font-display text-3xl text-foreground">Serviços</h2>
+            <p className="app-eyebrow">Catálogo</p>
+            <h2 className="mt-2 font-display text-3xl text-foreground">
+              Serviços
+            </h2>
             <p className="mt-2 max-w-2xl text-sm text-muted">
               Serviços, subserviços e tempos médios usados pelos agendamentos do
               tenant.
@@ -441,6 +441,7 @@ export function ServicesPage() {
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <FilterField label="Tipo" htmlFor="services-type-filter">
             <select
+              title="Tipo"
               id="services-type-filter"
               className={fieldClassName}
               value={filters.type_name}
@@ -458,6 +459,7 @@ export function ServicesPage() {
           </FilterField>
           <FilterField label="Status" htmlFor="services-status-filter">
             <select
+              title="Status"
               id="services-status-filter"
               className={fieldClassName}
               value={filters.is_active}
@@ -592,6 +594,7 @@ export function ServicesPage() {
             >
               <Field label="Tipo" htmlFor="service-type">
                 <input
+                  title="Tipo"
                   id="service-type"
                   required
                   className={fieldClassName}
@@ -603,6 +606,7 @@ export function ServicesPage() {
               </Field>
               <Field label="Título" htmlFor="service-title">
                 <input
+                  title="Título"
                   id="service-title"
                   required
                   className={fieldClassName}
@@ -614,6 +618,7 @@ export function ServicesPage() {
               </Field>
               <Field label="Descrição" htmlFor="service-description">
                 <textarea
+                  title="Descrição"
                   id="service-description"
                   required
                   className={fieldClassName}
@@ -865,6 +870,7 @@ export function ServicesPage() {
 
               <Field label="Notas" htmlFor="service-notes">
                 <textarea
+                  title="Notas"
                   id="service-notes"
                   className={fieldClassName}
                   rows={3}
@@ -1137,12 +1143,12 @@ function ServiceDetailPanel({
 
   return (
     <div>
-      <p className="app-eyebrow">
-        Detalhe
-      </p>
+      <p className="app-eyebrow">Detalhe</p>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-2xl text-foreground">{service.title}</h3>
+          <h3 className="font-display text-2xl text-foreground">
+            {service.title}
+          </h3>
           <p className="mt-1 text-sm text-muted">{service.type_name}</p>
         </div>
         <span
@@ -1156,9 +1162,7 @@ function ServiceDetailPanel({
         </span>
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-muted">
-        {service.description}
-      </p>
+      <p className="mt-4 text-sm leading-6 text-muted">{service.description}</p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <DetailMetric label="Preço base" value={`R$ ${service.price}`} />
@@ -1208,17 +1212,13 @@ function ServiceDetailPanel({
                 <p className="font-display text-lg text-foreground">
                   {subService.title}
                 </p>
-                <p className="mt-1 text-sm text-muted">
-                  R$ {subService.price}
-                </p>
+                <p className="mt-1 text-sm text-muted">R$ {subService.price}</p>
               </div>
               <span className="rounded-full border border-border/50 px-2 py-1 text-xs text-muted">
                 {subService.average_times.length} tempo(s)
               </span>
             </div>
-            <p className="mt-2 text-sm text-muted">
-              {subService.description}
-            </p>
+            <p className="mt-2 text-sm text-muted">{subService.description}</p>
 
             {subService.average_times.length > 0 ? (
               <div className="mt-3 space-y-2">
@@ -1274,9 +1274,7 @@ function ServiceDetailPanel({
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border/50 bg-surface/50 p-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted">
-        {label}
-      </p>
+      <p className="text-xs uppercase tracking-[0.16em] text-muted">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
