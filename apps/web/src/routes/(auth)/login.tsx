@@ -65,17 +65,17 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-950">
+    <main className="min-h-screen bg-surface/50 text-foreground">
       <div className="mx-auto grid min-h-screen max-w-7xl gap-8 px-4 py-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
-        <section className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-stone-200 bg-white p-8 shadow-premium lg:p-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)]" />
+        <section className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-border/50 bg-surface p-8 shadow-premium lg:p-12">
+          <div className="absolute inset-0 bg-transparent" />
 
           <div className="relative space-y-8">
             <div
               className={cn(
                 'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300',
                 isHealthLoading
-                  ? 'border-stone-100 bg-stone-50 text-stone-400'
+                  ? 'border-border/50 bg-surface/50 text-muted/70'
                   : isHealthError
                     ? 'border-red-100 bg-red-50 text-red-600'
                     : authMode === 'mock'
@@ -84,7 +84,7 @@ export function LoginPage() {
               )}
             >
               {isHealthLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-stone-400" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted/70" />
               ) : isHealthError ? (
                 <AlertCircle className="h-4 w-4 text-red-500" />
               ) : authMode === 'mock' ? (
@@ -109,12 +109,12 @@ export function LoginPage() {
                   alt="GroomingFlow"
                   className="h-auto w-60"
                 />
-                <h1 className="mt-4 font-display text-5xl leading-[1.1] text-stone-900 sm:text-6xl">
+                <h1 className="mt-4 font-display text-5xl leading-[1.1] text-foreground sm:text-6xl">
                   Gerencie sua PetShop com{' '}
                   <span className="text-sky-600">precisão</span> e elegância.
                 </h1>
               </div>
-              <p className="max-w-xl text-lg leading-relaxed text-stone-500">
+              <p className="max-w-xl text-lg leading-relaxed text-muted">
                 Uma plataforma completa para gestão pet: de agendamentos
                 complexos a controle financeiro, tudo em um só lugar.
               </p>
@@ -141,15 +141,15 @@ export function LoginPage() {
         </section>
 
         <section className="flex items-center justify-center">
-          <div className="w-full max-w-lg rounded-[2.5rem] border border-stone-200 bg-white p-8 shadow-premium sm:p-10">
+          <div className="w-full max-w-lg rounded-[2.5rem] border border-border/50 bg-surface p-8 shadow-premium sm:p-10">
             <div className="mb-10 space-y-2 text-center lg:text-left">
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-600/80">
                 Bem-vindo
               </p>
-              <h2 className="font-display text-4xl text-stone-900">
+              <h2 className="font-display text-4xl text-foreground">
                 Acessar Painel
               </h2>
-              <p className="text-stone-500">
+              <p className="text-muted">
                 Entre com suas credenciais para continuar.
               </p>
             </div>
@@ -193,16 +193,16 @@ export function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-10 grid gap-3 rounded-[1.5rem] border border-stone-100 bg-stone-50 p-5 text-sm">
+            <div className="mt-10 grid gap-3 rounded-[1.5rem] border border-border/50 bg-surface/50 p-5 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-stone-500">Servidor</span>
-                <code className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm">
+                <span className="font-medium text-muted">Servidor</span>
+                <code className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm">
                   {import.meta.env.VITE_API_URL ? 'Cloud API' : 'Localhost'}
                 </code>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="font-medium text-stone-500">Ambiente</span>
-                <code className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm uppercase">
+                <span className="font-medium text-muted">Ambiente</span>
+                <code className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sky-600 shadow-sm uppercase">
                   {getAuthMode()}
                 </code>
               </div>
@@ -224,12 +224,12 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <article className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+    <article className="rounded-2xl border border-border/50 bg-surface p-5 shadow-sm transition-all hover:shadow-md">
       <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="font-display text-lg text-stone-900">{title}</h3>
-      <p className="mt-1 text-sm leading-relaxed text-stone-500">
+      <h3 className="font-display text-lg text-foreground">{title}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
         {description}
       </p>
     </article>
@@ -251,14 +251,14 @@ function Field({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-semibold text-stone-700">{label}</span>
+      <span className="text-sm font-semibold text-foreground">{label}</span>
       <input
         {...inputProps}
         type={type}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-stone-900 outline-none transition placeholder:text-stone-400',
-          'focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/10 focus:bg-white',
+          'w-full rounded-2xl border border-border/50 bg-surface/50 px-4 py-4 text-foreground outline-none transition placeholder:text-muted/70',
+          'focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/10 focus:bg-surface',
         )}
       />
       {error ? (

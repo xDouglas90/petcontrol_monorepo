@@ -91,13 +91,13 @@ export function ClientsPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+    <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] h-full p-6">
+      <section className="app-panel p-6">
+        <p className="app-eyebrow">
           CLI
         </p>
-        <h2 className="mt-2 font-display text-3xl text-white">Clientes</h2>
-        <p className="mt-2 text-sm text-slate-300">
+        <h2 className="mt-2 font-display text-3xl text-foreground">Clientes</h2>
+        <p className="mt-2 text-sm text-muted">
           Cadastro real conectado em GET /api/v1/clients, com isolamento por
           tenant no backend.
         </p>
@@ -124,17 +124,17 @@ export function ClientsPage() {
           {(clientsQuery.data?.data ?? []).map((client) => (
             <article
               key={client.id}
-              className="rounded-3xl border border-white/10 bg-white/5 p-4"
+              className="rounded-3xl border border-border/50 bg-surface/50 p-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-display text-xl text-white">
+                  <h3 className="font-display text-xl text-foreground">
                     {client.full_name}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="mt-1 text-sm text-muted">
                     {client.email} · {client.cellphone}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted/70">
                     CPF {client.cpf} · desde {client.client_since ?? 'N/I'}
                   </p>
                 </div>
@@ -153,11 +153,11 @@ export function ClientsPage() {
         />
       </section>
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+      <section className="app-panel p-6">
+        <p className="app-eyebrow">
           {editingClientId ? 'Editar cliente' : 'Novo cliente'}
         </p>
-        <h3 className="mt-2 font-display text-2xl text-white">
+        <h3 className="mt-2 font-display text-2xl text-foreground">
           {editingClientId ? 'Atualizar cadastro' : 'Criar cliente'}
         </h3>
 
@@ -273,7 +273,7 @@ export function ClientsPage() {
               }
             />
           </Field>
-          <label className="flex items-center gap-3 text-sm text-slate-200" htmlFor="client-has-whatsapp">
+          <label className="flex items-center gap-3 text-sm text-foreground" htmlFor="client-has-whatsapp">
             <input
               id="client-has-whatsapp"
               title="O cliente possui WhatsApp?"
@@ -298,7 +298,7 @@ export function ClientsPage() {
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
 function Field({
   label,
@@ -311,7 +311,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
       {children}
     </label>
   );
@@ -329,7 +329,7 @@ function Actions({
       <button
         type="button"
         onClick={onEdit}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+        className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1 text-xs text-foreground transition hover:bg-surface"
       >
         Editar
       </button>
@@ -356,7 +356,7 @@ function StateMessage({
       className={`rounded-2xl border px-4 py-3 text-sm ${
         tone === 'error'
           ? 'border-rose-400/30 bg-rose-500/10 text-rose-100'
-          : 'border-white/10 bg-white/5 text-slate-300'
+          : 'border-border/50 bg-surface/50 text-muted'
       }`}
     >
       {message}
@@ -396,7 +396,7 @@ function FormActions({
       <button
         type="button"
         onClick={onReset}
-        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+        className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface"
       >
         Limpar
       </button>

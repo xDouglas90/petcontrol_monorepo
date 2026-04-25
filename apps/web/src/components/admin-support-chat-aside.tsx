@@ -83,9 +83,9 @@ export function AdminSupportChatAside({
   ) {
     return (
       <aside
-        className={`border-l border-stone-100 ${className} hidden xl:flex xl:w-[24rem] xl:flex-col`}
+        className={`border-l border-border/50 ${className} hidden xl:flex xl:w-[24rem] xl:flex-col`}
       >
-        <div className="p-6 text-sm text-stone-500">
+        <div className="p-6 text-sm text-muted">
           Carregando chat do sistema...
         </div>
       </aside>
@@ -127,13 +127,13 @@ export function AdminSupportChatAside({
 
   return (
     <aside
-      className={`hidden border-l border-stone-100 xl:flex ${className} ${
+      className={`hidden border-l border-border/50 xl:flex ${className} ${
         chatExpanded ? 'xl:w-[24rem]' : 'xl:w-[5rem]'
       }`}
     >
-      <div className="flex min-h-full w-full flex-col divide-y divide-stone-100">
+      <div className="flex min-h-full w-full flex-col divide-y divide-border/50">
         <div
-          className={`border-b border-stone-100 ${
+          className={`border-b border-border/50 ${
             chatExpanded
               ? 'flex items-center justify-between px-5 py-5'
               : 'flex justify-center px-3 py-5'
@@ -141,10 +141,10 @@ export function AdminSupportChatAside({
         >
           {chatExpanded ? (
             <div className="min-w-0">
-              <p className="truncate font-display text-xl text-stone-900">
+              <p className="truncate font-display text-xl text-foreground">
                 Chat interno
               </p>
-              <p className="truncate text-xs uppercase tracking-[0.28em] text-stone-400">
+              <p className="truncate text-xs uppercase tracking-[0.28em] text-muted/70">
                 suporte admin
               </p>
             </div>
@@ -154,7 +154,7 @@ export function AdminSupportChatAside({
             type="button"
             onClick={() => setChatExpanded((current) => !current)}
             title={chatExpanded ? 'Recolher chat' : 'Expandir chat'}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted transition hover:border-border hover:bg-surface/80 hover:text-foreground"
           >
             {chatExpanded ? (
               <ChevronRight className="h-4 w-4" />
@@ -166,13 +166,13 @@ export function AdminSupportChatAside({
 
         {!chatExpanded ? (
           <div className="flex flex-1 flex-col items-center gap-4 px-3 py-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-sky-600 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-sky-600 shadow-sm">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-500 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted shadow-sm">
               <CalendarDays className="h-5 w-5" />
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-emerald-500 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-emerald-500 shadow-sm">
               <Activity className="h-5 w-5" />
             </div>
           </div>
@@ -182,7 +182,7 @@ export function AdminSupportChatAside({
             <div className="p-8 text-center">
               <div className="flex flex-col items-center">
                 <div className="relative">
-                  <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-stone-100 p-1 shadow-sm">
+                  <div className="h-24 w-24 rounded-full border-4 border-stone-50 bg-surface/80 p-1 shadow-sm">
                     <img
                       src={
                         currentUser.image_url ||
@@ -197,10 +197,10 @@ export function AdminSupportChatAside({
                     onStatusChange={handleStatusChange}
                   />
                 </div>
-                <h4 className="mt-2 font-display text-xl text-stone-950">
+                <h4 className="mt-2 font-display text-xl text-foreground">
                   {greetingName}
                 </h4>
-                <p className="mb-3 text-sm text-stone-400">
+                <p className="mb-3 text-sm text-muted/70">
                   Administrador {company.fantasy_name}
                 </p>
 
@@ -216,18 +216,18 @@ export function AdminSupportChatAside({
             </div>
 
             <div className="flex flex-1 flex-col p-6 pt-8">
-              <div className="border-b border-stone-100 pb-4">
+              <div className="border-b border-border/50 pb-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-stone-400">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted/70">
                       Chat do sistema
                     </p>
-                    <h5 className="mt-2 font-display text-lg text-stone-950">
+                    <h5 className="mt-2 font-display text-lg text-foreground">
                       Suporte ao administrador
                     </h5>
                   </div>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-stone-500">
+                <p className="mt-3 text-sm leading-6 text-muted">
                   Este chat persiste mensagens de textos entre os usuários, com
                   suporte a sincronização em tempo real.
                 </p>
@@ -236,11 +236,11 @@ export function AdminSupportChatAside({
               <div className="mt-5">
                 <label
                   htmlFor="shell-system-contact"
-                  className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-400"
+                  className="text-xs font-semibold uppercase tracking-[0.24em] text-muted/70"
                 >
                   Lista de usuários
                 </label>
-                <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+                <div className="mt-2 rounded-2xl border border-border/50 bg-surface/50 px-4 py-3">
                   <select
                     id="shell-system-contact"
                     aria-label="Selecionar usuário system"
@@ -249,7 +249,7 @@ export function AdminSupportChatAside({
                       setSelectedSystemContactId(event.target.value);
                       setChatDraft('');
                     }}
-                    className="w-full bg-transparent text-sm text-stone-700 outline-none"
+                    className="w-full bg-transparent text-sm text-foreground outline-none"
                   >
                     {chatContacts.map((contact) => (
                       <option key={contact.id} value={contact.id}>
@@ -260,7 +260,7 @@ export function AdminSupportChatAside({
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center gap-3 rounded-[1.8rem] border border-stone-100 bg-stone-50/70 p-4">
+              <div className="mt-6 flex items-center gap-3 rounded-[1.8rem] border border-border/50 bg-surface/50 p-4">
                 <div className="relative">
                   {selectedSystemContact.imageUrl ? (
                     <img
@@ -275,15 +275,15 @@ export function AdminSupportChatAside({
                   )}
                   <div
                     className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${
-                      isContactOnline ? 'bg-emerald-500' : 'bg-stone-300'
+                      isContactOnline ? 'bg-emerald-500' : 'bg-surface-hover'
                     }`}
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-stone-900">
+                  <p className="truncate font-medium text-foreground">
                     {selectedSystemContact.name}
                   </p>
-                  <p className="truncate text-sm text-stone-400">
+                  <p className="truncate text-sm text-muted/70">
                     {selectedSystemContact.subtitle}
                   </p>
                 </div>
@@ -294,12 +294,12 @@ export function AdminSupportChatAside({
                 className="mt-6 h-[22rem] space-y-5 overflow-y-auto pr-2"
               >
                 {!effectiveSystemContactId ? (
-                  <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
+                  <div className="rounded-[1.6rem] border border-dashed border-border/50 bg-surface/50 px-4 py-6 text-sm leading-6 text-muted">
                     Vincule um usuário do tipo <strong>sistema</strong> para
                     iniciar uma conversa persistida com o administrador.
                   </div>
                 ) : chatMessagesQuery.isLoading ? (
-                  <div className="rounded-[1.6rem] border border-stone-100 bg-stone-50 px-4 py-6 text-sm text-stone-500">
+                  <div className="rounded-[1.6rem] border border-border/50 bg-surface/50 px-4 py-6 text-sm text-muted">
                     Carregando histórico da conversa...
                   </div>
                 ) : chatMessagesQuery.isError ? (
@@ -308,7 +308,7 @@ export function AdminSupportChatAside({
                     conversa.
                   </div>
                 ) : (chatMessagesQuery.data?.length ?? 0) === 0 ? (
-                  <div className="rounded-[1.6rem] border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm leading-6 text-stone-500">
+                  <div className="rounded-[1.6rem] border border-dashed border-border/50 bg-surface/50 px-4 py-6 text-sm leading-6 text-muted">
                     Ainda não existem mensagens persistidas entre este admin e o
                     usuário selecionado.
                   </div>
@@ -326,12 +326,12 @@ export function AdminSupportChatAside({
                           className={`max-w-[88%] rounded-[1.6rem] px-4 py-3 text-sm leading-6 ${
                             isOwnMessage
                               ? 'bg-sky-500 text-white'
-                              : 'border border-stone-100 bg-stone-50 text-stone-600'
+                              : 'border border-border/50 bg-surface/50 text-muted-foreground'
                           }`}
                         >
                           <p
                             className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                              isOwnMessage ? 'text-white/70' : 'text-stone-400'
+                              isOwnMessage ? 'text-white/70' : 'text-muted/70'
                             }`}
                           >
                             {message.sender_name}
@@ -341,7 +341,7 @@ export function AdminSupportChatAside({
                           </p>
                           <p
                             className={`mt-2 text-[11px] ${
-                              isOwnMessage ? 'text-white/70' : 'text-stone-400'
+                              isOwnMessage ? 'text-white/70' : 'text-muted/70'
                             }`}
                           >
                             {formatChatTimestamp(message.created_at)}
@@ -354,7 +354,7 @@ export function AdminSupportChatAside({
               </div>
 
               <form
-                className="mt-6 rounded-[1.6rem] border border-stone-200 bg-stone-50 px-4 py-4"
+                className="mt-6 rounded-[1.6rem] border border-border/50 bg-surface/50 px-4 py-4"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const message = chatDraft.trim();
@@ -377,7 +377,7 @@ export function AdminSupportChatAside({
                 }}
               >
                 <div className="flex items-center gap-3">
-                  <MessageSquareText className="h-4 w-4 text-stone-500" />
+                  <MessageSquareText className="h-4 w-4 text-muted" />
                   <input
                     id="shell-chat-message"
                     name="message"
@@ -395,7 +395,7 @@ export function AdminSupportChatAside({
                       !effectiveSystemContactId ||
                       sendChatMessageMutation.isPending
                     }
-                    className="w-full bg-transparent text-sm text-stone-700 outline-none placeholder:text-stone-400 disabled:cursor-not-allowed"
+                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted/70 disabled:cursor-not-allowed"
                   />
                   <button
                     type="submit"
@@ -404,7 +404,7 @@ export function AdminSupportChatAside({
                       !chatDraft.trim() ||
                       sendChatMessageMutation.isPending
                     }
-                    className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-stone-300"
+                    className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-surface-hover"
                   >
                     {sendChatMessageMutation.isPending ? 'Enviando' : 'Enviar'}
                   </button>
@@ -431,9 +431,9 @@ function MiniBadge({
   label: string;
 }) {
   return (
-    <div className="rounded-2xl border border-stone-100 bg-stone-50 px-3 py-3 text-center">
-      <Icon className="mx-auto h-4 w-4 text-stone-500" />
-      <p className="mt-2 text-xs font-medium text-stone-500">{label}</p>
+    <div className="rounded-2xl border border-border/50 bg-surface/50 px-3 py-3 text-center">
+      <Icon className="mx-auto h-4 w-4 text-muted" />
+      <p className="mt-2 text-xs font-medium text-muted">{label}</p>
     </div>
   );
 }
@@ -539,7 +539,7 @@ function StatusPicker({ currentStatus, onStatusChange }: StatusPickerProps) {
             onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
             role="presentation"
           />
-          <div className="absolute right-0 top-full z-50 mt-2 w-32 origin-top-right animate-in slide-in-from-top-2 fade-in rounded-2xl border border-stone-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 duration-200">
+          <div className="absolute right-0 top-full z-50 mt-2 w-32 origin-top-right animate-in slide-in-from-top-2 fade-in rounded-2xl border border-border/50 bg-surface p-2 shadow-2xl ring-1 ring-black/5 duration-200">
             <div className="flex flex-col gap-1">
               {statusOptions.map((opt) => (
                 <button
@@ -549,7 +549,7 @@ function StatusPicker({ currentStatus, onStatusChange }: StatusPickerProps) {
                     onStatusChange(opt.id);
                     setIsOpen(false);
                   }}
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-50"
+                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-foreground transition hover:bg-surface/50"
                 >
                   <div className={`h-3 w-3 rounded-full ${opt.color}`} />
                   <span>{opt.label}</span>

@@ -195,16 +195,16 @@ export function SchedulesPage() {
     createMutation.error || updateMutation.error || deleteMutation.error;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="space-y-4 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
+    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] h-full p-6">
+      <section className="app-panel space-y-4 p-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+          <p className="app-eyebrow">
             Schedules
           </p>
-          <h2 className="mt-2 font-display text-3xl text-white">
+          <h2 className="mt-2 font-display text-3xl text-foreground">
             Agendamentos do tenant
           </h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-muted">
             Lista real conectada em GET /api/v1/schedules, com isolamento por
             company_id no backend.
           </p>
@@ -219,9 +219,9 @@ export function SchedulesPage() {
           />
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-3xl border border-white/10">
+        <div className="mt-4 overflow-hidden rounded-3xl border border-border/50">
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-white/5 text-slate-300">
+            <thead className="bg-surface text-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Data</th>
                 <th className="px-4 py-3 font-medium">Client</th>
@@ -235,7 +235,7 @@ export function SchedulesPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-6 text-center text-slate-300"
+                    className="px-4 py-6 text-center text-muted"
                   >
                     Carregando schedules...
                   </td>
@@ -257,7 +257,7 @@ export function SchedulesPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-6 text-center text-slate-300"
+                    className="px-4 py-6 text-center text-muted"
                   >
                     Nenhum agendamento encontrado para este tenant.
                   </td>
@@ -266,8 +266,8 @@ export function SchedulesPage() {
 
               {viewState === 'ready'
                 ? schedules.map((schedule) => (
-                    <tr key={schedule.id} className="border-t border-white/10">
-                      <td className="px-4 py-3 text-slate-200">
+                    <tr key={schedule.id} className="border-t border-border/50">
+                      <td className="px-4 py-3 text-foreground">
                         {new Date(schedule.scheduled_at).toLocaleString(
                           'pt-BR',
                           {
@@ -276,13 +276,13 @@ export function SchedulesPage() {
                           },
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-300">
+                      <td className="px-4 py-3 text-foreground">
                         {schedule.client_name || schedule.client_id}
                       </td>
-                      <td className="px-4 py-3 text-slate-300">
+                      <td className="px-4 py-3 text-foreground">
                         <div>{schedule.pet_name || schedule.pet_id}</div>
                         {schedule.service_titles?.length ? (
-                          <div className="mt-1 text-xs text-slate-400">
+                          <div className="mt-1 text-xs text-muted">
                             {schedule.service_titles.join(', ')}
                           </div>
                         ) : null}
@@ -302,7 +302,7 @@ export function SchedulesPage() {
                           <button
                             type="button"
                             onClick={() => startEdit(schedule.id)}
-                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:bg-white/10"
+                            className="rounded-xl border border-border/50 bg-surface/50 px-3 py-1 text-xs text-foreground transition hover:bg-surface"
                           >
                             Editar
                           </button>
@@ -328,11 +328,11 @@ export function SchedulesPage() {
         />
       </section>
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-secondary/80">
+      <section className="app-panel p-6">
+        <p className="app-eyebrow">
           {editingScheduleId ? 'Editar schedule' : 'Novo schedule'}
         </p>
-        <h3 className="mt-2 font-display text-2xl text-white">
+        <h3 className="mt-2 font-display text-2xl text-foreground">
           {editingScheduleId ? 'Atualizar agendamento' : 'Criar agendamento'}
         </h3>
 
@@ -485,7 +485,7 @@ export function SchedulesPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+              className="rounded-2xl border border-border/50 bg-surface/50 px-4 py-2 text-sm text-foreground transition hover:bg-surface"
             >
               Limpar
             </button>
@@ -497,7 +497,7 @@ export function SchedulesPage() {
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
 function FormField({
   label,
@@ -512,7 +512,7 @@ function FormField({
 }) {
   return (
     <label className="block space-y-2" htmlFor={htmlFor}>
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
       {children}
       {error ? <span className="text-sm text-rose-300">{error}</span> : null}
     </label>

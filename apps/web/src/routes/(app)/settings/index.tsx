@@ -102,26 +102,26 @@ export function SettingsPage() {
     !canEditBusinessSettings;
 
   return (
-    <div>
-      <section className="overflow-hidden bg-white/75 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
-        <div className="divide-y divide-stone-200">
-          <section className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-7 md:px-7">
+    <div className="h-full p-6">
+      <section className="app-panel">
+        <div className="divide-y divide-border/50">
+          <section className="px-6 py-7 md:px-7">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="max-w-3xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-stone-400">
+                <p className="app-eyebrow">
                   Configurações
                 </p>
-                <h2 className="mt-3 font-display text-3xl text-stone-950">
+                <h2 className="mt-3 font-display text-3xl text-foreground">
                   Central de ajustes
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-stone-600">
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
                   Esta área reúne os dados institucionais da empresa, as regras
                   operacionais do negócio e, para perfis administradores, a
                   gestão das permissões dos usuários.
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-white/80 bg-white/70 p-3 text-stone-700 shadow-sm">
+              <div className="rounded-3xl border border-border/50 bg-surface/70 p-3 text-foreground shadow-sm">
                 <Settings2 className="h-6 w-6" />
               </div>
             </div>
@@ -262,7 +262,7 @@ function CompanySettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar empresa'}
           </button>
@@ -392,7 +392,7 @@ function BusinessSettingsForm({
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-stone-800">
+          <p className="text-sm font-semibold text-foreground">
             Dias de atendimento
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -415,7 +415,7 @@ function BusinessSettingsForm({
                     'rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition',
                     active
                       ? 'border-stone-950 bg-stone-950 text-white'
-                      : 'border-stone-200 bg-white text-stone-500',
+                      : 'border-border/50 bg-surface text-muted',
                   )}
                 >
                   {weekDayLabel(day)}
@@ -512,7 +512,7 @@ function BusinessSettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar negócio'}
           </button>
@@ -561,7 +561,7 @@ function UserPermissionsManager({
           <div className="space-y-3">
             <label
               htmlFor="tenant-user-select"
-              className="text-sm font-semibold text-stone-800"
+              className="text-sm font-semibold text-foreground"
             >
               Usuários
             </label>
@@ -569,7 +569,7 @@ function UserPermissionsManager({
               id="tenant-user-select"
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 outline-none transition focus:border-stone-400"
+              className="w-full rounded-2xl border border-border/50 bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-border-hover"
             >
               {filteredUsers.map((u) => (
                 <option key={u.user_id} value={u.user_id}>
@@ -578,20 +578,20 @@ function UserPermissionsManager({
               ))}
             </select>
             {selectedCompanyUser ? (
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
-                <p className="font-semibold text-stone-800">
+              <div className="rounded-2xl border border-border/50 bg-surface/50 p-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">
                   {selectedCompanyUser.full_name ||
                     selectedCompanyUser.short_name ||
                     selectedCompanyUser.user_id}
                 </p>
-                <p className="mt-1 uppercase tracking-[0.18em] text-stone-400">
+                <p className="mt-1 uppercase tracking-[0.18em] text-muted/70">
                   {selectedCompanyUser.role} · {selectedCompanyUser.kind}
                 </p>
               </div>
             ) : null}
           </div>
 
-          <div className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5">
+          <div className="rounded-[1.5rem] border border-border/50 bg-surface/50 p-5">
             {permissionsQuery.isLoading ? (
               <LoadingInline message="Carregando permissões do usuário..." />
             ) : permissionsQuery.data ? (
@@ -601,7 +601,7 @@ function UserPermissionsManager({
                 initialPermissions={permissionsQuery.data}
               />
             ) : (
-              <p className="text-sm text-stone-500">
+              <p className="text-sm text-muted">
                 Selecione um usuário para visualizar as permissões gerenciáveis.
               </p>
             )}
@@ -664,7 +664,7 @@ function UserPermissionsForm({
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+          className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
         >
           {mutation.isPending ? 'Salvando...' : 'Salvar permissões'}
         </button>
@@ -675,7 +675,7 @@ function UserPermissionsForm({
 
 function SettingsPageLoading() {
   return (
-    <section className="rounded-[2rem] bg-white/75 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+    <section className="app-panel p-6">
       <LoadingInline message="Carregando central de configurações..." />
     </section>
   );
@@ -691,14 +691,14 @@ function SettingsHeadlineCard({
   icon: typeof Building2;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/80 bg-white/70 p-4 shadow-sm">
+    <div className="rounded-[1.5rem] border border-border/50 bg-surface/70 p-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="rounded-2xl bg-stone-100 p-2 text-stone-700">
+        <div className="rounded-2xl bg-surface/80 p-2 text-foreground">
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-stone-900">{title}</p>
-          <p className="text-sm text-stone-500">{description}</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-sm text-muted">{description}</p>
         </div>
       </div>
     </div>
@@ -719,11 +719,11 @@ function SettingsCard({
   return (
     <section className="px-6 py-7 md:px-7">
       <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-400">
+        <p className="app-eyebrow">
           {eyebrow}
         </p>
-        <h3 className="mt-3 font-display text-2xl text-stone-950">{title}</h3>
-        <p className="mt-2 max-w-3xl text-sm leading-7 text-stone-500">
+        <h3 className="mt-3 font-display text-2xl text-foreground">{title}</h3>
+        <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
           {description}
         </p>
       </div>
@@ -750,7 +750,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-stone-800">
+      <span className="mb-2 block text-sm font-semibold text-foreground">
         {label}
       </span>
       <input
@@ -759,7 +759,7 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 outline-none transition focus:border-stone-400 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
+        className="w-full rounded-2xl border border-border/50 bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition focus:border-border-hover disabled:cursor-not-allowed disabled:bg-surface/80 disabled:text-muted/70"
       />
     </label>
   );
@@ -776,14 +776,14 @@ function ReadOnlyField({
 }) {
   return (
     <div>
-      <span className="mb-2 block text-sm font-semibold text-stone-800">
+      <span className="mb-2 block text-sm font-semibold text-foreground">
         {label}
       </span>
-      <div className="rounded-2xl border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-600">
+      <div className="rounded-2xl border border-border/50 bg-surface/80 px-4 py-3 text-sm text-muted-foreground">
         {value}
       </div>
       {helpText ? (
-        <p className="mt-2 text-xs text-stone-400">{helpText}</p>
+        <p className="mt-2 text-xs text-muted/70">{helpText}</p>
       ) : null}
     </div>
   );
@@ -801,8 +801,8 @@ function ToggleField({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex min-h-[50px] items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
-      <span className="text-sm font-semibold text-stone-800">{label}</span>
+    <label className="flex min-h-[50px] items-center justify-between rounded-2xl border border-border/50 bg-surface/50 px-4 py-3">
+      <span className="text-sm font-semibold text-foreground">{label}</span>
       <button
         type="button"
         role="switch"
@@ -811,13 +811,13 @@ function ToggleField({
         disabled={disabled}
         className={cn(
           'relative h-7 w-12 rounded-full transition',
-          checked ? 'bg-emerald-500' : 'bg-stone-300',
+          checked ? 'bg-emerald-500' : 'bg-surface-hover',
           disabled ? 'cursor-not-allowed opacity-60' : '',
         )}
       >
         <span
           className={cn(
-            'absolute top-1 h-5 w-5 rounded-full bg-white transition',
+            'absolute top-1 h-5 w-5 rounded-full bg-surface transition',
             checked ? 'left-6' : 'left-1',
           )}
         />
@@ -828,7 +828,7 @@ function ToggleField({
 
 function LoadingInline({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm text-stone-500">
+    <div className="flex items-center gap-3 text-sm text-muted">
       <LoaderCircle className="h-4 w-4 animate-spin" />
       <span>{message}</span>
     </div>
@@ -848,7 +848,7 @@ function PermissionsChecklist({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-stone-700">
+      <div className="flex items-center gap-2 text-foreground">
         <UsersRound className="h-4 w-4" />
         <p className="text-sm font-semibold">
           Permissões gerenciáveis por módulo
@@ -859,21 +859,21 @@ function PermissionsChecklist({
         {getPermissionGroups(snapshot).map((group) => (
           <section
             key={group.module_code}
-            className="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white"
+            className="overflow-hidden rounded-[1.75rem] border border-border/50 bg-surface"
           >
-            <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-4">
+            <div className="border-b border-border/50 bg-surface/50/80 px-5 py-4">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-stone-900">
+                <p className="text-sm font-semibold text-foreground">
                   {group.module_name}
                 </p>
                 <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
                   {group.module_code}
                 </span>
-                <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                <span className="rounded-full bg-surface/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                   pacote {group.min_package}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-stone-500">
+              <p className="mt-2 text-sm text-muted">
                 {group.module_description}
               </p>
             </div>
@@ -908,21 +908,21 @@ function PermissionChecklistItem({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-2xl px-3 py-1 transition hover:bg-stone-50/80">
+    <label className="flex items-start gap-3 rounded-2xl px-3 py-1 transition hover:bg-surface/50/80">
       <input
         type="checkbox"
         checked={checked}
         onChange={() => onToggle(permission.code)}
         disabled={disabled}
-        className="mt-1 h-4 w-4 rounded border-stone-300 text-stone-950"
+        className="mt-1 h-4 w-4 rounded border-border text-foreground"
       />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-stone-900">
+          <p className="text-sm font-semibold text-foreground">
             {formatPermissionLabel(permission.code)}
           </p>
           {permission.is_default_for_role ? (
-            <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            <span className="rounded-full bg-surface/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
               padrão
             </span>
           ) : (
