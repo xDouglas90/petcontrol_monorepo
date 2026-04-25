@@ -987,13 +987,15 @@ export function PeoplePage() {
           </header>
 
           <div className="p-6 lg:p-10">
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <SearchBar
-                id="people-search"
-                value={search}
-                onChange={setSearch}
-                placeholder="Buscar por nome, CPF ou tipo..."
-              />
+            <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
+              <div className="w-full lg:max-w-md">
+                <SearchBar
+                  id="people-search"
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Buscar por nome, CPF ou tipo..."
+                />
+              </div>
 
               <select
                 aria-label="Filtrar por tipo de pessoa"
@@ -1011,7 +1013,7 @@ export function PeoplePage() {
               </select>
             </div>
 
-            <div className="mt-8 space-y-px divide-y divide-border/50 border-y border-border/50">
+            <div className="mt-8 flex flex-col gap-3">
               {peopleQuery.isLoading ? (
                 <PeopleStateMessage message="Carregando pessoas..." />
               ) : null}

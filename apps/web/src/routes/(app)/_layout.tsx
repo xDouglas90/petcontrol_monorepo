@@ -317,7 +317,7 @@ export function AppLayout() {
                           aria-label="Adicionar pessoa"
                           type="button"
                           title="Adicionar pessoa"
-                          className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          className="app-nav-action ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold shadow focus:outline-none focus:ring-2"
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -362,7 +362,7 @@ export function AppLayout() {
                         aria-label="Adicionar pet"
                         type="button"
                         title="Adicionar pet"
-                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="app-nav-action ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold shadow focus:outline-none focus:ring-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
@@ -390,7 +390,7 @@ export function AppLayout() {
                         aria-label="Adicionar serviço"
                         type="button"
                         title="Adicionar serviço"
-                        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="app-nav-action ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold shadow focus:outline-none focus:ring-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();

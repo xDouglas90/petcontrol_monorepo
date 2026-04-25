@@ -89,11 +89,19 @@ body {
   }
 
   .app-nav-active {
-    @apply bg-accent text-stone-900 font-bold shadow-sm;
+    @apply bg-[#06aecb] text-slate-950 font-bold shadow-sm;
   }
 
   .app-nav-inactive {
     @apply text-muted hover:bg-surface hover:text-foreground;
+  }
+
+  .app-nav-action {
+    @apply border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 focus:ring-primary/50;
+  }
+
+  .app-nav-active .app-nav-action {
+    @apply border-slate-950/20 bg-slate-950/10 text-slate-950 hover:bg-slate-950/15 focus:ring-slate-950/30;
   }
 }
 
