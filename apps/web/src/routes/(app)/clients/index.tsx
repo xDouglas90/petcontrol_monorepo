@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { User } from 'lucide-react';
 import type { ClientDTO, CreateClientInput } from '@petcontrol/shared-types';
 
 import {
@@ -124,19 +125,24 @@ export function ClientsPage() {
           {(clientsQuery.data?.data ?? []).map((client) => (
             <article
               key={client.id}
-              className="rounded-3xl border border-border/50 bg-surface/50 p-4"
+              className={`group flex items-center justify-between gap-4 rounded-[1.8rem] border p-4 transition ${editingClientId === client.id ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-display text-xl text-foreground">
-                    {client.full_name}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted">
-                    {client.email} · {client.cellphone}
-                  </p>
-                  <p className="mt-1 text-xs text-muted/70">
-                    CPF {client.cpf} · desde {client.client_since ?? 'N/I'}
-                  </p>
+              <div className="flex w-full items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground group-hover:text-primary transition">
+                      {client.full_name}
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted">
+                      {client.email} · {client.cellphone}
+                    </p>
+                    <p className="text-[11px] text-muted/70">
+                      CPF {client.cpf} · desde {client.client_since ?? 'N/I'}
+                    </p>
+                  </div>
                 </div>
                 <Actions
                   onEdit={() => startEdit(client)}

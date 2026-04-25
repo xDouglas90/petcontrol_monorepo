@@ -14,6 +14,7 @@ import type {
   PetTemperament,
   ServiceDTO,
 } from '@petcontrol/shared-types';
+import { Sparkles } from 'lucide-react';
 
 import {
   useCreateServiceMutation,
@@ -514,10 +515,10 @@ export function ServicesPage() {
           {services.map((service) => (
             <article
               key={service.id}
-              className={`rounded-3xl border p-4 transition ${selectedServiceId === service.id ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/50 hover:bg-surface/50'}`}
+              className={`group flex items-center justify-between gap-4 rounded-[1.8rem] border p-4 transition ${selectedServiceId === service.id ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
             >
               <div
-                className="flex cursor-pointer flex-wrap items-start justify-between gap-3"
+                className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-3"
                 role="button"
                 tabIndex={0}
                 onClick={() => selectService(service)}
@@ -528,22 +529,27 @@ export function ServicesPage() {
                   }
                 }}
               >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-xl text-foreground">
-                      {service.title}
-                    </h3>
-                    <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
-                      {service.is_active ? 'Ativo' : 'Inativo'}
-                    </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+                    <Sparkles className="h-5 w-5" />
                   </div>
-                  <p className="mt-1 text-sm text-muted">
-                    {service.type_name} · R$ {service.price}
-                  </p>
-                  <p className="mt-1 text-xs text-muted">
-                    {service.sub_services_count ?? 0} subserviço(s) ·{' '}
-                    {service.average_times_count ?? 0} tempo(s) médio(s)
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-foreground group-hover:text-primary transition">
+                        {service.title}
+                      </p>
+                      <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[10px] uppercase font-bold text-emerald-100">
+                        {service.is_active ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-sm text-muted">
+                      {service.type_name} · R$ {service.price}
+                    </p>
+                    <p className="text-[11px] text-muted/70">
+                      {service.sub_services_count ?? 0} subserviço(s) ·{' '}
+                      {service.average_times_count ?? 0} tempo(s) médio(s)
+                    </p>
+                  </div>
                 </div>
                 {canManageServices ? (
                   <Actions

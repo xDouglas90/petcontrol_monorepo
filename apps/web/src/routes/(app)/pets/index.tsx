@@ -1106,53 +1106,40 @@ function PetListCard({
 
   return (
     <article
-      className={`transition ${selected ? 'bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] ring-1 ring-inset ring-sky-100' : 'bg-surface hover:bg-surface/50'}`}
+      className={`group flex items-center justify-between gap-4 rounded-[1.8rem] border p-4 transition ${selected ? 'border-primary/40 bg-primary/10' : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'}`}
     >
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full flex-col gap-4 p-4 text-lef lg:flex-row items-center"
+        className="flex w-full items-center justify-between gap-3 text-left"
       >
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 lg:h-20 lg:w-20">
-          <img
-            src={imageUrl}
-            alt={pet.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex items-start justify-between border-b gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <h3 className="font-display text-xl text-foreground">
-                  {pet.name}
-                </h3>
-                <span className="text-sm text-muted">
-                  ({pet.race || 'sem raça'})
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                Tutor: {pet.owner_name ?? pet.owner_id}
+        <div className="flex items-center gap-4">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+            <img
+              src={imageUrl}
+              alt={pet.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-foreground group-hover:text-primary transition">
+                {pet.name}
               </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
+              <span className="text-[11px] text-muted">
+                ({pet.race || 'sem raça'})
+              </span>
               <StatusBadge active={pet.is_active} />
               {pet.is_deceased ? (
                 <StatusBadge label="Falecido" tone="neutral" />
               ) : null}
             </div>
-          </div>
-
-          <div className="grid text-xs text-foreground sm:grid-cols-3">
-            <MetaRow label="Tipo" value={resolvePetKindLabel(pet.kind)} />
-            <MetaRow label="Porte" value={resolvePetSizeLabel(pet.size)} />
-            <MetaRow
-              label="Temperamento"
-              value={resolvePetTemperamentLabel(pet.temperament)}
-            />
-            <MetaRow label="Cor" value={pet.color || 'Não informada'} />
-            <MetaRow label="Sexo" value={pet.sex || 'Não informado'} />
-            <MetaRow label="Idade" value={resolvePetAgeLabel(pet.birth_date)} />
+            <p className="mt-0.5 text-sm text-muted">
+              Tutor: {pet.owner_name ?? pet.owner_id}
+            </p>
+            <p className="text-[11px] text-muted/70">
+              {resolvePetKindLabel(pet.kind)} · {resolvePetSizeLabel(pet.size)} · {resolvePetTemperamentLabel(pet.temperament)}
+            </p>
           </div>
         </div>
       </button>
@@ -1232,19 +1219,6 @@ function InfoCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-left gap-2 py-1.5 pr-2">
-      <span className="text-[10px] uppercase tracking-[0.2em] text-muted">
-        {label}:
-      </span>
-      <span className="text-right text-xs font-medium text-stone-800">
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function StatusBadge({
   active,
   label,
@@ -1258,7 +1232,7 @@ function StatusBadge({
   const activeTone = active ?? tone === 'active';
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] ${activeTone ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-foreground'}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] border ${activeTone ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-stone-400/30 bg-stone-500/10 text-stone-100'}`}
     >
       {text}
     </span>
@@ -1495,52 +1469,6 @@ function isPetTemperament(value: string | null): value is PetTemperament {
     value === 'playful' ||
     value === 'loving'
   );
-}
-
-function resolvePetAgeLabel(birthDate?: string | null): string {
-  if (!birthDate) {
-    return 'Não informada';
-  }
-
-  const parts = birthDate.split('-').map((part) => Number(part));
-  if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
-    return 'Não informada';
-  }
-
-  const [year, month, day] = parts;
-  const today = new Date();
-  const nowYear = today.getFullYear();
-  const nowMonth = today.getMonth() + 1;
-  const nowDay = today.getDate();
-
-  let years = nowYear - year;
-  let months = nowMonth - month;
-  let days = nowDay - day;
-
-  if (days < 0) {
-    months -= 1;
-    const previousMonthLastDay = new Date(nowYear, nowMonth - 1, 0).getDate();
-    days += previousMonthLastDay;
-  }
-
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  if (years < 0) {
-    return 'Não informada';
-  }
-
-  if (years > 0) {
-    return years === 1 ? '1 ano' : `${years} anos`;
-  }
-
-  if (months > 0) {
-    return months === 1 ? '1 mês' : `${months} meses`;
-  }
-
-  return days === 1 ? '1 dia' : `${days} dias`;
 }
 
 function resolvePetKindLabel(kind: PetKind) {

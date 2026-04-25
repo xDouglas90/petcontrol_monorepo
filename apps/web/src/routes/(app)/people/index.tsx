@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, useParams } from '@tanstack/react-router';
-import { Pencil } from 'lucide-react';
+import { Pencil, User } from 'lucide-react';
 import { buildCompanyRoute, DEFAULT_PAGE } from '@petcontrol/shared-constants';
 import type {
   BankAccountKind,
@@ -1043,58 +1043,50 @@ export function PeoplePage() {
                       setSelectedPersonId(person.id);
                       setPanelMode('view');
                     }}
-                    className={`flex w-full flex-col gap-3 p-6 text-left transition ${
+                    className={`group flex w-full items-center justify-between gap-4 rounded-[1.8rem] border p-4 text-left transition ${
                       isSelected
-                        ? 'bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] ring-1 ring-inset ring-sky-900/50'
-                        : 'bg-surface hover:bg-surface/50'
+                        ? 'border-primary/40 bg-primary/10'
+                        : 'border-border/50 bg-surface/30 hover:border-border hover:bg-surface/60'
                     }`}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-2">
-                          <h2 className="font-display text-xl text-foreground">
-                            {person.full_name ?? 'Pessoa sem identificação'}
-                          </h2>
-                          <p className="text-sm text-muted">
-                            {resolveKindLabel(person.kind)}
-                          </p>
+                    <div className="flex w-full items-center justify-between gap-3">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface border border-border/50 text-primary shadow-sm">
+                          <User className="h-5 w-5" />
                         </div>
-                        <p className="mt-2 text-sm text-muted md:hidden">
-                          {person.email ?? 'Email não informado'}
-                        </p>
-                        <div className="mt-2 flex flex-col gap-1 text-xs text-muted md:flex-row md:flex-wrap md:items-center md:gap-2">
-                          <span>{person.email ?? 'Email não informado'}</span>
-                          {person.cpf ? (
-                            <>
-                              <span className="hidden text-stone-300 md:inline">
-                                ·
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground group-hover:text-primary transition">
+                              {person.full_name ?? 'Pessoa sem identificação'}
+                            </p>
+                            <span className="text-[11px] text-muted">
+                              ({resolveKindLabel(person.kind)})
+                            </span>
+                            {wasRecentlyProvisioned ? (
+                              <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
+                                Credenciais provisionadas
                               </span>
-                              <span>CPF {maskCpf(person.cpf)}</span>
-                            </>
-                          ) : null}
-                          <span className="hidden text-stone-300 md:inline">
-                            ·
-                          </span>
-                          <span>
+                            ) : null}
+                          </div>
+                          <p className="mt-0.5 text-sm text-muted">
+                            {person.email ?? 'Email não informado'}
+                          </p>
+                          <p className="text-[11px] text-muted/70">
+                            {person.cpf ? `CPF ${maskCpf(person.cpf)} · ` : ''}
                             {wasRecentlyProvisioned
                               ? 'Usuário provisionado agora'
                               : person.has_system_user
                                 ? 'Usuário de sistema'
                                 : 'Sem acesso'}
-                          </span>
-                        </div>
-                        {wasRecentlyProvisioned ? (
-                          <p className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
-                            Credenciais provisionadas
                           </p>
-                        ) : null}
+                        </div>
                       </div>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] border ${
                           person.is_active
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-stone-200 text-foreground'
+                            ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100'
+                            : 'border-stone-400/30 bg-stone-500/10 text-stone-100'
                         }`}
                       >
                         {person.is_active ? 'Ativo' : 'Inativo'}
