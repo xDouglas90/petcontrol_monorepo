@@ -135,10 +135,10 @@ jobs:
           fi
 
           echo "::warning title=Vitest timeout::Primary web test run timed out after $PRIMARY_TIMEOUT. Retrying with forks pool."
-          timeout "$FALLBACK_TIMEOUT" pnpm --filter web exec vitest run --pool=forks --poolOptions.forks.isolate=false
+          timeout "$FALLBACK_TIMEOUT" pnpm --filter web exec vitest run --pool=forks
 
   runtime-matrix:
-    name: Runtime Matrix (Node ${{ matrix.node-version }} / Vitest ${{ matrix.vitest-version }})
+    name: Runtime Matrix (Node ${{ matrix.node-version }} / Vitest 4)
     runs-on: ubuntu-latest
     needs: libs-test
     timeout-minutes: 25
@@ -146,7 +146,6 @@ jobs:
       fail-fast: false
       matrix:
         node-version: ['22', '24']
-        vitest-version: ['3.2.4', '4.1.5']
     steps:
       - uses: actions/checkout@v6
       - name: Set up pnpm
@@ -167,12 +166,7 @@ jobs:
       - name: Run matrix runtime probe
         run: |
           set -euo pipefail
-          if [ "${{ matrix.vitest-version }}" = "3.2.4" ]; then
-            timeout 10m pnpm --filter web exec vitest run
-          else
-            cd apps/web
-            timeout 10m pnpm dlx --package vitest@${{ matrix.vitest-version }} --package jsdom@26.1.0 vitest run
-          fi
+          timeout 10m pnpm --filter web exec vitest run
 
   build:
     name: Build
