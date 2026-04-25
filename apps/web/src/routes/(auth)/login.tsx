@@ -65,10 +65,10 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-surface/50 text-foreground">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto grid min-h-screen max-w-7xl gap-8 px-4 py-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
-        <section className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-border/50 bg-surface p-8 shadow-premium lg:p-12">
-          <div className="absolute inset-0 bg-transparent" />
+        <section className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-border/40 bg-surface/30 p-8 shadow-2xl lg:p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.1),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.05),transparent_40%)]" />
 
           <div className="relative space-y-8">
             <div
@@ -109,14 +109,14 @@ export function LoginPage() {
                   alt="GroomingFlow"
                   className="h-auto w-60"
                 />
-                <h1 className="mt-4 font-display text-5xl leading-[1.1] text-foreground sm:text-6xl">
+                <h1 className="mt-6 font-display text-5xl leading-[1.1] tracking-tight text-foreground sm:text-7xl">
                   Gerencie sua PetShop com{' '}
-                  <span className="text-sky-400">precisão</span> e elegância.
+                  <span className="text-primary">precisão</span>.
                 </h1>
               </div>
-              <p className="max-w-xl text-lg leading-relaxed text-muted">
-                Uma plataforma completa para gestão pet: de agendamentos
-                complexos a controle financeiro, tudo em um só lugar.
+              <p className="max-w-xl text-lg leading-relaxed text-muted/80">
+                Uma plataforma de elite para gestão pet: de agendamentos
+                complexos a inteligência de dados, tudo em um só lugar.
               </p>
             </div>
           </div>
@@ -141,12 +141,12 @@ export function LoginPage() {
         </section>
 
         <section className="flex items-center justify-center">
-          <div className="w-full max-w-lg rounded-[2.5rem] border border-border/50 bg-surface p-8 shadow-premium sm:p-10">
+          <div className="w-full max-w-lg rounded-[2.5rem] border border-border/40 bg-surface/50 p-8 shadow-2xl backdrop-blur-sm sm:p-10">
             <div className="mb-10 space-y-2 text-center lg:text-left">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary/80">
+              <p className="app-eyebrow justify-center lg:justify-start">
                 Bem-vindo
               </p>
-              <h2 className="font-display text-4xl text-foreground">
+              <h2 className="mt-4 font-display text-4xl text-foreground">
                 Acessar Painel
               </h2>
               <p className="text-muted">
@@ -184,7 +184,7 @@ export function LoginPage() {
                 type="submit"
                 disabled={mutation.isPending}
                 className={cn(
-                  'group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 py-4 text-sm font-bold text-white transition-all hover:bg-sky-500 shadow-md hover:shadow-lg active:scale-[0.98]',
+                  'group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-sm font-bold text-slate-950 transition-all hover:brightness-110 shadow-lg active:scale-[0.98]',
                   'disabled:cursor-not-allowed disabled:opacity-70',
                 )}
               >
@@ -257,8 +257,8 @@ function Field({
         type={type}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-2xl border border-border/50 bg-surface/50 px-4 py-4 text-foreground outline-none transition placeholder:text-muted/70',
-          'focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/10 focus:bg-surface',
+          'w-full rounded-2xl border border-border/50 bg-background/50 px-4 py-4 text-foreground outline-none transition placeholder:text-muted/70',
+          'focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:bg-background',
         )}
       />
       {error ? (

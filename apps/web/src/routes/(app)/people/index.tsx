@@ -26,6 +26,7 @@ import {
 } from '@/lib/api/domain.queries';
 import { useToastStore } from '@/stores/toast.store';
 import { PaginationBar } from '@/ui/pagination-bar';
+import { SearchBar } from '@/ui/search-bar';
 
 const PERSON_KIND_OPTIONS: Array<{ value: 'all' | PersonKind; label: string }> =
   [
@@ -964,9 +965,7 @@ export function PeoplePage() {
           <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-muted">
-                  Gestão de Pessoas
-                </p>
+                <p className="app-eyebrow">Gestão de Pessoas</p>
                 <h1 className="mt-3 font-display text-4xl text-foreground sm:text-5xl">
                   Pessoas
                 </h1>
@@ -980,7 +979,7 @@ export function PeoplePage() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground transition hover:bg-sky-700 shadow-sm shadow-sky-200"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm"
               >
                 Inserir pessoa
               </button>
@@ -989,12 +988,11 @@ export function PeoplePage() {
 
           <div className="p-6 lg:p-10">
             <div className="flex flex-col gap-4 lg:flex-row">
-              <input
+              <SearchBar
                 id="people-search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={setSearch}
                 placeholder="Buscar por nome, CPF ou tipo..."
-                className="h-12 flex-1 rounded-2xl border border-border bg-surface/50 px-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface"
               />
 
               <select
@@ -1003,7 +1001,7 @@ export function PeoplePage() {
                 onChange={(event) =>
                   setSelectedKind(event.target.value as 'all' | PersonKind)
                 }
-                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PERSON_KIND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1063,7 +1061,7 @@ export function PeoplePage() {
                               ({resolveKindLabel(person.kind)})
                             </span>
                             {wasRecentlyProvisioned ? (
-                              <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
+                              <span className="inline-flex rounded-full border border-sky-400/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-300">
                                 Credenciais provisionadas
                               </span>
                             ) : null}
@@ -1109,7 +1107,7 @@ export function PeoplePage() {
             <div className="sticky top-10">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
+                  <p className="app-eyebrow">
                     {panelMode === 'create' ? 'Nova pessoa' : 'Editar pessoa'}
                   </p>
                   <h2 className="mt-4 font-display text-3xl text-foreground">
@@ -1360,7 +1358,7 @@ export function PeoplePage() {
                     }
                   />
                   {canManageSystemUser ? (
-                    <div className="space-y-3 rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-4">
+                    <div className="space-y-3 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-4 py-4">
                       <ToggleRow
                         label="Criar usuário de sistema"
                         checked={form.has_system_user ?? false}
@@ -1375,7 +1373,7 @@ export function PeoplePage() {
                           }))
                         }
                       />
-                      <p className="text-xs leading-5 text-sky-700">
+                      <p className="text-xs leading-5 text-sky-300">
                         {panelMode === 'edit' && personDetail?.has_system_user
                           ? 'Esta pessoa já possui usuário vinculado. A desativação desse vínculo fica para um fluxo administrativo específico.'
                           : currentUser?.role === 'system'
@@ -2330,7 +2328,7 @@ export function PeoplePage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSaving
                       ? 'Salvando...'
@@ -2352,9 +2350,7 @@ export function PeoplePage() {
             <div className="sticky top-10">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
-                    Seleção atual
-                  </p>
+                  <p className="app-eyebrow">Seleção atual</p>
                   <h2 className="mt-4 font-display text-3xl text-foreground">
                     {selectedPerson.full_name ?? 'Pessoa sem identificação'}
                   </h2>
@@ -2374,7 +2370,7 @@ export function PeoplePage() {
               </div>
 
               {!selectedPersonSupportsCurrentForm ? (
-                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
                   A edição deste tipo de pessoa será concluída no próximo slice
                   do módulo.
                 </div>
@@ -2398,8 +2394,8 @@ export function PeoplePage() {
               {personDetail ? (
                 <div className="mt-8 space-y-8">
                   {accessProvisionFeedback?.personId === personDetail.id ? (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
-                      <p className="font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                    <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
+                      <p className="font-semibold uppercase tracking-[0.16em] text-emerald-100">
                         Credenciais enviadas
                       </p>
                       <p className="mt-2 leading-6">
@@ -2691,7 +2687,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
       <dt className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted">
         {label}
       </dt>
-      <dd className="mt-1 text-sm font-medium text-stone-800">{value}</dd>
+      <dd className="mt-1 text-sm font-medium text-foreground">{value}</dd>
     </dl>
   );
 }
@@ -2711,7 +2707,7 @@ function DetailSection({
         {title}
       </p>
       {errorMessages && errorMessages.length > 0 ? (
-        <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="mt-3 rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
           {errorMessages.map((message) => (
             <p key={`${title}-${message}`}>{message}</p>
           ))}
@@ -2767,7 +2763,7 @@ function ToggleRow({
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-stone-300 text-sky-600 focus:ring-sky-500"
+        className="h-4 w-4 rounded border-border/50 bg-surface/50 text-primary focus:ring-primary/20"
       />
     </label>
   );
@@ -2784,7 +2780,7 @@ function PeopleStateMessage({
     <div
       className={`rounded-2xl border px-4 py-3 text-sm ${
         tone === 'error'
-          ? 'border-rose-200 bg-rose-50 text-rose-700'
+          ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
           : 'border-border bg-surface/50 text-muted'
       }`}
     >
@@ -2794,7 +2790,7 @@ function PeopleStateMessage({
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-border bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface';
+  'w-full rounded-2xl border border-border bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:bg-surface focus:ring-2 focus:ring-primary/20';
 
 function resolveKindLabel(kind: PersonKind) {
   switch (kind) {

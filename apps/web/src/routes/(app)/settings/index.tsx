@@ -114,7 +114,7 @@ export function SettingsPage() {
                 <h2 className="mt-3 font-display text-3xl text-foreground">
                   Central de ajustes
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                <p className="mt-3 text-sm leading-7 text-muted">
                   Esta área reúne os dados institucionais da empresa, as regras
                   operacionais do negócio e, para perfis administradores, a
                   gestão das permissões dos usuários.
@@ -262,7 +262,7 @@ function CompanySettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
+            className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar empresa'}
           </button>
@@ -512,7 +512,7 @@ function BusinessSettingsForm({
           <button
             type="submit"
             disabled={disabled || mutation.isPending}
-            className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
+            className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
           >
             {mutation.isPending ? 'Salvando...' : 'Salvar negócio'}
           </button>
@@ -578,7 +578,7 @@ function UserPermissionsManager({
               ))}
             </select>
             {selectedCompanyUser ? (
-              <div className="rounded-2xl border border-border/50 bg-surface/50 p-4 text-sm text-muted-foreground">
+              <div className="rounded-2xl border border-border/50 bg-surface/50 p-4 text-sm text-muted">
                 <p className="font-semibold text-foreground">
                   {selectedCompanyUser.full_name ||
                     selectedCompanyUser.short_name ||
@@ -664,7 +664,7 @@ function UserPermissionsForm({
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="inline-flex items-center justify-center rounded-2xl bg-sky-100 px-5 py-3 text-sm font-bold text-sky-600 shadow-sm transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
+          className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted/70"
         >
           {mutation.isPending ? 'Salvando...' : 'Salvar permissões'}
         </button>
@@ -779,7 +779,7 @@ function ReadOnlyField({
       <span className="mb-2 block text-sm font-semibold text-foreground">
         {label}
       </span>
-      <div className="rounded-2xl border border-border/50 bg-surface/80 px-4 py-3 text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-border/50 bg-surface/80 px-4 py-3 text-sm text-muted">
         {value}
       </div>
       {helpText ? (
@@ -806,7 +806,7 @@ function ToggleField({
       <button
         type="button"
         role="switch"
-        aria-checked={checked ? 'true' : 'false'}
+        aria-checked={checked}
         onClick={() => onChange(!checked)}
         disabled={disabled}
         className={cn(
@@ -866,7 +866,7 @@ function PermissionsChecklist({
                 <p className="text-sm font-semibold text-foreground">
                   {group.module_name}
                 </p>
-                <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300">
                   {group.module_code}
                 </span>
                 <span className="rounded-full bg-surface/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -926,7 +926,7 @@ function PermissionChecklistItem({
               padrão
             </span>
           ) : (
-            <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+            <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200">
               customizado
             </span>
           )}

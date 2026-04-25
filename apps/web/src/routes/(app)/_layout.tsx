@@ -243,7 +243,7 @@ export function AppLayout() {
                     : '-translate-x-[110%] opacity-0 pointer-events-none',
                 ),
           )}
-          aria-hidden={!isDesktopViewport && !sidebarOpen ? 'true' : undefined}
+          aria-hidden={!isDesktopViewport && !sidebarOpen ? true : undefined}
         >
           <div className="flex items-center justify-between border-b border-border/50 px-5 py-5">
             <div
@@ -551,7 +551,7 @@ function SidebarLabel({
           ? 'max-w-[14rem] translate-x-0 opacity-100 delay-100'
           : 'max-w-0 -translate-x-1 opacity-0 delay-0',
       )}
-      aria-hidden={!expanded ? 'true' : undefined}
+      aria-hidden={!expanded ? true : undefined}
     >
       {children}
     </span>

@@ -166,7 +166,7 @@ export function AdminSupportChatAside({
 
         {!chatExpanded ? (
           <div className="flex flex-1 flex-col items-center gap-4 px-3 py-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-sky-600 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-primary shadow-sm">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-surface/50 text-muted shadow-sm">
@@ -326,7 +326,7 @@ export function AdminSupportChatAside({
                           className={`max-w-[88%] rounded-[1.6rem] px-4 py-3 text-sm leading-6 ${
                             isOwnMessage
                               ? 'bg-sky-500 text-white'
-                              : 'border border-border/50 bg-surface/50 text-muted-foreground'
+                              : 'border border-border/50 bg-surface/50 text-muted'
                           }`}
                         >
                           <p

@@ -37,6 +37,7 @@ import { PaginationBar } from '@/ui/pagination-bar';
 import { ImageUpload } from '@/ui/image-upload';
 import { useAuthStore, selectSession } from '@/lib/auth/auth.store';
 import { useToastStore } from '@/stores/toast.store';
+import { SearchBar } from '@/ui/search-bar';
 
 type PetPanelMode = 'view' | 'create' | 'edit';
 type PetStatusFilter = 'all' | 'active' | 'inactive';
@@ -371,9 +372,7 @@ export function PetsPage() {
           <header className="bg-[radial-gradient(circle_at_top_right,rgba(2,132,199,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_35%)] px-6 py-8 lg:px-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-muted">
-                  Gestão de Pets
-                </p>
+                <p className="app-eyebrow">Gestão de Pets</p>
                 <h1 className="mt-3 font-display text-4xl text-foreground sm:text-5xl">
                   Pets
                 </h1>
@@ -386,7 +385,7 @@ export function PetsPage() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground shadow-sm shadow-sky-200 transition hover:bg-sky-700"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm"
               >
                 Inserir pet
               </button>
@@ -395,12 +394,11 @@ export function PetsPage() {
 
           <div className="px-6 py-6 lg:px-10 lg:py-10">
             <div>
-              <input
+              <SearchBar
                 id="pets-search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={setSearch}
                 placeholder="Buscar por nome do pet, nome do cliente, raça ou tipo..."
-                className="h-12 w-full rounded-2xl border border-border bg-surface/50 px-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface"
               />
             </div>
 
@@ -414,7 +412,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['size'],
                   )
                 }
-                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_SIZE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -432,7 +430,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['kind'],
                   )
                 }
-                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_KIND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -450,7 +448,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['temperament'],
                   )
                 }
-                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_TEMPERAMENT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -468,7 +466,7 @@ export function PetsPage() {
                     event.target.value as PetFilterState['is_active'],
                   )
                 }
-                className="h-12 rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-sky-300"
+                className="h-12 rounded-2xl border border-border/50 bg-surface px-4 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               >
                 {PET_STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -489,7 +487,7 @@ export function PetsPage() {
                 <StateMessage message="Nenhum pet encontrado com os filtros atuais." />
               ) : null}
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {visiblePets.map((pet) => {
                   const isSelected = pet.id === activeSelectedPetId;
                   return (
@@ -578,8 +576,8 @@ function PetFormPanel({
     <div className="xl:sticky xl:top-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
-            {mode === 'edit' ? 'Editar pet' : 'Novo pet'}
+          <p className="app-eyebrow">
+            {mode === 'create' ? 'Novo pet' : 'Editar pet'}
           </p>
           <h2 className="mt-4 font-display text-3xl text-foreground">
             {mode === 'edit' ? 'Atualizar cadastro' : 'Formulário de cadastro'}
@@ -917,7 +915,7 @@ function PetFormPanel({
           <button
             type="submit"
             disabled={isPending}
-            className="inline-flex h-12 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-bold text-foreground shadow-sm shadow-sky-200 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-bold text-slate-950 transition hover:brightness-110 shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending
               ? 'Salvando...'
@@ -965,7 +963,7 @@ function PetDetailPanel({
       </div>
 
       <div className="space-y-4 border-y border-border py-4">
-        <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100">
+        <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-surface/50">
           <img
             src={imageUrl}
             alt={pet.name}
@@ -999,7 +997,7 @@ function PetDetailPanel({
               onClick={onDelete}
               title="Excluir"
               aria-label="Excluir"
-              className="inline-flex h-10 items-center justify-center rounded-2xl border border-rose-200 px-6 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+              className="inline-flex h-10 items-center justify-center rounded-2xl border border-rose-400/40 px-6 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/10"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -1209,7 +1207,7 @@ function ToggleField({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-stone-300 text-sky-600 focus:ring-sky-500"
+        className="h-4 w-4 rounded border-border/50 bg-surface/50 text-primary focus:ring-primary/20"
       />
     </label>
   );
@@ -1237,7 +1235,7 @@ function StatusBadge({
   const activeTone = active ?? tone === 'active';
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] border ${activeTone ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-stone-400/30 bg-stone-500/10 text-stone-100'}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] border ${activeTone ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-border/50 bg-surface/50 text-muted'}`}
     >
       {text}
     </span>
@@ -1253,7 +1251,7 @@ function StateMessage({
 }) {
   return (
     <div
-      className={`border-l-2 pl-3 text-sm ${tone === 'error' ? 'border-rose-300 text-rose-700' : 'border-stone-300 text-foreground'}`}
+      className={`border-l-2 pl-3 text-sm ${tone === 'error' ? 'border-rose-400/40 text-rose-200' : 'border-border/50 text-foreground'}`}
     >
       {message}
     </div>
@@ -1264,7 +1262,7 @@ function MutationError({ error }: { error: unknown }) {
   if (!(error instanceof ApiError)) return null;
 
   return (
-    <div className="border-l-2 border-rose-300 pl-3 text-sm text-rose-700">
+    <div className="border-l-2 border-rose-400/40 pl-3 text-sm text-rose-200">
       {error.message}
     </div>
   );
@@ -1593,4 +1591,4 @@ function boolToLabel(value: boolean) {
 }
 
 const fieldClassName =
-  'w-full rounded-2xl border border-border bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-sky-300 focus:bg-surface';
+  'w-full rounded-2xl border border-border/50 bg-surface/50 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
