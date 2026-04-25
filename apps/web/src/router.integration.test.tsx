@@ -375,8 +375,10 @@ describe('Router integration', () => {
       expect(router.state.location.pathname).toBe('/petcontrol-dev/schedules');
     });
 
-    expect(screen.getByText('Agendamentos do tenant')).toBeTruthy();
-    expect(screen.getByText('Criar agendamento')).toBeTruthy();
+    expect(screen.getByText(/Gestão completa da agenda do tenant/i)).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Novo agendamento' }),
+    ).toBeTruthy();
     expect(screen.getAllByText('Maria Silva')).not.toHaveLength(0);
     expect(screen.getAllByText('Thor')).not.toHaveLength(0);
     expect(screen.getAllByText('Banho completo')).not.toHaveLength(0);
@@ -420,7 +422,7 @@ describe('Router integration', () => {
       expect(screen.getAllByText(/Dashboard/i).length).toBeGreaterThan(0);
     }, { timeout: 5000 });
     expect(screen.getAllByText(/PetControl Dev/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Agendamentos do tenant/i)).toBeTruthy();
+    expect(screen.getByText(/Gestão completa da agenda do tenant/i)).toBeTruthy();
   }, 10000);
 
   it('renderiza a rota /:companySlug/people com o módulo de pessoas ativo', async () => {

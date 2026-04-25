@@ -345,7 +345,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Olá, Admin')).toBeTruthy();
     expect(screen.getByText('0%')).toBeTruthy();
     expect(
-      screen.getByText('Nenhum atendimento registrado para o turno atual.'),
+      screen.getByText('Nenhum agendamento ocorrendo neste momento.'),
     ).toBeTruthy();
     expect(screen.getByText('Agendamentos em andamento')).toBeTruthy();
     expect(
