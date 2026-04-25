@@ -108,9 +108,7 @@ export function SettingsPage() {
           <section className="px-6 py-7 md:px-7">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="max-w-3xl">
-                <p className="app-eyebrow">
-                  Configurações
-                </p>
+                <p className="app-eyebrow">Configurações</p>
                 <h2 className="mt-3 font-display text-3xl text-foreground">
                   Central de ajustes
                 </h2>
@@ -719,9 +717,7 @@ function SettingsCard({
   return (
     <section className="px-6 py-7 md:px-7">
       <div className="mb-6">
-        <p className="app-eyebrow">
-          {eyebrow}
-        </p>
+        <p className="app-eyebrow">{eyebrow}</p>
         <h3 className="mt-3 font-display text-2xl text-foreground">{title}</h3>
         <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
           {description}
@@ -806,7 +802,7 @@ function ToggleField({
       <button
         type="button"
         role="switch"
-        aria-checked={checked}
+        aria-checked={checked ? 'true' : 'false'}
         onClick={() => onChange(!checked)}
         disabled={disabled}
         className={cn(
